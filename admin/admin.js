@@ -1,21 +1,17 @@
-/*
-  Sørgulen – Admin (testversjon)
-  ------------------------------------------------------------
-  Denne admin-siden er laget for å være robust:
-  - Ingen hard-crash hvis backend mangler admin-endepunkter.
-  - /api/health kan testes (skal fungere nå).
-  - "Hent bookinger" prøver /api/admin/bookings (må bygges i backend senere).
-*/
-
 (() => {
   'use strict';
 
   const LS_API_BASE = 'sorgulen_admin_api_base';
   const LS_ADMIN_KEY = 'sorgulen_admin_key';
 
-  // --- Helpers
   const $id = (id) => document.getElementById(id);
 
+  // State
+  let currentBookings = [];
+  let pendingConfirm = null; // { title, text, onOk }
+  let editingBookingId = null;
+
+  // ---------- Helpers
   function normalizeBaseUrl(url) {
     if (!url) return '';
     let u = String(url).trim();
@@ -26,11 +22,9 @@
   }
 
   function getApiBase() {
-    // Priority: input -> window.API_BASE_URL -> localStorage -> empty
     const fromInput = $id('apiBase')?.value;
     const fromWindow = typeof window !== 'undefined' ? window.API_BASE_URL : '';
     const fromLS = localStorage.getItem(LS_API_BASE);
-    // Tom streng betyr "bruk samme origin" (relativt /api/...) via Netlify proxy.
     return normalizeBaseUrl(fromInput || fromWindow || fromLS || '');
   }
 
@@ -42,35 +36,112 @@
 
   function setStatus(el, text, kind) {
     if (!el) return;
-    el.textContent = text;
-    // Optional styling via data-kind
-    if (kind) el.setAttribute('data-kind', kind);
-    else el.removeAttribute('data-kind');
+    el.textContent = text || '';
+    el.classList.remove('ok', 'warn', 'error', 'bad', 'info');
+    if (kind) el.classList.add(kind);
   }
 
   async function apiFetch(path, opts = {}) {
     const base = getApiBase();
-    const url = `${base}${path}`; // base kan være ''
+    const url = `${base}${path}`;
     const headers = new Headers(opts.headers || {});
+    headers.set('Accept', 'application/json');
 
     const adminKey = getAdminKey();
     if (adminKey) headers.set('x-admin-key', adminKey);
 
+    // Default JSON handling for PATCH
+    const method = (opts.method || 'GET').toUpperCase();
+    const hasBody = opts.body !== undefined && opts.body !== null;
+    if (hasBody && !(opts.body instanceof FormData) && !headers.has('Content-Type')) {
+      headers.set('Content-Type', 'application/json');
+    }
+
     return fetch(url, {
       ...opts,
+      method,
       headers,
       mode: 'cors',
       credentials: 'omit',
     });
   }
 
-  function formatDate(isoDate) {
-    if (!isoDate) return '';
-    // expect YYYY-MM-DD
-    return isoDate;
+  function escapeHtml(s) {
+    return String(s ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
   }
 
-  // --- UI wiring
+  function displayStatusLabel(status) {
+    const s = (status || '').toLowerCase();
+    if (s === 'done') return 'Utført';
+    if (s === 'cancelled') return 'Kansellert';
+    // default
+    return 'Aktiv';
+  }
+
+  function displayStatusClass(status) {
+    const s = (status || '').toLowerCase();
+    if (s === 'done') return 'done';
+    if (s === 'cancelled') return 'cancelled';
+    return 'active';
+  }
+
+  function normalizeStatus(status) {
+    const s = String(status || '').trim().toLowerCase();
+    if (s === 'active') return 'pending';
+    if (s === 'pending' || s === 'done' || s === 'cancelled') return s;
+    return '';
+  }
+
+  function bookingSummary(b) {
+    const date = b.date || '';
+    const time = b.time || '';
+    const service = b.serviceName || '';
+    const customer = b.customerName || '';
+    return `${date} ${time} – ${service} – ${customer}`.trim();
+  }
+
+  // ---------- Modal plumbing
+  function showBackdrop(show) {
+    const el = $id('modalBackdrop');
+    if (!el) return;
+    if (show) el.removeAttribute('hidden');
+    else el.setAttribute('hidden', 'hidden');
+  }
+
+  function openModal(modalId) {
+    const el = $id(modalId);
+    if (!el) return;
+    showBackdrop(true);
+    el.removeAttribute('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal(modalId) {
+    const el = $id(modalId);
+    if (!el) return;
+    el.setAttribute('hidden', 'hidden');
+    showBackdrop(false);
+    document.body.style.overflow = '';
+  }
+
+  function wireBackdropClose() {
+    const backdrop = $id('modalBackdrop');
+    if (!backdrop) return;
+    backdrop.addEventListener('click', () => {
+      // close any open modal
+      closeModal('confirmModal');
+      closeModal('editModal');
+      pendingConfirm = null;
+      editingBookingId = null;
+    });
+  }
+
+  // ---------- Connection card
   function loadStoredSettingsIntoInputs() {
     const base = normalizeBaseUrl(localStorage.getItem(LS_API_BASE) || window.API_BASE_URL || '');
     const key = (localStorage.getItem(LS_ADMIN_KEY) || '').trim();
@@ -114,7 +185,6 @@
             return;
           }
 
-          // Try JSON
           let payload = null;
           try { payload = JSON.parse(text); } catch (_) {}
 
@@ -127,6 +197,7 @@
     }
   }
 
+  // ---------- Bookings table
   function clearBookingsTable() {
     const table = $id('bookingsTable');
     const tbody = table ? table.querySelector('tbody') : null;
@@ -149,44 +220,77 @@
     for (const b of bookings) {
       const tr = document.createElement('tr');
 
-      const date = b.date || b.bookingDate || '';
-      const time = b.time || b.bookingTime || '';
-      const service = b.serviceName || b.service?.name || '';
-      const customer = b.customerName || b.customer?.name || '';
-      const contact = [b.customerEmail || b.customer?.email, b.customerPhone || b.customer?.phone]
-        .filter(Boolean)
-        .join(' / ');
-      const status = b.status || (b.canceled ? 'Canceled' : '');
+      const date = b.date || '';
+      const time = b.time || '';
+      const service = b.serviceName || '';
+      const customer = b.customerName || '';
+      const contact = [b.customerEmail, b.customerPhone].filter(Boolean).join(' / ');
+      const statusLabel = displayStatusLabel(b.status);
+      const statusClass = displayStatusClass(b.status);
 
-      // Placeholder for future actions (cancel/delete/etc.)
-      const actions = '';
+      const isCancelled = statusClass === 'cancelled';
+      const isDone = statusClass === 'done';
 
       tr.innerHTML = `
-        <td>${date}</td>
-        <td>${time}</td>
-        <td>${service}</td>
-        <td>${customer}</td>
-        <td>${contact}</td>
-        <td>${status}</td>
-        <td>${actions}</td>
+        <td>${escapeHtml(date)}</td>
+        <td>${escapeHtml(time)}</td>
+        <td>${escapeHtml(service)}</td>
+        <td>${escapeHtml(customer)}</td>
+        <td>${escapeHtml(contact)}</td>
+        <td><span class="pill ${statusClass}">${escapeHtml(statusLabel)}</span></td>
+        <td>
+          <div class="actions">
+            <button class="btn" data-action="edit" data-id="${escapeHtml(b._id)}" ${isCancelled ? 'disabled' : ''}>Rediger</button>
+            <button class="btn" data-action="cancel" data-id="${escapeHtml(b._id)}" ${isCancelled ? 'disabled' : ''}>Kanseller</button>
+            <button class="btn-primary" data-action="done" data-id="${escapeHtml(b._id)}" ${(isCancelled || isDone) ? 'disabled' : ''}>Utført</button>
+          </div>
+        </td>
       `.trim();
 
       tbody.appendChild(tr);
     }
+
+    // Delegate click handling
+    tbody.querySelectorAll('button[data-action]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const action = btn.getAttribute('data-action');
+        const id = btn.getAttribute('data-id');
+        if (!action || !id) return;
+        const booking = currentBookings.find((x) => String(x._id) === String(id));
+        if (!booking) return;
+
+        if (action === 'edit') {
+          openEditModal(booking);
+        } else if (action === 'cancel') {
+          openConfirmModal({
+            title: 'Bekreft kansellering',
+            text: bookingSummary(booking),
+            onOk: () => updateStatus(id, 'cancelled'),
+          });
+        } else if (action === 'done') {
+          openConfirmModal({
+            title: 'Bekreft utført',
+            text: bookingSummary(booking),
+            onOk: () => updateStatus(id, 'done'),
+          });
+        }
+      });
+    });
   }
 
   async function loadBookings() {
     const elStatus = $id('bookingsStatus');
     const from = $id('fromDate')?.value || '';
     const to = $id('toDate')?.value || '';
-    const status = $id('statusFilter')?.value || '';
+    const statusRaw = $id('statusFilter')?.value || '';
     const q = ($id('search')?.value || '').trim();
 
-    // Build querystring for future backend
+    const status = normalizeStatus(statusRaw);
+
     const params = new URLSearchParams();
-    if (from) params.set('from', formatDate(from));
-    if (to) params.set('to', formatDate(to));
-    if (status && status !== 'Alle') params.set('status', status);
+    if (from) params.set('from', String(from));
+    if (to) params.set('to', String(to));
+    if (status) params.set('status', status);
     if (q) params.set('q', q);
 
     try {
@@ -201,20 +305,19 @@
           setStatus(elStatus, 'Mangler admin-key. Lim inn ADMIN_KEY og trykk Lagre.', 'warn');
         } else if (res.status === 403) {
           setStatus(elStatus, 'Feil admin-key. Sjekk at ADMIN_KEY matcher Render.', 'error');
-        } else if (res.status === 404) {
-          setStatus(elStatus, `Admin-endepunkt finnes ikke (404). Backend må deployes med /api/admin/bookings.`, 'error');
         } else {
           setStatus(elStatus, `Feil (${res.status}): ${text || res.statusText}`, 'error');
         }
         return;
       }
 
-      let data;
-      try { data = JSON.parse(text); } catch (e) { data = null; }
+      let data = null;
+      try { data = JSON.parse(text); } catch (_) {}
 
       const bookings = data?.bookings || data || [];
-      renderBookings(bookings);
-      setStatus(elStatus, `Lastet ${Array.isArray(bookings) ? bookings.length : 0} bookinger.`, 'ok');
+      currentBookings = Array.isArray(bookings) ? bookings : [];
+      renderBookings(currentBookings);
+      setStatus(elStatus, `Lastet ${currentBookings.length} bookinger.`, 'ok');
     } catch (e) {
       setStatus(elStatus, `Feil ved henting: ${e.message}`, 'error');
     }
@@ -230,21 +333,171 @@
       btnClear.addEventListener('click', () => {
         if ($id('fromDate')) $id('fromDate').value = '';
         if ($id('toDate')) $id('toDate').value = '';
-        if ($id('statusFilter')) $id('statusFilter').value = 'Alle';
+        if ($id('statusFilter')) $id('statusFilter').value = '';
         if ($id('search')) $id('search').value = '';
         clearBookingsTable();
         setStatus($id('bookingsStatus'), 'Filtre nullstilt.', 'ok');
       });
     }
 
-    // Clear initial placeholder row (keep it simple)
     clearBookingsTable();
   }
 
-  // Init
+  // ---------- Confirm modal
+  function openConfirmModal({ title, text, onOk }) {
+    pendingConfirm = { title, text, onOk };
+    $id('confirmTitle').textContent = title;
+    $id('confirmText').textContent = text;
+    openModal('confirmModal');
+  }
+
+  function wireConfirmModal() {
+    const btnCancel = $id('confirmCancel');
+    const btnOk = $id('confirmOk');
+
+    if (btnCancel) {
+      btnCancel.addEventListener('click', () => {
+        pendingConfirm = null;
+        closeModal('confirmModal');
+      });
+    }
+
+    if (btnOk) {
+      btnOk.addEventListener('click', async () => {
+        if (!pendingConfirm) {
+          closeModal('confirmModal');
+          return;
+        }
+        const { onOk } = pendingConfirm;
+        pendingConfirm = null;
+        closeModal('confirmModal');
+        if (typeof onOk === 'function') await onOk();
+      });
+    }
+  }
+
+  // ---------- Edit modal
+  function openEditModal(booking) {
+    editingBookingId = String(booking._id);
+
+    $id('editDate').value = booking.date || '';
+    $id('editTime').value = booking.time || '';
+    $id('editService').value = booking.serviceName || '';
+    $id('editName').value = booking.customerName || '';
+    $id('editEmail').value = booking.customerEmail || '';
+    $id('editPhone').value = booking.customerPhone || '';
+
+    setStatus($id('editStatus'), '', '');
+    openModal('editModal');
+  }
+
+  function wireEditModal() {
+    const btnCancel = $id('editCancel');
+    const form = $id('editForm');
+
+    if (btnCancel) {
+      btnCancel.addEventListener('click', () => {
+        editingBookingId = null;
+        closeModal('editModal');
+      });
+    }
+
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!editingBookingId) return;
+
+        const payload = {
+          date: $id('editDate').value,
+          time: $id('editTime').value,
+          serviceName: $id('editService').value,
+          customerName: $id('editName').value,
+          customerEmail: $id('editEmail').value,
+          customerPhone: $id('editPhone').value,
+        };
+
+        await updateBooking(editingBookingId, payload);
+      });
+    }
+  }
+
+  async function updateBooking(id, payload) {
+    const el = $id('editStatus');
+    try {
+      setStatus(el, 'Lagrer ...', 'info');
+
+      const res = await apiFetch(`/api/admin/bookings/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      });
+
+      const text = await res.text();
+      let data = null;
+      try { data = JSON.parse(text); } catch (_) {}
+
+      if (!res.ok) {
+        if (res.status === 409) {
+          setStatus(el, 'Konflikt: Tiden er allerede booket.', 'warn');
+        } else {
+          setStatus(el, `Feil (${res.status}): ${data?.error || text || res.statusText}`, 'error');
+        }
+        return;
+      }
+
+      const updated = data?.booking || null;
+      if (updated) {
+        currentBookings = currentBookings.map((b) => (String(b._id) === String(id) ? updated : b));
+        renderBookings(currentBookings);
+      }
+
+      setStatus(el, 'Lagret.', 'ok');
+      // close after short delay feel? keep immediate
+      editingBookingId = null;
+      closeModal('editModal');
+      setStatus($id('bookingsStatus'), 'Booking oppdatert.', 'ok');
+    } catch (e) {
+      setStatus(el, `Feil: ${e.message}`, 'error');
+    }
+  }
+
+  async function updateStatus(id, status) {
+    const elStatus = $id('bookingsStatus');
+    try {
+      setStatus(elStatus, 'Oppdaterer ...', 'info');
+
+      const res = await apiFetch(`/api/admin/bookings/${encodeURIComponent(id)}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      });
+
+      const text = await res.text();
+      let data = null;
+      try { data = JSON.parse(text); } catch (_) {}
+
+      if (!res.ok) {
+        setStatus(elStatus, `Feil (${res.status}): ${data?.error || text || res.statusText}`, 'error');
+        return;
+      }
+
+      const updated = data?.booking || null;
+      if (updated) {
+        currentBookings = currentBookings.map((b) => (String(b._id) === String(id) ? updated : b));
+        renderBookings(currentBookings);
+      }
+
+      setStatus(elStatus, 'Oppdatert.', 'ok');
+    } catch (e) {
+      setStatus(elStatus, `Feil: ${e.message}`, 'error');
+    }
+  }
+
+  // ---------- Init
   document.addEventListener('DOMContentLoaded', () => {
     loadStoredSettingsIntoInputs();
     wireConnectionCard();
     wireBookingsCard();
+    wireBackdropClose();
+    wireConfirmModal();
+    wireEditModal();
   });
 })();

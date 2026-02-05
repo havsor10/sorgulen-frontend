@@ -58,7 +58,7 @@
             <label for="statusFilter">Status</label>
             <select id="statusFilter">
               <option value="">Alle</option>
-              <option value="active">Aktiv</option>
+              <option value="pending">Aktiv</option>
               <option value="cancelled">Kansellert</option>
               <option value="done">Utført</option>
             </select>
@@ -100,6 +100,59 @@
           <summary>API-kontrakt (backend må implementere)</summary>
           <pre class="code" id="apiContract"></pre>
         </details>
+      </section>
+
+      <!-- Modals -->
+      <div id="modalBackdrop" class="modal-backdrop" hidden></div>
+
+      <section id="confirmModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" hidden>
+        <div class="modal-card">
+          <h3 id="confirmTitle">Bekreft</h3>
+          <p id="confirmText" class="muted"></p>
+          <div class="modal-actions">
+            <button id="confirmCancel" class="btn" type="button">Avbryt</button>
+            <button id="confirmOk" class="btn-primary" type="button">Bekreft</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="editModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="editTitle" hidden>
+        <div class="modal-card">
+          <h3 id="editTitle">Rediger booking</h3>
+          <form id="editForm" class="modal-form">
+            <div class="grid">
+              <div class="field">
+                <label for="editDate">Dato</label>
+                <input id="editDate" type="date" required />
+              </div>
+              <div class="field">
+                <label for="editTime">Tid</label>
+                <input id="editTime" type="time" required />
+              </div>
+              <div class="field">
+                <label for="editService">Tjeneste</label>
+                <input id="editService" type="text" required />
+              </div>
+              <div class="field">
+                <label for="editName">Kunde</label>
+                <input id="editName" type="text" required />
+              </div>
+              <div class="field">
+                <label for="editEmail">E-post</label>
+                <input id="editEmail" type="email" required />
+              </div>
+              <div class="field">
+                <label for="editPhone">Telefon</label>
+                <input id="editPhone" type="text" required />
+              </div>
+            </div>
+            <p id="editStatus" class="status"></p>
+            <div class="modal-actions">
+              <button id="editCancel" class="btn" type="button">Avbryt</button>
+              <button id="editSave" class="btn-primary" type="submit">Lagre</button>
+            </div>
+          </form>
+        </div>
       </section>
     </main>
 
