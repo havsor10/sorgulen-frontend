@@ -131,7 +131,7 @@
     const table = $id('bookingsTable');
     const tbody = table ? table.querySelector('tbody') : null;
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="6">Ingen data lastet.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7">Ingen data lastet.</td></tr>';
   }
 
   function renderBookings(bookings) {
@@ -140,7 +140,7 @@
     if (!tbody) return;
 
     if (!Array.isArray(bookings) || bookings.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6">Ingen bookinger funnet.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7">Ingen bookinger funnet.</td></tr>';
       return;
     }
 
@@ -158,6 +158,9 @@
         .join(' / ');
       const status = b.status || (b.canceled ? 'Canceled' : '');
 
+      // Placeholder for future actions (cancel/delete/etc.)
+      const actions = '';
+
       tr.innerHTML = `
         <td>${date}</td>
         <td>${time}</td>
@@ -165,6 +168,7 @@
         <td>${customer}</td>
         <td>${contact}</td>
         <td>${status}</td>
+        <td>${actions}</td>
       `.trim();
 
       tbody.appendChild(tr);
@@ -192,13 +196,16 @@
       const res = await apiFetch(`/api/admin/bookings?${params.toString()}`, { method: 'GET' });
       const text = await res.text();
 
-      // Backend ikke implementert enda -> typisk 404
       if (!res.ok) {
-        setStatus(
-          elStatus,
-          `Backend har ikke admin-endepunkt ennå (status ${res.status}). Dette er forventet før vi bygger admin-API.`,
-          'warn'
-        );
+        if (res.status === 401) {
+          setStatus(elStatus, 'Mangler admin-key. Lim inn ADMIN_KEY og trykk Lagre.', 'warn');
+        } else if (res.status === 403) {
+          setStatus(elStatus, 'Feil admin-key. Sjekk at ADMIN_KEY matcher Render.', 'error');
+        } else if (res.status === 404) {
+          setStatus(elStatus, `Admin-endepunkt finnes ikke (404). Backend må deployes med /api/admin/bookings.`, 'error');
+        } else {
+          setStatus(elStatus, `Feil (${res.status}): ${text || res.statusText}`, 'error');
+        }
         return;
       }
 
