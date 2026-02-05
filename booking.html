@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bestill time – Sørgulen</title>
+  <!-- Relative paths: fungerer i Live Server (127.0.0.1:5500/frontend/...) og i deploy -->
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="./css/booking.css" />
+</head>
+<body>
+  <main class="booking-container">
+    <h1>Bestill time</h1>
+
+    <!-- Servicevalg -->
+    <section id="service-section">
+      <h2>Velg tjeneste</h2>
+      <div id="service-options" class="service-options"></div>
+    </section>
+
+    <!-- Dato -->
+    <section id="date-section">
+      <h2>Velg dato</h2>
+      <input type="date" id="booking-date" disabled />
+    </section>
+
+    <!-- Tidsluker -->
+    <section id="slots-section" class="hidden">
+      <h2>Ledige tider</h2>
+      <div id="timeslots" class="timeslot-grid"></div>
+    </section>
+
+    <!-- Bestillingsskjema -->
+    <section id="form-section" class="hidden">
+      <h2>Fyll inn din informasjon</h2>
+      <form id="booking-form">
+        <input type="hidden" id="hold-id" />
+        <div class="form-group">
+          <label for="name">Navn</label>
+          <input type="text" id="name" name="name" required />
+        </div>
+        <div class="form-group">
+          <label for="phone">Telefon</label>
+          <input type="tel" id="phone" name="phone" required />
+        </div>
+        <div class="form-group">
+          <label for="email">E-post</label>
+          <input type="email" id="email" name="email" required />
+        </div>
+        <div class="form-group">
+          <label for="message">Kommentar (valgfritt)</label>
+          <textarea id="message" name="message" rows="3"></textarea>
+        </div>
+        <button type="submit" class="btn-primary">Bekreft booking</button>
+      </form>
+    </section>
+
+    <!-- Suksessmelding -->
+    <section id="success-section" class="hidden">
+      <h2>Takk for din bestilling!</h2>
+      <p>Du vil motta en bekreftelse på e-post. Kontakt oss dersom du har spørsmål.</p>
+    </section>
+  </main>
+
+  <!--
+    Produksjon: API-kall går til /api/* på samme domene.
+    Netlify håndterer dette via Functions-proxy (se netlify.toml).
+    Lokal dev (valgfritt): sett window.API_BASE_URL før scriptet for å peke til backend.
+  -->
+  <script src="./js/booking.js" defer></script>
+</body>
+</html>

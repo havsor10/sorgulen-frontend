@@ -1,0 +1,7 @@
+/*
+  Kompatibilitetsfil.
+  Noen eldre versjoner av booking.html refererer til "style.css" i frontend-roten.
+  Denne importerer dagens styles.
+*/
+
+@import url("./css/booking.css");

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin – Bookinger | Sørgulen</title>
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="./admin.css" />
+  </head>
+  <body>
+    <main class="admin-container">
+      <header class="admin-header">
+        <div>
+          <h1>Admin</h1>
+          <p class="muted">Administrer tjenester og bookinger (testversjon).</p>
+        </div>
+
+        <div class="header-actions">
+          <a class="btn" href="../booking.html">Åpne booking</a>
+        </div>
+      </header>
+
+      <section class="card">
+        <h2>Tilkobling</h2>
+        <div class="grid">
+          <div class="field">
+            <label for="apiBase">API base URL</label>
+            <input id="apiBase" type="text" placeholder="(tom = bruk samme domene)" />
+            <p class="help">Anbefalt: la feltet stå tomt i produksjon. Da brukes samme domene, og Netlify proxy'er <code>/api/*</code> videre til Render (se <code>netlify.toml</code>).</p>
+          </div>
+          <div class="field">
+            <label for="adminKey">Admin key (midlertidig)</label>
+            <input id="adminKey" type="password" placeholder="Valgfritt – lagres lokalt i nettleseren" />
+            <p class="help">Dette er kun en midlertidig løsning. Ekte sikkerhet må ligge i backend (auth/roller).</p>
+          </div>
+        </div>
+
+        <div class="row">
+          <button id="saveSettings" class="btn-primary" type="button">Lagre</button>
+          <button id="checkApi" class="btn" type="button">Test /api/health</button>
+          <span id="apiStatus" class="status">Ikke testet</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Bookinger</h2>
+
+        <div class="grid">
+          <div class="field">
+            <label for="fromDate">Fra dato</label>
+            <input id="fromDate" type="date" />
+          </div>
+          <div class="field">
+            <label for="toDate">Til dato</label>
+            <input id="toDate" type="date" />
+          </div>
+          <div class="field">
+            <label for="statusFilter">Status</label>
+            <select id="statusFilter">
+              <option value="">Alle</option>
+              <option value="active">Aktiv</option>
+              <option value="cancelled">Kansellert</option>
+              <option value="done">Utført</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="search">Søk</label>
+            <input id="search" type="search" placeholder="Navn, e-post, telefon, tjeneste…" />
+          </div>
+        </div>
+
+        <div class="row">
+          <button id="loadBookings" class="btn-primary" type="button">Hent bookinger</button>
+          <button id="clearFilters" class="btn" type="button">Nullstill</button>
+          <span id="bookingsStatus" class="status"></span>
+        </div>
+
+        <div class="table-wrap">
+          <table class="table" id="bookingsTable">
+            <thead>
+              <tr>
+                <th>Dato</th>
+                <th>Tid</th>
+                <th>Tjeneste</th>
+                <th>Kunde</th>
+                <th>Kontakt</th>
+                <th>Status</th>
+                <th>Handling</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="7" class="muted">Ingen data lastet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <details class="note">
+          <summary>API-kontrakt (backend må implementere)</summary>
+          <pre class="code" id="apiContract"></pre>
+        </details>
+      </section>
+    </main>
+
+    <script>
+      // Standard: bruk samme origin (tom streng). Kan overstyres i feltet ved behov.
+      window.API_BASE_URL = window.API_BASE_URL || "";
+    </script>
+    <script src="./admin.js"></script>
+  </body>
+</html>
