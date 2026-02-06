@@ -234,3 +234,10 @@
   background: rgba(0,0,0,0.04);
   overflow: auto;
 }
+
+/* ✅ Kritisk: respekter HTML 'hidden' (overstyrer .modal display grid) */
+.modal[hidden],
+.modal-backdrop[hidden] {
+  display: none !important;
+}
+
