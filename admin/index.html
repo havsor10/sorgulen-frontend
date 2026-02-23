@@ -26,46 +26,71 @@
           <div class="field">
             <label for="apiBase">API base URL</label>
             <input id="apiBase" type="text" placeholder="(tom = bruk samme domene)" />
-            <p class="help">Anbefalt: la feltet stå tomt i produksjon. Da brukes samme domene, og Netlify proxy'er <code>/api/*</code> videre til Render (se <code>netlify.toml</code>).</p>
+            <p class="help">
+              Anbefalt: la feltet stå tomt i produksjon. Da brukes samme domene, og Netlify proxy'er
+              <code>/api/*</code> videre til Render (se <code>netlify.toml</code>).
+            </p>
           </div>
+
           <div class="field">
-            <label for="adminKey">Admin key (midlertidig)</label>
-            <input id="adminKey" type="password" placeholder="Valgfritt – lagres lokalt i nettleseren" />
-            <p class="help">Dette er kun en midlertidig løsning. Ekte sikkerhet må ligge i backend (auth/roller).</p>
+            <label>Admin-innlogging (Firebase)</label>
+
+            <div class="row" style="gap: 8px; align-items: flex-end;">
+              <div class="field" style="margin: 0; flex: 1;">
+                <label for="loginEmail" class="muted">E-post</label>
+                <input id="loginEmail" type="email" autocomplete="username" placeholder="Sor.industri@gmail.com" />
+              </div>
+
+              <div class="field" style="margin: 0; flex: 1;">
+                <label for="loginPassword" class="muted">Passord</label>
+                <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Passord" />
+              </div>
+            </div>
+
+            <div class="row" style="gap: 8px;">
+              <button id="btnLogin" class="btn-primary" type="button">Logg inn</button>
+              <button id="btnLogout" class="btn" type="button" disabled>Logg ut</button>
+              <span id="authStatus" class="status"></span>
+            </div>
+
+            <p class="help">Innlogging brukes for sikker tilgang til admin- og takstameter-funksjoner. Ingen admin-key i nettleseren.</p>
           </div>
         </div>
 
         <div class="row">
           <button id="saveSettings" class="btn-primary" type="button">Lagre</button>
           <button id="checkApi" class="btn" type="button">Test /api/health</button>
-          <span id="apiStatus" class="status">Ikke testet</span>
+          <span id="apiStatus" class="status"></span>
         </div>
       </section>
 
       <section class="card">
         <h2>Bookinger</h2>
 
-        <div class="grid">
+        <div class="filters">
           <div class="field">
-            <label for="fromDate">Fra dato</label>
+            <label for="fromDate">Dato</label>
             <input id="fromDate" type="date" />
           </div>
+
           <div class="field">
-            <label for="toDate">Til dato</label>
-            <input id="toDate" type="date" />
+            <label for="toDate">Til (ikke i bruk i denne fasen)</label>
+            <input id="toDate" type="date" disabled />
           </div>
+
           <div class="field">
-            <label for="statusFilter">Status</label>
-            <select id="statusFilter">
+            <label for="statusFilter">Status (ikke i bruk i denne fasen)</label>
+            <select id="statusFilter" disabled>
               <option value="">Alle</option>
-              <option value="pending">Aktiv</option>
-              <option value="cancelled">Kansellert</option>
+              <option value="pending">I kø</option>
+              <option value="in_progress">Pågår</option>
               <option value="done">Utført</option>
             </select>
           </div>
+
           <div class="field">
-            <label for="search">Søk</label>
-            <input id="search" type="search" placeholder="Navn, e-post, telefon, tjeneste…" />
+            <label for="search">Søk (ikke i bruk i denne fasen)</label>
+            <input id="search" type="text" placeholder="Navn/epost/telefon" disabled />
           </div>
         </div>
 
@@ -89,65 +114,73 @@
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td colspan="7" class="muted">Ingen data lastet.</td>
-              </tr>
+              <tr><td colspan="7">Ingen data lastet.</td></tr>
             </tbody>
           </table>
         </div>
-
-        <details class="note">
-          <summary>API-kontrakt (backend må implementere)</summary>
-          <pre class="code" id="apiContract"></pre>
-        </details>
       </section>
 
-      <!-- Modals -->
-      <div id="modalBackdrop" class="modal-backdrop" hidden></div>
-
-      <section id="confirmModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" hidden>
-        <div class="modal-card">
-          <h3 id="confirmTitle">Bekreft</h3>
-          <p id="confirmText" class="muted"></p>
-          <div class="modal-actions">
+      <!-- Confirm modal -->
+      <section class="modal-backdrop" id="confirmBackdrop" hidden>
+        <div class="modal">
+          <header class="modal-header">
+            <h3 id="confirmTitle">Bekreft</h3>
+          </header>
+          <div class="modal-body">
+            <p id="confirmText" class="muted"></p>
+          </div>
+          <div class="modal-footer">
             <button id="confirmCancel" class="btn" type="button">Avbryt</button>
-            <button id="confirmOk" class="btn-primary" type="button">Bekreft</button>
+            <button id="confirmOk" class="btn-primary" type="button">OK</button>
           </div>
         </div>
       </section>
 
-      <section id="editModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="editTitle" hidden>
-        <div class="modal-card">
-          <h3 id="editTitle">Rediger booking</h3>
-          <form id="editForm" class="modal-form">
-            <div class="grid">
+      <!-- Edit modal (deaktivert i denne fasen, men beholdes i HTML for senere) -->
+      <section class="modal-backdrop" id="editBackdrop" hidden>
+        <div class="modal">
+          <header class="modal-header">
+            <h3>Rediger booking</h3>
+          </header>
+          <form id="editForm">
+            <div class="modal-body grid">
+              <div class="field">
+                <label for="editService">Tjeneste</label>
+                <input id="editService" type="text" />
+              </div>
               <div class="field">
                 <label for="editDate">Dato</label>
-                <input id="editDate" type="date" required />
+                <input id="editDate" type="date" />
               </div>
               <div class="field">
                 <label for="editTime">Tid</label>
-                <input id="editTime" type="time" required />
+                <input id="editTime" type="time" />
               </div>
               <div class="field">
-                <label for="editService">Tjeneste</label>
-                <input id="editService" type="text" required />
+                <label for="editCustomerName">Kunde</label>
+                <input id="editCustomerName" type="text" />
               </div>
               <div class="field">
-                <label for="editName">Kunde</label>
-                <input id="editName" type="text" required />
+                <label for="editCustomerEmail">E-post</label>
+                <input id="editCustomerEmail" type="email" />
               </div>
               <div class="field">
-                <label for="editEmail">E-post</label>
-                <input id="editEmail" type="email" required />
+                <label for="editCustomerPhone">Telefon</label>
+                <input id="editCustomerPhone" type="tel" />
               </div>
               <div class="field">
-                <label for="editPhone">Telefon</label>
-                <input id="editPhone" type="text" required />
+                <label for="editStatus">Status</label>
+                <select id="editStatus">
+                  <option value="pending">I kø</option>
+                  <option value="in_progress">Pågår</option>
+                  <option value="done">Utført</option>
+                  <option value="cancelled">Kansellert</option>
+                </select>
               </div>
+              <span id="editStatusMsg" class="status"></span>
             </div>
-            <p id="editStatus" class="status"></p>
-            <div class="modal-actions">
+
+            <div class="modal-footer">
               <button id="editCancel" class="btn" type="button">Avbryt</button>
               <button id="editSave" class="btn-primary" type="submit">Lagre</button>
             </div>
@@ -160,6 +193,12 @@
       // Standard: bruk samme origin (tom streng). Kan overstyres i feltet ved behov.
       window.API_BASE_URL = window.API_BASE_URL || "";
     </script>
+
+    <!-- Firebase (Auth) -->
+    <script defer src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/9.6.11/firebase-auth-compat.js"></script>
+    <script src="../js/firebase-config.js"></script>
+
     <script src="./admin.js"></script>
   </body>
 </html>
