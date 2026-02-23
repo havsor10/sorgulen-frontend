@@ -5,7 +5,7 @@
 // Eksempel:
 // window.FB_CONFIG = { apiKey: "...", authDomain: "...", projectId: "..." };
 window.FB_CONFIG = window.FB_CONFIG || {
-  apiKey: "SETT_INN_API_KEY",
-  authDomain: "SETT_INN_AUTH_DOMAIN",
-  projectId: "SETT_INN_PROJECT_ID",
+  apiKey: "AIzaSyBgynh-WizjPfeZBWFOwpu_Sv6tWeM1Vqo",
+  authDomain:  "sorgulen-industriservice.firebaseapp.com",
+  projectId: "sorgulen-industriservice",
 };
