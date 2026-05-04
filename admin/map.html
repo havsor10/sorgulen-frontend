@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jobb Oversikt – Kart | Sørgulen Industriservice</title>
+  <link rel="stylesheet" href="admin.css">
+  <!-- Leaflet for kart -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-u07kLseDtF2OnCMMU6IB2teMhr2qcXJFJd1XRnSA9ST9CzG6ENlzWNWVM94mHJi0" crossorigin="" />
+</head>
+<body>
+  <header>
+    <h1>Jobboversikt – Kart</h1>
+    <nav class="navbar">
+      <a href="admin-dashboard.html" class="tab">Tilbake til oversikt</a>
+    </nav>
+  </header>
+  <main>
+    <div id="jobsMap" style="height:80vh; width:100%; border-radius:12px;"></div>
+  </main>
+  <!-- Leaflet script -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-b+eEdFqHFoFTlqw3Yax85GazaogIcNnR8T9HzBU1Jrky7BNSz7IIeRqfS4WZnqIA" crossorigin=""></script>
+  <script>
+    // Hent bestillinger og plasser markører på kartet basert på adresse og status
+    async function initMap() {
+      const map = L.map('jobsMap').setView([61.5953, 5.0317], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap bidragsytere' }).addTo(map);
+      let orders = [];
+      try {
+        // Hent bestillinger fra backend API. Bruk produksjonsdomenet.
+        const BACKEND_URL = 'https://api.sorgulen.no/api';
+        const res = await fetch(`${BACKEND_URL}/orders`, { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          orders = (data.orders || []).map(o => {
+            const serviceMap = { broeyting: 'Brøyting', plenklipping: 'Plenklipping', trefelling: 'Trefelling', diverse: 'Diverse' };
+            const uiStatusMap = { new: 'venter-godkjenning', in_progress: 'venter-utføring', completed: 'ferdig', cancelled: 'kansellert' };
+            return {
+              id: o._id,
+              navn: o.customer.name,
+              adresse: o.customer.address,
+              tjeneste: serviceMap[o.service] || o.service,
+              status: uiStatusMap[o.status] || 'venter-godkjenning'
+            };
+          });
+        }
+      } catch (e) {
+        orders = [];
+      }
+      for (const ord of orders) {
+        if (!ord.adresse) continue;
+        try {
+          const resp = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(ord.adresse));
+          const results = await resp.json();
+          if (results.length > 0) {
+            const { lat, lon } = results[0];
+            const color = statusColor(ord.status);
+            const marker = L.circleMarker([parseFloat(lat), parseFloat(lon)], { color, radius: 8, fillOpacity: 0.8 }).addTo(map);
+            marker.bindPopup(`<strong>${ord.navn}</strong><br>${ord.adresse}<br>${ord.tjeneste}<br>Status: ${statusLabel(ord.status)}`);
+          }
+        } catch (err) {
+          console.warn('Geocoding feilet for', ord.adresse);
+        }
+      }
+    }
+    function statusColor(status) {
+      switch (status) {
+        case 'venter-godkjenning': return '#f1c232';
+        case 'venter-synfaring': return '#f39c12';
+        case 'venter-utføring': return '#e67e22';
+        case 'utført': return '#3498db';
+        case 'ferdig-betalt': return '#27ae60';
+        case 'ferdig': return '#2ecc71';
+        case 'kansellert': return '#e74c3c';
+        default: return '#95a5a6';
+      }
+    }
+    function statusLabel(status) {
+      switch (status) {
+        case 'venter-godkjenning': return 'Bestilt';
+        case 'venter-synfaring': return 'Venter synfaring';
+        case 'venter-utføring': return 'Venter utføring';
+        case 'utført': return 'Oppdrag utført';
+        case 'ferdig-betalt': return 'Ferdig betalt';
+        case 'ferdig': return 'Ferdig';
+        case 'kansellert': return 'Kansellert';
+        default: return status;
+      }
+    }
+    document.addEventListener('DOMContentLoaded', initMap);
+  </script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bestill tjeneste – Sørgulen Industriservice</title>
+  <meta name="description" content="Bestill brøyting eller dekkskift hos Sørgulen Industriservice." />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="maintenance.css" />
+  <script src="maintenance.js" defer></script>
+  <style>
+    .booking-wrap{max-width:980px;margin:0 auto;padding:24px 18px 60px}
+    .booking-card{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);padding:18px;margin-bottom:18px}
+    .booking-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .booking-grid.one{grid-template-columns:1fr}
+    .slot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:12px}
+    .slot-btn{padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:#101827;color:#f3f6ff;cursor:pointer;font-weight:700}
+    .slot-btn.disabled{opacity:.35;cursor:not-allowed}
+    .slot-btn.active{outline:2px solid #5fd38d;background:#0d2a1b}
+    .muted{color:var(--muted)}
+    .notice{padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);margin:10px 0}
+    .success{background:rgba(95,211,141,.08);border-color:rgba(95,211,141,.35)}
+    .error{background:rgba(255,184,76,.08);border-color:rgba(255,184,76,.35)}
+    .hidden{display:none}
+    textarea,input,select{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:#0e1523;color:#f3f6ff}
+    label{display:grid;gap:6px;font-size:14px}
+    .cta-row{display:flex;gap:10px;flex-wrap:wrap}
+    @media (max-width:720px){.booking-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <a href="index.html" class="logo" aria-label="Sørgulen Industriservice">
+      <img src="assets/logo.png" alt="Sørgulen logo" width="34" height="34" />
+      <b>Sørgulen&nbsp;Industriservice</b>
+    </a>
+    <nav aria-label="Hovedmeny">
+      <a href="index.html">Hjem</a>
+      <a href="tjenester.html">Tjenester</a>
+      <a href="kontakt.html">Kontakt</a>
+    </nav>
+    <button class="hamburger" id="hamburger" aria-label="Meny" aria-controls="menuPanel" aria-expanded="false">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="#cfe3ff"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </button>
+  </div>
+  <div class="menu-panel" id="menuPanel">
+    <a href="index.html">Hjem</a>
+    <a href="tjenester.html">Tjenester</a>
+    <a href="kontakt.html">Kontakt</a>
+  </div>
+</header>
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <h1 id="bookingTitle">Bestill tjeneste</h1>
+      <p class="lead">Brøyting og dekkskift kan bookes direkte. Andre tjenester sendes som forespørsel.</p>
+      <div class="facts">
+        <div class="fact">Bookbare tider: 09:00–20:00</div>
+                <div class="fact">Avbestilling via telefon</div>
+      </div>
+    </div>
+  </div>
+</section>
+<main class="booking-wrap">
+  <div class="booking-card">
+    <div class="booking-grid">
+      <label>Tjeneste
+        <select id="serviceSelect"></select>
+      </label>
+      <label>Dato
+        <input id="bookingDate" type="date" />
+      </label>
+    </div>
+    <div id="message" class="notice hidden"></div>
+    <div id="slotsWrap" class="hidden">
+      <h3>Ledige tider</h3>
+      <p class="muted">Hvis valgt tid er opptatt, foreslår vi neste ledige tider.</p>
+      <div id="slots" class="slot-grid"></div>
+    </div>
+  </div>
+
+  <div id="formWrap" class="booking-card hidden">
+    <h3>Fullfør bestilling</h3>
+    <div class="booking-grid">
+      <label>Navn
+        <input id="customerName" type="text" />
+      </label>
+      <label>Telefon
+        <input id="customerPhone" type="tel" />
+      </label>
+      <label>E-post
+        <input id="customerEmail" type="email" />
+      </label>
+      <label>Adresse
+        <input id="customerAddress" type="text" />
+      </label>
+    </div>
+    <div class="booking-grid one" style="margin-top:16px">
+      <label>Kommentar
+        <textarea id="comment" rows="4" placeholder="Tilleggsinformasjon til oppdraget"></textarea>
+      </label>
+    </div>
+    <div class="cta-row" style="margin-top:16px">
+      <button id="submitBooking" class="btn primary" type="button">Send bestilling</button>
+      <a class="btn secondary" href="kontakt.html">Kontakt oss</a>
+    </div>
+    <p class="muted" style="margin-top:12px">For å avbestille eller flytte time må du kontakte oss direkte.</p>
+  </div>
+
+  <div id="successWrap" class="booking-card success hidden">
+    <h3>Bestillingen er registrert</h3>
+    <p>Du vil motta e-postbekreftelse. Vi har også sendt varsel til administrator.</p>
+    <a href="index.html" class="btn">Tilbake til forsiden</a>
+  </div>
+</main>
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script src="booking.js"></script>
+</body>
+</html>

@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sørgulen Industriservice | Pålitelige tjenester i Florø</title>
+  <meta name="description" content="Brøyting, plenklipp og vedlikehold i Florø. Rask respons, tydelige priser og enkel bestilling.">
+  <meta name="theme-color" content="#0a0f18" />
+
+  <!-- Viktig: style.css ligger på samme nivå som index.html -->
+  <link rel="stylesheet" href="style.css" />
+  <!-- Vedlikeholdsfil: Vis et overlay når siden er under utvikling. -->
+  <link rel="stylesheet" href="maintenance.css" />
+  <script src="maintenance.js" defer></script>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="bar">
+      <!-- ENDRING: Kun bilde som logo, klikkbar til forsiden -->
+      <a href="index.html" class="logo" aria-label="Sørgulen Industriservice">
+        <img src="assets/logo.png" alt="Sørgulen logo" width="34" height="34" />
+        <!-- Firmanavn plassert ved siden av logoen -->
+        <b>Sørgulen&nbsp;Industriservice</b>
+      </a>
+
+      <nav aria-label="Hovedmeny">
+        <a href="index.html">Hjem</a>
+        <a href="om-oss.html">Om oss</a>
+        <a href="tjenester.html">Tjenester</a>
+        <!-- Ny lenke til utleie-seksjonen -->
+        <a href="utleie/index.html">Utleie</a>
+        <a href="tilbud.html">Tilbud</a>
+        <!-- Spor bestilling fjernet -->
+        <!-- Kontaktknapp åpner Tidio-chatten i stedet for egen side -->
+        <a href="kontakt.html" aria-label="Kontakt oss">Kontakt</a>
+        <a href="sporsmal.html">Spørsmål</a>
+        <a href="apningstider.html">Åpningstider</a>
+        <!-- Tilbakemelding link -->
+        <!-- Tilbakemelding fjernet etter ønske -->
+      </nav>
+
+      <button class="hamburger" id="hamburger" aria-label="Meny" aria-controls="menuPanel" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="#cfe3ff" role="img" aria-hidden="true"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+      </button>
+    </div>
+
+    <div class="menu-panel" id="menuPanel">
+      <a href="index.html">Hjem</a>
+      <a href="om-oss.html">Om oss</a>
+      <a href="tjenester.html">Tjenester</a>
+      <!-- Ny lenke til utleie-seksjonen i mobilmenyen -->
+      <a href="utleie/index.html">Utleie</a>
+      <a href="tilbud.html">Tilbud</a>
+      <!-- Spor bestilling fjernet -->
+      <!-- Kontaktknapp åpner Tidio-chatten i stedet for egen side -->
+        <a href="kontakt.html" aria-label="Kontakt oss">Kontakt</a>
+      <a href="sporsmal.html">Spørsmål</a>
+      <a href="apningstider.html">Åpningstider</a>
+      <!-- Tilbakemelding link i menyen -->
+      <!-- Tilbakemelding link fjernet fra mobilmeny -->
+    </div>
+  </header>
+
+  <!-- Hero (bakgrunn tas fra style.css via .hero::before) -->
+  <section id="hjem" class="hero">
+    <div class="hero-inner">
+      <div>
+        <h1>Pålitelige tjenester for hjem og næring i Florø</h1>
+        <p class="lead">Brøyting, plenklipp og vedlikehold levert med presisjon. Rask respons, tydelige priser og enkel bestilling.</p>
+        <div class="btns">
+          <!-- Bytt ut bestillingsside med direkte widget åpning -->
+          <a href="booking.html?service=Brøyting" class="btn primary">Bestill brøyting</a>
+          <a href="tjenester.html" class="btn secondary">Se tjenester</a>
+        </div>
+        <div class="facts">
+          <div class="fact">Ingen betaling før jobben er utført</div>
+<div class="fact">Tilbyr tjenester i Florø og omegn</div>
+        </div>
+      </div>
+
+      <!-- Reklamekort fjernet -->
+    </div>
+  </section>
+
+  <!-- Tjenester -->
+  <section id="tjenester" class="wrap">
+    <div class="section-title">
+      <h2>Våre tjenester</h2>
+      <a href="tjenester.html" class="btn">Se alle tjenester</a>
+    </div>
+
+    <div class="grid" id="servicesGrid">
+      <!-- Brøyting -->
+      <article class="card" data-tags="vinter">
+        <div class="media">
+          <span class="badge">Fra 350 kr</span>
+          <!-- picture m/webp+jpg -->
+          <picture>
+            <source srcset="assets/tjenester/broyting.webp" type="image/webp">
+            <img src="assets/tjenester/broyting.jpg" alt="Brøyting" loading="lazy" />
+          </picture>
+        </div>
+        <div class="content">
+          <h3>Brøyting</h3>
+          <div class="meta">Oppkjørsler, adkomst og parkering. Rask utrykning ved snøfall.</div>
+          <div class="actions">
+            <!-- Direkte bestilling uten egen bestillingsside -->
+            <a href="booking.html?service=Brøyting" class="btn primary">Bestill</a>
+            <a href="tjenester/broyting-pris-info.html" class="btn">Pris og info</a>
+          </div>
+        </div>
+      </article>
+
+          <!-- Plenklipping -->
+      <article class="card coming-soon" data-tags="sommer">
+        <div class="media">
+          <span class="badge">Fra 500 kr</span>
+          <picture>
+            <source srcset="assets/tjenester/plenklipp.webp" type="image/webp">
+            <img src="assets/tjenester/plenklipp.jpg" alt="Plenklipping" loading="lazy" />
+          </picture>
+        </div>
+        <!-- Kommer snart-overlay for ikke-lanserte tjenester -->
+        <div class="overlay"><span>Kommer snart<br><small>Denne tjenesten er snart tilgjengelig</small></span></div>
+        <div class="content">
+          <h3>Plenklipping</h3>
+          <div class="meta">Kantklipp og opprydding inkludert. Passer små og store hager.</div>
+          <div class="actions">
+            <!-- Direkte bestilling uten egen bestillingsside -->
+            <a href="kontakt.html?service=Plenklipping" class="btn primary">Send forespørsel</a>
+            <a href="tjenester/plenklipp-pris-info.html" class="btn">Pris og info</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- Dekkskift -->
+      <article class="card" data-tags="">
+        <div class="media">
+          <span class="badge">Fra 450 kr</span>
+          <picture>
+            <source srcset="assets/tjenester/dekkskift.webp" type="image/webp">
+            <img src="assets/tjenester/dekkskift.jpg" alt="Dekkskift" loading="lazy" />
+          </picture>
+        </div>
+        <div class="content">
+          <h3>Dekkskift</h3>
+          <div class="meta">Mobilt dekkskift i Florø og omegn – vi kommer dit du er!</div>
+          <div class="actions">
+            <!-- Oppdatert data‑service for dekkskift (tjeneste 11) -->
+            <a href="booking.html?service=Dekkskift" class="btn primary">Bestill</a>
+            <a href="tjenester/dekkskift-pris-info.html" class="btn">Pris og info</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- Trefelling -->
+      <!-- Legg til "coming-soon"-klassen og overlay for å indikere at tjenesten ikke er lansert ennå -->
+      <article class="card coming-soon" data-tags="sommer">
+        <div class="media">
+          <span class="badge">Fra 600 kr</span>
+          <picture>
+            <source srcset="assets/tjenester/trefelling.webp" type="image/webp">
+            <img src="assets/tjenester/trefelling.jpg" alt="Trefelling" loading="lazy" />
+          </picture>
+        </div>
+        <!-- Kommer snart-overlay for ikke‑lanserte tjenester -->
+        <div class="overlay"><span>Kommer snart<br><small>Denne tjenesten er snart tilgjengelig</small></span></div>
+        <div class="content">
+          <h3>Trefelling</h3>
+          <div class="meta">Sikker felling og opprydding. Befaring ved behov.</div>
+          <div class="actions">
+            <!-- Direkte bestilling uten egen bestillingsside -->
+            <a href="kontakt.html?service=Trefelling" class="btn primary">Send forespørsel</a>
+            <a href="tjenester/trefelling-pris-info.html" class="btn">Pris og info</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- Diverse arbeid -->
+<article class="card coming-soon" data-tags="sommer vinter">
+  <div class="media">
+    <span class="badge">Fra 300 kr</span>
+    <picture>
+      <source srcset="assets/tjenester/diverse.webp" type="image/webp">
+      <img src="assets/tjenester/diverse.jpg" alt="Diverse arbeid" loading="lazy" />
+    </picture>
+  </div>
+  <!-- Kommer snart-overlay for ikke-lanserte tjenester -->
+  <div class="overlay"><span>Kommer snart<br><small>Denne tjenesten er snart tilgjengelig</small></span></div>
+  <div class="content">
+    <h3>Diverse arbeid</h3>
+    <div class="meta">Alt fra små fiksejobber til større prosjekter – vi tilpasser oss ditt behov.</div>
+    <div class="actions">
+      <!-- Direkte bestilling uten egen bestillingsside -->
+      <a href="kontakt.html?service=Diverse%20arbeid" class="btn primary">Send forespørsel</a>
+      <a href="tjenester/diverse-pris-info.html" class="btn">Pris og info</a>
+    </div>
+  </div>
+</article>
+
+      <!-- Takvask -->
+      <article class="card coming-soon" data-tags="sommer vinter">
+        <div class="media">
+          <span class="badge">Fra 1 500 kr</span>
+          <picture>
+            <source srcset="assets/tjenester/takvask.webp" type="image/webp">
+            <img src="assets/tjenester/takvask.jpg" alt="Takvask" loading="lazy" />
+          </picture>
+        </div>
+        <!-- Kommer snart-overlay for ikke-lanserte tjenester -->
+        <div class="overlay"><span>Kommer snart<br><small>Denne tjenesten er snart tilgjengelig</small></span></div>
+        <div class="content">
+          <h3>Takvask</h3>
+          <div class="meta">Skånsom takvask som fjerner mose og alger og forlenger takets levetid.</div>
+          <div class="actions">
+            <!-- Direkte bestilling uten egen bestillingsside -->
+            <a href="kontakt.html?service=Takvask" class="btn primary">Send forespørsel</a>
+            <a href="tjenester/takvask-pris-info.html" class="btn">Pris og info</a>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- Fordeler / hvorfor velge oss -->
+  <section class="wrap">
+    <div class="section-title">
+      <h2>Hvorfor velge oss?</h2>
+      <span class="note">Dette får du når du bruker Sørgulen&nbsp;Industriservice</span>
+    </div>
+      <div class="facts">
+      <div class="fact">Tilbyr tjenester i Florø og omegn</div>
+      <div class="fact">Ingen betaling før jobben er utført</div>
+<div class="fact">Skreddersydde avtaler for ditt behov</div>
+    </div>
+  </section>
+
+  <!-- Kalkulator -->
+  <section class="wrap" id="prisinfo">
+    <div class="section-title">
+      <h2>Rask priskalkulator</h2>
+      <span class="note">Estimater. Endelig pris bekreftes etter bestilling.</span>
+    </div>
+    <div class="calc">
+      <div class="box">
+        <h4>Brøyting</h4>
+        <div class="row">
+          <label for="b-area">Område (m²)</label>
+          <input type="number" id="b-area" value="60" min="10" inputmode="numeric" />
+        </div>
+        <div class="row">
+          <label for="b-urgency">Hastighet</label>
+          <select id="b-urgency">
+            <option value="1">Standard</option>
+            <option value="1.25">Rask</option>
+            <option value="1.5">Ekspress</option>
+          </select>
+        </div>
+        <div class="total" id="b-total">Estimat: 350 kr</div>
+      </div>
+
+      <div class="box">
+        <h4>Plenklipping</h4>
+        <div class="row">
+          <label for="p-area">Område (m²)</label>
+          <input type="number" id="p-area" value="120" min="20" inputmode="numeric" />
+        </div>
+        <div class="row">
+          <label for="p-frequency">Hyppighet</label>
+          <select id="p-frequency">
+            <option value="1">Enkeltoppdrag</option>
+            <option value="0.9">Månedlig</option>
+            <option value="0.8">Hver 14. dag</option>
+          </select>
+        </div>
+        <div class="total" id="p-total">Estimat: 500 kr</div>
+      </div>
+    </div>
+  </section>
+
+    <section id="kundeomtaler" class="wrap">
+    <div class="section-title">
+      <h2>Kundeomtaler</h2>
+      <span class="note">Kundeomtaler oppdateres fortløpende.</span>
+    </div>
+    <div class="box">
+      <p>Vi jobber med å publisere kundeomtaler direkte på nettsiden uten tredjeparts bookingløsning.</p>
+    </div>
+  </section>
+
+  <!-- Kontakt -->
+  <section id="kontakt" class="wrap">
+    <div class="section-title"><h2>Kontakt</h2></div>
+    <div class="box">
+      <p>Telefon: 407&nbsp;30&nbsp;187 • E‑post: sor.industri@gmail.com • Adresse: Kleiva&nbsp;91&nbsp;B</p>
+      <!-- Lenke til kontaktsiden -->
+      <p class="note"><a href="kontakt.html" aria-label="Kontakt oss">Åpne kontaktside&nbsp;→</a></p>
+    </div>
+  </section>
+
+  <!-- Kart / plassering: erstatter tilbakemeldingsseksjonen -->
+  <section id="kart" class="wrap">
+    <div class="section-title"><h2>Vår plassering</h2></div>
+    <div class="box">
+      <!-- Integrert kart med vår adresse. Dette bruker Google Maps for å vise beliggenheten til Kleiva 91 B i Florø. -->
+      <iframe
+        title="Kart som viser vår plassering"
+        src="https://maps.google.com/maps?q=Kleiva%2091%20B%2C%20Flor%C3%B8&t=&z=13&ie=UTF8&iwloc=&output=embed"
+        width="100%"
+        height="450"
+        style="border:0;"
+        allowfullscreen=""
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div>
+        <h4>Kontakt oss</h4>
+        <p>Telefon: 407&nbsp;30&nbsp;187<br>E‑post: sor.industri@gmail.com<br>Adresse: Kleiva&nbsp;91&nbsp;B, Florø</p>
+      </div>
+      <div>
+        <h4>Personvern og cookies</h4>
+        <a href="personvern.html">Les mer</a>
+      </div>
+      <div>
+        <h4>Vilkår for bruk</h4>
+        <a href="vilkar.html">Les mer</a>
+      </div>
+      <div>
+        <h4>Om Sørgulen Industriservice</h4>
+        <a href="om-oss.html">Les mer</a>
+      </div>
+      <div>
+        <h4>Miljøprofil</h4>
+        <a href="miljoprofil.html">Les mer</a>
+      </div>
+      <!-- Sertifiseringsseksjonen er fjernet i henhold til krav -->
+      <div>
+        <h4>Følg oss</h4>
+        <a href="https://www.facebook.com/sorgulenindustriservice" target="_blank" rel="noopener">Facebook</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 Sørgulen Industriservice</span>
+      <span>Org. nr. 935179580</span>
+    </div>
+  </footer>
+
+  <!-- JS (samme som før) -->
+  <script defer src="app.js"></script>
+
+  <!-- Firebase config and live brøyting banner -->
+  <script src="config.js"></script>
+  <!-- Firebase compatibility libraries for auth and Firestore. These must be
+       loaded before the real‑time listener below. -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script>
+    // Live brøyting banner script. This subscribes to the Firestore document
+    // groups/{APP_ACCESS_TOKEN} and listens for the `live` field. When a
+    // takstameter job starts, it shows a banner above the season toggle and
+    // hides it when the job ends or pauses. House numbers are stripped on
+    // the backend side.
+    (function() {
+      // Only run on pages that contain a season card (home page). Other pages
+      // will not show the banner.
+      document.addEventListener('DOMContentLoaded', function() {
+        const seasonCard = document.querySelector('.season-card');
+        if (!seasonCard) return;
+        // Ensure Firebase is initialised
+        if (!firebase.apps?.length) firebase.initializeApp(window.FB_CONFIG);
+        // Sign in anonymously (does nothing if already signed in)
+        firebase.auth().signInAnonymously().catch(function() {});
+        // Create banner element if missing
+        function ensureBanner() {
+          let banner = document.getElementById('liveBanner');
+          if (banner) return banner;
+          banner = document.createElement('div');
+          banner.id = 'liveBanner';
+          banner.className = 'live-banner';
+          banner.style.display = 'none';
+          const dot = document.createElement('span');
+          dot.className = 'dot';
+          const text = document.createElement('span');
+          text.className = 'text';
+          banner.appendChild(dot);
+          banner.appendChild(text);
+          // Insert before season card
+          seasonCard.parentNode.insertBefore(banner, seasonCard);
+          return banner;
+        }
+        const banner = ensureBanner();
+        const token = window.APP_ACCESS_TOKEN || 'default';
+        const docRef = firebase.firestore().collection('groups').doc(token);
+        docRef.onSnapshot(function(snap) {
+          const data = snap.data() || {};
+          const live = data.live || {};
+          const textEl = banner.querySelector('.text');
+          if (live.active && live.street) {
+            textEl.textContent = 'Pågår brøyting på ' + live.street;
+            banner.style.display = 'flex';
+          } else {
+            banner.style.display = 'none';
+            textEl.textContent = '';
+          }
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

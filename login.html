@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Logg inn - Sørgulen Industriservice</title>
+  <meta name="description" content="Logg inn for å administrere bestillinger og avtaler." />
+  <!-- Denne siden omdirigeres til forsiden slik at uautoriserte brukere ikke finner innloggingen. -->
+  <meta http-equiv="refresh" content="0; url=index.html" />
+  <link rel="stylesheet" href="style.css" />
+  <!-- Vedlikeholdsfil: Vis et overlay når siden er under utvikling. -->
+  <link rel="stylesheet" href="maintenance.css" />
+  <script src="maintenance.js" defer></script>
+  <style>
+    .login-wrap{max-width:420px;margin:40px auto;padding:24px;background:#141b2b;border:1px solid rgba(255,255,255,0.08);border-radius:14px}
+    .login-wrap h2{margin:0 0 8px}
+    .login-wrap .note{margin:6px 0 16px}
+    .login-form{display:grid;gap:12px}
+    .login-form label{font-size:14px;color:#a9b3c9}
+    .login-form input{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:#0e1523;color:#f3f6ff}
+    .row-inline{display:flex;align-items:center;gap:8px}
+    .btn-full{width:100%}
+    .help{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+    .help a{color:#cfe3ff;text-decoration:underline}
+    .social{margin-top:14px;display:grid;gap:10px}
+    .social button{width:100%}
+    @media (max-width:540px){.login-wrap{margin:24px 18px}}
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="bar">
+      <!-- Gjør logoen klikkbar slik at den alltid tar deg til forsiden -->
+      <a href="index.html" class="logo" aria-label="Gå til forsiden">
+        <img src="assets/logo.png" alt="Sørgulen logo" width="34" height="34" />
+        <b>Sørgulen&nbsp;Industriservice</b>
+      </a>
+      <nav aria-label="Hovedmeny">
+        <a href="index.html">Hjem</a>
+        <a href="tjenester.html">Tjenester</a>
+        <!-- Utleie-lenke mellom tjenester og om-oss -->
+        <a href="utleie/index.html">Utleie</a>
+        <!-- Lenke til tilbudssiden -->
+        <a href="tilbud.html">Tilbud</a>
+        <a href="om-oss.html">Om oss</a>
+        <a href="kontakt.html">Kontakt</a>
+        <a href="sporsmal.html">Spørsmål</a>
+        <a href="apningstider.html">Åpningstider</a>
+        <a href="feedback.html">Tilbakemelding</a>
+        <a href="login.html" class="cta">Logg inn</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-label="Meny" aria-controls="menuPanel" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="#cfe3ff"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+      </button>
+    </div>
+    <div class="menu-panel" id="menuPanel">
+      <a href="index.html">Hjem</a>
+      <a href="tjenester.html">Tjenester</a>
+      <!-- Utleie-lenke i mobilmenyen -->
+      <a href="utleie/index.html">Utleie</a>
+      <!-- Lenke til tilbudssiden i mobilmenyen -->
+      <a href="tilbud.html">Tilbud</a>
+      <a href="om-oss.html">Om oss</a>
+      <a href="kontakt.html">Kontakt</a>
+      <a href="sporsmal.html">Spørsmål</a>
+      <a href="apningstider.html">Åpningstider</a>
+      <a href="feedback.html">Tilbakemelding</a>
+      <a href="login.html">Logg inn</a>
+    </div>
+  </header>
+
+  <!-- HERO TOPP -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div>
+        <h1>Logg inn</h1>
+        <p class="lead">Tilgang til bestillinger, avtaler og kundedata.</p>
+      </div>
+      <div class="season-card">
+        <h3>Tips</h3>
+        <p class="note">Ingen konto? Ta kontakt, så setter vi opp bruker for deg.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOGIN -->
+  <section class="wrap">
+    <div class="login-wrap">
+      <h2>Velkommen tilbake</h2>
+      <p class="note">Skriv inn e-post/brukernavn og passord for å fortsette.</p>
+
+      <form class="login-form" id="loginForm" onsubmit="return false;">
+        <div>
+          <label for="email">E-post eller brukernavn</label>
+          <input id="email" name="email" type="text" autocomplete="username" required />
+        </div>
+
+        <div>
+          <label for="password">Passord</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required />
+        </div>
+
+        <div class="row-inline">
+          <input id="showpwd" type="checkbox" />
+          <label for="showpwd" class="note">Vis passord</label>
+        </div>
+
+        <button class="btn primary btn-full" id="loginBtn" type="submit">Logg inn</button>
+
+        <div class="help">
+          <a href="#" onclick="alert('Kontakt admin for å resette passord inntil vi kobler ekte innlogging.');return false;">Glemt passord?</a>
+          <a href="kontakt.html">Kontakt oss</a>
+        </div>
+
+        <div class="social">
+          <button class="btn" type="button" onclick="alert('Google-innlogging kommer.')">Fortsett med Google</button>
+          <button class="btn" type="button" onclick="alert('Microsoft-innlogging kommer.')">Fortsett med Microsoft</button>
+        </div>
+
+        <p class="note" style="margin-top:12px">Dette er en demo-innlogging. Vi kobler mot ekte system (Netlify Identity, Supabase eller egen API) når du er klar.</p>
+      </form>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div>
+        <h4>Kontakt oss</h4>
+        <p>Telefon: 407&nbsp;30&nbsp;187<br>E‑post: sor.industri@gmail.com<br>Adresse: Kleiva&nbsp;91&nbsp;B, Florø</p>
+      </div>
+      <div>
+        <h4>Personvern og cookies</h4>
+        <a href="personvern.html">Les mer</a>
+      </div>
+      <div>
+        <h4>Vilkår for bruk</h4>
+        <a href="vilkar.html">Les mer</a>
+      </div>
+      <div>
+        <h4>Om Sørgulen Industriservice</h4>
+        <a href="om-oss.html">Les mer</a>
+      </div>
+      <div>
+        <h4>Miljøprofil</h4>
+        <a href="miljoprofil.html">Les mer</a>
+      </div>
+      <!-- Sertifiseringsseksjonen er fjernet i henhold til krav -->
+      <div>
+        <h4>Følg oss</h4>
+        <a href="https://www.facebook.com/sorgulenindustriservice" target="_blank" rel="noopener">Facebook</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 Sørgulen Industriservice</span>
+      <span>Org. nr. 935179580</span>
+    </div>
+  </footer>
+
+  <script>
+    // Mobilmeny
+    const hamb = document.getElementById("hamburger");
+    const panel = document.getElementById("menuPanel");
+    if (hamb && panel) {
+      hamb.addEventListener("click", () => {
+        const open = panel.style.display === "block";
+        panel.style.display = open ? "none" : "block";
+        hamb.setAttribute("aria-expanded", String(!open));
+      });
+      document.addEventListener("click", (e) => {
+        if (!panel.contains(e.target) && !hamb.contains(e.target)) {
+          panel.style.display = "none";
+          hamb.setAttribute("aria-expanded", "false");
+        }
+      });
+    }
+
+    // Vis/skjul passord
+    const show = document.getElementById("showpwd");
+    const pwd = document.getElementById("password");
+    if (show && pwd) {
+      show.addEventListener("change", () => {
+        pwd.type = show.checked ? "text" : "password";
+      });
+    }
+
+    // Demo-innlogging (lokal sjekk) – byttes ut med ekte API senere
+    const form = document.getElementById("loginForm");
+    const btn = document.getElementById("loginBtn");
+    const email = document.getElementById("email");
+    form.addEventListener("submit", async () => {
+      btn.disabled = true; btn.textContent = "Logger inn...";
+      // TODO: Koble hit mot ekte auth (Netlify Identity / Admin API)
+      // Midlertidig demo: slepp inn hvis felt er fylt
+      await new Promise(r => setTimeout(r, 600));
+      if (email.value && pwd.value) {
+        // For adminpanel lokalt:
+        window.location.href = "admin/admin-dashboard.html";
+      } else {
+        alert("Skriv inn gyldig e-post/brukernavn og passord.");
+      }
+      btn.disabled = false; btn.textContent = "Logg inn";
+    });
+  </script>
+  <!-- Legg til skript for mobilmeny -->
+  <script src="app.js" defer></script>
+  <!-- Kontakt-knapp fra SimplyBook fjernet -->
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin innlogging – Sørgulen Industriservice</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <header>
+    <h1>Admin innlogging</h1>
+  </header>
+
+  <main class="login-main">
+    <section class="login-wrap">
+      <h2>Logg inn</h2>
+      <p>Bruk admin-nøkkelen fra Render miljøvariabelen <strong>ADMIN_KEY</strong>.</p>
+      <form id="loginForm" class="login-form">
+        <input id="adminKey" type="password" placeholder="Admin-nøkkel" required>
+        <button type="submit">Logg inn</button>
+      </form>
+      <div id="loginMessage" class="status-message"></div>
+    </section>
+  </main>
+
+  <script src="../config.js"></script>
+  <script>
+    const API_BASE = (window.CONFIG && window.CONFIG.API_BASE_URL) || "https://sorgulen-backend-2.onrender.com/api";
+    const KEY_STORAGE = "sorgulen_admin_key";
+    const form = document.getElementById("loginForm");
+    const msg = document.getElementById("loginMessage");
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const key = document.getElementById("adminKey").value.trim();
+      msg.textContent = "Sjekker tilgang...";
+      msg.className = "status-message info";
+      try {
+        const res = await fetch(`${API_BASE}/admin/ping`, { headers: { "x-admin-key": key } });
+        if (!res.ok) throw new Error("Feil admin-nøkkel");
+        localStorage.setItem(KEY_STORAGE, key);
+        window.location.href = "admin-dashboard.html";
+      } catch (err) {
+        msg.textContent = err.message || "Innlogging feilet.";
+        msg.className = "status-message error";
+      }
+    });
+  </script>
+</body>
+</html>

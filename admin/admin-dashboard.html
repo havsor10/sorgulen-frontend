@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin – Bookinger | Sørgulen Industriservice</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <header>
+    <h1>Admin – Bookinger</h1>
+    <a href="login.html" id="logoutBtn" class="logout">Logg ut</a>
+
+    <div class="admin-tools">
+      <input type="text" id="searchInput" placeholder="Søk navn, telefon, e-post, tjeneste...">
+      <button id="refreshBtn" type="button">Oppdater</button>
+    </div>
+
+    <div class="navbar">
+      <button class="tab active" data-tab="all" data-label="Alle">Alle</button>
+      <button class="tab" data-tab="pending" data-label="Venter">Venter</button>
+      <button class="tab" data-tab="planned" data-label="Planlagt">Planlagt</button>
+      <button class="tab" data-tab="done" data-label="Utført">Utført</button>
+      <button class="tab" data-tab="paid" data-label="Betalt">Betalt</button>
+      <button class="tab" data-tab="cancelled" data-label="Kansellert">Kansellert</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="create-form">
+      <h2>Opprett manuell booking</h2>
+      <form id="createBookingForm" class="form-grid">
+        <input type="text" id="createName" placeholder="Navn" required>
+        <input type="tel" id="createPhone" placeholder="Telefon" required>
+        <input type="email" id="createEmail" placeholder="E-post" required>
+        <input type="text" id="createAddress" placeholder="Adresse">
+        <select id="createService" required>
+          <option value="Brøyting">Brøyting</option>
+          <option value="Dekkskift">Dekkskift</option>
+          <option value="Plenklipp">Plenklipp</option>
+          <option value="Takvask">Takvask</option>
+          <option value="Trefelling">Trefelling</option>
+          <option value="Diverse arbeid">Diverse arbeid</option>
+        </select>
+        <input type="date" id="createDate" required>
+        <select id="createTime" required>
+          <option value="09:00">09:00</option>
+          <option value="10:00">10:00</option>
+          <option value="11:00">11:00</option>
+          <option value="12:00">12:00</option>
+          <option value="13:00">13:00</option>
+          <option value="14:00">14:00</option>
+          <option value="15:00">15:00</option>
+          <option value="16:00">16:00</option>
+          <option value="17:00">17:00</option>
+          <option value="18:00">18:00</option>
+          <option value="19:00">19:00</option>
+          <option value="20:00">20:00</option>
+        </select>
+        <input type="text" id="createComment" placeholder="Kommentar">
+        <button type="submit">Legg til</button>
+      </form>
+    </section>
+
+    <div id="statusMessage" class="status-message"></div>
+    <section id="ordersList" class="orders-list"></section>
+  </main>
+
+  <script src="../config.js"></script>
+  <script src="admin-dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,309 @@
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #121212;
+  color: #f0f0f0;
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  background-color: #1e1e1e;
+  padding: 20px;
+  text-align: center;
+  border-bottom: 2px solid #333;
+  position: relative; /* for absolutt posisjonering av logg ut-knapp */
+}
+
+header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.navbar {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.tab {
+  background-color: #2a2a2a;
+  color: #fff;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px 5px 0 0;
+  transition: background-color 0.3s;
+}
+
+.tab:hover {
+  background-color: #444;
+}
+
+.tab.active {
+  background-color: #007acc;
+}
+
+.tab-content {
+  display: none;
+  padding: 20px;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.order-card {
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 10px;
+}
+
+.status-aktiv {
+  border-left: 5px solid green;
+}
+
+.status-fullfort {
+  border-left: 5px solid blue;
+}
+
+.status-kansellert {
+  border-left: 5px solid red;
+}
+
+/* Ny statusklassifisering for ulike faser av oppdraget */
+.status-venter-godkjenning { border-left: 5px solid #ffc107; }
+.status-venter-synfaring   { border-left: 5px solid #ff9800; }
+.status-venter-utføring    { border-left: 5px solid #ff5722; }
+.status-utført             { border-left: 5px solid #03a9f4; }
+.status-ferdig-betalt      { border-left: 5px solid #4caf50; }
+.status-ferdig             { border-left: 5px solid #8bc34a; }
+
+/* Skjema for å opprette nye bestillinger */
+.create-form {
+  margin: 20px auto;
+  max-width: 800px;
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 15px;
+  text-align: left;
+}
+.create-form h2 {
+  margin: 0 0 10px;
+  font-size: 20px;
+  color: #e0e0e0;
+}
+.create-form .form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.create-form input,
+.create-form select {
+  width: 100%;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background-color: #2a2a2a;
+  color: #fff;
+}
+.create-form button {
+  margin-top: 8px;
+  padding: 10px 16px;
+  background-color: #007acc;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.create-form button:hover {
+  background-color: #2980d9;
+}
+
+/* Logg ut-knapp i adminpanelet */
+.logout {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  background-color: #b30000;
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 5px;
+  text-decoration: none;
+  font-weight: 600;
+}
+.logout:hover {
+  background-color: #cc3333;
+}
+
+.admin-tools {
+  margin: 16px auto 0;
+  max-width: 920px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.admin-tools input {
+  min-width: 260px;
+  flex: 1;
+  max-width: 520px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #101827;
+  color: #fff;
+}
+
+.admin-tools button,
+.login-form button,
+.edit-grid button {
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: #15c987;
+  color: #06140f;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.orders-list {
+  max-width: 1100px;
+  margin: 20px auto;
+  padding: 0 16px;
+}
+
+.order-card {
+  display: grid;
+  gap: 12px;
+}
+
+.order-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.order-card h3 {
+  margin: 0 0 4px;
+}
+
+.order-card p {
+  margin: 3px 0;
+}
+
+.order-grid,
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px 16px;
+}
+
+.order-actions,
+.edit-grid,
+.contact-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: end;
+}
+
+.order-actions label,
+.edit-grid label {
+  display: grid;
+  gap: 5px;
+  font-size: 13px;
+  color: #cbd5e1;
+}
+
+.order-actions select,
+.edit-grid select,
+.login-form input {
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #101827;
+  color: #fff;
+}
+
+.details-link {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #253248;
+  color: #fff;
+  text-decoration: none;
+}
+
+.badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.badge {
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #253248;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.payment-paid { background: #14532d; }
+.payment-unpaid { background: #7f1d1d; }
+
+.status-pending { border-left: 5px solid #facc15; }
+.status-planned { border-left: 5px solid #38bdf8; }
+.status-done { border-left: 5px solid #22c55e; }
+.status-cancelled { border-left: 5px solid #ef4444; }
+
+.status-message {
+  max-width: 1100px;
+  margin: 14px auto 0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: #fff;
+}
+.status-message:empty { display: none; }
+.status-message.info { background: #1e3a8a; }
+.status-message.success { background: #14532d; }
+.status-message.error { background: #7f1d1d; }
+
+.empty-state,
+.detail-card,
+.login-wrap {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.detail-main,
+.login-main {
+  max-width: 900px;
+  margin: 24px auto;
+  padding: 0 16px;
+}
+
+.login-wrap {
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.login-form {
+  display: grid;
+  gap: 10px;
+}
+
+@media (max-width: 720px) {
+  .order-card-header { flex-direction: column; }
+  .badge-row { justify-content: flex-start; }
+  .logout { position: static; display: inline-block; margin-top: 12px; }
+}

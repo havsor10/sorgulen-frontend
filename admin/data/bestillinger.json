@@ -1,0 +1,22 @@
+[
+  {
+    "navn": "Ola Nordmann",
+    "adresse": "Kleiva 91B",
+    "dato": "2025-08-08",
+    "status": "aktive"
+  },
+  {
+    "navn": "Kari Olsen",
+    "adresse": "Florø sentrum",
+    "dato": "2025-08-07",
+    "status": "fullfort"
+  },
+  {
+    "navn": "Test Person",
+    "tjeneste": "Plenklipping",
+    "adresse": "Test gata 123",
+    "telefon": "12345678",
+    "dato": "2025-08-10",
+    "status": "aktive"
+  }
+]

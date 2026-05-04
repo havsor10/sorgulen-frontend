@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tilbakemelding – Sørgulen Industriservice</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Vedlikeholdsfil: Vis et overlay når siden er under utvikling. -->
+  <link rel="stylesheet" href="maintenance.css" />
+  <script src="maintenance.js" defer></script>
+</head>
+<body>
+  <!-- HEADER -->
+  <header>
+    <div class="bar">
+      <a href="index.html" class="logo" aria-label="Sørgulen Industriservice">
+        <img src="assets/logo.png" alt="Sørgulen logo" width="34" height="34" />
+        <b>Sørgulen&nbsp;Industriservice</b>
+      </a>
+      <nav aria-label="Hovedmeny">
+        <a href="index.html">Hjem</a>
+        <a href="om-oss.html">Om oss</a>
+        <a href="tjenester.html">Tjenester</a>
+        <!-- Ny lenke til utleie-seksjonen -->
+        <a href="utleie/index.html">Utleie</a>
+        <a href="tilbud.html">Tilbud</a>
+        <!-- Kontaktknapp åpner Tidio-chatten i stedet for egen side -->
+        <a href="kontakt.html">Kontakt</a>
+        <a href="sporsmal.html">Spørsmål</a>
+        <a href="apningstider.html">Åpningstider</a>
+        <a href="feedback.html" class="active">Tilbakemelding</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-label="Meny" aria-controls="menuPanel" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="#cfe3ff" role="img" aria-hidden="true"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+      </button>
+    </div>
+    <div class="menu-panel" id="menuPanel">
+      <a href="index.html">Hjem</a>
+      <a href="om-oss.html">Om oss</a>
+      <a href="tjenester.html">Tjenester</a>
+      <!-- Utleie-lenke i mobilmenyen -->
+      <a href="utleie/index.html">Utleie</a>
+      <a href="tilbud.html">Tilbud</a>
+      <a href="kontakt.html">Kontakt</a>
+      <a href="sporsmal.html">Spørsmål</a>
+      <a href="apningstider.html">Åpningstider</a>
+      <a href="feedback.html" class="active">Tilbakemelding</a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="section-title"><h2>Tilbakemelding</h2></div>
+    <p>Sørgulen&nbsp;Industriservice har selv utviklet nettsiden og ønsker gjerne tilbakemeldinger på det som kan forbedres eller ikke fungerer.</p>
+    <p>Send gjerne e‑post til <a href="mailto:sor.industri@gmail.com?subject=Tilbakemelding">sor.industri@gmail.com</a></p>
+    <p>Marker emnefeltet med: <strong>Tilbakemelding</strong></p>
+    <a class="btn primary" href="mailto:sor.industri@gmail.com?subject=Tilbakemelding">Send tilbakemelding</a>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div>
+        <h4>Kontakt oss</h4>
+        <p>Telefon: 407&nbsp;30&nbsp;187<br>E‑post: sor.industri@gmail.com<br>Adresse: Kleiva&nbsp;91&nbsp;B, Florø</p>
+      </div>
+      <div>
+        <h4>Personvern og cookies</h4>
+        <a href="personvern.html">Les mer</a>
+      </div>
+      <div>
+        <h4>Vilkår for bruk</h4>
+        <a href="vilkar.html">Les mer</a>
+      </div>
+      <div>
+        <h4>Om Sørgulen Industriservice</h4>
+        <a href="om-oss.html">Les mer</a>
+      </div>
+      <div>
+        <h4>Miljøprofil</h4>
+        <a href="miljoprofil.html">Les mer</a>
+      </div>
+      <!-- Sertifiseringsseksjonen er fjernet i henhold til krav -->
+      <div>
+        <h4>Følg oss</h4>
+        <a href="https://www.facebook.com/sorgulenindustriservice" target="_blank" rel="noopener">Facebook</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 Sørgulen Industriservice</span>
+      <span>Org. nr. 935179580</span>
+    </div>
+  </footer>
+
+  <script src="app.js" defer></script>
+  <!-- Kontakt-knapp fra SimplyBook fjernet -->
+</body>
+</html>

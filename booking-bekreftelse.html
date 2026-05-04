@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bestilling bekreftet – Sørgulen Industriservice</title>
+  <meta name="description" content="Bekreftelse på bestilling hos Sørgulen Industriservice." />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="maintenance.css" />
+  <script src="maintenance.js" defer></script>
+  <style>
+    .confirm-wrap{max-width:860px;margin:0 auto;padding:24px 18px 60px}
+    .confirm-card{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);padding:22px;margin-bottom:18px}
+    .confirm-card h2{margin-top:0}
+    .confirm-card.success{background:rgba(95,211,141,.08);border-color:rgba(95,211,141,.35)}
+    .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;margin-top:18px}
+    .summary-item{padding:14px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)}
+    .summary-item.full{grid-column:1 / -1}
+    .summary-label{display:block;color:var(--muted);font-size:13px;margin-bottom:6px}
+    .summary-value{font-weight:700;word-break:break-word}
+    .cta-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+    .hidden{display:none}
+    @media (max-width:720px){.summary-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <a href="index.html" class="logo" aria-label="Sørgulen Industriservice">
+      <img src="assets/logo.png" alt="Sørgulen logo" width="34" height="34" />
+      <b>Sørgulen&nbsp;Industriservice</b>
+    </a>
+    <nav aria-label="Hovedmeny">
+      <a href="index.html">Hjem</a>
+      <a href="tjenester.html">Tjenester</a>
+      <a href="kontakt.html">Kontakt</a>
+    </nav>
+    <button class="hamburger" id="hamburger" aria-label="Meny" aria-controls="menuPanel" aria-expanded="false">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="#cfe3ff"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </button>
+  </div>
+  <div class="menu-panel" id="menuPanel">
+    <a href="index.html">Hjem</a>
+    <a href="tjenester.html">Tjenester</a>
+    <a href="kontakt.html">Kontakt</a>
+  </div>
+</header>
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <h1>Bestilling bekreftet</h1>
+      <p class="lead">Takk for din bestilling! Du vil motta en bekreftelse på e-post. Har du spørsmål, kontakt oss på telefon eller e-post.</p>
+    </div>
+  </div>
+</section>
+<main class="confirm-wrap">
+  <div class="confirm-card success">
+    <h2>Takk for din bestilling!</h2>
+    <p>Du vil motta en bekreftelse på e-post.</p>
+    <p>Har du spørsmål, kontakt oss på telefon eller e-post.</p>
+  </div>
+
+  <div class="confirm-card" id="summaryCard">
+    <h2>Oppsummering av bestillingen</h2>
+    <div class="summary-grid" id="summaryGrid"></div>
+    <div class="cta-row">
+      <a href="index.html" class="btn primary">Tilbake til forsiden</a>
+      <a href="kontakt.html" class="btn secondary">Kontakt oss</a>
+    </div>
+  </div>
+
+  <div class="confirm-card hidden" id="missingSummaryCard">
+    <h2>Fant ikke bestillingsdetaljer</h2>
+    <p>Bestillingen kan være registrert, men oppsummeringen er ikke tilgjengelig i nettleseren akkurat nå.</p>
+    <div class="cta-row">
+      <a href="booking.html" class="btn primary">Til booking</a>
+      <a href="kontakt.html" class="btn secondary">Kontakt oss</a>
+    </div>
+  </div>
+</main>
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+  (function () {
+    const summaryGrid = document.getElementById('summaryGrid');
+    const summaryCard = document.getElementById('summaryCard');
+    const missingSummaryCard = document.getElementById('missingSummaryCard');
+
+    let raw = null;
+    try {
+      raw = sessionStorage.getItem('lastBookingSummary') || localStorage.getItem('lastBookingSummary');
+    } catch (_) {
+      raw = localStorage.getItem('lastBookingSummary');
+    }
+
+    if (!raw) {
+      summaryCard.classList.add('hidden');
+      missingSummaryCard.classList.remove('hidden');
+      return;
+    }
+
+    let booking = null;
+    try {
+      booking = JSON.parse(raw);
+    } catch (_) {
+      summaryCard.classList.add('hidden');
+      missingSummaryCard.classList.remove('hidden');
+      return;
+    }
+
+    const fields = [
+      ['Tjeneste', booking.serviceName || '-'],
+      ['Dato', booking.date || '-'],
+      ['Tidspunkt', booking.time || '-'],
+      ['Navn', booking.customerName || '-'],
+      ['Telefon', booking.customerPhone || '-'],
+      ['E-post', booking.customerEmail || '-'],
+      ['Kommentar', booking.comment || '-', true],
+    ];
+
+    summaryGrid.innerHTML = fields.map(([label, value, full]) => `
+      <div class="summary-item${full ? ' full' : ''}">
+        <span class="summary-label">${label}</span>
+        <div class="summary-value">${value}</div>
+      </div>
+    `).join('');
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Takvask – Pris og info | Sørgulen Industriservice</title>
+  <meta name="description" content="Prisoversikt og informasjon for takvask i Florø. Vi tilbyr skånsom lavtrykk takvask som fjerner mose og alger og forlenger takets levetid." />
+  <meta name="theme-color" content="#0a0f18" />
+  <!-- Vedlikeholdsfil: vis overlay ved utvikling. -->
+  <link rel="stylesheet" href="../maintenance.css" />
+  <script src="../maintenance.js" defer></script>
+  <style>
+    :root{
+      --bg:#0a0f18;
+      --bg-soft:#0f1522;
+      --card:#141b2b;
+      --muted:#a9b3c9;
+      --text:#f3f6ff;
+      --accent:#12c285;
+      --accent-2:#2ea8ff;
+      --danger:#ff5a5f;
+      --shadow:0 10px 30px rgba(0,0,0,0.35);
+      --radius:14px;
+      --max:1200px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;line-height:1.45}
+    a{color:inherit;text-decoration:none}
+    img{max-width:100%;display:block}
+
+    header{position:sticky;top:0;z-index:50;background:linear-gradient(180deg,rgba(10,15,24,0.95),rgba(10,15,24,0.70));backdrop-filter:blur(6px);border-bottom:1px solid rgba(255,255,255,0.06)}
+    .bar{max-width:var(--max);margin:0 auto;display:flex;align-items:center;gap:18px;padding:14px 18px}
+    .logo{display:flex;align-items:center;gap:10px}
+    .logo img{width:34px;height:34px}
+    .logo b{letter-spacing:0.5px;white-space:nowrap}
+    nav{margin-left:auto;display:flex;gap:18px}
+    nav a{padding:10px 12px;border-radius:10px;color:var(--muted)}
+    nav a:hover{background:rgba(255,255,255,0.06);color:var(--text)}
+    .cta{background:var(--accent);color:#06110b;font-weight:600}
+    .cta:hover{filter:brightness(1.05)}
+    .hamburger{display:none;margin-left:auto;background:transparent;border:1px solid rgba(255,255,255,0.15);width:42px;height:42px;border-radius:10px}
+    .menu-panel{display:none;position:fixed;inset:64px 14px auto 14px;background:var(--card);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px;box-shadow:var(--shadow);z-index:60}
+    .menu-panel a{display:block;padding:14px;border-radius:10px;color:var(--muted)}
+    .menu-panel a:hover{background:rgba(255,255,255,0.06);color:var(--text)}
+
+    .hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(255,255,255,0.06)}
+    .hero::before{
+      content:"";position:absolute;inset:0;
+      background:
+        radial-gradient(1000px 300px at 20% 0%, rgba(46,168,255,0.12), transparent 60%),
+        radial-gradient(900px 300px at 80% 0%, rgba(18,194,133,0.12), transparent 60%),
+        url('../assets/tjenester/takvask.jpg');
+      background-size:cover;background-position:center;
+      opacity:0.30;transform:scale(1.08);
+      animation:slowZoom 20s ease-in-out infinite alternate;
+      filter:contrast(1.05) saturate(1.05);
+    }
+    @keyframes slowZoom{to{transform:scale(1.15)}}
+    .hero-inner{position:relative;max-width:var(--max);margin:0 auto;padding:80px 18px 50px;display:grid;grid-template-columns:1.2fr 0.8fr;gap:28px}
+    .hero h1{font-size:clamp(28px,3.6vw,46px);margin:0 0 10px}
+    .lead{color:var(--muted);font-size:clamp(15px,1.6vw,18px);margin:0 0 18px;max-width:60ch}
+    .btns{display:flex;flex-wrap:wrap;gap:12px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 18px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04)}
+    .btn.primary{background:var(--accent);color:#07120c;border:none;font-weight:700}
+    .btn.secondary{background:rgba(46,168,255,0.12);border-color:rgba(46,168,255,0.35);color:#dff2ff}
+    .facts{display:flex;gap:10px;margin-top:16px;color:var(--muted);font-size:14px;flex-wrap:wrap}
+    .fact{display:flex;gap:8px;align-items:center;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);padding:8px 10px;border-radius:10px}
+
+    .wrap{max-width:var(--max);margin:0 auto;padding:28px 18px}
+    .section-title{display:flex;align-items:flex-end;justify-content:space-between;margin:10px 0 12px}
+    .box{background:var(--card);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+
+    .list{display:grid;gap:8px;color:#e6ebff}
+    .note{color:var(--muted);font-size:14px}
+
+    .prices{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .price-card{background:#0e1523;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px}
+    .price-card h3{margin:0 0 8px}
+    table{width:100%;border-collapse:collapse;margin-top:6px}
+    th,td{border-bottom:1px solid rgba(255,255,255,0.08);padding:10px 8px;text-align:left}
+    th{color:#cfe3ff;font-weight:600}
+    .small{font-size:13px;color:var(--muted);margin-top:8px}
+
+    .faq{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .qa{background:#10182a;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px}
+    .qa b{display:block;margin-bottom:6px}
+
+    footer{margin-top:28px;border-top:1px solid rgba(255,255,255,0.06);background:#0a101b}
+    .foot{max-width:var(--max);margin:0 auto;padding:24px 18px;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between}
+
+    .breadcrumbs{font-size:14px;color:var(--muted);margin:6px 0 0}
+    .breadcrumbs a{color:#cfe3ff}
+
+    @media (max-width:1024px){
+      .hero-inner{grid-template-columns:1fr}
+      .grid,.prices,.faq{grid-template-columns:1fr}
+    }
+    @media (max-width:720px){
+      nav{display:none}
+      .hamburger{display:block}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <!-- Klikkbar logo som tar deg til forsiden -->
+      <a href="../index.html" class="logo" aria-label="Gå til forsiden">
+        <img src="../assets/logo.png" alt="Sørgulen logo" width="34" height="34" />
+        <b>Sørgulen&nbsp;Industriservice</b>
+      </a>
+      <nav aria-label="Hovedmeny">
+        <a href="../index.html">Hjem</a>
+        <a href="../om-oss.html">Om oss</a>
+        <a href="../tjenester.html">Tjenester</a>
+        <!-- Utleie-lenke for undersider -->
+        <a href="../utleie/index.html">Utleie</a>
+        <!-- Lenke til tilbudssiden -->
+        <a href="../tilbud.html">Tilbud</a>
+        <!-- Kontaktknapp åpner Tidio-chatten i stedet for egen side -->
+        <a href="../kontakt.html">Kontakt</a>
+        <a href="../sporsmal.html">Spørsmål</a>
+        <a href="../apningstider.html">Åpningstider</a>
+        <a href="../feedback.html">Tilbakemelding</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-label="Meny">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="#cfe3ff"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+      </button>
+    </div>
+    <div class="menu-panel" id="menuPanel">
+      <a href="../index.html">Hjem</a>
+      <a href="../om-oss.html">Om oss</a>
+      <a href="../tjenester.html">Tjenester</a>
+      <!-- Utleie-lenke i mobilmenyen -->
+      <a href="../utleie/index.html">Utleie</a>
+      <!-- Lenke til tilbudssiden i mobilmenyen -->
+      <a href="../tilbud.html">Tilbud</a>
+      <a href="../kontakt.html">Kontakt</a>
+      <a href="../sporsmal.html">Spørsmål</a>
+      <a href="../apningstider.html">Åpningstider</a>
+      <a href="../feedback.html">Tilbakemelding</a>
+    </div>
+  </header>
+  <section class="hero">
+    <div class="hero-inner">
+      <div>
+        <div class="breadcrumbs"><a href="../index.html">Hjem</a> / <a href="../tjenester.html">Tjenester</a> / Takvask</div>
+        <h1>Takvask i Florø</h1>
+        <p class="lead">Skånsom takvask som fjerner mose og alger og forlenger takets levetid. Vi bruker lavtrykk og miljøvennlige midler.</p>
+        <div class="btns">
+          <!-- Direkte bestilling uten egen bestillingsside -->
+          <a class="btn primary" href="../kontakt.html?service=Takvask">Send forespørsel</a>
+          <a class="btn secondary" href="#priser">Se priser</a>
+        </div>
+        <div class="facts">
+          <div class="fact">Skånsom lavtrykkvask</div>
+          <div class="fact">Fjerner mose og alger</div>
+          <div class="fact">Forlenger takets levetid</div>
+        </div>
+      </div>
+      <div class="box">
+        <h3>Dette tilbyr vi</h3>
+        <div class="list">
+          <div>Lavtrykk takvask som skåner takstein og panner</div>
+          <div>Fjerning av mose, alger og lav</div>
+          <div>Miljøvennlige rengjøringsmidler</div>
+          <div>Rens og vedlikehold av takrenner</div>
+        </div>
+        <p class="small">Dekningsområde: Florø og omegn. Kontakt oss for andre områder.</p>
+      </div>
+    </div>
+  </section>
+  <section id="priser" class="wrap">
+    <div class="section-title">
+      <h2>Priser</h2>
+      <span class="note">Estimater. Endelig pris bekreftes ved bestilling eller befaring.</span>
+    </div>
+    <div class="prices">
+      <div class="price-card">
+        <h3>Privat</h3>
+        <table>
+          <thead><tr><th>Tjeneste</th><th>Pris fra</th></tr></thead>
+          <tbody>
+            <tr><td>Lite tak (under 100 m²)</td><td>1 500 kr</td></tr>
+            <tr><td>Middels tak (100–200 m²)</td><td>2 500 kr</td></tr>
+            <tr><td>Stort tak (over 200 m²)</td><td>3 500 kr</td></tr>
+            <tr><td>Takrennerens</td><td>500 kr</td></tr>
+          </tbody>
+        </table>
+        <p class="small">Prisene kan variere etter takets tilstand og kompleksitet. Befaring gir presis pris.</p>
+      </div>
+      <div class="price-card">
+        <h3>Bedrift</h3>
+        <table>
+          <thead><tr><th>Tjeneste</th><th>Pris fra</th></tr></thead>
+          <tbody>
+            <tr><td>Små næringstak</td><td>3 000 kr</td></tr>
+            <tr><td>Store næringstak</td><td>4 500 kr</td></tr>
+            <tr><td>Tillegg for høybygninger</td><td>Tillegg 25 %</td></tr>
+          </tbody>
+        </table>
+        <p class="small">Bedriftsavtaler gir prioritet og fast pris etter befaring.</p>
+      </div>
+    </div>
+    <div class="wrap" style="padding-left:0;padding-right:0">
+      <div class="box" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+        <div>
+          <b>Klar for bestilling?</b>
+          <div class="note">Vi bekrefter din forespørsel innen 60 minutter i åpningstid.</div>
+        </div>
+        <div class="btns">
+          <!-- Direkte bestilling uten egen bestillingsside -->
+          <a class="btn primary" href="../kontakt.html?service=Takvask">Send forespørsel</a>
+          <a class="btn" href="#faq">Vanlige spørsmål</a>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="faq" class="wrap">
+    <div class="section-title"><h2>Vanlige spørsmål</h2></div>
+    <div class="faq">
+      <div class="qa">
+        <b>Skader takvask taket?</b>
+        Nei, vi bruker lavtrykk og skånsomme midler som ikke skader takmaterialet. Vår metode fjerner mose og alger uten å slite på taksteinen.
+      </div>
+      <div class="qa">
+        <b>Må jeg være hjemme under vasken?</b>
+        Nei, men vi trenger tilgang til vannuttak. Vi avtaler eventuelle detaljer med deg før oppstart.
+      </div>
+      <div class="qa">
+        <b>Hvordan betaler jeg?</b>
+        Du betaler først når arbeidet er fullført. Vi tilbyr Vipps, bankoverføring, faktura eller kontant betaling. Kontant betaling må avtales på forhånd. For større oppdrag kan delbetaling eller betalingsavtale ordnes.
+      </div>
+      <div class="qa">
+        <b>Kan jeg få betalingsutsettelse eller nedbetalingsplan?</b>
+        Ja, ta kontakt via telefon eller e‑post hvis du trenger fleksibel betaling. Vi finner en løsning som passer ditt budsjett.
+      </div>
+      <div class="qa">
+        <b>Hva hvis jeg må avbestille?</b>
+        Du kan avbestille gratis frem til 24 timer før avtalt tidspunkt. Ved senere avbestilling kan et gebyr tilkomme for dekning av utgifter.
+      </div>
+      <div class="qa">
+        <b>Hvordan endrer jeg tidspunkt?</b>
+        Kontakt oss via telefon, e‑post eller chat så snart som mulig, så finner vi et nytt tidspunkt som passer.
+      </div>
+    </div>
+  </section>
+  <section class="wrap">
+    <div class="section-title"><h2>Kontakt oss</h2></div>
+    <div class="box">
+      <p>Telefon: 972 58 679• E-post: sor.industri@gmail.com • Adresse: Kleiva 91 B</p>
+      <p class="note">Du kan også bruke chat-knappen nederst til høyre.</p>
+    </div>
+  </section>
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div>
+        <h4>Kontakt oss</h4>
+        <p>Telefon: 407&nbsp;30&nbsp;187<br>E‑post: sor.industri@gmail.com<br>Adresse: Kleiva&nbsp;91&nbsp;B, Florø</p>
+      </div>
+      <div>
+        <h4>Personvern og cookies</h4>
+        <a href="../personvern.html">Les mer</a>
+      </div>
+      <div>
+        <h4>Vilkår for bruk</h4>
+        <a href="../vilkar.html">Les mer</a>
+      </div>
+      <div>
+        <h4>Om Sørgulen Industriservice</h4>
+        <a href="../om-oss.html">Les mer</a>
+      </div>
+      <div>
+        <h4>Miljøprofil</h4>
+        <a href="../miljoprofil.html">Les mer</a>
+      </div>
+      <!-- Sertifiseringsseksjonen er fjernet i henhold til krav -->
+      <div>
+        <h4>Følg oss</h4>
+        <a href="https://www.facebook.com/sorgulenindustriservice" target="_blank" rel="noopener">Facebook</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 Sørgulen Industriservice</span>
+      <span>Org. nr. 935179580</span>
+    </div>
+  </footer>
+  <script>
+    // Mobilmeny for hero-sider
+    const hamb = document.getElementById('hamburger');
+    const panel = document.getElementById('menuPanel');
+    if(hamb){
+      hamb.addEventListener('click', () => {
+        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+      });
+      document.addEventListener('click', (e)=>{
+        if(panel && !panel.contains(e.target) && !hamb.contains(e.target)) panel.style.display='none';
+      });
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Spørsmål - Sørgulen Industriservice</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Vedlikeholdsfil: Vis et overlay når siden er under utvikling. -->
+  <link rel="stylesheet" href="maintenance.css" />
+  <script src="maintenance.js" defer></script>
+  <style>
+    .faq-container {
+      max-width: 800px;
+      margin: auto;
+      padding: 40px 20px;
+    }
+    .faq-item {
+      background-color: #141b2b;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid #1e2638;
+    }
+    .faq-question {
+      padding: 15px 20px;
+      cursor: pointer;
+      font-weight: bold;
+      color: #12c285;
+    }
+    .faq-answer {
+      display: none;
+      padding: 15px 20px;
+      background-color: #0f1522;
+      color: #d3d9e6;
+    }
+    .faq-item.active .faq-answer {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="bar">
+      <a href="index.html" class="logo" aria-label="Sørgulen Industriservice">
+        <img src="assets/logo.png" alt="Sørgulen logo" width="34" height="34" />
+        <b>Sørgulen&nbsp;Industriservice</b>
+      </a>
+      <nav aria-label="Hovedmeny">
+        <a href="index.html">Hjem</a>
+        <a href="om-oss.html">Om oss</a>
+        <a href="tjenester.html">Tjenester</a>
+        <!-- Utleie-lenke etter tjenester -->
+        <a href="utleie/index.html">Utleie</a>
+        <!-- Lenke til tilbudssiden -->
+        <a href="tilbud.html">Tilbud</a>
+        <!-- Kontaktlenke -->
+        <a href="kontakt.html">Kontakt</a>
+        <a href="sporsmal.html" class="active">Spørsmål</a>
+        <a href="apningstider.html">Åpningstider</a>
+        <a href="feedback.html">Tilbakemelding</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-label="Meny" aria-controls="menuPanel" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="#cfe3ff" role="img" aria-hidden="true"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+      </button>
+    </div>
+    <div class="menu-panel" id="menuPanel">
+      <a href="index.html">Hjem</a>
+      <a href="om-oss.html">Om oss</a>
+      <a href="tjenester.html">Tjenester</a>
+      <!-- Utleie-lenke i mobilmenyen -->
+      <a href="utleie/index.html">Utleie</a>
+      <!-- Lenke til tilbudssiden i mobilmenyen -->
+      <a href="tilbud.html">Tilbud</a>
+      <a href="kontakt.html">Kontakt</a>
+      <a href="sporsmal.html" class="active">Spørsmål</a>
+      <a href="apningstider.html">Åpningstider</a>
+      <a href="feedback.html">Tilbakemelding</a>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero" style="background-image: url('assets/hero-faq.jpg');">
+    <h2>Ofte stilte spørsmål</h2>
+    <p>Finn raskt svar på det du lurer på.</p>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq-container">
+    <div class="faq-item">
+      <div class="faq-question">Hvordan bestiller jeg en tjeneste?</div>
+      <div class="faq-answer">Du kan bestille direkte via nettsiden ved å gå til "Tjenester" og velge ønsket tjeneste, eller kontakte oss via telefon eller e-post.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-question">Hvilke områder dekker dere?</div>
+      <div class="faq-answer">Vi tilbyr tjenester hovedsakelig i Florø og omegn, men kan vurdere andre områder etter avtale.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-question">Hva koster tjenestene deres?</div>
+      <div class="faq-answer">Prisene varierer avhengig av tjeneste og omfang. Du finner prisinformasjon under hver tjeneste i menyen "Tjenester".</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-question">Kan jeg få en fast avtale?</div>
+      <div class="faq-answer">Ja, vi tilbyr både enkeltoppdrag og faste avtaler tilpasset dine behov.</div>
+    </div>
+
+  <!-- Ny FAQ om betaling -->
+  <div class="faq-item">
+    <div class="faq-question">Hvordan betaler jeg?</div>
+    <div class="faq-answer">Vi tar ingen betaling før oppdraget er ferdig utført. Du kan betale med Vipps, bankoverføring, faktura eller kontant. Kontant betaling må avtales på forhånd – ta kontakt før vi kommer for å utføre oppdraget.</div>
+  </div>
+
+  <!-- Ny FAQ om betalingsutsettelse / nedbetalingsplan -->
+  <div class="faq-item">
+    <div class="faq-question">Avtale om betalingsutsettelse / nedbetalingsplan</div>
+    <div class="faq-answer">Har du behov for betalingsutsettelse eller ønsker du en nedbetalingsplan? Ta kontakt via telefon eller e‑post, så finner vi en løsning som passer dine behov.</div>
+  </div>
+
+  <!-- Ny FAQ om avbestilling / kansellering -->
+  <div class="faq-item">
+    <div class="faq-question">Avbestilling / kansellering</div>
+    <div class="faq-answer">Du kan avbestille et oppdrag kostnadsfritt dersom du gir beskjed minimum 24 timer før avtalt tid. Avbestilling nærmere oppdraget kan medføre et gebyr for planlegging og forberedelser.</div>
+  </div>
+
+  <!-- Ny FAQ om endring av tidspunkt -->
+  <div class="faq-item">
+    <div class="faq-question">Hvordan endrer jeg tidspunkt for bestilt tjeneste?</div>
+    <div class="faq-answer">Ønsker du å endre tidspunkt for en bestilling, ta kontakt med oss via chat, telefon eller e‑post så snart som mulig. Vi er fleksible og finner et nytt tidspunkt som passer både deg og oss.</div>
+  </div>
+
+  <!-- FAQ om prissetting av oppdrag -->
+  <div class="faq-item">
+    <div class="faq-question">Prissetting av oppdrag</div>
+    <div class="faq-answer">
+      Sørgulen Industriservice legger stor vekt på å tilby rettferdige og nøyaktige priser for begge parter.<br/><br/>
+      Dersom prisen ikke er fastsatt før oppdraget starter, benytter våre medarbeidere et egenutviklet taksametersystem spesielt laget for Sørgulen Industriservice sine tjenester. Dette systemet beregner pris basert på standard times- og minuttpris. Når arbeidet er fullført, stoppes taksameteret automatisk, og det genereres en faktura med totalbeløpet for oppdraget.<br/><br/>
+      Alle fakturaer blir manuelt kontrollert før utsendelse for å sikre korrekthet. Skulle prisen oppleves som urimelig eller uforholdsmessig, oppfordrer vi kunden til å ta kontakt slik at vi sammen kan finne en løsning som begge parter er fornøyd med.<br/><br/>
+      Dersom kunden ønsker å avtale en fast pris for et oppdrag, vil denne prisen registreres og benyttes som utgangspunkt ved fremtidige bestillinger av tilsvarende tjenester, som for eksempel brøyting. Pris vil naturligvis justeres dersom oppdraget omfatter mindre arbeid enn normalt.
+    </div>
+  </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div>
+        <h4>Kontakt oss</h4>
+        <p>Telefon: 407&nbsp;30&nbsp;187<br>E‑post: sor.industri@gmail.com<br>Adresse: Kleiva&nbsp;91&nbsp;B, Florø</p>
+      </div>
+      <div>
+        <h4>Personvern og cookies</h4>
+        <a href="personvern.html">Les mer</a>
+      </div>
+      <div>
+        <h4>Vilkår for bruk</h4>
+        <a href="vilkar.html">Les mer</a>
+      </div>
+      <div>
+        <h4>Om Sørgulen Industriservice</h4>
+        <a href="om-oss.html">Les mer</a>
+      </div>
+      <div>
+        <h4>Miljøprofil</h4>
+        <a href="miljoprofil.html">Les mer</a>
+      </div>
+      <!-- Sertifiseringsseksjonen er fjernet i henhold til krav -->
+      <div>
+        <h4>Følg oss</h4>
+        <a href="https://www.facebook.com/sorgulenindustriservice" target="_blank" rel="noopener">Facebook</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 Sørgulen Industriservice</span>
+      <span>Org. nr. 935179580</span>
+    </div>
+  </footer>
+  <!-- Skripter -->
+  <script>
+    // FAQ toggle
+    document.querySelectorAll('.faq-question').forEach(q => {
+      q.addEventListener('click', () => {
+        q.parentElement.classList.toggle('active');
+      });
+    });
+  </script>
+  <script src="app.js" defer></script>
+  <!-- Kontakt-knapp fra SimplyBook fjernet -->
+
+</body>
+</html>

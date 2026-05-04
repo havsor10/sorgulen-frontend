@@ -1,0 +1,72 @@
+/* Vedlikeholdsoverlegg for alle offentlige sider. Når dev-modus ikke er aktiv
+ * vises dette over innholdet. Hvis du legger til ?dev=1 i adressen, eller
+ * logger inn som utvikler via overlayet, lagres flagget i localStorage og
+ * overlayet skjules på denne enheten. */
+
+#maint-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(7, 10, 15, 0.92);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+#maint-card {
+  max-width: 640px;
+  background: #0f1624;
+  border: 1px solid #1f2a3a;
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  color: #e9eef7;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  text-align: center;
+}
+
+#maint-card h1 {
+  margin: 0 0 8px;
+  font-size: 22px;
+}
+
+#maint-card p {
+  margin: 8px 0 0.6rem;
+  line-height: 1.5;
+  font-size: 15px;
+  color: #b9c6d8;
+}
+
+#maint-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+#maint-actions a,
+#maint-actions button {
+  border: 1px solid #2a3b52;
+  background: #122033;
+  color: #e9eef7;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+#maint-actions button.cta {
+  background: #19c37d;
+  border-color: #19c37d;
+  color: #081219;
+}
+
+.small {
+  font-size: 0.85rem;
+  color: #9bb0c9;
+  margin-top: 8px;
+}

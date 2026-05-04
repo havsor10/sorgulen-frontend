@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dekkskift – Pris og info | Sørgulen Industriservice</title>
+  <meta name="description" content="Prisoversikt og informasjon for dekkskift i Florø. Vi tilbyr profesjonelt dekkskift hvor vi kommer til deg for en fast pris på 450 kr." />
+  <meta name="theme-color" content="#0a0f18" />
+  <!-- Vedlikeholdsfil: vis overlay ved utvikling. -->
+  <link rel="stylesheet" href="../maintenance.css" />
+  <script src="../maintenance.js" defer></script>
+  <style>
+    :root{
+      --bg:#0a0f18;
+      --bg-soft:#0f1522;
+      --card:#141b2b;
+      --muted:#a9b3c9;
+      --text:#f3f6ff;
+      --accent:#12c285;
+      --accent-2:#2ea8ff;
+      --danger:#ff5a5f;
+      --shadow:0 10px 30px rgba(0,0,0,0.35);
+      --radius:14px;
+      --max:1200px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;line-height:1.45}
+    a{color:inherit;text-decoration:none}
+    img{max-width:100%;display:block}
+    header{position:sticky;top:0;z-index:50;background:linear-gradient(180deg,rgba(10,15,24,0.95),rgba(10,15,24,0.70));backdrop-filter:blur(6px);border-bottom:1px solid rgba(255,255,255,0.06)}
+    .bar{max-width:var(--max);margin:0 auto;display:flex;align-items:center;gap:18px;padding:14px 18px}
+    .logo{display:flex;align-items:center;gap:10px}
+    .logo img{width:34px;height:34px}
+    .logo b{letter-spacing:0.5px;white-space:nowrap}
+    nav{margin-left:auto;display:flex;gap:18px}
+    nav a{padding:10px 12px;border-radius:10px;color:var(--muted)}
+    nav a:hover{background:rgba(255,255,255,0.06);color:var(--text)}
+    .cta{background:var(--accent);color:#06110b;font-weight:600}
+    .cta:hover{filter:brightness(1.05)}
+    .hamburger{display:none;margin-left:auto;background:transparent;border:1px solid rgba(255,255,255,0.15);width:42px;height:42px;border-radius:10px}
+    .menu-panel{display:none;position:fixed;inset:64px 14px auto 14px;background:var(--card);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px;box-shadow:var(--shadow);z-index:60}
+    .menu-panel a{display:block;padding:14px;border-radius:10px;color:var(--muted)}
+    .menu-panel a:hover{background:rgba(255,255,255,0.06);color:var(--text)}
+    .hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(255,255,255,0.06)}
+    .hero::before{
+      content:"";position:absolute;inset:0;
+      background:
+        radial-gradient(1000px 300px at 20% 0%, rgba(46,168,255,0.12), transparent 60%),
+        radial-gradient(900px 300px at 80% 0%, rgba(18,194,133,0.12), transparent 60%),
+        url('../assets/tjenester/dekkskift.jpg');
+      background-size:cover;background-position:center;
+      opacity:0.30;transform:scale(1.08);
+      animation:slowZoom 20s ease-in-out infinite alternate;
+      filter:contrast(1.05) saturate(1.05);
+    }
+    @keyframes slowZoom{to{transform:scale(1.15)}}
+    .hero-inner{position:relative;max-width:var(--max);margin:0 auto;padding:80px 18px 50px;display:grid;grid-template-columns:1.2fr 0.8fr;gap:28px}
+    .hero h1{font-size:clamp(28px,3.6vw,46px);margin:0 0 10px}
+    .lead{color:var(--muted);font-size:clamp(15px,1.6vw,18px);margin:0 0 18px;max-width:60ch}
+    .btns{display:flex;flex-wrap:wrap;gap:12px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 18px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04)}
+    .btn.primary{background:var(--accent);color:#07120c;border:none;font-weight:700}
+    .btn.secondary{background:rgba(46,168,255,0.12);border-color:rgba(46,168,255,0.35);color:#dff2ff}
+    .facts{display:flex;gap:10px;margin-top:16px;color:var(--muted);font-size:14px;flex-wrap:wrap}
+    .fact{display:flex;gap:8px;align-items:center;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);padding:8px 10px;border-radius:10px}
+    .wrap{max-width:var(--max);margin:0 auto;padding:28px 18px}
+    .section-title{display:flex;align-items:flex-end;justify-content:space-between;margin:10px 0 12px}
+    .box{background:var(--card);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+    .list{display:grid;gap:8px;color:#e6ebff}
+    .note{color:var(--muted);font-size:14px}
+    footer{margin-top:28px;border-top:1px solid rgba(255,255,255,0.06);background:#0a101b}
+    .foot{max-width:var(--max);margin:0 auto;padding:24px 18px;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between}
+    .breadcrumbs{font-size:14px;color:var(--muted);margin:6px 0 0}
+    .breadcrumbs a{color:#cfe3ff}
+    @media (max-width:1024px){
+      .hero-inner{grid-template-columns:1fr}
+    }
+    @media (max-width:720px){
+      nav{display:none}
+      .hamburger{display:block}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <!-- Klikkbar logo som tar deg til forsiden -->
+      <a href="../index.html" class="logo" aria-label="Gå til forsiden">
+        <img src="../assets/logo.png" alt="Sørgulen logo" width="34" height="34" />
+        <b>Sørgulen&nbsp;Industriservice</b>
+      </a>
+      <nav aria-label="Hovedmeny">
+        <a href="../index.html">Hjem</a>
+        <a href="../om-oss.html">Om oss</a>
+        <a href="../tjenester.html" class="active">Tjenester</a>
+        <a href="../utleie/index.html">Utleie</a>
+        <a href="../tilbud.html">Tilbud</a>
+        <a href="../kontakt.html">Kontakt</a>
+        <a href="../sporsmal.html">Spørsmål</a>
+        <a href="../apningstider.html">Åpningstider</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-label="Meny">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="#cfe3ff"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+      </button>
+    </div>
+    <div class="menu-panel" id="menuPanel">
+      <a href="../index.html">Hjem</a>
+      <a href="../om-oss.html">Om oss</a>
+      <a href="../tjenester.html" class="active">Tjenester</a>
+      <a href="../utleie/index.html">Utleie</a>
+      <a href="../tilbud.html">Tilbud</a>
+      <a href="../kontakt.html">Kontakt</a>
+      <a href="../sporsmal.html">Spørsmål</a>
+      <a href="../apningstider.html">Åpningstider</a>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-inner">
+      <div>
+        <div class="breadcrumbs"><a href="../index.html">Hjem</a> / <a href="../tjenester.html">Tjenester</a> / Dekkskift</div>
+        <h1>Dekkskift i Florø</h1>
+        <p class="lead">Profesjonelt dekkskift der du er – vi bytter dekkene dine til en fast pris på 450&nbsp;kr.</p>
+        <div class="btns">
+          <!-- Direkte bestilling uten egen bestillingsside -->
+          
+          
+          <a class="btn primary" href="../booking.html?service=Dekkskift">Bestill dekkskift</a>
+          <a class="btn secondary" href="#priser">Se informasjon</a>
+        </div>
+        <div class="facts">
+          <div class="fact">Fast pris – 450 kr</div>
+          <div class="fact">Vi kommer dit du er</div>
+          <div class="fact">Trygg og effektiv tjeneste</div>
+        </div>
+      </div>
+      <div class="box">
+        <h3>Dette tilbyr vi</h3>
+        <div class="list">
+          <div>Dekkskift hjemme, på jobb eller langs veien</div>
+          <div>Profesjonelt utstyr for trygt hjulskift</div>
+          <div>Mulighet for utskifting av slitte eller defekte bolter</div>
+          <div>Kontroll av mønsterdybde</div>
+        </div>
+        <p class="note">Dekningsområde: Florø og omegn. Kontakt oss for andre områder.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="priser" class="wrap">
+    <div class="section-title">
+      <h2>Pris og vilkår</h2>
+      <span class="note">Fast pris. Se også vilkårene nedenfor for å sikre en rask og trygg jobb.</span>
+    </div>
+    <div class="box">
+      <h3>Pris</h3>
+      <p>Dekkskift koster 450 kr uansett hvor du befinner deg i Florø og omegn.</p>
+      <h3 style="margin-top:20px;">Vilkår</h3>
+      <ol style="margin-left:18px;">
+        <li><strong>Klargjøring av dekk:</strong> Dekkene må være klare ved bilen eller plassert i bilen når vi ankommer. Hvis dekkene er lagret på steder med hindringer eller vanskelig tilkomst, og dette medfører ekstra tidsbruk, kan det påløpe ekstra kostnader.</li>
+        <li><strong>Fastgrodde bolter:</strong> Hvis hjulbolter sitter fast og krever bruk av ekstra kraft for å løsne, stanser vi arbeidet og kontakter deg før vi fortsetter. Ved bruk av rå kraft kan bolter eller muttere knekke. Kunden må godkjenne eventuell risiko før arbeidet fortsetter.</li>
+        <li><strong>Slitte eller defekte bolter:</strong> Vi har alltid med et utvalg bolter og muttere. Dersom vi oppdager slitasje, ødelagte gjenger eller andre svakheter som gjør at bolter ikke bør brukes videre, kontakter vi deg og tilbyr umiddelbar utskifting. Du får pris på nye bolter før avtale inngås.</li>
+        <li><strong>Når kunden ikke er til stede:</strong> Dersom du ikke kan være til stede ved dekkskiftet, må bilen stå på et flatt og stabilt underlag, ha tilstrekkelig plass rundt bilen, forhjulene må være rettet fremover, og eventuell bilalarm må være deaktivert før vi ankommer. Dette sikrer en trygg og effektiv gjennomføring.</li>
+        <li><strong>Kontroll av mønsterdybde:</strong> Vi kontrollerer alltid mønsterdybden under dekkskiftet. Hvis dekkene har ulovlig lav mønsterdybde, gjennomfører vi ikke dekkskiftet av hensyn til trafikksikkerheten.</li>
+      </ol>
+    </div>
+  </section>
+
+  <footer>
+    <div class="foot">
+      <div>
+        <h4>Kontakt oss</h4>
+        <p>Telefon: 407&nbsp;30&nbsp;187<br/>E‑post: sor.industri@gmail.com<br/>Adresse: Kleiva&nbsp;91&nbsp;B, Florø</p>
+      </div>
+      <div>
+        <h4>Personvern</h4>
+        <a href="../personvern.html">Les mer</a>
+      </div>
+      <div>
+        <h4>Vilkår</h4>
+        <a href="../vilkar.html">Les mer</a>
+      </div>
+      <div>
+        <h4>Om oss</h4>
+        <a href="../om-oss.html">Les mer</a>
+      </div>
+      <div>
+        <h4>Miljøprofil</h4>
+        <a href="../miljoprofil.html">Les mer</a>
+      </div>
+      <div>
+        <h4>Følg oss</h4>
+        <a href="https://www.facebook.com/sorgulenindustriservice" target="_blank" rel="noopener">Facebook</a>
+      </div>
+    </div>
+    <div class="foot" style="border-top:1px solid rgba(255,255,255,0.06);margin-top:12px;font-size:14px;justify-content:space-between;">
+      <span>© 2025 Sørgulen Industriservice</span>
+      <span>Org. nr. 935179580</span>
+    </div>
+  </footer>
+
+  <!-- Vanilla app script -->
+  <script src="../app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Takk for din tilbakemelding – Sørgulen Industriservice</title>
+  <meta name="description" content="Takk for tilbakemeldingen din! Vi setter stor pris på at du deler dine tanker med oss." />
+  <link rel="stylesheet" href="style.css" />
+  <!-- Vedlikeholdsfil for potensiell utviklingsmodus (overlegges om nødvendig) -->
+  <link rel="stylesheet" href="maintenance.css" />
+  <script src="maintenance.js" defer></script>
+  <style>
+    /* Sentral kort-layout for takk/feedback-sider. Beholder mørkt tema som resten av nettstedet */
+    body{
+      display:flex;
+      flex-direction:column;
+      min-height:100vh;
+      background:#0a0f18;
+      color:#f3f6ff;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;
+    }
+    header {
+      flex-shrink:0;
+    }
+    .page-wrap {
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .card{max-width:720px;margin:24px;padding:28px;border-radius:14px;background:#141b2b;border:1px solid rgba(255,255,255,.08);box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    h1{margin:0 0 8px;font-size:clamp(24px,3.6vw,40px)}
+    p{color:#a9b3c9;margin:0 0 16px}
+    .actions{display:flex;gap:10px;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 18px;border-radius:12px;border:1px solid rgba(255,255,255,.12);color:#f3f6ff;text-decoration:none}
+    .btn.primary{background:#12c285;border-color:#12c285;color:#06110b;font-weight:700}
+    .muted{color:#a9b3c9}
+  </style>
+</head>
+<body>
+  <!-- Global header med navigasjon og hamburgermeny -->
+  <header>
+    <div class="bar">
+      <!-- Logo-lenke: alltid tilbake til forsiden -->
+      <a href="index.html" class="logo" aria-label="Sørgulen Industriservice">
+        <img src="assets/logo.png" alt="Sørgulen logo" width="34" height="34" />
+        <b>Sørgulen&nbsp;Industriservice</b>
+      </a>
+      <nav aria-label="Hovedmeny">
+        <a href="index.html">Hjem</a>
+        <a href="om-oss.html">Om oss</a>
+        <a href="tjenester.html">Tjenester</a>
+        <a href="utleie/index.html">Utleie</a>
+        <a href="tilbud.html">Tilbud</a><a href="kontakt.html">Kontakt</a>
+        <a href="sporsmal.html">Spørsmål</a>
+        <a href="apningstider.html">Åpningstider</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-label="Meny" aria-controls="menuPanel" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="#cfe3ff" role="img" aria-hidden="true"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+      </button>
+    </div>
+    <div class="menu-panel" id="menuPanel">
+      <a href="index.html">Hjem</a>
+      <a href="om-oss.html">Om oss</a>
+      <a href="tjenester.html">Tjenester</a>
+      <a href="utleie/index.html">Utleie</a>
+      <a href="tilbud.html">Tilbud</a><a href="kontakt.html">Kontakt</a>
+      <a href="sporsmal.html">Spørsmål</a>
+      <a href="apningstider.html">Åpningstider</a>
+    </div>
+  </header>
+
+  <!-- Innholdsomslag som sikrer at hovedinnholdet sentreres vertikalt under headeren -->
+  <div class="page-wrap">
+    <main class="card" role="main" aria-labelledby="feedback-thank-title">
+      <h1 id="feedback-thank-title">Takk for din tilbakemelding!</h1>
+      <p>Vi har mottatt meldingen din og setter pris på at du deler dine tanker med oss. Vi leser alle tilbakemeldinger nøye for å kunne forbedre våre tjenester.</p>
+      <p class="muted">Trenger du rask hjelp? Ring 407&nbsp;30&nbsp;187 eller send e‑post til <a href="mailto:sor.industri@gmail.com">sor.industri@gmail.com</a>.</p>
+      <div class="actions">
+        <a class="btn primary" href="index.html">Til forsiden</a>
+        <a class="btn" href="tjenester.html">Se tjenester</a>
+      </div>
+    </main>
+  </div>
+
+  <!-- Last inn app.js for å aktivere hamburgermenyen -->
+  <script src="app.js" defer></script>
+</body>
+</html>

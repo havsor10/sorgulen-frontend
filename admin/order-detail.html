@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bestilling – detaljer | Sørgulen Industriservice</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <header>
+    <h1>Bestillingsdetaljer</h1>
+    <nav class="navbar">
+      <a href="admin-dashboard.html" class="tab">Tilbake</a>
+    </nav>
+  </header>
+
+  <main class="detail-main">
+    <div id="orderInfo" class="detail-card">Laster...</div>
+  </main>
+
+  <script src="../config.js"></script>
+  <script>
+    const API_BASE = (window.CONFIG && window.CONFIG.API_BASE_URL) || "https://sorgulen-backend-2.onrender.com/api";
+    const KEY_STORAGE = "sorgulen_admin_key";
+
+    function getParam(name) {
+      return new URL(window.location.href).searchParams.get(name);
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function adminKey() {
+      let key = localStorage.getItem(KEY_STORAGE) || "";
+      if (!key) {
+        key = prompt("Skriv inn admin-nøkkel:") || "";
+        if (key) localStorage.setItem(KEY_STORAGE, key.trim());
+      }
+      return key.trim();
+    }
+
+    async function apiFetch(path, options = {}) {
+      const res = await fetch(`${API_BASE}${path}`, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-key": adminKey(),
+          ...(options.headers || {}),
+        },
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error((data && data.error) || `API-feil ${res.status}`);
+      return data;
+    }
+
+    function render(order) {
+      const container = document.getElementById("orderInfo");
+      const paymentStatus = order.paymentStatus || "unpaid";
+      const status = order.status || "pending";
+      container.innerHTML = `
+        <h2>${escapeHtml(order.customerName)}</h2>
+        <div class="detail-grid">
+          <p><strong>Tjeneste:</strong> ${escapeHtml(order.serviceName)}</p>
+          <p><strong>Dato:</strong> ${escapeHtml(order.date)}</p>
+          <p><strong>Tid:</strong> ${escapeHtml(order.time)}</p>
+          <p><strong>Telefon:</strong> <a href="tel:${escapeHtml(order.customerPhone)}">${escapeHtml(order.customerPhone)}</a></p>
+          <p><strong>E-post:</strong> <a href="mailto:${escapeHtml(order.customerEmail)}">${escapeHtml(order.customerEmail)}</a></p>
+          <p><strong>Adresse:</strong> ${escapeHtml(order.customerAddress || "-")}</p>
+          <p><strong>Kommentar:</strong> ${escapeHtml(order.comment || "-")}</p>
+          <p><strong>Opprettet:</strong> ${order.createdAt ? new Date(order.createdAt).toLocaleString("no-NO") : "-"}</p>
+        </div>
+
+        <div class="edit-grid">
+          <label>Status
+            <select id="statusInput">
+              <option value="pending" ${status === "pending" ? "selected" : ""}>Venter</option>
+              <option value="planned" ${status === "planned" ? "selected" : ""}>Planlagt</option>
+              <option value="done" ${status === "done" ? "selected" : ""}>Utført</option>
+              <option value="cancelled" ${status === "cancelled" ? "selected" : ""}>Kansellert</option>
+            </select>
+          </label>
+          <label>Betaling
+            <select id="paymentInput">
+              <option value="unpaid" ${paymentStatus === "unpaid" ? "selected" : ""}>Ikke betalt</option>
+              <option value="paid" ${paymentStatus === "paid" ? "selected" : ""}>Betalt</option>
+            </select>
+          </label>
+          <button id="saveBtn">Lagre</button>
+        </div>
+
+        <div class="contact-actions">
+          <a class="tab" href="tel:${escapeHtml(order.customerPhone)}">Ring</a>
+          <a class="tab" href="sms:${escapeHtml(order.customerPhone)}">SMS</a>
+          <a class="tab" href="mailto:${escapeHtml(order.customerEmail)}?subject=Angående bestilling hos Sørgulen Industriservice">E-post</a>
+        </div>
+      `;
+
+      document.getElementById("saveBtn").addEventListener("click", async () => {
+        await apiFetch(`/admin/bookings/${encodeURIComponent(order._id)}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            status: document.getElementById("statusInput").value,
+            paymentStatus: document.getElementById("paymentInput").value,
+          }),
+        });
+        alert("Lagret");
+      });
+    }
+
+    async function load() {
+      const id = getParam("id");
+      if (!id) return;
+      try {
+        const data = await apiFetch(`/admin/bookings/${encodeURIComponent(id)}`);
+        render(data.booking);
+      } catch (err) {
+        document.getElementById("orderInfo").textContent = err.message || "Kunne ikke hente bestilling.";
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", load);
+  </script>
+</body>
+</html>

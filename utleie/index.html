@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Utleie av verktøy – Sørgulen Industriservice</title>
+  <meta name="description" content="Utleie av verktøy og utstyr i Florø. Se våre verktøy og send forespørsel enkelt via nettsiden." />
+  <meta name="theme-color" content="#0a0f18" />
+  <!-- Inkluder de globale stilarkene fra rotnivået -->
+  <link rel="stylesheet" href="../style.css" />
+  <link rel="stylesheet" href="../maintenance.css" />
+  <script src="../maintenance.js" defer></script>
+  <style>
+    /* Egen grid for utleiekort. Viser 3 kolonner som standard, 2 kolonner på nettbrett og mobil. */
+    /* Grid for utleiekort. Fire kolonner på store skjermer, tre på nettbrett, to på mobil. */
+    .rental-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+    }
+    @media (max-width: 1024px) {
+      .rental-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    @media (max-width: 720px) {
+      .rental-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header med navigasjon. Utleie-lenken er markert som aktiv. -->
+  <header>
+    <div class="bar">
+      <a href="../index.html" class="logo" aria-label="Sørgulen Industriservice">
+        <img src="../assets/logo.png" alt="Sørgulen logo" width="34" height="34" />
+        <b>Sørgulen&nbsp;Industriservice</b>
+      </a>
+      <nav aria-label="Hovedmeny">
+        <a href="../index.html">Hjem</a>
+        <a href="../om-oss.html">Om oss</a>
+        <a href="../tjenester.html">Tjenester</a>
+        <a href="../utleie/index.html" class="active">Utleie</a>
+        <!-- Lenke til tilbudssiden -->
+        <a href="../tilbud.html">Tilbud</a><a href="../kontakt.html">Kontakt</a>
+        <a href="../sporsmal.html">Spørsmål</a>
+        <a href="../apningstider.html">Åpningstider</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-label="Meny" aria-controls="menuPanel" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="#cfe3ff" role="img" aria-hidden="true"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+      </button>
+    </div>
+    <div class="menu-panel" id="menuPanel">
+      <a href="../index.html">Hjem</a>
+      <a href="../om-oss.html">Om oss</a>
+      <a href="../tjenester.html">Tjenester</a>
+      <a href="../utleie/index.html" class="active">Utleie</a>
+      <!-- Lenke til tilbudssiden i mobilmenyen -->
+      <a href="../tilbud.html">Tilbud</a><a href="../kontakt.html">Kontakt</a>
+      <a href="../sporsmal.html">Spørsmål</a>
+      <a href="../apningstider.html">Åpningstider</a>
+    </div>
+  </header>
+
+  <!-- Hero-seksjon -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div>
+        <h1>Utleie av verktøy og utstyr</h1>
+        <p class="lead">Lei kvalitetssikrede verktøy til dag, helg eller uke.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Innhold med utleiekort -->
+  <section class="wrap">
+    <div class="section-title">
+      <h2>Tilgjengelige verktøy</h2>
+    </div>
+    <div class="rental-grid">
+      <!-- AVA Evolution P60 Medium Bundle -->
+      <article class="card">
+        <div class="media">
+          <span class="badge">Fra 300 kr</span>
+          <picture>
+            <img src="../assets/utleie/ava-evolution-p60-medium-bundle.jpeg" alt="AVA Evolution P60 Medium Bundle" loading="lazy" />
+          </picture>
+        </div>
+        <div class="content">
+          <h3>AVA&nbsp;Evolution&nbsp;P60</h3>
+          <div class="meta">145&nbsp;bar • 500&nbsp;l/t • 2100&nbsp;W • Komplett med tilbehør</div>
+          <div class="actions">
+            <a href="ava-evolution-p60-medium-bundle.html" class="btn">Pris og info</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- Arbeidslampe LED 2×50 W -->
+      <article class="card">
+        <div class="media">
+          <span class="badge">Fra 200 kr</span>
+          <picture>
+            <img src="../assets/utleie/arbeidslampe-led.jpeg" alt="Arbeidslampe LED 2×50 W" loading="lazy" />
+          </picture>
+        </div>
+        <div class="content">
+          <h3>Arbeidslampe LED&nbsp;2×50 W</h3>
+          <div class="meta">Teleskopstativ • 2×4000 lumen • 120° spredning</div>
+          <div class="actions">
+            <a href="arbeidslampe-led-2x50w.html" class="btn">Pris og info</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- Ryobi Drill R18DD4 One+ 18V -->
+      <article class="card">
+        <div class="media">
+          <span class="badge">Fra 100 kr</span>
+          <picture>
+            <img src="../assets/utleie/ryobi-drill-r18dd4.jpeg" alt="Ryobi drill R18DD4 One+ 18V" loading="lazy" />
+          </picture>
+        </div>
+        <div class="content">
+          <h3>Ryobi&nbsp;drill&nbsp;R18DD4&nbsp;One+&nbsp;18V</h3>
+          <div class="meta">18&nbsp;V • 1–3 driller • Inkl. batterier</div>
+          <div class="actions">
+            <a href="ryobi-drill-r18dd4.html" class="btn">Pris og info</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- Buskrydder/gresstrimmer 43CC bensin -->
+      <article class="card">
+        <div class="media">
+          <span class="badge">Fra 200 kr</span>
+          <picture>
+            <img src="../assets/utleie/buskrydder-gresstrimmer-43cc.jpeg" alt="Buskrydder/gresstrimmer 43CC bensin" loading="lazy" />
+          </picture>
+        </div>
+        <div class="content">
+          <h3>Buskrydder&nbsp;/&nbsp;gresstrimmer&nbsp;43CC</h3>
+          <div class="meta">43&nbsp;CC bensin • 2‑takts motor • Trimmer&nbsp;&amp;&nbsp;rydder</div>
+          <div class="actions">
+            <a href="buskrydder-gresstrimmer-43cc.html" class="btn">Pris og info</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- Sirkelsag 18 V Ø150 mm -->
+      <article class="card">
+        <div class="media">
+          <span class="badge">Fra 200 kr</span>
+          <picture>
+            <img src="../assets/utleie/sirkelsag-18v-150mm.jpeg" alt="Sirkelsag 18 V Ø150 mm" loading="lazy" />
+          </picture>
+        </div>
+        <div class="content">
+          <h3>Sirkelsag&nbsp;18&nbsp;V&nbsp;Ø150&nbsp;mm</h3>
+          <div class="meta">18&nbsp;V • 150&nbsp;mm blad • 4500 rpm</div>
+          <div class="actions">
+            <a href="sirkelsag-18v-150mm.html" class="btn">Pris og info</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- Vinkelsliper 18 V Ø125 mm -->
+      <article class="card">
+        <div class="media">
+          <span class="badge">Fra 200 kr</span>
+          <picture>
+            <img src="../assets/utleie/vinkelsliper-18v-125mm.jpeg" alt="Vinkelsliper 18 V Ø125 mm" loading="lazy" />
+          </picture>
+        </div>
+        <div class="content">
+          <h3>Vinkelsliper&nbsp;18&nbsp;V&nbsp;Ø125&nbsp;mm</h3>
+          <div class="meta">18&nbsp;V • Ø125&nbsp;mm skive • Metall&nbsp;og&nbsp;stein</div>
+          <div class="actions">
+            <a href="vinkelsliper-18v-125mm.html" class="btn">Pris og info</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- Multisliper RPS18-0 -->
+      <article class="card">
+        <div class="media">
+          <span class="badge">Fra 100 kr</span>
+          <picture>
+            <img src="../assets/utleie/multisliper.jpeg" alt="Multisliper" loading="lazy" />
+          </picture>
+        </div>
+        <div class="content">
+          <h3>Multisliper</h3>
+          <div class="meta">Batteridrevet • For små og mellomstore jobber</div>
+          <div class="actions">
+            <a href="multisliper.html" class="btn">Pris og info</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- Bajonettsag RRS18-0 -->
+      <article class="card">
+        <div class="media">
+          <span class="badge">Fra 150 kr</span>
+          <picture>
+            <img src="../assets/utleie/bajonettsag.jpeg" alt="Bajonettsag" loading="lazy" />
+          </picture>
+        </div>
+        <div class="content">
+          <h3>Bajonettsag</h3>
+          <div class="meta">Rask kapping • 3400 slag/min • Tre, metall, plast</div>
+          <div class="actions">
+            <a href="bajonettsag.html" class="btn">Pris og info</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- Batteridrevet skralle R18RW2-0 -->
+      <article class="card">
+        <div class="media">
+          <span class="badge">Fra 200 kr</span>
+          <picture>
+            <img src="../assets/utleie/batteridrevet-skralle.jpeg" alt="Batteridrevet skralle" loading="lazy" />
+          </picture>
+        </div>
+        <div class="content">
+          <h3>Batteridrevet&nbsp;skralle</h3>
+          <div class="meta">18&nbsp;V • Perfekt for muttere • Kompakt</div>
+          <div class="actions">
+            <a href="batteridrevet-skralle.html" class="btn">Pris og info</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- Multiverktøy RMT18-0 -->
+      <article class="card">
+        <div class="media">
+          <span class="badge">Fra 150 kr</span>
+          <picture>
+            <img src="../assets/utleie/multiverktoy.jpeg" alt="Multiverktøy" loading="lazy" />
+          </picture>
+        </div>
+        <div class="content">
+          <h3>Multiverktøy</h3>
+          <div class="meta">Allsidig • Kutter og sliper • RMT18‑0</div>
+          <div class="actions">
+            <a href="multiverktoy.html" class="btn">Pris og info</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- SOUNDBOKS Gen. 3 -->
+      <article class="card">
+        <div class="media">
+          <span class="badge">Fra 400 kr</span>
+          <picture>
+            <img src="../assets/utleie/soundboks-gen-3.jpeg" alt="SOUNDBOKS Gen. 3 høyttaler" loading="lazy" />
+          </picture>
+        </div>
+        <div class="content">
+          <h3>SOUNDBOKS&nbsp;Gen.&nbsp;3</h3>
+          <div class="meta">40&nbsp;timer batteri • Enorm bass og klar diskant</div>
+          <div class="actions">
+            <a href="soundboks-gen-3.html" class="btn">Pris og info</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- Spenningsomformer RY18BI150B-0 -->
+      <article class="card">
+        <div class="media">
+          <span class="badge">Fra 150 kr</span>
+          <picture>
+            <img src="../assets/utleie/spenningsomformer.jpeg" alt="Spenningsomformer for ONE+ batterier" loading="lazy" />
+          </picture>
+        </div>
+        <div class="content">
+          <h3>Spenningsomformer</h3>
+          <div class="meta">Lader ONE+ batterier • Gir 230 V og USB‑strøm</div>
+          <div class="actions">
+            <a href="spenningsomformer.html" class="btn">Pris og info</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- Samsung The Freestyle 2nd gen projektor -->
+      <article class="card">
+        <div class="media">
+          <span class="badge">Fra 500 kr</span>
+          <picture>
+            <img src="../assets/utleie/samsung-freestyle-2nd-gen.jpeg" alt="Samsung The Freestyle 2nd gen projektor" loading="lazy" />
+          </picture>
+        </div>
+        <div class="content">
+          <h3>Samsung&nbsp;The&nbsp;Freestyle&nbsp;2nd&nbsp;gen</h3>
+          <div class="meta">Full&nbsp;HD&nbsp;30–100″ • 360° lyd • Smart&nbsp;TV</div>
+          <div class="actions">
+            <a href="samsung-freestyle-2nd-gen.html" class="btn">Pris og info</a>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- Footer kopiert og tilpasset med relative stier -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div>
+        <h4>Kontakt oss</h4>
+        <p>Telefon: 407&nbsp;30&nbsp;187<br>E‑post: sor.industri@gmail.com<br>Adresse: Kleiva&nbsp;91&nbsp;B, Florø</p>
+      </div>
+      <div>
+        <h4>Personvern og cookies</h4>
+        <a href="../personvern.html">Les mer</a>
+      </div>
+      <div>
+        <h4>Vilkår for bruk</h4>
+        <a href="../vilkar.html">Les mer</a>
+      </div>
+      <div>
+        <h4>Om Sørgulen Industriservice</h4>
+        <a href="../om-oss.html">Les mer</a>
+      </div>
+      <div>
+        <h4>Miljøprofil</h4>
+        <a href="../miljoprofil.html">Les mer</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 Sørgulen Industriservice</span>
+    </div>
+  </footer>
+
+  <!-- Last inn app.js for å aktivere hamburgermenyen -->
+  <script src="../app.js" defer></script>
+</body>
+</html>
