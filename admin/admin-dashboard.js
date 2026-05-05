@@ -25,6 +25,9 @@
     paid: "Betalt",
   };
 
+  const serviceOptions = ["Brøyting", "Dekkskift", "Plenklipp", "Takvask", "Trefelling", "Diverse arbeid"];
+  const timeOptions = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00"];
+
   function getAdminKey() {
     let key = localStorage.getItem(KEY_STORAGE) || "";
     if (!key) {
@@ -48,7 +51,7 @@
   }
 
   function escapeHtml(value) {
-    return String(value || "")
+    return String(value ?? "")
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")
@@ -56,9 +59,15 @@
       .replaceAll("'", "&#039;");
   }
 
+  function fallback(value) {
+    const v = String(value ?? "").trim();
+    return v || "-";
+  }
+
   function formatDate(value) {
     if (!value) return "-";
-    const parts = String(value).split("-");
+    const normalized = String(value).slice(0, 10);
+    const parts = normalized.split("-");
     if (parts.length === 3) return `${parts[2]}.${parts[1]}.${parts[0]}`;
     return value;
   }
@@ -69,6 +78,10 @@
 
   function normalizedPayment(b) {
     return b.paymentStatus || "unpaid";
+  }
+
+  function findBooking(id) {
+    return bookings.find((b) => String(b._id || b.id) === String(id));
   }
 
   function filteredBookings() {
@@ -126,13 +139,20 @@
       const status = normalizedStatus(b);
       const payment = normalizedPayment(b);
       const id = String(b._id || b.id || "");
+      const phone = fallback(b.customerPhone);
+      const email = fallback(b.customerEmail);
+      const address = fallback(b.customerAddress);
+      const comment = fallback(b.comment);
+      const name = fallback(b.customerName);
+      const serviceName = fallback(b.serviceName);
+      const time = fallback(b.time);
 
       return `
         <article class="order-card status-${escapeHtml(status)}" data-id="${escapeHtml(id)}">
           <div class="order-card-header">
             <div>
-              <h3>${escapeHtml(b.customerName)}</h3>
-              <p>${escapeHtml(b.serviceName)} – ${escapeHtml(formatDate(b.date))} kl. ${escapeHtml(b.time)}</p>
+              <h3>${escapeHtml(name)}</h3>
+              <p>${escapeHtml(serviceName)} – ${escapeHtml(formatDate(b.date))} kl. ${escapeHtml(time)}</p>
             </div>
             <div class="badge-row">
               <span class="badge">${escapeHtml(statusLabels[status] || status)}</span>
@@ -141,10 +161,10 @@
           </div>
 
           <div class="order-grid">
-            <p><strong>Telefon:</strong> <a href="tel:${escapeHtml(b.customerPhone)}">${escapeHtml(b.customerPhone)}</a></p>
-            <p><strong>E-post:</strong> <a href="mailto:${escapeHtml(b.customerEmail)}">${escapeHtml(b.customerEmail)}</a></p>
-            <p><strong>Adresse:</strong> ${escapeHtml(b.customerAddress || "-")}</p>
-            <p><strong>Kommentar:</strong> ${escapeHtml(b.comment || "-")}</p>
+            <p><strong>Telefon:</strong> ${phone !== "-" ? `<a href="tel:${escapeHtml(phone)}">${escapeHtml(phone)}</a>` : "-"}</p>
+            <p><strong>E-post:</strong> ${email !== "-" ? `<a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a>` : "-"}</p>
+            <p><strong>Adresse:</strong> ${escapeHtml(address)}</p>
+            <p><strong>Kommentar:</strong> ${escapeHtml(comment)}</p>
           </div>
 
           <div class="order-actions">
@@ -164,6 +184,8 @@
               </select>
             </label>
 
+            <button class="editBookingBtn" type="button" data-id="${escapeHtml(id)}">Rediger</button>
+            <button class="deleteBookingBtn" type="button" data-id="${escapeHtml(id)}">Slett</button>
             <a class="details-link" href="order-detail.html?id=${encodeURIComponent(id)}">Detaljer</a>
           </div>
         </article>
@@ -209,9 +231,122 @@
     });
 
     const updated = data.booking;
-    bookings = bookings.map((b) => String(b._id) === String(id) ? updated : b);
+    bookings = bookings.map((b) => String(b._id || b.id) === String(id) ? updated : b);
     render();
     setMessage("Oppdatert.", "success");
+  }
+
+  async function deleteBooking(id) {
+    const b = findBooking(id);
+    const label = b ? `${fallback(b.customerName)} – ${fallback(b.serviceName)} ${formatDate(b.date)} kl. ${fallback(b.time)}` : "denne bookingen";
+
+    const first = window.confirm(`Er du sikker på at du vil slette bookingen?\n\n${label}`);
+    if (!first) return;
+
+    const second = window.confirm("Dette kan ikke angres. Vil du slette bookingen permanent?");
+    if (!second) return;
+
+    await apiFetch(`/admin/bookings/${encodeURIComponent(id)}`, { method: "DELETE" });
+    bookings = bookings.filter((item) => String(item._id || item.id) !== String(id));
+    render();
+    setMessage("Booking slettet.", "success");
+  }
+
+  function makeOptions(options, selected) {
+    return options.map((option) => `<option value="${escapeHtml(option)}" ${String(selected) === option ? "selected" : ""}>${escapeHtml(option)}</option>`).join("");
+  }
+
+  function openEditModal(id) {
+    const b = findBooking(id);
+    if (!b) {
+      setMessage("Fant ikke booking.", "error");
+      return;
+    }
+
+    closeEditModal();
+
+    const modal = document.createElement("div");
+    modal.className = "modal-backdrop";
+    modal.id = "editBookingModal";
+    modal.innerHTML = `
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="editBookingTitle">
+        <div class="modal-header">
+          <h2 id="editBookingTitle">Rediger booking</h2>
+          <button type="button" class="modal-close" id="closeEditModal" aria-label="Lukk">×</button>
+        </div>
+        <form id="editBookingForm" class="modal-grid">
+          <label>Navn
+            <input type="text" name="customerName" value="${escapeHtml(b.customerName || "")}" required>
+          </label>
+          <label>Telefon
+            <input type="tel" name="customerPhone" value="${escapeHtml(b.customerPhone || "")}" required>
+          </label>
+          <label>E-post
+            <input type="email" name="customerEmail" value="${escapeHtml(b.customerEmail || "")}" required>
+          </label>
+          <label>Adresse
+            <input type="text" name="customerAddress" value="${escapeHtml(b.customerAddress || "")}">
+          </label>
+          <label>Tjeneste
+            <select name="serviceName" required>${makeOptions(serviceOptions, b.serviceName)}</select>
+          </label>
+          <label>Dato
+            <input type="date" name="date" value="${escapeHtml(String(b.date || "").slice(0, 10))}" required>
+          </label>
+          <label>Tidspunkt
+            <select name="time" required>${makeOptions(timeOptions, b.time)}</select>
+          </label>
+          <label>Status
+            <select name="status" required>
+              <option value="pending" ${normalizedStatus(b) === "pending" ? "selected" : ""}>Venter</option>
+              <option value="planned" ${normalizedStatus(b) === "planned" ? "selected" : ""}>Planlagt</option>
+              <option value="done" ${normalizedStatus(b) === "done" ? "selected" : ""}>Utført</option>
+              <option value="cancelled" ${normalizedStatus(b) === "cancelled" ? "selected" : ""}>Kansellert</option>
+            </select>
+          </label>
+          <label>Betaling
+            <select name="paymentStatus" required>
+              <option value="unpaid" ${normalizedPayment(b) === "unpaid" ? "selected" : ""}>Ikke betalt</option>
+              <option value="paid" ${normalizedPayment(b) === "paid" ? "selected" : ""}>Betalt</option>
+            </select>
+          </label>
+          <label class="full-row">Kommentar
+            <textarea name="comment" rows="3">${escapeHtml(b.comment || "")}</textarea>
+          </label>
+          <div class="modal-actions full-row">
+            <button type="submit" class="primary-btn">Lagre endringer</button>
+            <button type="button" class="secondary-btn" id="cancelEditModal">Avbryt</button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    document.body.classList.add("modal-open");
+
+    document.getElementById("closeEditModal")?.addEventListener("click", closeEditModal);
+    document.getElementById("cancelEditModal")?.addEventListener("click", closeEditModal);
+    modal.addEventListener("click", (event) => {
+      if (event.target === modal) closeEditModal();
+    });
+
+    document.getElementById("editBookingForm")?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const formData = new FormData(event.currentTarget);
+      const payload = Object.fromEntries(formData.entries());
+      try {
+        setMessage("Lagrer endringer...", "info");
+        await updateBooking(id, payload);
+        closeEditModal();
+      } catch (err) {
+        setMessage(err.message || "Kunne ikke lagre endringer.", "error");
+      }
+    });
+  }
+
+  function closeEditModal() {
+    document.getElementById("editBookingModal")?.remove();
+    document.body.classList.remove("modal-open");
   }
 
   tabs.forEach((tab) => {
@@ -228,6 +363,25 @@
 
   logoutBtn?.addEventListener("click", () => {
     localStorage.removeItem(KEY_STORAGE);
+  });
+
+  ordersList?.addEventListener("click", async (event) => {
+    const editBtn = event.target.closest(".editBookingBtn");
+    const deleteBtn = event.target.closest(".deleteBookingBtn");
+
+    if (editBtn?.dataset.id) {
+      openEditModal(editBtn.dataset.id);
+      return;
+    }
+
+    if (deleteBtn?.dataset.id) {
+      try {
+        setMessage("", "info");
+        await deleteBooking(deleteBtn.dataset.id);
+      } catch (err) {
+        setMessage(err.message || "Kunne ikke slette booking.", "error");
+      }
+    }
   });
 
   ordersList?.addEventListener("change", async (event) => {
@@ -273,6 +427,10 @@
     } catch (err) {
       setMessage(err.message || "Kunne ikke opprette booking.", "error");
     }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeEditModal();
   });
 
   document.addEventListener("DOMContentLoaded", loadBookings);
