@@ -66,6 +66,81 @@
     <section id="ordersList" class="orders-list"></section>
   </main>
 
+
+
+  <div id="editModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="editModalTitle">Rediger booking</h2>
+        <button type="button" id="closeEditModal" class="icon-btn" aria-label="Lukk">×</button>
+      </div>
+      <form id="editBookingForm" class="modal-grid">
+        <input type="hidden" id="editBookingId">
+        <label>Navn<input type="text" id="editName" required></label>
+        <label>Telefon<input type="tel" id="editPhone" required></label>
+        <label>E-post<input type="email" id="editEmail" required></label>
+        <label>Adresse<input type="text" id="editAddress"></label>
+        <label>Tjeneste
+          <select id="editService" required>
+            <option value="Brøyting">Brøyting</option>
+            <option value="Dekkskift">Dekkskift</option>
+            <option value="Plenklipping">Plenklipping</option>
+            <option value="Takvask">Takvask</option>
+            <option value="Trefelling">Trefelling</option>
+            <option value="Diverse arbeid">Diverse arbeid</option>
+          </select>
+        </label>
+        <label>Dato<input type="date" id="editDate" required></label>
+        <label>Tidspunkt
+          <select id="editTime" required>
+            <option value="09:00">09:00</option>
+            <option value="10:00">10:00</option>
+            <option value="11:00">11:00</option>
+            <option value="12:00">12:00</option>
+            <option value="13:00">13:00</option>
+            <option value="14:00">14:00</option>
+            <option value="15:00">15:00</option>
+            <option value="16:00">16:00</option>
+            <option value="17:00">17:00</option>
+            <option value="18:00">18:00</option>
+            <option value="19:00">19:00</option>
+            <option value="20:00">20:00</option>
+          </select>
+        </label>
+        <label>Status
+          <select id="editStatus">
+            <option value="pending">Venter</option>
+            <option value="planned">Planlagt</option>
+            <option value="done">Utført</option>
+            <option value="cancelled">Kansellert</option>
+          </select>
+        </label>
+        <label>Betaling
+          <select id="editPayment">
+            <option value="unpaid">Ikke betalt</option>
+            <option value="paid">Betalt</option>
+          </select>
+        </label>
+        <label class="full-span">Kommentar<textarea id="editComment" rows="3"></textarea></label>
+        <div class="modal-actions full-span">
+          <button type="button" id="cancelEdit" class="secondary-btn">Avbryt</button>
+          <button type="submit" class="primary-btn">Lagre endringer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="confirmModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle">
+    <div class="modal-card small">
+      <h2 id="confirmModalTitle">Bekreft sletting</h2>
+      <p id="confirmText">Er du sikker?</p>
+      <div class="modal-actions">
+        <button type="button" id="confirmNo" class="secondary-btn">Nei</button>
+        <button type="button" id="confirmYes" class="danger-btn">Ja</button>
+      </div>
+    </div>
+  </div>
+
   <script src="../config.js"></script>
   <script src="admin-dashboard.js"></script>
 </body>

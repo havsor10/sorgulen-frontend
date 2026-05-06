@@ -10,8 +10,20 @@
   const createForm = document.getElementById("createBookingForm");
   const tabs = Array.from(document.querySelectorAll(".tab[data-tab]"));
 
+  const editModal = document.getElementById("editModal");
+  const editForm = document.getElementById("editBookingForm");
+  const closeEditModal = document.getElementById("closeEditModal");
+  const cancelEdit = document.getElementById("cancelEdit");
+
+  const confirmModal = document.getElementById("confirmModal");
+  const confirmText = document.getElementById("confirmText");
+  const confirmNo = document.getElementById("confirmNo");
+  const confirmYes = document.getElementById("confirmYes");
+
   let bookings = [];
   let currentTab = "all";
+  let pendingDeleteId = null;
+  let deleteStep = 0;
 
   const statusLabels = {
     pending: "Venter",
@@ -24,9 +36,6 @@
     unpaid: "Ikke betalt",
     paid: "Betalt",
   };
-
-  const serviceOptions = ["Brøyting", "Dekkskift", "Plenklipp", "Takvask", "Trefelling", "Diverse arbeid"];
-  const timeOptions = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00"];
 
   function getAdminKey() {
     let key = localStorage.getItem(KEY_STORAGE) || "";
@@ -59,17 +68,25 @@
       .replaceAll("'", "&#039;");
   }
 
-  function fallback(value) {
+  function clean(value, fallback = "-") {
     const v = String(value ?? "").trim();
-    return v || "-";
+    return v || fallback;
+  }
+
+  function normalizeDateValue(value) {
+    if (!value) return "";
+    const str = String(value);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+    if (/^\d{4}-\d{2}-\d{2}T/.test(str)) return str.slice(0, 10);
+    return str;
   }
 
   function formatDate(value) {
-    if (!value) return "-";
-    const normalized = String(value).slice(0, 10);
+    const normalized = normalizeDateValue(value);
+    if (!normalized) return "-";
     const parts = normalized.split("-");
     if (parts.length === 3) return `${parts[2]}.${parts[1]}.${parts[0]}`;
-    return value;
+    return normalized;
   }
 
   function normalizedStatus(b) {
@@ -139,13 +156,13 @@
       const status = normalizedStatus(b);
       const payment = normalizedPayment(b);
       const id = String(b._id || b.id || "");
-      const phone = fallback(b.customerPhone);
-      const email = fallback(b.customerEmail);
-      const address = fallback(b.customerAddress);
-      const comment = fallback(b.comment);
-      const name = fallback(b.customerName);
-      const serviceName = fallback(b.serviceName);
-      const time = fallback(b.time);
+      const phone = clean(b.customerPhone);
+      const email = clean(b.customerEmail);
+      const address = clean(b.customerAddress);
+      const comment = clean(b.comment);
+      const name = clean(b.customerName);
+      const serviceName = clean(b.serviceName);
+      const time = clean(b.time);
 
       return `
         <article class="order-card status-${escapeHtml(status)}" data-id="${escapeHtml(id)}">
@@ -184,8 +201,8 @@
               </select>
             </label>
 
-            <button class="editBookingBtn" type="button" data-id="${escapeHtml(id)}">Rediger</button>
-            <button class="deleteBookingBtn" type="button" data-id="${escapeHtml(id)}">Slett</button>
+            <button type="button" class="editBookingBtn" data-id="${escapeHtml(id)}">Rediger</button>
+            <button type="button" class="deleteBookingBtn" data-id="${escapeHtml(id)}">Slett</button>
             <a class="details-link" href="order-detail.html?id=${encodeURIComponent(id)}">Detaljer</a>
           </div>
         </article>
@@ -236,117 +253,51 @@
     setMessage("Oppdatert.", "success");
   }
 
+  function openEditModal(id) {
+    const booking = findBooking(id);
+    if (!booking || !editModal || !editForm) return;
+
+    document.getElementById("editBookingId").value = id;
+    document.getElementById("editName").value = booking.customerName || "";
+    document.getElementById("editPhone").value = booking.customerPhone || "";
+    document.getElementById("editEmail").value = booking.customerEmail || "";
+    document.getElementById("editAddress").value = booking.customerAddress || "";
+    document.getElementById("editService").value = booking.serviceName || "Brøyting";
+    document.getElementById("editDate").value = normalizeDateValue(booking.date);
+    document.getElementById("editTime").value = booking.time || "09:00";
+    document.getElementById("editStatus").value = normalizedStatus(booking);
+    document.getElementById("editPayment").value = normalizedPayment(booking);
+    document.getElementById("editComment").value = booking.comment || "";
+
+    editModal.classList.remove("hidden");
+    document.body.classList.add("modal-open");
+  }
+
+  function closeModal() {
+    editModal?.classList.add("hidden");
+    confirmModal?.classList.add("hidden");
+    document.body.classList.remove("modal-open");
+    pendingDeleteId = null;
+    deleteStep = 0;
+  }
+
+  function openDeleteConfirm(id) {
+    const booking = findBooking(id);
+    pendingDeleteId = id;
+    deleteStep = 1;
+    if (confirmText) {
+      confirmText.textContent = `Er du sikker på at du vil slette bookingen til ${booking?.customerName || "kunden"}?`;
+    }
+    confirmYes.textContent = "Ja";
+    confirmModal?.classList.remove("hidden");
+    document.body.classList.add("modal-open");
+  }
+
   async function deleteBooking(id) {
-    const b = findBooking(id);
-    const label = b ? `${fallback(b.customerName)} – ${fallback(b.serviceName)} ${formatDate(b.date)} kl. ${fallback(b.time)}` : "denne bookingen";
-
-    const first = window.confirm(`Er du sikker på at du vil slette bookingen?\n\n${label}`);
-    if (!first) return;
-
-    const second = window.confirm("Dette kan ikke angres. Vil du slette bookingen permanent?");
-    if (!second) return;
-
     await apiFetch(`/admin/bookings/${encodeURIComponent(id)}`, { method: "DELETE" });
-    bookings = bookings.filter((item) => String(item._id || item.id) !== String(id));
+    bookings = bookings.filter((b) => String(b._id || b.id) !== String(id));
     render();
     setMessage("Booking slettet.", "success");
-  }
-
-  function makeOptions(options, selected) {
-    return options.map((option) => `<option value="${escapeHtml(option)}" ${String(selected) === option ? "selected" : ""}>${escapeHtml(option)}</option>`).join("");
-  }
-
-  function openEditModal(id) {
-    const b = findBooking(id);
-    if (!b) {
-      setMessage("Fant ikke booking.", "error");
-      return;
-    }
-
-    closeEditModal();
-
-    const modal = document.createElement("div");
-    modal.className = "modal-backdrop";
-    modal.id = "editBookingModal";
-    modal.innerHTML = `
-      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="editBookingTitle">
-        <div class="modal-header">
-          <h2 id="editBookingTitle">Rediger booking</h2>
-          <button type="button" class="modal-close" id="closeEditModal" aria-label="Lukk">×</button>
-        </div>
-        <form id="editBookingForm" class="modal-grid">
-          <label>Navn
-            <input type="text" name="customerName" value="${escapeHtml(b.customerName || "")}" required>
-          </label>
-          <label>Telefon
-            <input type="tel" name="customerPhone" value="${escapeHtml(b.customerPhone || "")}" required>
-          </label>
-          <label>E-post
-            <input type="email" name="customerEmail" value="${escapeHtml(b.customerEmail || "")}" required>
-          </label>
-          <label>Adresse
-            <input type="text" name="customerAddress" value="${escapeHtml(b.customerAddress || "")}">
-          </label>
-          <label>Tjeneste
-            <select name="serviceName" required>${makeOptions(serviceOptions, b.serviceName)}</select>
-          </label>
-          <label>Dato
-            <input type="date" name="date" value="${escapeHtml(String(b.date || "").slice(0, 10))}" required>
-          </label>
-          <label>Tidspunkt
-            <select name="time" required>${makeOptions(timeOptions, b.time)}</select>
-          </label>
-          <label>Status
-            <select name="status" required>
-              <option value="pending" ${normalizedStatus(b) === "pending" ? "selected" : ""}>Venter</option>
-              <option value="planned" ${normalizedStatus(b) === "planned" ? "selected" : ""}>Planlagt</option>
-              <option value="done" ${normalizedStatus(b) === "done" ? "selected" : ""}>Utført</option>
-              <option value="cancelled" ${normalizedStatus(b) === "cancelled" ? "selected" : ""}>Kansellert</option>
-            </select>
-          </label>
-          <label>Betaling
-            <select name="paymentStatus" required>
-              <option value="unpaid" ${normalizedPayment(b) === "unpaid" ? "selected" : ""}>Ikke betalt</option>
-              <option value="paid" ${normalizedPayment(b) === "paid" ? "selected" : ""}>Betalt</option>
-            </select>
-          </label>
-          <label class="full-row">Kommentar
-            <textarea name="comment" rows="3">${escapeHtml(b.comment || "")}</textarea>
-          </label>
-          <div class="modal-actions full-row">
-            <button type="submit" class="primary-btn">Lagre endringer</button>
-            <button type="button" class="secondary-btn" id="cancelEditModal">Avbryt</button>
-          </div>
-        </form>
-      </div>
-    `;
-
-    document.body.appendChild(modal);
-    document.body.classList.add("modal-open");
-
-    document.getElementById("closeEditModal")?.addEventListener("click", closeEditModal);
-    document.getElementById("cancelEditModal")?.addEventListener("click", closeEditModal);
-    modal.addEventListener("click", (event) => {
-      if (event.target === modal) closeEditModal();
-    });
-
-    document.getElementById("editBookingForm")?.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const formData = new FormData(event.currentTarget);
-      const payload = Object.fromEntries(formData.entries());
-      try {
-        setMessage("Lagrer endringer...", "info");
-        await updateBooking(id, payload);
-        closeEditModal();
-      } catch (err) {
-        setMessage(err.message || "Kunne ikke lagre endringer.", "error");
-      }
-    });
-  }
-
-  function closeEditModal() {
-    document.getElementById("editBookingModal")?.remove();
-    document.body.classList.remove("modal-open");
   }
 
   tabs.forEach((tab) => {
@@ -366,21 +317,16 @@
   });
 
   ordersList?.addEventListener("click", async (event) => {
-    const editBtn = event.target.closest(".editBookingBtn");
-    const deleteBtn = event.target.closest(".deleteBookingBtn");
+    const target = event.target;
+    const id = target.dataset.id;
+    if (!id) return;
 
-    if (editBtn?.dataset.id) {
-      openEditModal(editBtn.dataset.id);
-      return;
+    if (target.classList.contains("editBookingBtn")) {
+      openEditModal(id);
     }
 
-    if (deleteBtn?.dataset.id) {
-      try {
-        setMessage("", "info");
-        await deleteBooking(deleteBtn.dataset.id);
-      } catch (err) {
-        setMessage(err.message || "Kunne ikke slette booking.", "error");
-      }
+    if (target.classList.contains("deleteBookingBtn")) {
+      openDeleteConfirm(id);
     }
   });
 
@@ -402,17 +348,70 @@
     }
   });
 
+  editForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const id = document.getElementById("editBookingId").value;
+    const payload = {
+      customerName: document.getElementById("editName").value.trim(),
+      customerPhone: document.getElementById("editPhone").value.trim(),
+      customerEmail: document.getElementById("editEmail").value.trim(),
+      customerAddress: document.getElementById("editAddress").value.trim(),
+      serviceName: document.getElementById("editService").value,
+      date: document.getElementById("editDate").value,
+      time: document.getElementById("editTime").value,
+      status: document.getElementById("editStatus").value,
+      paymentStatus: document.getElementById("editPayment").value,
+      comment: document.getElementById("editComment").value.trim(),
+    };
+
+    try {
+      setMessage("Lagrer endringer...", "info");
+      await updateBooking(id, payload);
+      closeModal();
+    } catch (err) {
+      setMessage(err.message || "Kunne ikke lagre endringer.", "error");
+    }
+  });
+
+  closeEditModal?.addEventListener("click", closeModal);
+  cancelEdit?.addEventListener("click", closeModal);
+  confirmNo?.addEventListener("click", closeModal);
+
+  confirmYes?.addEventListener("click", async () => {
+    if (!pendingDeleteId) return closeModal();
+    if (deleteStep === 1) {
+      deleteStep = 2;
+      if (confirmText) confirmText.textContent = "Dette kan ikke angres. Slett bookingen permanent?";
+      confirmYes.textContent = "Ja, slett";
+      return;
+    }
+
+    try {
+      const id = pendingDeleteId;
+      closeModal();
+      setMessage("Sletter booking...", "info");
+      await deleteBooking(id);
+    } catch (err) {
+      setMessage(err.message || "Kunne ikke slette booking.", "error");
+      await loadBookings();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeModal();
+  });
+
   createForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const payload = {
       serviceName: document.getElementById("createService").value,
       date: document.getElementById("createDate").value,
       time: document.getElementById("createTime").value,
-      customerName: document.getElementById("createName").value,
-      customerPhone: document.getElementById("createPhone").value,
-      customerEmail: document.getElementById("createEmail").value,
-      customerAddress: document.getElementById("createAddress").value,
-      comment: document.getElementById("createComment").value,
+      customerName: document.getElementById("createName").value.trim(),
+      customerPhone: document.getElementById("createPhone").value.trim(),
+      customerEmail: document.getElementById("createEmail").value.trim(),
+      customerAddress: document.getElementById("createAddress").value.trim(),
+      comment: document.getElementById("createComment").value.trim(),
     };
 
     try {
@@ -427,10 +426,6 @@
     } catch (err) {
       setMessage(err.message || "Kunne ikke opprette booking.", "error");
     }
-  });
-
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") closeEditModal();
   });
 
   document.addEventListener("DOMContentLoaded", loadBookings);

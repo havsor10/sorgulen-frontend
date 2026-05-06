@@ -63,39 +63,49 @@
     </div>
   </header>
 
-  <!-- Hero (bakgrunn tas fra style.css via .hero::before) -->
-  <section id="hjem" class="hero">
-    <div class="hero-inner">
-      <div>
-        <h1>Pålitelige tjenester for hjem og næring i Florø</h1>
-        <p class="lead">Brøyting, plenklipp og vedlikehold levert med presisjon. Rask respons, tydelige priser og enkel bestilling.</p>
-        <div class="btns">
-          <!-- Bytt ut bestillingsside med direkte widget åpning -->
-          <a href="booking.html?service=Brøyting" class="btn primary">Bestill brøyting</a>
-          <a href="tjenester.html" class="btn secondary">Se tjenester</a>
+  <!-- Premium hero -->
+  <section id="hjem" class="hero premium-hero">
+    <div class="hero-inner premium-hero-inner">
+      <div class="hero-copy reveal-on-load">
+        <span class="eyebrow">Lokalt • effektivt • trygt</span>
+        <h1>Sørgulen Industriservice</h1>
+        <p class="lead">Profesjonelle tjenester i Florø og omegn. Book brøyting og dekkskift direkte, eller send forespørsel på øvrige oppdrag.</p>
+        <div class="btns hero-actions">
+          <a href="booking.html?service=Brøyting" class="btn primary hero-cta">Bestill tjeneste</a>
+          <a href="kontakt.html" class="btn secondary">Få tilbud</a>
         </div>
-        <div class="facts">
-          <div class="fact">Ingen betaling før jobben er utført</div>
-<div class="fact">Tilbyr tjenester i Florø og omegn</div>
+        <div class="trust-row" aria-label="Nøkkelfordeler">
+          <div class="trust-pill"><strong>Ingen forskudd</strong><span>Betaling etter utført arbeid</span></div>
+          <div class="trust-pill"><strong>Rask respons</strong><span>Florø og omegn</span></div>
+          <div class="trust-pill"><strong>E-postbekreftelse</strong><span>Trygg bookingflyt</span></div>
         </div>
       </div>
-
-      <!-- Reklamekort fjernet -->
+      <aside class="hero-panel reveal-on-load" aria-label="Fordeler for kunde">
+        <span class="panel-kicker">Rask og ryddig hjelp</span>
+        <h2>Brøyting fra 350 kr</h2>
+        <p>Dekkskift 450 kr. Velg tidspunkt, send bestilling og få bekreftelse på e-post.</p>
+        <div class="panel-grid">
+          <span>Ledige tider</span>
+          <span>Rask oppfølging</span>
+          <span>Trygg bestilling</span>
+          <span>Lokal service</span>
+        </div>
+      </aside>
     </div>
   </section>
 
   <!-- Tjenester -->
   <section id="tjenester" class="wrap">
     <div class="section-title">
-      <h2>Våre tjenester</h2>
-      <a href="tjenester.html" class="btn">Se alle tjenester</a>
+      <div><span class="eyebrow small">Tjenesteportefølje</span><h2>Våre tjenester</h2></div>
+      <a href="tjenester.html" class="btn secondary">Se alle tjenester</a>
     </div>
 
     <div class="grid" id="servicesGrid">
       <!-- Brøyting -->
       <article class="card" data-tags="vinter">
         <div class="media">
-          <span class="badge">Fra 350 kr</span>
+          <span class="badge premium-badge">Populær • Fra 350 kr</span>
           <!-- picture m/webp+jpg -->
           <picture>
             <source srcset="assets/tjenester/broyting.webp" type="image/webp">
@@ -114,7 +124,7 @@
       </article>
 
           <!-- Plenklipping -->
-      <article class="card coming-soon" data-tags="sommer">
+      <article class="card" data-tags="sommer">
         <div class="media">
           <span class="badge">Fra 500 kr</span>
           <picture>
@@ -122,8 +132,6 @@
             <img src="assets/tjenester/plenklipp.jpg" alt="Plenklipping" loading="lazy" />
           </picture>
         </div>
-        <!-- Kommer snart-overlay for ikke-lanserte tjenester -->
-        <div class="overlay"><span>Kommer snart<br><small>Denne tjenesten er snart tilgjengelig</small></span></div>
         <div class="content">
           <h3>Plenklipping</h3>
           <div class="meta">Kantklipp og opprydding inkludert. Passer små og store hager.</div>
@@ -138,7 +146,7 @@
       <!-- Dekkskift -->
       <article class="card" data-tags="">
         <div class="media">
-          <span class="badge">Fra 450 kr</span>
+          <span class="badge premium-badge">450 kr</span>
           <picture>
             <source srcset="assets/tjenester/dekkskift.webp" type="image/webp">
             <img src="assets/tjenester/dekkskift.jpg" alt="Dekkskift" loading="lazy" />
@@ -156,8 +164,7 @@
       </article>
 
       <!-- Trefelling -->
-      <!-- Legg til "coming-soon"-klassen og overlay for å indikere at tjenesten ikke er lansert ennå -->
-      <article class="card coming-soon" data-tags="sommer">
+      <article class="card" data-tags="sommer">
         <div class="media">
           <span class="badge">Fra 600 kr</span>
           <picture>
@@ -165,8 +172,6 @@
             <img src="assets/tjenester/trefelling.jpg" alt="Trefelling" loading="lazy" />
           </picture>
         </div>
-        <!-- Kommer snart-overlay for ikke‑lanserte tjenester -->
-        <div class="overlay"><span>Kommer snart<br><small>Denne tjenesten er snart tilgjengelig</small></span></div>
         <div class="content">
           <h3>Trefelling</h3>
           <div class="meta">Sikker felling og opprydding. Befaring ved behov.</div>
@@ -179,7 +184,7 @@
       </article>
 
       <!-- Diverse arbeid -->
-<article class="card coming-soon" data-tags="sommer vinter">
+<article class="card" data-tags="sommer vinter">
   <div class="media">
     <span class="badge">Fra 300 kr</span>
     <picture>
@@ -187,8 +192,6 @@
       <img src="assets/tjenester/diverse.jpg" alt="Diverse arbeid" loading="lazy" />
     </picture>
   </div>
-  <!-- Kommer snart-overlay for ikke-lanserte tjenester -->
-  <div class="overlay"><span>Kommer snart<br><small>Denne tjenesten er snart tilgjengelig</small></span></div>
   <div class="content">
     <h3>Diverse arbeid</h3>
     <div class="meta">Alt fra små fiksejobber til større prosjekter – vi tilpasser oss ditt behov.</div>
@@ -201,7 +204,7 @@
 </article>
 
       <!-- Takvask -->
-      <article class="card coming-soon" data-tags="sommer vinter">
+      <article class="card" data-tags="sommer vinter">
         <div class="media">
           <span class="badge">Fra 1 500 kr</span>
           <picture>
@@ -209,8 +212,6 @@
             <img src="assets/tjenester/takvask.jpg" alt="Takvask" loading="lazy" />
           </picture>
         </div>
-        <!-- Kommer snart-overlay for ikke-lanserte tjenester -->
-        <div class="overlay"><span>Kommer snart<br><small>Denne tjenesten er snart tilgjengelig</small></span></div>
         <div class="content">
           <h3>Takvask</h3>
           <div class="meta">Skånsom takvask som fjerner mose og alger og forlenger takets levetid.</div>
@@ -221,6 +222,18 @@
           </div>
         </div>
       </article>
+    </div>
+  </section>
+
+
+  <section class="wrap premium-process">
+    <div class="section-title">
+      <div><span class="eyebrow small">Slik fungerer det</span><h2>Enkel bestilling fra start til utført jobb</h2></div>
+    </div>
+    <div class="process-grid">
+      <div class="process-card"><span>1</span><h3>Velg tjeneste</h3><p>Velg brøyting eller dekkskift og finn ledig tidspunkt.</p></div>
+      <div class="process-card"><span>2</span><h3>Send bestilling</h3><p>Du får tydelig oppsummering og bekreftelse på e-post.</p></div>
+      <div class="process-card"><span>3</span><h3>Vi følger opp</h3><p>Bestillingen blir registrert og fulgt opp ryddig frem til oppdraget er utført.</p></div>
     </div>
   </section>
 
@@ -317,38 +330,18 @@
     </div>
   </section>
 
-  <footer class="site-footer">
+  <footer class="site-footer premium-footer">
     <div class="footer-content">
-      <div>
-        <h4>Kontakt oss</h4>
-        <p>Telefon: 407&nbsp;30&nbsp;187<br>E‑post: sor.industri@gmail.com<br>Adresse: Kleiva&nbsp;91&nbsp;B, Florø</p>
+      <div class="footer-brand">
+        <img src="assets/logo.png" alt="Sørgulen logo" width="42" height="42" />
+        <h4>Sørgulen Industriservice</h4>
+        <p>Praktiske tjenester, rask respons og ryddig oppfølging i Florø og omegn.</p>
       </div>
-      <div>
-        <h4>Personvern og cookies</h4>
-        <a href="personvern.html">Les mer</a>
-      </div>
-      <div>
-        <h4>Vilkår for bruk</h4>
-        <a href="vilkar.html">Les mer</a>
-      </div>
-      <div>
-        <h4>Om Sørgulen Industriservice</h4>
-        <a href="om-oss.html">Les mer</a>
-      </div>
-      <div>
-        <h4>Miljøprofil</h4>
-        <a href="miljoprofil.html">Les mer</a>
-      </div>
-      <!-- Sertifiseringsseksjonen er fjernet i henhold til krav -->
-      <div>
-        <h4>Følg oss</h4>
-        <a href="https://www.facebook.com/sorgulenindustriservice" target="_blank" rel="noopener">Facebook</a>
-      </div>
+      <div><h4>Kontakt</h4><p>Telefon: 407&nbsp;30&nbsp;187<br>E-post: sor.industri@gmail.com<br>Adresse: Kleiva&nbsp;91&nbsp;B, Florø</p></div>
+      <div><h4>Tjenester</h4><a href="booking.html?service=Brøyting">Bestill brøyting</a><a href="booking.html?service=Dekkskift">Bestill dekkskift</a><a href="kontakt.html">Be om tilbud</a></div>
+      <div><h4>Informasjon</h4><a href="om-oss.html">Om oss</a><a href="personvern.html">Personvern</a><a href="vilkar.html">Vilkår</a><a href="https://www.facebook.com/sorgulenindustriservice" target="_blank" rel="noopener">Facebook</a></div>
     </div>
-    <div class="footer-bottom">
-      <span>© 2025 Sørgulen Industriservice</span>
-      <span>Org. nr. 935179580</span>
-    </div>
+    <div class="footer-bottom"><span>© 2026 Sørgulen Industriservice</span><span>Org. nr. 935179580</span></div>
   </footer>
 
   <!-- JS (samme som før) -->
