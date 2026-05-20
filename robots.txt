@@ -1,2 +1,7 @@
 User-agent: *
-Disallow: /admin
+Allow: /
+
+Disallow: /admin/
+Disallow: /login.html
+
+Sitemap: https://sorgulen.no/sitemap.xml

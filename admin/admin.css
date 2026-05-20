@@ -403,3 +403,17 @@ body.modal-open { overflow: hidden; }
   .modal-actions { flex-direction: column-reverse; }
   .modal-actions button { width: 100%; }
 }
+
+/* === FASE A1 admin mobil-polish === */
+body{overflow-x:hidden;}
+button,a,input,select,textarea{font:inherit;}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid rgba(18,194,133,.75);outline-offset:3px;}
+button,.btn{min-height:44px;touch-action:manipulation;}
+@media (max-width:720px){
+  .admin-shell,.dashboard,.container,.wrap{padding-left:12px!important;padding-right:12px!important;}
+  table{display:block;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .toolbar,.filters,.admin-actions,.modal-actions{gap:10px;flex-wrap:wrap;}
+  .toolbar button,.filters button,.admin-actions button,.modal-actions button{width:100%;}
+  input,select,textarea{width:100%;max-width:100%;}
+  .modal,.dialog{max-width:calc(100vw - 24px)!important;max-height:calc(100vh - 24px);overflow:auto;}
+}

@@ -903,3 +903,249 @@ footer{margin-top:30px;border-top:1px solid rgba(255,255,255,0.06);background:#0
     box-shadow: 0 0 0 0 rgba(18, 194, 133, 0);
   }
 }
+
+/* === FASE A1 LANseringsklar frontend polish ===
+   Kun visuelle/stabiliserende frontend-endringer.
+   Ingen API-, booking-, admin- eller backend-endepunkter endret.
+*/
+html{scroll-padding-top:88px;-webkit-text-size-adjust:100%;}
+body{overflow-x:hidden;}
+img{height:auto;}
+button,a,input,select,textarea{font:inherit;}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:3px solid rgba(18,194,133,.75);
+  outline-offset:3px;
+}
+.btn,button,.slot-btn{min-height:44px;touch-action:manipulation;}
+.card,.booking-card,.process-card,.trust-pill,.hero-panel{overflow:hidden;}
+.media{position:relative;overflow:hidden;}
+.media img{width:100%;height:100%;object-fit:cover;}
+.card .media{aspect-ratio:16/10;}
+.utleie-card .media,.rental-card .media{aspect-ratio:16/11;}
+input,select,textarea{max-width:100%;}
+
+/* Hero: mer cinematic bakgrunn på mobil uten å ødelegge PC-layout */
+.hero.premium-hero{position:relative;isolation:isolate;}
+.hero.premium-hero::before{
+  opacity:1;
+  transform:scale(1.045);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(5,10,18,.08) 0%, rgba(5,10,18,.34) 44%, rgba(5,10,18,.78) 100%),
+    linear-gradient(180deg, rgba(5,10,18,.26) 0%, rgba(5,10,18,.50) 60%, rgba(5,10,18,.90) 100%),
+    image-set(
+      url('assets/floro-hero-1920.webp') type('image/webp'),
+      url('assets/floro-hero-1920.jpg') type('image/jpeg')
+    );
+  background-size:cover;
+  background-position:center 58%;
+  filter:contrast(1.08) saturate(1.08);
+}
+.hero.premium-hero::after{
+  background:
+    linear-gradient(90deg,rgba(5,10,18,.90) 0%,rgba(5,10,18,.66) 46%,rgba(5,10,18,.28) 100%),
+    linear-gradient(180deg,rgba(5,10,18,.06) 0%,rgba(5,10,18,.36) 70%,rgba(5,10,18,.94) 100%);
+}
+
+/* Mobil og nettbrett hardening */
+@media (max-width:900px){
+  .bar{gap:10px;}
+  .logo b{font-size:14px;max-width:190px;overflow:hidden;text-overflow:ellipsis;}
+  .menu-panel{max-height:calc(100vh - 86px);overflow:auto;}
+  .grid{grid-template-columns:1fr 1fr;}
+  .section-title{gap:14px;}
+}
+@media (max-width:720px){
+  header{position:sticky;top:0;}
+  .bar{padding:12px 14px;}
+  .logo img{width:32px;height:32px;}
+  .logo b{font-size:13px;max-width:170px;}
+  .menu-panel{inset:58px 10px auto 10px;border-radius:18px;background:rgba(13,20,34,.98);backdrop-filter:blur(14px);}
+  .menu-panel a{min-height:48px;display:flex;align-items:center;}
+  .hero.premium-hero{min-height:92vh;}
+  .hero.premium-hero::before{
+    transform:scale(1.08);
+    background:
+      radial-gradient(circle at 52% 38%, rgba(5,10,18,.05) 0%, rgba(5,10,18,.28) 44%, rgba(5,10,18,.82) 100%),
+      linear-gradient(180deg, rgba(5,10,18,.24) 0%, rgba(5,10,18,.50) 58%, rgba(5,10,18,.94) 100%),
+      image-set(
+        url('assets/floro-hero-1280.webp') type('image/webp'),
+        url('assets/floro-hero-1280.jpg') type('image/jpeg')
+      );
+    background-size:cover;
+    background-position:54% 54%;
+  }
+  .hero.premium-hero::after{
+    background:
+      linear-gradient(180deg, rgba(5,10,18,.30) 0%, rgba(5,10,18,.48) 44%, rgba(5,10,18,.88) 100%),
+      linear-gradient(90deg, rgba(5,10,18,.78) 0%, rgba(5,10,18,.54) 58%, rgba(5,10,18,.36) 100%);
+  }
+  .premium-hero-inner{min-height:calc(92vh - 64px);display:flex;align-items:center;padding:56px 16px 60px!important;}
+  .premium-hero h1{font-size:clamp(38px,12vw,56px);line-height:.98;}
+  .premium-hero .lead{font-size:16px;}
+  .hero-actions .btn,.btns .btn{width:100%;justify-content:center;}
+  .trust-row{grid-template-columns:1fr!important;gap:10px;}
+  .trust-pill{padding:13px;background:rgba(255,255,255,.075);border-color:rgba(255,255,255,.16);box-shadow:0 16px 40px rgba(0,0,0,.22);}
+  .grid{grid-template-columns:1fr!important;gap:18px;}
+  .card{border-radius:22px;}
+  .card .media{aspect-ratio:16/10;}
+  .content{padding:16px;}
+  .actions{gap:10px;}
+  .actions .btn{width:100%;}
+  .wrap{padding-left:16px!important;padding-right:16px!important;}
+  .booking-steps{grid-template-columns:1fr!important;}
+  .step{min-height:54px;}
+  .slot-btn{min-height:48px;}
+  footer .footer-content,.premium-footer .footer-content{grid-template-columns:1fr!important;text-align:left;}
+}
+@media (max-width:420px){
+  .logo b{max-width:145px;}
+  .premium-hero h1{font-size:clamp(34px,12vw,50px);}
+  .eyebrow{font-size:11px;}
+  .card .media{aspect-ratio:4/3;}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important;}
+}
+
+
+/* === FASE B2/B3 – Lanseringsfinish, ytelse og profesjonell footer === */
+img {
+  height: auto;
+}
+
+section, .card, .service-card, .rental-card, .premium-card, .glass-card {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 420px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .001ms !important;
+  }
+}
+
+.site-footer-premium {
+  margin-top: 56px;
+  background:
+    radial-gradient(circle at 15% 0%, rgba(18,194,133,.14), transparent 36%),
+    linear-gradient(180deg, rgba(11,17,29,.96), rgba(5,10,18,1));
+  border-top: 1px solid rgba(255,255,255,.10);
+  color: #f3f6ff;
+}
+
+.site-footer-premium .footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 42px 18px 24px;
+}
+
+.site-footer-premium .footer-grid {
+  display: grid;
+  grid-template-columns: 1.2fr .9fr .9fr .9fr;
+  gap: 24px;
+}
+
+.site-footer-premium h2,
+.site-footer-premium h3 {
+  margin: 0 0 12px;
+}
+
+.site-footer-premium p,
+.site-footer-premium a,
+.site-footer-premium li {
+  color: #a9b3c9;
+}
+
+.site-footer-premium a:hover {
+  color: #fff;
+}
+
+.site-footer-premium ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.site-footer-premium li {
+  margin: 7px 0;
+}
+
+.footer-brand {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.footer-brand img {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+}
+
+.footer-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.footer-pill {
+  display: inline-flex;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.10);
+  color: #d6deef;
+  font-size: 13px;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255,255,255,.08);
+  margin-top: 28px;
+  padding-top: 18px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  color: #7f8aa3;
+  font-size: 13px;
+}
+
+.launch-note {
+  border: 1px solid rgba(18,194,133,.22);
+  background: rgba(18,194,133,.07);
+  color: #bdf8df;
+  border-radius: 16px;
+  padding: 12px 14px;
+  margin-top: 16px;
+  font-size: 14px;
+}
+
+@media (max-width: 900px) {
+  .site-footer-premium .footer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .site-footer-premium {
+    margin-top: 34px;
+  }
+
+  .site-footer-premium .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .site-footer-premium .footer-inner {
+    padding: 32px 16px 20px;
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+  }
+}
