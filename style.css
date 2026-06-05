@@ -1149,3 +1149,86 @@ section, .card, .service-card, .rental-card, .premium-card, .glass-card {
     flex-direction: column;
   }
 }
+
+
+/* === PUNKT 6-7: profesjonell bildevisning på utleie ===
+   Mål: fyll bredden på kortbildene uten stygge sidefelt, men unngå brutal topp/bunn-kutting.
+*/
+.rental-card .media,
+.utleie-card .media {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  background: #f7f8fb;
+  overflow: hidden;
+}
+
+.rental-card .media img,
+.utleie-card .media img,
+.card .media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+}
+
+/* Produktdetaljsider: vis hele produktet mer kontrollert, spesielt lange verktøy */
+.product-hero img,
+.product-main img,
+.product-image img,
+.detail-hero img,
+.gallery-main img,
+.utleie-detail img,
+main .wrap > img {
+  max-width: 100%;
+  object-fit: contain;
+  object-position: center center;
+}
+
+/* Buskrydder/gressstrimmer er langt og skal ikke kappes hardt */
+img[src*="buskrydder-gresstrimmer-43cc"] {
+  object-fit: contain !important;
+  object-position: center center !important;
+  background: #fff;
+}
+
+/* Kortbildet for buskrydder får litt mer luft fordi produktet er langt */
+.rental-card .media img[src*="buskrydder-gresstrimmer-43cc"],
+.utleie-card .media img[src*="buskrydder-gresstrimmer-43cc"] {
+  object-fit: contain !important;
+  padding: 8px;
+}
+
+/* Små produktbilder med hvit bakgrunn: fyll bredden penere uten grå stripe */
+.rental-card .media img[src*="sirkelsag-18v-150mm"],
+.rental-card .media img[src*="vinkelsliper-18v-125mm"],
+.rental-card .media img[src*="bajonettsag"],
+.rental-card .media img[src*="multisliper"],
+.rental-card .media img[src*="multiverktoy"],
+.rental-card .media img[src*="batteridrevet-skralle"],
+.rental-card .media img[src*="ryobi-drill"] {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  background: #fff;
+}
+
+@media (max-width: 720px) {
+  .rental-card .media,
+  .utleie-card .media {
+    aspect-ratio: 16 / 10;
+  }
+
+  .rental-card .media img[src*="buskrydder-gresstrimmer-43cc"],
+  .utleie-card .media img[src*="buskrydder-gresstrimmer-43cc"] {
+    padding: 12px;
+  }
+}
+
+.product-main-image {
+  width: 100%;
+  max-height: min(72vh, 760px);
+  object-fit: contain !important;
+  object-position: center center !important;
+  background: #fff;
+}
