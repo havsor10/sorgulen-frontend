@@ -91,7 +91,19 @@
       ? `<div class="req-ai-row">Gjenkjent: ${ai.detectedItems.map(escapeHtml).join(", ")}</div>` : "";
     const vol = (ai.estimatedVolumeM3 !== null && ai.estimatedVolumeM3 !== undefined)
       ? `<div class="req-ai-row">Estimert volum: ${escapeHtml(ai.estimatedVolumeM3)} m³</div>` : "";
-    const price = (ai.priceLow != null && ai.priceHigh != null)
+
+    // Detaljert prisoppstilling (som i demoen)
+    let breakdown = "";
+    if (Array.isArray(ai.priceBreakdown) && ai.priceBreakdown.length) {
+      breakdown = `<table style="width:100%;font-size:13px;margin:8px 0;border-collapse:collapse;">` +
+        ai.priceBreakdown.map((line) =>
+          `<tr><td style="padding:3px 0;color:#cdd6e3;">${escapeHtml(line.item)}</td><td style="text-align:right;padding:3px 0;color:#cdd6e3;white-space:nowrap;">${escapeHtml(line.amount)} kr</td></tr>`
+        ).join("") +
+        `<tr style="border-top:1px solid #333;"><td style="padding:6px 0;font-weight:700;color:#4fc78a;">Estimert total</td><td style="text-align:right;padding:6px 0;font-weight:700;color:#4fc78a;">${escapeHtml(ai.priceLow)}–${escapeHtml(ai.priceHigh)} kr</td></tr>` +
+        `</table>`;
+    }
+
+    const price = (!breakdown && ai.priceLow != null && ai.priceHigh != null)
       ? `<div class="req-ai-row req-ai-price">${escapeHtml(ai.priceLow)}–${escapeHtml(ai.priceHigh)} kr</div>` : "";
     const dur = ai.durationText ? `<div class="req-ai-row">Varighet: ${escapeHtml(ai.durationText)}</div>` : "";
     const reason = ai.reasoning ? `<div class="req-ai-row" style="color:#9aa6b8;">${escapeHtml(ai.reasoning)}</div>` : "";
@@ -102,7 +114,7 @@
     return `<div class="req-ai">
       <h4>AI-forslag${conf}</h4>
       <div class="req-ai-row">${scope}<strong>${escapeHtml(ai.category || "Ukjent kategori")}</strong></div>
-      ${items}${vol}${dur}${price}${reason}${warn}
+      ${items}${vol}${dur}${breakdown}${price}${reason}${warn}
     </div>`;
   }
 
@@ -152,13 +164,28 @@
           <input type="text" class="adminNote" style="width:100%;background:#161616;border:1px solid #2c2c2c;border-radius:6px;padding:8px;color:#f0f0f0;box-sizing:border-box;" value="${escapeHtml(r.adminNote || "")}">
         </div>
 
+        ${offerBlock(r)}
+
         <div class="req-actions">
           <button class="btn-save" data-action="save">Lagre estimat</button>
-          <button class="btn-sent" data-action="sent">Marker som sendt</button>
+          <button class="btn-offer" data-action="offer" style="background:#7a3fd6;">${r.offer && r.offer.message ? "Lag tilbud på nytt" : "Lag tilbud"}</button>
           <button class="btn-archive" data-action="archive">Arkiver</button>
         </div>
       </div>`;
     }).join("");
+  }
+
+  function offerBlock(r) {
+    if (!r.offer || !r.offer.message) return "";
+    const o = r.offer;
+    const priceStr = o.priceLow === o.priceHigh ? `${escapeHtml(o.priceLow)} kr` : `${escapeHtml(o.priceLow)}–${escapeHtml(o.priceHigh)} kr`;
+    return `
+      <div style="border-left:3px solid #7a3fd6; background:#1d1530; padding:12px 14px; margin:12px 0; border-radius:0 6px 6px 0;">
+        <h4 style="margin:0 0 8px; font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:#b794f0;">Tilbud (kan redigeres)</h4>
+        <textarea class="offerMsg" style="width:100%; min-height:120px; background:#161616; border:1px solid #2c2c2c; border-radius:6px; padding:10px; color:#f0f0f0; box-sizing:border-box; font-family:inherit; font-size:14px; line-height:1.5; resize:vertical;">${escapeHtml(o.message)}</textarea>
+        <div style="margin-top:8px; font-size:14px; color:#cdd6e3;">Tilbudspris: <strong style="color:#4fc78a;">${priceStr}</strong></div>
+        <button class="btn-save-offer" data-action="save-offer" style="margin-top:10px; padding:8px 16px; border:none; border-radius:6px; background:#5a8b3a; color:#fff; cursor:pointer; font-size:13px;">Lagre tilbudstekst</button>
+      </div>`;
   }
 
   async function patchRequest(id, updates) {
@@ -192,9 +219,29 @@
         if (high !== "") updates.adminPriceHigh = Number(high);
         await patchRequest(id, updates);
         setMessage("Estimat lagret.", "success");
-      } else if (action === "sent") {
-        await patchRequest(id, { status: "sent" });
-        setMessage("Markert som sendt.", "success");
+      } else if (action === "offer") {
+        setMessage("Lager tilbud med AI…");
+        const res = await fetch(`${API_BASE}/requests/${id}/offer`, {
+          method: "POST",
+          headers: headers(),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || "Kunne ikke lage tilbud");
+        }
+        setMessage("Tilbud laget. Se gjennom teksten nedenfor.", "success");
+      } else if (action === "save-offer") {
+        const message = card.querySelector(".offerMsg").value;
+        const res = await fetch(`${API_BASE}/requests/${id}/offer`, {
+          method: "PATCH",
+          headers: headers(),
+          body: JSON.stringify({ message }),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || "Kunne ikke lagre tilbudstekst");
+        }
+        setMessage("Tilbudstekst lagret.", "success");
       } else if (action === "archive") {
         await patchRequest(id, { status: "archived" });
         setMessage("Arkivert.", "success");
