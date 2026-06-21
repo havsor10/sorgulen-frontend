@@ -175,7 +175,17 @@
         <!-- Honeypot (skjult for mennesker, fanger bots) -->
         <input type="text" id="peWebsite" class="pe-hidden" tabindex="-1" autocomplete="off" aria-hidden="true">
 
-        <button type="button" class="pe-btn" id="peSubmit">Send forespørsel</button>
+        <!-- AI-oppfølgingsspørsmål (vises kun hvis AI trenger mer info) -->
+        <div id="peQuestions" class="pe-hidden" style="margin-bottom:18px;">
+          <div style="background:#0b1a2a; border:1px solid #1e3a52; border-radius:8px; padding:14px;">
+            <p style="color:#6fc2ff; font-size:13px; margin:0 0 12px; display:flex; align-items:center; gap:6px;">
+              <span style="font-size:16px;">💬</span> Et par raske spørsmål så vi kan gi deg et mer presist estimat:
+            </p>
+            <div id="peQuestionFields"></div>
+          </div>
+        </div>
+
+        <button type="button" class="pe-btn" id="peSubmit">Fortsett</button>
         <p class="pe-note">Du får et veiledende prisestimat tilbake – endelig pris bekreftes alltid av oss før jobben starter.</p>
       </div>
     </div>
@@ -255,50 +265,169 @@
         msgBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
 
-      submitBtn.addEventListener('click', async () => {
-        msgBox.classList.add('pe-hidden');
+      let questionsShown = false;     // er spørsmålene allerede hentet/vist?
+      let uploadedImageUrls = null;   // bilder lastet opp i questions-steget (gjenbrukes)
 
+      function validateBasics() {
+        const name = document.getElementById('peName').value.trim();
+        const phone = document.getElementById('pePhone').value.trim();
+        const description = document.getElementById('peDesc').value.trim();
+        if (!name || !phone || !description) {
+          showError('Fyll inn navn, telefon og en beskrivelse av jobben.');
+          return false;
+        }
+        return true;
+      }
+
+      function renderQuestions(questions) {
+        const wrap = document.getElementById('peQuestionFields');
+        wrap.innerHTML = '';
+        questions.forEach((q, i) => {
+          const field = document.createElement('div');
+          field.style.marginBottom = i < questions.length - 1 ? '14px' : '0';
+
+          const label = document.createElement('label');
+          label.textContent = q.question;
+          label.style.cssText = 'display:block; color:#cfe3ff; font-size:14px; margin-bottom:6px;';
+          field.appendChild(label);
+
+          if (q.type === 'ja_nei') {
+            const btnWrap = document.createElement('div');
+            btnWrap.style.cssText = 'display:flex; gap:8px;';
+            ['Ja', 'Nei'].forEach((val) => {
+              const b = document.createElement('button');
+              b.type = 'button';
+              b.textContent = val;
+              b.dataset.qid = q.id;
+              b.dataset.value = val;
+              b.className = 'pe-yn';
+              b.style.cssText = 'flex:1; padding:10px; border:1px solid #25324b; border-radius:8px; background:#0b1018; color:#e8eefb; cursor:pointer; font-size:14px;';
+              b.addEventListener('click', () => {
+                btnWrap.querySelectorAll('.pe-yn').forEach((x) => { x.style.background = '#0b1018'; x.style.borderColor = '#25324b'; });
+                b.style.background = '#12c285'; b.style.borderColor = '#12c285'; b.style.color = '#06231a';
+                field.dataset.answer = val;
+              });
+              btnWrap.appendChild(b);
+            });
+            field.appendChild(btnWrap);
+          } else {
+            const input = document.createElement('input');
+            input.type = q.type === 'tall' ? 'number' : 'text';
+            input.className = 'pe-input';
+            input.placeholder = q.unit ? `Antall ${q.unit}` : 'Skriv her…';
+            input.addEventListener('input', () => { field.dataset.answer = input.value; });
+            field.appendChild(input);
+          }
+
+          field.dataset.question = q.question;
+          wrap.appendChild(field);
+        });
+      }
+
+      function collectAnswers() {
+        const fields = document.getElementById('peQuestionFields').children;
+        const answers = [];
+        for (const f of fields) {
+          if (f.dataset.question && f.dataset.answer) {
+            answers.push({ question: f.dataset.question, answer: f.dataset.answer });
+          }
+        }
+        return answers;
+      }
+
+      async function sendRequest(answers) {
         const name = document.getElementById('peName').value.trim();
         const phone = document.getElementById('pePhone').value.trim();
         const email = document.getElementById('peEmail').value.trim();
         const description = document.getElementById('peDesc').value.trim();
-        const website = document.getElementById('peWebsite').value; // honeypot
+        const website = document.getElementById('peWebsite').value;
 
-        if (!name || !phone || !description) {
-          showError('Fyll inn navn, telefon og en beskrivelse av jobben.');
+        const body = {
+          customerName: name,
+          customerPhone: phone,
+          customerEmail: email,
+          description: description,
+          website: website,
+          answers: answers || [],
+        };
+        // Gjenbruk bilder fra questions-steget hvis tilgjengelig, ellers send base64
+        if (uploadedImageUrls && uploadedImageUrls.length) {
+          body.uploadedImageUrls = uploadedImageUrls;
+        } else {
+          body.images = imageData;
+        }
+
+        const res = await fetch(BACKEND_URL + '/requests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || 'Noe gikk galt. Prøv igjen.');
+        }
+        document.getElementById('peFormWrap').classList.add('pe-hidden');
+        document.getElementById('peSuccess').classList.remove('pe-hidden');
+        document.getElementById('peSuccess').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+
+      submitBtn.addEventListener('click', async () => {
+        msgBox.classList.add('pe-hidden');
+        if (!validateBasics()) return;
+
+        // Steg 2: spørsmål er allerede vist -> send med svar
+        if (questionsShown) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Sender…';
+          try {
+            await sendRequest(collectAnswers());
+          } catch (err) {
+            showError(err.message || 'Noe gikk galt. Prøv igjen.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Send forespørsel';
+          }
           return;
         }
 
+        // Steg 1: hent eventuelle oppfølgingsspørsmål
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Sender…';
-
+        submitBtn.textContent = 'Et øyeblikk…';
         try {
-          const res = await fetch(BACKEND_URL + '/requests', {
+          const description = document.getElementById('peDesc').value.trim();
+          const website = document.getElementById('peWebsite').value;
+          const qRes = await fetch(BACKEND_URL + '/requests/questions', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              customerName: name,
-              customerPhone: phone,
-              customerEmail: email,
-              description: description,
-              images: imageData,
-              website: website,
-            }),
+            body: JSON.stringify({ description, images: imageData, website }),
           });
+          const qData = await qRes.json().catch(() => ({ questions: [] }));
+          const questions = Array.isArray(qData.questions) ? qData.questions : [];
+          // Lagre opplastede bilde-URLer så vi ikke laster opp på nytt
+          if (Array.isArray(qData.imageUrls)) uploadedImageUrls = qData.imageUrls;
 
-          if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            throw new Error(data.error || 'Noe gikk galt. Prøv igjen.');
+          if (questions.length > 0) {
+            // Vis spørsmålene, bytt knapp til "Send"
+            renderQuestions(questions);
+            document.getElementById('peQuestions').classList.remove('pe-hidden');
+            questionsShown = true;
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Send forespørsel';
+            document.getElementById('peQuestions').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          } else {
+            // Ingen spørsmål -> send direkte
+            submitBtn.textContent = 'Sender…';
+            await sendRequest([]);
           }
-
-          // Vis kvittering
-          document.getElementById('peFormWrap').classList.add('pe-hidden');
-          document.getElementById('peSuccess').classList.remove('pe-hidden');
-          document.getElementById('peSuccess').scrollIntoView({ behavior: 'smooth', block: 'center' });
         } catch (err) {
-          showError(err.message || 'Noe gikk galt. Prøv igjen.');
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Send forespørsel';
+          // Hvis spørsmåls-steget feiler, send forespørselen som vanlig
+          try {
+            submitBtn.textContent = 'Sender…';
+            await sendRequest([]);
+          } catch (err2) {
+            showError(err2.message || 'Noe gikk galt. Prøv igjen.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Fortsett';
+          }
         }
       });
     })();
