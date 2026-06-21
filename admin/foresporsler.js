@@ -184,8 +184,11 @@
         <h4 style="margin:0 0 8px; font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:#b794f0;">Tilbud (kan redigeres)</h4>
         <textarea class="offerMsg" style="width:100%; min-height:120px; background:#161616; border:1px solid #2c2c2c; border-radius:6px; padding:10px; color:#f0f0f0; box-sizing:border-box; font-family:inherit; font-size:14px; line-height:1.5; resize:vertical;">${escapeHtml(o.message)}</textarea>
         <div style="margin-top:8px; font-size:14px; color:#cdd6e3;">Tilbudspris: <strong style="color:#4fc78a;">${priceStr}</strong></div>
-        <button class="btn-save-offer" data-action="save-offer" style="margin-top:10px; padding:8px 16px; border:none; border-radius:6px; background:#5a8b3a; color:#fff; cursor:pointer; font-size:13px;">Lagre tilbudstekst</button>
-      </div>`;
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
+          <button class="btn-save-offer" data-action="save-offer" style="padding:8px 16px; border:none; border-radius:6px; background:#5a8b3a; color:#fff; cursor:pointer; font-size:13px;">Lagre tilbudstekst</button>
+          <button class="btn-pdf" data-action="pdf" style="padding:8px 16px; border:none; border-radius:6px; background:#c0392b; color:#fff; cursor:pointer; font-size:13px;">${o.pdfUrl ? "Lag PDF på nytt" : "Forhåndsvis PDF"}</button>
+          ${o.pdfUrl ? `<a href="${escapeHtml(o.pdfUrl)}" target="_blank" rel="noopener" style="padding:8px 16px; border-radius:6px; background:#2c3e50; color:#fff; text-decoration:none; font-size:13px;">Åpne PDF ↗</a>` : ""}
+        </div>`;
   }
 
   async function patchRequest(id, updates) {
@@ -242,6 +245,19 @@
           throw new Error(data.error || "Kunne ikke lagre tilbudstekst");
         }
         setMessage("Tilbudstekst lagret.", "success");
+      } else if (action === "pdf") {
+        setMessage("Genererer PDF…");
+        const res = await fetch(`${API_BASE}/requests/${id}/pdf`, {
+          method: "POST",
+          headers: headers(),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || "Kunne ikke lage PDF");
+        }
+        const data = await res.json();
+        setMessage("PDF laget.", "success");
+        if (data.pdfUrl) window.open(data.pdfUrl, "_blank");
       } else if (action === "archive") {
         await patchRequest(id, { status: "archived" });
         setMessage("Arkivert.", "success");
