@@ -11,7 +11,7 @@
   let requests = [];
   let currentTab = "all";
 
-  const statusLabels = { new: "Ny", reviewed: "Vurdert", sent: "Sendt", archived: "Arkivert" };
+  const statusLabels = { new: "Ny", reviewed: "Vurdert", offer: "Tilbud laget", sent: "Sendt", accepted: "Aktiv", declined: "Avslått", archived: "Arkivert" };
 
   // Samme auth-mønster som admin-dashboard.js
   function getAdminKey() {
@@ -169,6 +169,8 @@
         <div class="req-actions">
           <button class="btn-save" data-action="save">Lagre estimat</button>
           <button class="btn-offer" data-action="offer" style="background:#7a3fd6;">${r.offer && r.offer.message ? "Lag tilbud på nytt" : "Lag tilbud"}</button>
+          <button class="btn-accept" data-action="accept" style="background:#2e8b57;">Kunde vil ha jobben</button>
+          <button class="btn-decline" data-action="decline" style="background:#a0522d;">Kunde takket nei</button>
           <button class="btn-archive" data-action="archive">Arkiver</button>
         </div>
       </div>`;
@@ -188,6 +190,11 @@
           <button class="btn-save-offer" data-action="save-offer" style="padding:8px 16px; border:none; border-radius:6px; background:#5a8b3a; color:#fff; cursor:pointer; font-size:13px;">Lagre tilbudstekst</button>
           <button class="btn-pdf" data-action="pdf" style="padding:8px 16px; border:none; border-radius:6px; background:#c0392b; color:#fff; cursor:pointer; font-size:13px;">${o.pdfUrl ? "Lag PDF på nytt" : "Forhåndsvis PDF"}</button>
           ${o.pdfUrl ? `<a href="${escapeHtml(o.pdfUrl)}" target="_blank" rel="noopener" style="padding:8px 16px; border-radius:6px; background:#2c3e50; color:#fff; text-decoration:none; font-size:13px;">Åpne PDF ↗</a>` : ""}
+        </div>
+        <div style="margin-top:10px;">
+          <button class="btn-send" data-action="send" style="width:100%; padding:12px; border:none; border-radius:6px; background:#12c285; color:#06231a; font-weight:700; cursor:pointer; font-size:15px;">📧 Send tilbud til kunde</button>
+          ${!r.customerEmail ? `<p style="color:#f0a85f; font-size:12px; margin:6px 0 0;">⚠ Kunden oppga ingen e-post – kan ikke sende automatisk.</p>` : ""}
+          ${o.sentAt ? `<p style="color:#8fe0a8; font-size:12px; margin:6px 0 0;">✓ Sendt ${new Date(o.sentAt).toLocaleString("no-NO")}</p>` : ""}
         </div>`;
   }
 
@@ -258,6 +265,24 @@
         const data = await res.json();
         setMessage("PDF laget.", "success");
         if (data.pdfUrl) window.open(data.pdfUrl, "_blank");
+      } else if (action === "send") {
+        if (!confirm("Sende tilbudet til kunden på e-post nå?")) return;
+        setMessage("Sender tilbud til kunde…");
+        const res = await fetch(`${API_BASE}/requests/${id}/send`, {
+          method: "POST",
+          headers: headers(),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || "Kunne ikke sende tilbud");
+        }
+        setMessage("Tilbud sendt til kunden! ✓", "success");
+      } else if (action === "accept") {
+        await patchRequest(id, { status: "accepted" });
+        setMessage("Markert som aktiv – kunden vil ha jobben.", "success");
+      } else if (action === "decline") {
+        await patchRequest(id, { status: "declined" });
+        setMessage("Markert som avslått.", "success");
       } else if (action === "archive") {
         await patchRequest(id, { status: "archived" });
         setMessage("Arkivert.", "success");
