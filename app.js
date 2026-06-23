@@ -59,22 +59,6 @@ if (cmp && range) {
   });
 }
 
-// Kalkulator
-const bArea = document.getElementById("b-area");
-const bUrg = document.getElementById("b-urgency");
-const bTotal = document.getElementById("b-total");
-
-function calc() {
-  if (!bArea || !bUrg || !bTotal) return;
-  const baseB = 350; // grunnpris brøyting
-  const stepB = 2.5; // kr per m2 over 40 m2
-  const aB = Math.max(0, Number(bArea.value) - 40);
-  const outB = Math.round((baseB + aB * stepB) * Number(bUrg.value));
-  bTotal.textContent = "Estimat: " + outB + " kr";
-}
-[bArea, bUrg].forEach((el) => el && el.addEventListener("input", calc));
-calc();
-
 // Send bestilling fra forsiden
 // Frontpage order form now posts directly to the unified API /orders endpoint.
 // The form collects name, service, address, phone, date and optional info. We also require
