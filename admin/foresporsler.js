@@ -11,7 +11,7 @@
   let requests = [];
   let currentTab = "all";
 
-  const statusLabels = { new: "Ny", reviewed: "Vurdert", offer: "Tilbud laget", sent: "Sendt", accepted: "Aktiv", declined: "Avslått", archived: "Arkivert" };
+  const statusLabels = { new: "Ny", reviewed: "Vurdert", offer: "Tilbud laget", sent: "Sendt", accepted: "Aktiv", declined: "Avslått", completed: "Utført", invoiced: "Fakturert", paid: "Betalt", archived: "Arkivert" };
 
   // Samme auth-mønster som admin-dashboard.js
   function getAdminKey() {
@@ -160,42 +160,105 @@
           </div>
         </div>
         <div style="margin-top:10px;">
-          <label style="display:block;font-size:12px;color:#9aa6b8;margin-bottom:4px;">Notat</label>
+          <label style="display:block;font-size:12px;color:#9aa6b8;margin-bottom:4px;">Notat (kun for deg, vises ikke til kunde)</label>
           <input type="text" class="adminNote" style="width:100%;background:#161616;border:1px solid #2c2c2c;border-radius:6px;padding:8px;color:#f0f0f0;box-sizing:border-box;" value="${escapeHtml(r.adminNote || "")}">
+        </div>
+
+        <div class="req-actions" style="margin-top:14px;">
+          <button class="btn-save" data-action="save" style="background:#007acc;">💾 Steg 1: Lagre pris</button>
+          <button class="btn-offer" data-action="offer" style="background:#7a3fd6;">${r.offer && r.offer.message ? "🔄 Lag tilbud på nytt" : "✍️ Lag tilbud"}</button>
         </div>
 
         ${offerBlock(r)}
 
+        ${invoiceBlock(r)}
+
+        <div style="height:1px; background:#2c2c2c; margin:16px 0 12px;"></div>
+        <div style="font-size:12px; color:#9aa6b8; margin-bottom:8px;">Status og oppfølging:</div>
         <div class="req-actions">
-          <button class="btn-save" data-action="save">Lagre estimat</button>
-          <button class="btn-offer" data-action="offer" style="background:#7a3fd6;">${r.offer && r.offer.message ? "Lag tilbud på nytt" : "Lag tilbud"}</button>
-          <button class="btn-accept" data-action="accept" style="background:#2e8b57;">Kunde vil ha jobben</button>
-          <button class="btn-decline" data-action="decline" style="background:#a0522d;">Kunde takket nei</button>
-          <button class="btn-archive" data-action="archive">Arkiver</button>
+          <button class="btn-accept" data-action="accept" style="background:#2e8b57;">✓ Kunde vil ha jobben</button>
+          <button class="btn-completed" data-action="completed" style="background:#1f7a5a;">🔧 Marker som utført</button>
+          <button class="btn-decline" data-action="decline" style="background:#a0522d;">✗ Kunde takket nei</button>
+          <button class="btn-archive" data-action="archive" style="background:#555;">📁 Arkiver</button>
+          <button class="btn-delete" data-action="delete" style="background:#7a1f1f;">🗑 Slett</button>
         </div>
       </div>`;
     }).join("");
+  }
+
+  function invoiceBlock(r) {
+    const inv = r.invoice;
+    const hasInvoice = inv && inv.number;
+    const hasEmail = !!r.customerEmail;
+
+    // Vis faktura-seksjonen kun når jobben er aktiv/utført eller allerede fakturert
+    const relevant = ["accepted", "completed", "invoiced", "paid"].includes(r.status) || hasInvoice;
+    if (!relevant) return "";
+
+    if (!hasInvoice) {
+      return `
+        <div style="border-left:3px solid #c79a3a; background:#241f12; padding:14px 16px; margin:12px 0; border-radius:0 6px 6px 0;">
+          <h4 style="margin:0 0 6px; font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:#e0c060;">Faktura</h4>
+          <p style="margin:0 0 10px; font-size:12px; color:#9aa6b8;">Når jobben er gjort, lag en faktura basert på tilbudsprisen.</p>
+          <button class="btn-invoice" data-action="invoice" style="padding:9px 18px; border:none; border-radius:6px; background:#c79a3a; color:#1a1407; cursor:pointer; font-size:14px; font-weight:600;">🧾 Lag faktura</button>
+        </div>`;
+    }
+
+    const fmtDate = (d) => d ? new Date(d).toLocaleDateString("no-NO") : "";
+    return `
+      <div style="border-left:3px solid #c79a3a; background:#241f12; padding:14px 16px; margin:12px 0; border-radius:0 6px 6px 0;">
+        <h4 style="margin:0 0 6px; font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:#e0c060;">Faktura ${escapeHtml(inv.number)}</h4>
+        <div style="font-size:14px; color:#e8eefb;">Beløp: <strong style="color:#e0c060;">${escapeHtml(inv.amount)} kr</strong></div>
+        <div style="font-size:13px; color:#aab4c5; margin-top:2px;">Forfall: ${escapeHtml(fmtDate(inv.dueDate))}</div>
+        ${inv.sentAt ? `<div style="font-size:12px; color:#8fe0a8; margin-top:6px;">✓ Sendt ${escapeHtml(new Date(inv.sentAt).toLocaleString("no-NO"))}</div>` : ""}
+        ${inv.paidAt ? `<div style="font-size:12px; color:#8fe0a8; margin-top:2px;">💰 Betalt ${escapeHtml(new Date(inv.paidAt).toLocaleString("no-NO"))}</div>` : ""}
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+          <button class="btn-invoice-preview" data-action="invoice-preview" style="padding:8px 16px; border:none; border-radius:6px; background:#c0392b; color:#fff; cursor:pointer; font-size:13px;">📄 Forhåndsvis faktura</button>
+          ${!inv.sentAt ? `<button class="btn-invoice-send" data-action="invoice-send" ${!hasEmail ? "disabled" : ""} style="padding:8px 16px; border:none; border-radius:6px; background:${hasEmail ? "#12c285" : "#2a3a33"}; color:${hasEmail ? "#06231a" : "#6f7c90"}; cursor:${hasEmail ? "pointer" : "not-allowed"}; font-size:13px; font-weight:600;">📧 Send faktura</button>` : ""}
+          ${inv.sentAt && !inv.paidAt ? `<button class="btn-invoice-paid" data-action="invoice-paid" style="padding:8px 16px; border:none; border-radius:6px; background:#2e8b57; color:#fff; cursor:pointer; font-size:13px;">💰 Marker som betalt</button>` : ""}
+        </div>
+        ${!hasEmail ? `<p style="color:#f0a85f; font-size:12px; margin:8px 0 0;">⚠ Kunden oppga ingen e-post – kan ikke sende automatisk.</p>` : ""}
+      </div>`;
   }
 
   function offerBlock(r) {
     if (!r.offer || !r.offer.message) return "";
     const o = r.offer;
     const priceStr = o.priceLow === o.priceHigh ? `${escapeHtml(o.priceLow)} kr` : `${escapeHtml(o.priceLow)}–${escapeHtml(o.priceHigh)} kr`;
+    const hasEmail = !!r.customerEmail;
     return `
-      <div style="border-left:3px solid #7a3fd6; background:#1d1530; padding:12px 14px; margin:12px 0; border-radius:0 6px 6px 0;">
-        <h4 style="margin:0 0 8px; font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:#b794f0;">Tilbud (kan redigeres)</h4>
-        <textarea class="offerMsg" style="width:100%; min-height:120px; background:#161616; border:1px solid #2c2c2c; border-radius:6px; padding:10px; color:#f0f0f0; box-sizing:border-box; font-family:inherit; font-size:14px; line-height:1.5; resize:vertical;">${escapeHtml(o.message)}</textarea>
+      <div style="border-left:3px solid #7a3fd6; background:#1d1530; padding:14px 16px; margin:12px 0; border-radius:0 6px 6px 0;">
+        <h4 style="margin:0 0 4px; font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:#b794f0;">Steg 2 · Tilbudstekst (kan redigeres)</h4>
+        <p style="margin:0 0 10px; font-size:12px; color:#9aa6b8;">Teksten kunden får i e-posten. Juster fritt, og lagre når du er fornøyd.</p>
+        <textarea class="offerMsg" style="width:100%; min-height:130px; background:#161616; border:1px solid #2c2c2c; border-radius:6px; padding:10px; color:#f0f0f0; box-sizing:border-box; font-family:inherit; font-size:14px; line-height:1.5; resize:vertical;">${escapeHtml(o.message)}</textarea>
         <div style="margin-top:8px; font-size:14px; color:#cdd6e3;">Tilbudspris: <strong style="color:#4fc78a;">${priceStr}</strong></div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
-          <button class="btn-save-offer" data-action="save-offer" style="padding:8px 16px; border:none; border-radius:6px; background:#5a8b3a; color:#fff; cursor:pointer; font-size:13px;">Lagre tilbudstekst</button>
-          <button class="btn-pdf" data-action="pdf" style="padding:8px 16px; border:none; border-radius:6px; background:#c0392b; color:#fff; cursor:pointer; font-size:13px;">${o.pdfUrl ? "Lag PDF på nytt" : "Forhåndsvis PDF"}</button>
-          ${o.pdfUrl ? `<a href="${escapeHtml(o.pdfUrl)}" target="_blank" rel="noopener" style="padding:8px 16px; border-radius:6px; background:#2c3e50; color:#fff; text-decoration:none; font-size:13px;">Åpne PDF ↗</a>` : ""}
+        <button class="btn-save-offer" data-action="save-offer" style="margin-top:10px; padding:8px 16px; border:none; border-radius:6px; background:#5a8b3a; color:#fff; cursor:pointer; font-size:13px;">💾 Lagre tilbudstekst</button>
+
+        <div style="height:1px; background:#2c2540; margin:16px 0;"></div>
+
+        <h4 style="margin:0 0 4px; font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:#b794f0;">Steg 3 · Se gjennom før sending</h4>
+        <p style="margin:0 0 10px; font-size:12px; color:#9aa6b8;">Sjekk hvordan tilbudet ser ut før du sender det til kunden.</p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn-preview-email" data-action="preview-email" style="padding:8px 16px; border:none; border-radius:6px; background:#3a6ea5; color:#fff; cursor:pointer; font-size:13px;">✉️ Forhåndsvis e-post</button>
+          <button class="btn-pdf" data-action="pdf-preview" style="padding:8px 16px; border:none; border-radius:6px; background:#c0392b; color:#fff; cursor:pointer; font-size:13px;">📄 Forhåndsvis PDF</button>
         </div>
-        <div style="margin-top:10px;">
-          <button class="btn-send" data-action="send" style="width:100%; padding:12px; border:none; border-radius:6px; background:#12c285; color:#06231a; font-weight:700; cursor:pointer; font-size:15px;">📧 Send tilbud til kunde</button>
-          ${!r.customerEmail ? `<p style="color:#f0a85f; font-size:12px; margin:6px 0 0;">⚠ Kunden oppga ingen e-post – kan ikke sende automatisk.</p>` : ""}
-          ${o.sentAt ? `<p style="color:#8fe0a8; font-size:12px; margin:6px 0 0;">✓ Sendt ${new Date(o.sentAt).toLocaleString("no-NO")}</p>` : ""}
-        </div>`;
+        <div class="emailPreview" style="display:none; margin-top:12px; background:#0e0e12; border:1px solid #2c2c2c; border-radius:6px; padding:14px;">
+          <div style="font-size:12px; color:#9aa6b8; margin-bottom:4px;">Emne:</div>
+          <div style="font-size:14px; color:#f0f0f0; margin-bottom:12px; font-weight:600;">Pristilbud fra Sørgulen Industriservice</div>
+          <div style="font-size:12px; color:#9aa6b8; margin-bottom:4px;">Til:</div>
+          <div style="font-size:14px; color:#f0f0f0; margin-bottom:12px;">${hasEmail ? escapeHtml(r.customerEmail) : "<span style='color:#f0a85f;'>Ingen e-post oppgitt</span>"}</div>
+          <div style="font-size:12px; color:#9aa6b8; margin-bottom:4px;">Melding:</div>
+          <div class="emailPreviewBody" style="font-size:14px; color:#e8eefb; white-space:pre-wrap; line-height:1.55; background:#161616; border-radius:6px; padding:12px;"></div>
+          <div style="font-size:12px; color:#7f8a9c; margin-top:10px;">📎 Pristilbud-Sorgulen.pdf blir lagt ved automatisk.</div>
+        </div>
+
+        <div style="height:1px; background:#2c2540; margin:16px 0;"></div>
+
+        <h4 style="margin:0 0 10px; font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:#b794f0;">Steg 4 · Send til kunde</h4>
+        <button class="btn-send" data-action="send" ${!hasEmail ? "disabled" : ""} style="width:100%; padding:13px; border:none; border-radius:6px; background:${hasEmail ? "#12c285" : "#2a3a33"}; color:${hasEmail ? "#06231a" : "#6f7c90"}; font-weight:700; cursor:${hasEmail ? "pointer" : "not-allowed"}; font-size:15px;">📧 Send tilbud til kunde</button>
+        ${!hasEmail ? `<p style="color:#f0a85f; font-size:12px; margin:8px 0 0;">⚠ Kunden oppga ingen e-post – kan ikke sende automatisk.</p>` : ""}
+        ${o.sentAt ? `<p style="color:#8fe0a8; font-size:12px; margin:8px 0 0;">✓ Sendt ${new Date(o.sentAt).toLocaleString("no-NO")}</p>` : ""}
+      </div>`;
   }
 
   async function patchRequest(id, updates) {
@@ -252,19 +315,18 @@
           throw new Error(data.error || "Kunne ikke lagre tilbudstekst");
         }
         setMessage("Tilbudstekst lagret.", "success");
-      } else if (action === "pdf") {
-        setMessage("Genererer PDF…");
-        const res = await fetch(`${API_BASE}/requests/${id}/pdf`, {
-          method: "POST",
-          headers: headers(),
-        });
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data.error || "Kunne ikke lage PDF");
-        }
-        const data = await res.json();
-        setMessage("PDF laget.", "success");
-        if (data.pdfUrl) window.open(data.pdfUrl, "_blank");
+      } else if (action === "pdf-preview") {
+        // Åpner PDF direkte fra backend (pålitelig, omgår Cloudinary-cache)
+        const key = encodeURIComponent(getAdminKey());
+        window.open(`${API_BASE}/requests/${id}/pdf-preview?key=${key}`, "_blank");
+      } else if (action === "preview-email") {
+        // Viser e-postforhåndsvisning rett på siden (bruker teksten i feltet)
+        const msg = card.querySelector(".offerMsg").value;
+        const box = card.querySelector(".emailPreview");
+        const body = card.querySelector(".emailPreviewBody");
+        if (body) body.textContent = msg;
+        if (box) box.style.display = box.style.display === "none" ? "block" : "none";
+        return; // ingen reload nødvendig
       } else if (action === "send") {
         if (!confirm("Sende tilbudet til kunden på e-post nå?")) return;
         setMessage("Sender tilbud til kunde…");
@@ -280,12 +342,65 @@
       } else if (action === "accept") {
         await patchRequest(id, { status: "accepted" });
         setMessage("Markert som aktiv – kunden vil ha jobben.", "success");
+      } else if (action === "completed") {
+        await patchRequest(id, { status: "completed" });
+        setMessage("Markert som utført – klar til fakturering.", "success");
+      } else if (action === "invoice") {
+        setMessage("Lager faktura…");
+        const res = await fetch(`${API_BASE}/requests/${id}/invoice`, {
+          method: "POST",
+          headers: headers(),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || "Kunne ikke lage faktura");
+        }
+        setMessage("Faktura laget. Se gjennom og send.", "success");
+      } else if (action === "invoice-preview") {
+        const key = encodeURIComponent(getAdminKey());
+        window.open(`${API_BASE}/requests/${id}/invoice-preview?key=${key}`, "_blank");
+        return;
+      } else if (action === "invoice-send") {
+        if (!confirm("Sende fakturaen til kunden på e-post nå?")) return;
+        setMessage("Sender faktura…");
+        const res = await fetch(`${API_BASE}/requests/${id}/invoice/send`, {
+          method: "POST",
+          headers: headers(),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || "Kunne ikke sende faktura");
+        }
+        setMessage("Faktura sendt til kunden! ✓", "success");
+      } else if (action === "invoice-paid") {
+        if (!confirm("Markere fakturaen som betalt?")) return;
+        const res = await fetch(`${API_BASE}/requests/${id}/invoice/paid`, {
+          method: "POST",
+          headers: headers(),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || "Kunne ikke markere betalt");
+        }
+        setMessage("Faktura markert som betalt! 💰", "success");
       } else if (action === "decline") {
         await patchRequest(id, { status: "declined" });
         setMessage("Markert som avslått.", "success");
       } else if (action === "archive") {
         await patchRequest(id, { status: "archived" });
         setMessage("Arkivert.", "success");
+      } else if (action === "delete") {
+        const name = card.querySelector(".req-customer")?.textContent || "denne forespørselen";
+        if (!confirm(`Slette forespørselen fra ${name} permanent?\n\nDette kan ikke angres.`)) return;
+        const res = await fetch(`${API_BASE}/requests/${id}`, {
+          method: "DELETE",
+          headers: headers(),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || "Kunne ikke slette");
+        }
+        setMessage("Forespørsel slettet.", "success");
       }
       await loadRequests();
     } catch (err) {
