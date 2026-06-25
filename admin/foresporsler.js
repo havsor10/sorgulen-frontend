@@ -135,7 +135,7 @@
       <div class="req-card" data-id="${id}">
         <div class="req-head">
           <div>
-            <p class="req-customer">${escapeHtml(r.customerName)}</p>
+            <p class="req-customer">${escapeHtml(r.customerName)}${r.refNumber ? ` <span style="color:#c79a3a; font-weight:700; font-size:13px;">· Ref #${escapeHtml(r.refNumber)}</span>` : ""}</p>
             <div class="req-meta">
               ${escapeHtml(r.customerPhone)}${r.customerEmail ? " · " + escapeHtml(r.customerEmail) : ""}<br>
               ${formatDateTime(r.createdAt)}

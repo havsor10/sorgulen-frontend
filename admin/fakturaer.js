@@ -120,6 +120,21 @@
   }
 
   if (refreshBtn) refreshBtn.addEventListener("click", load);
+  const backfillBtn = document.getElementById("backfillBtn");
+  if (backfillBtn) {
+    backfillBtn.addEventListener("click", async () => {
+      if (!confirm("Gi referansenummer til alle gamle bestillinger og forespørsler som mangler det? Dette gjøres bare én gang.")) return;
+      setMessage("Tildeler referansenumre…");
+      try {
+        const res = await fetch(`${API_BASE}/invoices/backfill-refs`, { method: "POST", headers: headers() });
+        if (!res.ok) throw new Error("Kunne ikke tildele numre");
+        const data = await res.json();
+        setMessage(`Ferdig! ${data.bookingsFixed} bestillinger og ${data.requestsFixed} forespørsler fikk referansenummer.`, "success");
+      } catch (err) {
+        setMessage(err.message || "Noe gikk galt", "error");
+      }
+    });
+  }
   if (newInvoiceBtn) {
     newInvoiceBtn.addEventListener("click", () => {
       window.location.href = "faktura-ny.html";

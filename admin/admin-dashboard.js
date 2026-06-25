@@ -168,7 +168,7 @@
         <article class="order-card status-${escapeHtml(status)}" data-id="${escapeHtml(id)}">
           <div class="order-card-header">
             <div>
-              <h3>${escapeHtml(name)}</h3>
+              <h3>${escapeHtml(name)}${b.refNumber ? ` <span style="color:#c79a3a; font-weight:700; font-size:13px;">· Ref #${escapeHtml(b.refNumber)}</span>` : ""}</h3>
               <p>${escapeHtml(serviceName)} – ${escapeHtml(formatDate(b.date))} kl. ${escapeHtml(time)}</p>
             </div>
             <div class="badge-row">
