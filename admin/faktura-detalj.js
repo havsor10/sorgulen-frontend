@@ -61,6 +61,9 @@
       actions += `<button class="btn-delete" data-action="delete">🗑 Slett utkast</button>`;
     } else if (inv.status === "sent") {
       actions += `<button class="btn-paid" data-action="paid">💰 Marker betalt</button>`;
+      actions += `<button class="btn-delete" data-action="credit" style="background:#8a5a1f;">↩️ Lag kreditnota</button>`;
+    } else if (inv.status === "paid") {
+      actions += `<button class="btn-delete" data-action="credit" style="background:#8a5a1f;">↩️ Lag kreditnota</button>`;
     }
 
     content.innerHTML = `
@@ -131,6 +134,13 @@
         if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || "Kunne ikke slette"); }
         setMessage("Utkast slettet.", "success");
         setTimeout(() => { window.location.href = "fakturaer.html"; }, 800);
+      } else if (action === "credit") {
+        if (!confirm("Lage en kreditnota som opphever denne fakturaen? Originalen blir merket «kreditert». Dette er den lovlige måten å rette en sendt faktura på.")) return;
+        setMessage("Lager kreditnota…");
+        const res = await fetch(`${API_BASE}/invoices/${inv._id}/credit`, { method: "POST", headers: headers() });
+        if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || "Kunne ikke lage kreditnota"); }
+        setMessage("Kreditnota laget! ✓", "success");
+        load();
       }
     } catch (err) {
       setMessage(err.message || "Noe gikk galt", "error");
@@ -138,6 +148,7 @@
   }
 
   async function load() {
+    if (statusMessage) statusMessage.style.display = "none"; // nullstill gamle meldinger
     if (!invoiceId) { content.innerHTML = `<div class="fd-loading">Mangler faktura-ID.</div>`; return; }
     content.innerHTML = `<div class="fd-loading">Laster faktura…</div>`;
     try {
