@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin – Fakturaer | Sørgulen Industriservice</title>
+  <link rel="stylesheet" href="admin.css">
+  <style>
+    .inv-wrap { max-width: 1000px; margin: 0 auto; padding: 20px; }
+    .inv-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 18px; }
+    .inv-toolbar .spacer { flex: 1; }
+    .btn-new {
+      background: #12c285; color: #06231a; border: none; border-radius: 8px;
+      padding: 11px 20px; font-size: 15px; font-weight: 700; cursor: pointer;
+    }
+    .inv-summary { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+    .inv-stat {
+      background: #1e1e1e; border: 1px solid #333; border-radius: 8px;
+      padding: 12px 18px; min-width: 120px;
+    }
+    .inv-stat .num { font-size: 22px; font-weight: 700; color: #4fc78a; }
+    .inv-stat .lbl { font-size: 12px; color: #9aa6b8; margin-top: 2px; }
+    table.inv-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    table.inv-table th {
+      text-align: left; padding: 10px 12px; color: #9aa6b8; font-size: 12px;
+      text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid #333;
+    }
+    table.inv-table td { padding: 12px; border-bottom: 1px solid #262626; color: #e8eefb; }
+    table.inv-table tr:hover td { background: #181818; }
+    .inv-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+    .badge-draft { background: #2a2a2a; color: #c0c0c0; }
+    .badge-sent { background: #2e2710; color: #e0c060; }
+    .badge-paid { background: #14331a; color: #7fe098; }
+    .badge-credited { background: #2a1518; color: #d98a8a; }
+    .inv-empty { text-align: center; color: #888; padding: 50px 20px; }
+    .inv-loading { text-align: center; color: #888; padding: 50px 20px; }
+    .inv-amount { font-weight: 700; color: #e0c060; white-space: nowrap; }
+    .inv-num { font-weight: 700; color: #fff; }
+    .inv-row-link { cursor: pointer; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Admin – Fakturaer</h1>
+    <a href="login.html" id="logoutBtn" class="logout">Logg ut</a>
+    <div class="admin-tools">
+      <a href="admin-dashboard.html" style="color:#6fb6f0; text-decoration:none; margin-right:14px;">← Bookinger</a>
+      <a href="foresporsler.html" style="color:#6fb6f0; text-decoration:none; margin-right:14px;">Forespørsler</a>
+      <button id="refreshBtn" type="button">Oppdater</button>
+    </div>
+  </header>
+
+  <main class="inv-wrap">
+    <div id="statusMessage" class="status-message" style="display:none;"></div>
+
+    <div class="inv-toolbar">
+      <div class="spacer"></div>
+      <button class="btn-new" id="newInvoiceBtn" type="button">+ Ny faktura</button>
+    </div>
+
+    <div class="inv-summary" id="invSummary"></div>
+
+    <div id="invContent">
+      <div class="inv-loading">Laster fakturaer…</div>
+    </div>
+  </main>
+
+  <script src="../config.js"></script>
+  <script src="fakturaer.js"></script>
+</body>
+</html>
