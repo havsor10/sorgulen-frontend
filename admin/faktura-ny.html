@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ny faktura | Sørgulen Industriservice</title>
+  <link rel="stylesheet" href="admin.css">
+  <style>
+    .nf-wrap { max-width: 680px; margin: 0 auto; padding: 20px; }
+    .nf-card {
+      background: #1e1e1e; border: 1px solid #333; border-radius: 10px;
+      padding: 20px; margin-bottom: 18px;
+    }
+    .nf-card h3 { margin: 0 0 4px; font-size: 15px; color: #e0e6f0; }
+    .nf-card p.hint { margin: 0 0 14px; font-size: 13px; color: #9aa6b8; }
+    .nf-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+    .nf-field { flex: 1; min-width: 200px; }
+    .nf-field label { display: block; font-size: 12px; color: #9aa6b8; margin-bottom: 4px; }
+    .nf-field input, .nf-field textarea {
+      width: 100%; background: #141414; border: 1px solid #2c2c2c; border-radius: 6px;
+      padding: 10px; color: #f0f0f0; box-sizing: border-box; font-family: inherit; font-size: 14px;
+    }
+    .nf-lookup-row { display: flex; gap: 8px; align-items: flex-end; }
+    .nf-lookup-row .nf-field { flex: 1; }
+    .btn-lookup {
+      background: #3a6ea5; color: #fff; border: none; border-radius: 6px;
+      padding: 11px 18px; font-size: 14px; cursor: pointer; white-space: nowrap;
+    }
+    .lines-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+    .lines-table td { padding: 4px 4px 4px 0; }
+    .lines-table input.line-item { width: 100%; }
+    .lines-table input.line-amount { width: 110px; }
+    .btn-add-line {
+      background: #2a2a2a; color: #cdd6e3; border: 1px dashed #444; border-radius: 6px;
+      padding: 8px 14px; font-size: 13px; cursor: pointer;
+    }
+    .btn-remove-line {
+      background: #5a1f1f; color: #fff; border: none; border-radius: 5px;
+      padding: 6px 10px; font-size: 13px; cursor: pointer;
+    }
+    .nf-total { text-align: right; font-size: 16px; color: #e0c060; font-weight: 700; margin-top: 8px; }
+    .nf-actions { display: flex; gap: 10px; margin-top: 8px; }
+    .btn-save {
+      background: #12c285; color: #06231a; border: none; border-radius: 8px;
+      padding: 13px 24px; font-size: 15px; font-weight: 700; cursor: pointer; flex: 1;
+    }
+    .btn-cancel {
+      background: #333; color: #ddd; border: none; border-radius: 8px;
+      padding: 13px 24px; font-size: 15px; cursor: pointer;
+    }
+    .lookup-result { font-size: 13px; margin-top: 8px; }
+    .lookup-ok { color: #8fe0a8; }
+    .lookup-fail { color: #f0a85f; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Ny faktura</h1>
+    <a href="login.html" id="logoutBtn" class="logout">Logg ut</a>
+    <div class="admin-tools">
+      <a href="fakturaer.html" style="color:#6fb6f0; text-decoration:none;">← Tilbake til fakturaer</a>
+    </div>
+  </header>
+
+  <main class="nf-wrap">
+    <div id="statusMessage" class="status-message" style="display:none;"></div>
+
+    <!-- Hent fra referansenummer -->
+    <div class="nf-card">
+      <h3>Hent fra bestilling eller forespørsel</h3>
+      <p class="hint">Har kunden bestilt via nettsiden? Skriv inn referansenummeret, så fylles feltene ut automatisk. Hopp over dette for en manuell faktura (f.eks. telefonkunde).</p>
+      <div class="nf-lookup-row">
+        <div class="nf-field">
+          <label for="refInput">Referansenummer</label>
+          <input type="number" id="refInput" placeholder="f.eks. 1001" inputmode="numeric">
+        </div>
+        <button class="btn-lookup" id="lookupBtn" type="button">Hent</button>
+      </div>
+      <div class="lookup-result" id="lookupResult"></div>
+    </div>
+
+    <!-- Kundeinfo -->
+    <div class="nf-card">
+      <h3>Kunde</h3>
+      <div class="nf-row">
+        <div class="nf-field">
+          <label for="custName">Navn *</label>
+          <input type="text" id="custName" required>
+        </div>
+        <div class="nf-field">
+          <label for="custPhone">Telefon</label>
+          <input type="text" id="custPhone">
+        </div>
+      </div>
+      <div class="nf-row">
+        <div class="nf-field">
+          <label for="custEmail">E-post</label>
+          <input type="email" id="custEmail">
+        </div>
+      </div>
+      <div class="nf-field">
+        <label for="custAddress">Adresse</label>
+        <input type="text" id="custAddress" placeholder="Gate, postnr, sted">
+      </div>
+    </div>
+
+    <!-- Linjer -->
+    <div class="nf-card">
+      <h3>Hva skal faktureres</h3>
+      <p class="hint">Legg til en eller flere linjer. Beløp i kr.</p>
+      <table class="lines-table">
+        <tbody id="linesBody"></tbody>
+      </table>
+      <button class="btn-add-line" id="addLineBtn" type="button">+ Legg til linje</button>
+      <div class="nf-total" id="totalDisplay">Total: 0 kr</div>
+    </div>
+
+    <div class="nf-actions">
+      <button class="btn-save" id="saveBtn" type="button">💾 Lagre som utkast</button>
+      <button class="btn-cancel" id="cancelBtn" type="button">Avbryt</button>
+    </div>
+  </main>
+
+  <script src="../config.js"></script>
+  <script src="faktura-ny.js"></script>
+</body>
+</html>
