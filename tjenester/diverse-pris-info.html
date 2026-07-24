@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Diverse arbeid – Pris og info | Sørgulen Industriservice</title>
-  <meta name="description" content="Prisoversikt og informasjon for diverse arbeid i Florø. Vi tar på oss små og store oppdrag innen vedlikehold, reparasjon og montering." />
+  <meta name="description" content="Prisoversikt og informasjon for diverse arbeid i Florø. Vi utfører mindre og varierte oppdrag innen vedlikehold, reparasjon og montering." />
   <meta name="theme-color" content="#0a0f18" />
   <!-- Vedlikeholdsfil: vis overlay ved utvikling. -->
   <link rel="stylesheet" href="../maintenance.css" />
@@ -92,7 +92,10 @@
 <body>
   <header>
     <div class="bar">
-        <b>Sørgulen Industriservice</b>
+      <!-- Klikkbar logo som tar deg til forsiden -->
+      <a href="../index.html" class="logo" aria-label="Gå til forsiden">
+        <img src="../assets/logo.png" alt="Sørgulen logo" width="34" height="34" decoding="async">
+        <b>Sørgulen&nbsp;Industriservice</b>
       </a>
       <nav aria-label="Hovedmeny">
         <a href="../index.html">Hjem</a>
@@ -100,7 +103,7 @@
         <!-- Utleie-lenke for undersider -->
         <a href="../utleie/index.html">Utleie</a>
         <!-- Lenke til tilbudssiden -->
-        <a href="../tilbud.html">Tilbud</a>
+        <a href="../tilbud.html">Tilbud</a><a href="../prisestimat.html">Få prisestimat</a>
         <a href="../kontakt.html">Kontakt</a>
         <a href="../sporsmal.html">Spørsmål</a>
         <a href="../apningstider.html">Åpningstider</a>
@@ -116,7 +119,7 @@
       <!-- Utleie-lenke i mobilmenyen -->
       <a href="../utleie/index.html">Utleie</a>
       <!-- Lenke til tilbudssiden i mobilmenyen -->
-      <a href="../tilbud.html">Tilbud</a>
+      <a href="../tilbud.html">Tilbud</a><a href="../prisestimat.html">Få prisestimat</a>
       <a href="../kontakt.html">Kontakt</a>
       <a href="../sporsmal.html">Spørsmål</a>
       <a href="../apningstider.html">Åpningstider</a>
@@ -128,7 +131,7 @@
       <div>
         <div class="breadcrumbs"><a href="../index.html">Hjem</a> / / Diverse arbeid</div>
         <h1>Diverse arbeid i Florø</h1>
-        <p class="lead">Vi tar på oss det meste – fra små snekkertjenester til enkle reparasjoner, montering og annet vedlikehold. Spør oss – vi finner en løsning.</p>
+        <p class="lead">Vi utfører mindre og varierte oppdrag som normalt kan gjennomføres i løpet av én arbeidsdag – små snekkertjenester, enkle reparasjoner, montering og annet vedlikehold. Spør oss, så vurderer vi oppdraget.</p>
         <div class="btns">
           <!-- Direkte bestilling uten egen bestillingsside -->
           <a class="btn primary" href="../kontakt.html?service=Diverse%20arbeid">Send forespørsel</a>
@@ -159,31 +162,27 @@
     </div>
     <div class="prices">
       <div class="price-card">
-        <h3>Privat</h3>
+        <h3>Slik prises oppdraget</h3>
         <table>
-          <thead><tr><th>Tjeneste</th><th>Pris fra</th></tr></thead>
+          <thead><tr><th>Grunnlag</th><th>Pris</th></tr></thead>
           <tbody>
-            <tr><td>Hjelp 1 time</td><td>300 kr</td></tr>
-            <tr><td>Hjelp 2 timer</td><td>550 kr</td></tr>
-            <tr><td>Vedlikeholdsavtale</td><td>1 500 kr</td></tr>
-            <tr><td>Oppmøtegebyr</td><td>50 kr</td></tr>
-            <tr><td>Materialkostnader</td><td>Etter behov</td></tr>
+            <tr><td>Arbeid, ordinær arbeidstid</td><td>fra 650 kr/time</td></tr>
+            <tr><td>Maskinbruk og spesialutstyr</td><td>etter behov</td></tr>
+            <tr><td>Materiell</td><td>etter behov</td></tr>
+            <tr><td>Transport, bortkjøring og avfallsgebyr</td><td>etter behov</td></tr>
           </tbody>
         </table>
-        <p class="small">Småjobber prises per time. Avtal gjerne en pakkepris for større oppdrag.</p>
+        <p class="small">Arbeid prises normalt fra 650 kr per time. Eventuelle tillegg for nødvendig maskinbruk, spesialutstyr, materiell, transport, bortkjøring eller avfallsgebyr opplyses eller avtales før arbeidet starter.</p>
       </div>
       <div class="price-card">
-        <h3>Bedrift</h3>
-        <table>
-          <thead><tr><th>Tjeneste</th><th>Pris fra</th></tr></thead>
-          <tbody>
-            <tr><td>Montasje og reparasjoner</td><td>450 kr/time</td></tr>
-            <tr><td>Prosjektpris</td><td>Etter avtale</td></tr>
-            <tr><td>Materiell og utstyr</td><td>Etter behov</td></tr>
-            <tr><td>Overtid/helg</td><td>Tillegg 25 %</td></tr>
-          </tbody>
-        </table>
-        <p class="small">Bedriftsavtaler tilpasses behov og inkluderer prioritet når du trenger hjelp raskt.</p>
+        <h3>Godt å vite</h3>
+        <div class="list">
+          <div>Vi tar primært mindre og varierte oppdrag som normalt kan gjennomføres i løpet av én arbeidsdag.</div>
+          <div>Vanlig håndverktøy er inkludert i timeprisen.</div>
+          <div>Usikker på om oppdraget passer? Send oss en forespørsel, så vurderer vi det.</div>
+          <div>Ingen betaling før arbeidet er utført.</div>
+        </div>
+        <p class="small">Ønsker du en vurdering før arbeidet starter? Send inn bilder og en beskrivelse via <a href="../prisestimat.html">Få prisestimat</a>.</p>
       </div>
     </div>
     <div class="wrap" style="padding-left:0;padding-right:0">
@@ -205,7 +204,7 @@
     <div class="faq">
       <div class="qa">
         <b>Hvilke typer jobb kan dere utføre?</b>
-        Vi tar på oss alt fra små reparasjoner og montering til hagearbeid og enklere oppussingsoppgaver. Spør oss om ditt behov!
+        Vi utfører små reparasjoner, montering, hagearbeid, rydding og lignende oppdrag som normalt kan gjennomføres i løpet av én arbeidsdag. Er du usikker på om oppdraget passer? Ta kontakt, så vurderer vi det.
       </div>
       <div class="qa">
         <b>Tar dere med verktøy?</b>

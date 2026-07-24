@@ -33,7 +33,7 @@
         if (res.ok) {
           const data = await res.json();
           orders = (data.orders || []).map(o => {
-            const serviceMap = { broeyting: 'Brøyting', plenklipping: 'Plenklipping', trefelling: 'Trefelling', diverse: 'Diverse' };
+            const serviceMap = { broeyting: 'Brøyting', dekkskift: 'Dekkskift', diverse: 'Diverse' };
             const uiStatusMap = { new: 'venter-godkjenning', in_progress: 'venter-utføring', completed: 'ferdig', cancelled: 'kansellert' };
             return {
               id: o._id,

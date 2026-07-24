@@ -38,7 +38,7 @@ if (toggle && seasonNote) {
     seasonNote.textContent =
       season === "vinter"
         ? "Vinter aktiv: fremhever brøyting og vinteroppdrag."
-        : "Sommer aktiv: fremhever plenklipp og sommertjenester.";
+        : "Sommer aktiv: fremhever sommeroppdrag.";
     cards.forEach((c) => {
       const tags = c.getAttribute("data-tags") || "";
       const on = tags.includes(season) || tags === "";
@@ -74,7 +74,6 @@ if (bestillingForm) {
     if (formData.get("bot-field")) return;
     const serviceMap = {
       'Brøyting': 'broeyting',
-      'Takvask': 'diverse',
       'Takrennevask og rens': 'diverse',
       'Vask av søppeldunker': 'diverse',
       'Diverse arbeid': 'diverse'
@@ -260,7 +259,7 @@ document.querySelectorAll('.book-service-btn').forEach((btn) => {
     if (serviceId === '2') return openServiceBooking('Brøyting');
     if (serviceId === '11') return openServiceBooking('Dekkskift');
     if (serviceId === '5') return openRequestPage('Diverse arbeid');
-    if (serviceId === '6') return openRequestPage('Takvask');
+    if (serviceId === '6') return openRequestPage('Diverse arbeid');
 
     return openRequestPage('Tjenesteforespørsel');
   });

@@ -77,7 +77,7 @@
     overlay.innerHTML =
       '<div id="maint-card">' +
         "<h1>Velkommen til Sørgulen Industriservice</h1>" +
-        "<p>Nettsiden er nå klar til bruk. Vi gleder oss til å hjelpe Flor\u00f8\u2011folket med små og store oppdrag.</p>" +
+        "<p>Nettsiden er nå klar til bruk. Vi gleder oss til å hjelpe Flor\u00f8\u2011folket med mindre og varierte oppdrag.</p>" +
         '<div id="maint-actions">' +
           '<button id="welcomeContinue" class="cta">Fortsett</button>' +
         "</div>" +

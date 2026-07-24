@@ -253,6 +253,19 @@
     setMessage("Oppdatert.", "success");
   }
 
+  // Historiske bookinger kan inneholde tjenester som ikke lenger tilbys
+  // (f.eks. Takvask). Da legges verdien inn som et midlertidig valg slik at
+  // gamle bestillinger fortsatt vises korrekt og ikke endres ved lagring.
+  function ensureServiceOption(selectEl, value) {
+    if (!selectEl || !value) return;
+    const exists = Array.from(selectEl.options).some((o) => o.value === value);
+    if (exists) return;
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = `${value} (utgått tjeneste)`;
+    selectEl.appendChild(opt);
+  }
+
   function openEditModal(id) {
     const booking = findBooking(id);
     if (!booking || !editModal || !editForm) return;
@@ -262,7 +275,9 @@
     document.getElementById("editPhone").value = booking.customerPhone || "";
     document.getElementById("editEmail").value = booking.customerEmail || "";
     document.getElementById("editAddress").value = booking.customerAddress || "";
-    document.getElementById("editService").value = booking.serviceName || "Brøyting";
+    const editServiceEl = document.getElementById("editService");
+    ensureServiceOption(editServiceEl, booking.serviceName);
+    editServiceEl.value = booking.serviceName || "Brøyting";
     document.getElementById("editDate").value = normalizeDateValue(booking.date);
     document.getElementById("editTime").value = booking.time || "09:00";
     document.getElementById("editStatus").value = normalizedStatus(booking);
