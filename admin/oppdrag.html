@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin – Oppdrag / Takstameter | Sørgulen Industriservice</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <header>
+    <h1>Admin – Oppdrag / Takstameter</h1>
+    <a href="login.html" id="logoutBtn" class="logout">Logg ut</a>
+
+    <nav class="admin-section-links" aria-label="Adminnavigasjon">
+      <a href="admin-dashboard.html">Bookinger</a>
+      <a href="foresporsler.html">Forespørsler</a>
+      <a href="fakturaer.html">Fakturaer</a>
+      <a href="oppdrag.html" class="active" aria-current="page">Oppdrag / Takstameter</a>
+    </nav>
+  </header>
+
+  <main class="work-order-main">
+    <div id="statusMessage" class="status-message" role="status" aria-live="polite"></div>
+
+    <section id="activeWorkOrderSection" aria-labelledby="activeWorkOrderHeading">
+      <div class="section-heading-row">
+        <div>
+          <p class="section-kicker">Tidtaking</p>
+          <h2 id="activeWorkOrderHeading">Aktivt oppdrag</h2>
+        </div>
+        <button id="refreshBtn" class="secondary-btn" type="button">Oppdater</button>
+      </div>
+      <div id="activeWorkOrderContent" class="active-work-order-content"></div>
+    </section>
+
+    <section id="createWorkOrderSection" class="create-form work-order-create" aria-labelledby="createWorkOrderHeading">
+      <h2 id="createWorkOrderHeading">Opprett nytt oppdrag</h2>
+      <p class="form-help">Søk i eksisterende bookinger og forespørsler. Hvis kunden ikke finnes, kan du skrive navnet direkte uten at det opprettes et nytt kunderegister.</p>
+
+      <form id="createWorkOrderForm" class="work-order-form">
+        <div class="work-order-form-grid">
+          <div class="form-field customer-search-field full-width-field">
+            <label for="customerSearch">Kunde / bedrift</label>
+            <input id="customerSearch" type="search" autocomplete="off" placeholder="Søk navn, telefon, e-post eller adresse" required>
+            <div id="customerResults" class="customer-results" role="listbox" aria-label="Kundetreff"></div>
+            <div id="selectedCustomerInfo" class="selected-customer hidden"></div>
+          </div>
+
+          <div class="form-field">
+            <label for="serviceName">Oppdrag / tjeneste</label>
+            <input id="serviceName" type="text" list="serviceSuggestions" maxlength="120" placeholder="For eksempel hagearbeid" required>
+            <datalist id="serviceSuggestions">
+              <option value="Brøyting"></option>
+              <option value="Dekkskift"></option>
+              <option value="Diverse arbeid"></option>
+              <option value="Hagearbeid"></option>
+              <option value="Vaktmesterarbeid"></option>
+              <option value="Mekanisk arbeid"></option>
+            </datalist>
+          </div>
+
+          <div class="form-field">
+            <label for="jobDate">Oppdragsdato</label>
+            <input id="jobDate" type="date" required>
+          </div>
+
+          <div class="form-field">
+            <label for="ratePreset">Timesats</label>
+            <select id="ratePreset" required>
+              <option value="650">650 kr/time – kunden stiller med utstyr</option>
+              <option value="850">850 kr/time – firmaet stiller med utstyr</option>
+              <option value="custom">Annen sats</option>
+            </select>
+          </div>
+
+          <div id="customRateField" class="form-field hidden">
+            <label for="customRate">Egen timesats</label>
+            <input id="customRate" type="number" min="1" max="100000" step="0.01" inputmode="decimal" placeholder="Kr/time">
+          </div>
+
+          <div class="form-field full-width-field">
+            <label for="workOrderNotes">Notater</label>
+            <textarea id="workOrderNotes" rows="3" maxlength="5000" placeholder="Hva skal utføres, avtaler, materiell eller annen viktig informasjon"></textarea>
+          </div>
+        </div>
+
+        <button id="createWorkOrderBtn" class="primary-btn work-order-submit" type="submit">Opprett oppdrag</button>
+      </form>
+    </section>
+
+    <section class="work-history-section" aria-labelledby="historyHeading">
+      <div class="section-heading-row">
+        <div>
+          <p class="section-kicker">Oppdragslogg</p>
+          <h2 id="historyHeading">Oppdragshistorikk</h2>
+        </div>
+      </div>
+
+      <div class="history-toolbar">
+        <input id="historySearch" type="search" placeholder="Søk kunde, oppdrag eller notat" aria-label="Søk i oppdrag">
+        <select id="historyStatus" aria-label="Filtrer på status">
+          <option value="all">Alle statuser</option>
+          <option value="planned">Planlagt</option>
+          <option value="open">Aktiv / pauset / stoppet</option>
+          <option value="completed">Ferdigstilt</option>
+          <option value="cancelled">Avbrutt</option>
+        </select>
+      </div>
+
+      <div id="workOrderHistory" class="work-order-history"></div>
+    </section>
+  </main>
+
+  <div id="detailModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="detailModalTitle">
+    <div class="modal-card work-order-detail-modal">
+      <div class="modal-header">
+        <h2 id="detailModalTitle">Oppdragsdetaljer</h2>
+        <button type="button" id="closeDetailModal" class="icon-btn" aria-label="Lukk">×</button>
+      </div>
+      <div id="detailModalContent"></div>
+    </div>
+  </div>
+
+  <div id="confirmModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle">
+    <div class="modal-card small">
+      <h2 id="confirmModalTitle">Bekreft handling</h2>
+      <p id="confirmModalText"></p>
+      <div class="modal-actions">
+        <button type="button" id="confirmNo" class="secondary-btn">Avbryt</button>
+        <button type="button" id="confirmYes" class="danger-btn">Bekreft</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../config.js"></script>
+  <script src="work-order-time.js"></script>
+  <script src="oppdrag.js"></script>
+</body>
+</html>
