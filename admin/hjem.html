@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Hjem – Sørgulen admin</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="hjem.css">
+</head>
+<body class="home-body">
+  <header class="home-header">
+    <div><p class="eyebrow">Sørgulen Industriservice</p><h1>God arbeidsdag</h1></div>
+    <a href="login.html" id="logoutBtn" class="quiet-link">Logg ut</a>
+  </header>
+
+  <nav class="home-nav" aria-label="Adminnavigasjon">
+    <a href="hjem.html" class="active" aria-current="page">Hjem</a>
+    <a href="oppdrag.html">Oppdrag</a>
+    <a href="admin-dashboard.html">Bookinger</a>
+    <a href="foresporsler.html">Forespørsler</a>
+    <a href="fakturaer.html">Fakturaer</a>
+  </nav>
+
+  <main class="home-main">
+    <div id="homeStatus" class="home-status" role="status" aria-live="polite">Henter dagens oversikt…</div>
+
+    <section id="focusSection" class="focus-section" aria-labelledby="focusTitle">
+      <div id="focusContent" class="home-card focus-card loading-card">Henter aktivt eller neste oppdrag…</div>
+    </section>
+
+    <section aria-labelledby="tasksTitle">
+      <div class="section-title-row"><div><p class="eyebrow">Prioritert</p><h2 id="tasksTitle">Må gjøres</h2></div><button id="refreshBtn" class="icon-action" type="button" aria-label="Oppdater">↻</button></div>
+      <div id="aiSummary" class="ai-summary hidden"></div>
+      <div id="taskList" class="task-list loading-card">Kontrollerer hva som krever handling…</div>
+    </section>
+
+    <section aria-labelledby="latestTitle">
+      <div class="section-title-row"><div><p class="eyebrow">Nylig</p><h2 id="latestTitle">Siste bookinger</h2></div><a href="admin-dashboard.html" class="quiet-link">Se alle</a></div>
+      <div id="latestBookings" class="booking-list loading-card">Henter bookinger…</div>
+    </section>
+  </main>
+
+  <div id="quickModal" class="home-modal hidden" role="dialog" aria-modal="true" aria-labelledby="quickTitle">
+    <form id="quickForm" class="home-sheet">
+      <div class="sheet-head"><h2 id="quickTitle">Registrer</h2><button id="closeQuick" type="button" class="icon-action" aria-label="Lukk">×</button></div>
+      <div id="quickFields"></div>
+      <p id="quickError" class="form-error" role="alert"></p>
+      <button id="quickSave" type="submit" class="primary-action">Lagre</button>
+    </form>
+  </div>
+
+  <div id="confirmModal" class="home-modal hidden" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="home-sheet small-sheet"><h2 id="confirmTitle">Bekreft</h2><p id="confirmText"></p><div class="confirm-actions"><button id="confirmCancel" type="button" class="secondary-action">Avbryt</button><button id="confirmOk" type="button" class="primary-action">Bekreft</button></div></div>
+  </div>
+
+  <script src="../config.js"></script>
+  <script src="work-order-time.js"></script>
+  <script src="hjem.js"></script>
+</body>
+</html>

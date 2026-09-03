@@ -28,8 +28,20 @@
     }
     .lines-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
     .lines-table td { padding: 4px 4px 4px 0; }
-    .lines-table input.line-item { width: 100%; }
-    .lines-table input.line-amount { width: 110px; }
+    .lines-table th { text-align:left; color:#9aa6b8; font-size:11px; padding:4px; }
+    .lines-table input, .lines-table select { width:100%; background:#141414; color:#fff; border:1px solid #333; border-radius:6px; padding:9px; box-sizing:border-box; }
+    .line-total { min-width:90px; text-align:right; font-weight:700; }
+    .rate-toolbar { display:flex; gap:8px; flex-wrap:wrap; }
+    .btn-rates { background:#c79a3a; color:#1a1407; border:0; border-radius:7px; padding:9px 15px; font-weight:800; cursor:pointer; }
+    .rate-modal { position:fixed; inset:0; z-index:1000; display:grid; place-items:center; padding:16px; background:rgba(0,0,0,.78); }
+    .rate-modal.hidden { display:none; }
+    .rate-panel { width:min(720px,100%); max-height:85vh; overflow:auto; background:#171717; border:1px solid #3b4658; border-radius:12px; padding:18px; }
+    .rate-heading { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .rate-category h4 { color:#c79a3a; margin:18px 0 7px; }
+    .rate-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    .rate-option { text-align:left; background:#222; color:#fff; border:1px solid #3a4657; border-radius:8px; padding:11px; cursor:pointer; }
+    .rate-option span { display:block; color:#8fe0a8; margin-top:4px; }
+    @media(max-width:700px){ .lines-table,.lines-table tbody,.lines-table tr,.lines-table td{display:block;width:100%}.lines-table thead{display:none}.lines-table tr{border-bottom:1px solid #333;padding:8px 0}.lines-table td{padding:4px 0}.line-total{text-align:left}.rate-grid{grid-template-columns:1fr} }
     .btn-add-line {
       background: #2a2a2a; color: #cdd6e3; border: 1px dashed #444; border-radius: 6px;
       padding: 8px 14px; font-size: 13px; cursor: pointer;
@@ -107,11 +119,13 @@
     <!-- Linjer -->
     <div class="nf-card">
       <h3>Hva skal faktureres</h3>
-      <p class="hint">Legg til en eller flere linjer. Beløp i kr.</p>
+      <p class="hint">Velg en lagret sats eller legg inn beskrivelse, tidsbruk/antall og sats selv. Summen regnes ut automatisk og kontrolleres av serveren.</p>
+      <div class="nf-field" style="margin-bottom:14px"><label for="invoiceDescription">Overordnet beskrivelse</label><textarea id="invoiceDescription" rows="3" placeholder="Hva ble utført?"></textarea></div>
       <table class="lines-table">
+        <thead><tr><th>Beskrivelse</th><th>Tid/antall</th><th>Enhet</th><th>Sats</th><th>Sum</th><th></th></tr></thead>
         <tbody id="linesBody"></tbody>
       </table>
-      <button class="btn-add-line" id="addLineBtn" type="button">+ Legg til linje</button>
+      <div class="rate-toolbar"><button class="btn-rates" id="ratesBtn" type="button">Satser</button><button class="btn-add-line" id="addLineBtn" type="button">+ Manuell linje</button></div>
       <div class="nf-total" id="totalDisplay">Total: 0 kr</div>
     </div>
 
@@ -120,6 +134,8 @@
       <button class="btn-cancel" id="cancelBtn" type="button">Avbryt</button>
     </div>
   </main>
+
+  <div class="rate-modal hidden" id="ratesModal" role="dialog" aria-modal="true" aria-labelledby="ratesTitle"><div class="rate-panel"><div class="rate-heading"><div><h2 id="ratesTitle">Velg sats</h2><p class="hint">Satsene kopieres inn på fakturaen som et historisk øyeblikksbilde.</p></div><button class="btn-cancel" id="closeRatesBtn" type="button">Lukk</button></div><div id="ratesList">Henter satser…</div></div></div>
 
   <script src="../config.js"></script>
   <script src="faktura-ny.js"></script>

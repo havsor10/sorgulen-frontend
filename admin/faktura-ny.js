@@ -12,6 +12,12 @@
   const saveBtn = document.getElementById("saveBtn");
   const cancelBtn = document.getElementById("cancelBtn");
   const logoutBtn = document.getElementById("logoutBtn");
+  const invoiceDescription = document.getElementById("invoiceDescription");
+  const ratesBtn = document.getElementById("ratesBtn");
+  const ratesModal = document.getElementById("ratesModal");
+  const ratesList = document.getElementById("ratesList");
+  const closeRatesBtn = document.getElementById("closeRatesBtn");
+  let rates = [];
 
   const f = {
     name: document.getElementById("custName"),
@@ -43,13 +49,21 @@
   }
 
   // --- Linjer ---
-  function addLine(item = "", amount = "") {
+  function esc(value) { return String(value ?? "").replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;"); }
+  function addLine(item = "", amount = "", details = {}) {
+    const quantity = details.quantity ?? 1;
+    const unit = details.unit || "fixed";
+    const unitPrice = details.unitPrice ?? amount ?? "";
     const tr = document.createElement("tr");
+    tr.dataset.rateCode = details.rateCode || "";
     tr.innerHTML = `
-      <td><input type="text" class="line-item" placeholder="Beskrivelse" value="${String(item).replace(/"/g, "&quot;")}"></td>
-      <td><input type="number" class="line-amount" placeholder="kr" inputmode="numeric" value="${amount}"></td>
+      <td><input type="text" class="line-item" placeholder="Arbeid/beskrivelse" value="${esc(item)}"><input type="text" class="line-description" placeholder="Detaljer (valgfritt)" value="${esc(details.description || "")}" style="margin-top:5px"></td>
+      <td><input type="number" class="line-quantity" min="0.01" step="0.01" inputmode="decimal" value="${esc(quantity)}"></td>
+      <td><select class="line-unit"><option value="hour" ${unit === "hour" ? "selected" : ""}>timer</option><option value="fixed" ${unit === "fixed" ? "selected" : ""}>oppdrag</option><option value="quantity" ${unit === "quantity" ? "selected" : ""}>stk</option></select></td>
+      <td><input type="number" class="line-price" min="0" step="0.01" inputmode="decimal" value="${esc(unitPrice)}"></td>
+      <td class="line-total">0 kr</td>
       <td><button class="btn-remove-line" type="button">✕</button></td>`;
-    tr.querySelector(".line-amount").addEventListener("input", updateTotal);
+    tr.querySelectorAll("input,select").forEach((el) => el.addEventListener("input", updateTotal));
     tr.querySelector(".btn-remove-line").addEventListener("click", () => {
       tr.remove();
       updateTotal();
@@ -61,13 +75,20 @@
   function getLines() {
     return Array.from(linesBody.querySelectorAll("tr")).map((tr) => ({
       item: tr.querySelector(".line-item").value.trim(),
-      amount: Number(tr.querySelector(".line-amount").value) || 0,
+      description: tr.querySelector(".line-description").value.trim(),
+      quantity: Number(tr.querySelector(".line-quantity").value) || 0,
+      unit: tr.querySelector(".line-unit").value,
+      unitLabel: tr.querySelector(".line-unit").value === "hour" ? "time" : tr.querySelector(".line-unit").value === "fixed" ? "oppdrag" : "stk",
+      unitPrice: Number(tr.querySelector(".line-price").value) || 0,
+      amount: Math.round(((Number(tr.querySelector(".line-quantity").value) || 0) * (Number(tr.querySelector(".line-price").value) || 0) + Number.EPSILON) * 100) / 100,
+      rateCode: tr.dataset.rateCode || "",
     })).filter((l) => l.item);
   }
 
   function updateTotal() {
+    Array.from(linesBody.querySelectorAll("tr")).forEach((tr) => { const q=Number(tr.querySelector(".line-quantity").value)||0; const p=Number(tr.querySelector(".line-price").value)||0; tr.querySelector(".line-total").textContent=`${Math.round(q*p*100)/100} kr`; });
     const total = getLines().reduce((sum, l) => sum + l.amount, 0);
-    totalDisplay.textContent = `Total: ${total} kr`;
+    totalDisplay.textContent = `Total: ${Math.round(total * 100) / 100} kr`;
   }
 
   // --- Oppslag via referansenummer ---
@@ -94,6 +115,7 @@
 
       // Fyll en linje fra beskrivelse + foreslått beløp
       linesBody.innerHTML = "";
+      invoiceDescription.value = data.description || "";
       addLine(data.description || "Utført arbeid", data.amount != null ? data.amount : "");
 
       const kilde = data.sourceType === "booking" ? "bestilling" : "forespørsel";
@@ -124,7 +146,7 @@
           customerPhone: f.phone.value.trim(),
           customerEmail: f.email.value.trim(),
           customerAddress: f.address.value.trim(),
-          description: lines.map((l) => l.item).join(", "),
+          description: invoiceDescription.value.trim() || lines.map((l) => l.item).join(", "),
           lines,
           amount,
           sourceType: source.sourceType,
@@ -148,6 +170,18 @@
   lookupBtn.addEventListener("click", lookup);
   refInput.addEventListener("keydown", (e) => { if (e.key === "Enter") lookup(); });
   addLineBtn.addEventListener("click", () => addLine());
+  async function openRates() {
+    ratesModal.classList.remove("hidden");
+    try {
+      const res = await fetch(`${API_BASE}/admin/rates`, { headers: headers() });
+      const data = await res.json(); if (!res.ok) throw new Error(data.error || "Kunne ikke hente satser"); rates = data.rates || [];
+      const groups = rates.reduce((all, rate) => { (all[rate.category] ||= []).push(rate); return all; }, {});
+      ratesList.innerHTML = Object.entries(groups).map(([category, items]) => `<section class="rate-category"><h4>${esc(category)}</h4><div class="rate-grid">${items.map((r) => `<button type="button" class="rate-option" data-code="${esc(r.code)}">${esc(r.name)}<span>${r.defaultRate} kr / ${esc(r.unitLabel)}</span></button>`).join("")}</div></section>`).join("");
+    } catch (err) { ratesList.textContent = err.message; }
+  }
+  ratesBtn.addEventListener("click", openRates);
+  closeRatesBtn.addEventListener("click", () => ratesModal.classList.add("hidden"));
+  ratesList.addEventListener("click", (e) => { const btn=e.target.closest(".rate-option"); if(!btn)return; const r=rates.find((x)=>x.code===btn.dataset.code); if(!r)return; if(linesBody.querySelectorAll("tr").length===1 && !getLines()[0]?.item) linesBody.innerHTML=""; addLine(r.name, r.defaultRate, { quantity:1, unit:r.unit, unitPrice:r.defaultRate, rateCode:r.code }); ratesModal.classList.add("hidden"); });
   saveBtn.addEventListener("click", save);
   cancelBtn.addEventListener("click", () => { window.location.href = "fakturaer.html"; });
   if (logoutBtn) logoutBtn.addEventListener("click", (e) => {
@@ -156,6 +190,6 @@
     window.location.href = "login.html";
   });
 
-  // Start med én tom linje
-  addLine();
+  const workOrderId = new URLSearchParams(location.search).get("workOrderId");
+  if (workOrderId) fetch(`${API_BASE}/invoices/work-order/${encodeURIComponent(workOrderId)}`, { headers: headers() }).then(async(res)=>{const data=await res.json(); if(!res.ok)throw new Error(data.error); f.name.value=data.customer.name||""; f.phone.value=data.customer.phone||""; f.email.value=data.customer.email||""; f.address.value=data.customer.address||""; invoiceDescription.value=data.description||""; source={sourceType:data.sourceType,sourceRef:data.sourceRef,sourceId:data.sourceId}; linesBody.innerHTML=""; (data.lines||[]).forEach((l)=>addLine(l.item,l.amount,l)); if(!linesBody.children.length)addLine(); }).catch((err)=>setMessage(err.message,"error")); else addLine();
 })();

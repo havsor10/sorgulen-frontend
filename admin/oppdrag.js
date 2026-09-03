@@ -1,7 +1,8 @@
 (() => {
   const API_BASE = (window.CONFIG && window.CONFIG.API_BASE_URL) || "https://sorgulen-backend-2.onrender.com/api";
   const KEY_STORAGE = "sorgulen_admin_key";
-  const OPEN_STATUSES = new Set(["active", "paused", "stopped"]);
+  const OPEN_STATUSES = new Set(["active", "paused"]);
+  const PROJECT_OPEN_STATUSES = new Set(["active", "paused", "stopped"]);
   const workOrderTime = window.SorgulenWorkOrderTime;
 
   if (!workOrderTime) throw new Error("Mangler tidsberegning for oppdrag");
@@ -10,7 +11,7 @@
     planned: "Planlagt",
     active: "Aktiv",
     paused: "Pauset",
-    stopped: "Stoppet",
+    stopped: "Mellom økter",
     completed: "Ferdigstilt",
     cancelled: "Avbrutt",
   };
@@ -193,6 +194,7 @@
     if (!intervals.length) return '<p class="muted">Ingen arbeidstid registrert ennå.</p>';
     const nowMs = Date.now() + serverOffsetMs;
 
+    const categoryLabels = { work: "Arbeid", purchase: "Innkjøp", transport: "Transport" };
     return `<ol class="interval-list">${intervals.map((interval, index) => {
       const startMs = new Date(interval.startedAt).getTime();
       const endMs = interval.endedAt ? new Date(interval.endedAt).getTime() : nowMs;
@@ -200,11 +202,22 @@
         ? Math.floor((endMs - startMs) / 1000)
         : 0;
       return `<li>
-        <span>Arbeidsøkt ${index + 1}</span>
+        <span>${escapeHtml(categoryLabels[interval.category] || "Arbeid")} ${index + 1}</span>
         <strong>${escapeHtml(formatTime(interval.startedAt))}–${interval.endedAt ? escapeHtml(formatTime(interval.endedAt)) : "pågår"}</strong>
         <span>${escapeHtml(formatDuration(seconds))}</span>
       </li>`;
     }).join("")}</ol>`;
+  }
+
+  function intervalCategoryTotals(workOrder) {
+    const totals = { work: 0, purchase: 0, transport: 0 };
+    const nowMs = Date.now() + serverOffsetMs;
+    (workOrder.workIntervals || []).forEach((interval) => {
+      const start = new Date(interval.startedAt).getTime();
+      const end = interval.endedAt ? new Date(interval.endedAt).getTime() : nowMs;
+      if (!Number.isNaN(start) && !Number.isNaN(end) && end >= start) totals[interval.category || "work"] += Math.floor((end - start) / 1000);
+    });
+    return totals;
   }
 
   function workOrderControls(workOrder) {
@@ -231,6 +244,7 @@
     }
     if (workOrder.status === "stopped") {
       return `
+        <button class="work-btn work-btn-start" type="button" data-work-action="resume" data-id="${id}">FORTSETT OPPDRAG</button>
         <button class="work-btn work-btn-complete" type="button" data-work-action="complete" data-id="${id}">FERDIGSTILL OPPDRAG</button>
         <button class="work-btn work-btn-ghost" type="button" data-work-action="cancel" data-id="${id}">Forkast / avbryt</button>`;
     }
@@ -305,7 +319,7 @@
     const query = (historySearch.value || "").trim().toLowerCase();
     const filter = historyStatus.value;
     return workOrders.filter((workOrder) => {
-      if (filter === "open" && !OPEN_STATUSES.has(workOrder.status)) return false;
+      if (filter === "open" && !PROJECT_OPEN_STATUSES.has(workOrder.status)) return false;
       if (!["all", "open"].includes(filter) && workOrder.status !== filter) return false;
       if (!query) return true;
       const customer = workOrder.customerSnapshot || {};
@@ -508,7 +522,7 @@
     if (action === "stop") {
       askForConfirmation({
         title: "Stoppe tidtakingen?",
-        text: `Tidtakingen for ${customerName} stoppes og oppsummeringen åpnes. Etter STOPP kan timeren ikke fortsettes; bruk PAUSE hvis arbeidet skal fortsette senere.`,
+        text: `Den aktive arbeidsøkten for ${customerName} avsluttes. Prosjektet og historikken beholdes, og kan fortsettes senere.`,
         confirmLabel: "Ja, stopp",
         run: () => performAction(id, action),
       });
@@ -556,7 +570,7 @@
         start: "Takstameteret er startet.",
         pause: "Takstameteret er pauset. Pausen teller ikke som arbeidstid.",
         resume: "Takstameteret fortsetter.",
-        stop: "Tidtakingen er stoppet. Kontroller oppsummeringen før ferdigstilling.",
+        stop: "Arbeidsøkten er avsluttet. Prosjektet kan fortsettes senere eller ferdigstilles.",
         complete: "Oppdraget er ferdigstilt og lagret i historikken.",
         cancel: "Oppdraget er markert som avbrutt. Tidsloggen er bevart.",
       };
@@ -604,6 +618,11 @@
     const amount = calculateEstimatedAmount(workOrder, seconds);
     const completed = workOrder.status === "completed";
     const contactParts = [customer.phone, customer.email, customer.address].filter(Boolean);
+    const expenses = workOrder.additionalCosts || [];
+    const materials = workOrder.materials || [];
+    const projectNotes = workOrder.projectNotes || [];
+    const expenseTotal = expenses.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    const categoryTotals = intervalCategoryTotals(workOrder);
 
     detailModalContent.innerHTML = `
       <div class="detail-status-row">
@@ -625,7 +644,23 @@
 
       <section class="detail-section">
         <h3>Tidslogg</h3>
+        <p class="muted">Arbeid ${escapeHtml(formatDuration(categoryTotals.work))} · Innkjøp ${escapeHtml(formatDuration(categoryTotals.purchase))} · Transport ${escapeHtml(formatDuration(categoryTotals.transport))}</p>
         ${renderIntervals(workOrder)}
+      </section>
+
+      <section class="detail-section">
+        <h3>Utgifter · ${escapeHtml(formatCurrency(expenseTotal))}</h3>
+        ${expenses.length ? `<ul class="interval-list">${expenses.map((expense) => `<li><span>${escapeHtml(formatDateTime(expense.occurredAt))}</span><strong>${escapeHtml(expense.item)}</strong><span>${escapeHtml(formatCurrency(expense.amount))}${expense.receiptUrl ? ` · <a href="${escapeHtml(expense.receiptUrl)}" target="_blank" rel="noopener">Kvittering</a>` : ""}</span></li>`).join("")}</ul>` : '<p class="muted">Ingen utgifter registrert.</p>'}
+      </section>
+
+      <section class="detail-section">
+        <h3>Materialer</h3>
+        ${materials.length ? `<ul class="interval-list">${materials.map((material) => `<li><span>${escapeHtml(formatDateTime(material.createdAt))}</span><strong>${escapeHtml(material.item)} · ${escapeHtml(material.quantity)}</strong><span>${material.unitPrice != null ? escapeHtml(formatCurrency(Number(material.unitPrice) * Number(material.quantity))) : "Pris ikke satt"}</span></li>`).join("")}</ul>` : '<p class="muted">Ingen materialer registrert.</p>'}
+      </section>
+
+      <section class="detail-section">
+        <h3>Prosjektnotater</h3>
+        ${projectNotes.length ? `<ul class="interval-list">${projectNotes.map((note) => `<li><span>${escapeHtml(formatDateTime(note.createdAt))}</span><strong>${escapeHtml(note.text)}</strong><span></span></li>`).join("")}</ul>` : '<p class="muted">Ingen løpende notater registrert.</p>'}
       </section>
 
       <section class="detail-section">
@@ -773,6 +808,18 @@
     jobDateInput.value = getOsloDateInputValue();
     try {
       await loadDashboard(true);
+      const bookingId = new URLSearchParams(window.location.search).get("bookingId");
+      if (bookingId) {
+        const data = await apiFetch(`/admin/work-orders/customer-options?sourceType=booking&sourceId=${encodeURIComponent(bookingId)}`);
+        const option = (data.customerOptions || []).find((candidate) => candidate.sourceType === "booking" && candidate.sourceId === bookingId);
+        if (option) {
+          selectCustomer(option);
+          createSection.scrollIntoView({ behavior: "smooth", block: "start" });
+          setMessage("Bookingen er hentet inn. Velg riktig timesats og opprett oppdraget.", "success");
+        }
+      }
+      const openId = new URLSearchParams(window.location.search).get("open");
+      if (openId) await openDetails(openId);
     } catch (err) {
       renderActiveWorkOrder();
       renderHistory();

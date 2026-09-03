@@ -39,7 +39,7 @@
         const res = await fetch(`${API_BASE}/admin/ping`, { headers: { "x-admin-key": key } });
         if (!res.ok) throw new Error("Feil admin-nøkkel");
         localStorage.setItem(KEY_STORAGE, key);
-        window.location.href = "admin-dashboard.html";
+        window.location.href = "hjem.html";
       } catch (err) {
         msg.textContent = err.message || "Innlogging feilet.";
         msg.className = "status-message error";

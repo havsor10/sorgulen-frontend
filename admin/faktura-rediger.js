@@ -9,6 +9,7 @@
   const saveBtn = document.getElementById("saveBtn");
   const cancelBtn = document.getElementById("cancelBtn");
   const logoutBtn = document.getElementById("logoutBtn");
+  const invoiceDescription = document.getElementById("invoiceDescription");
 
   const f = {
     name: document.getElementById("custName"),
@@ -39,13 +40,18 @@
     if (type !== "error") setTimeout(() => { statusMessage.style.display = "none"; }, 3500);
   }
 
-  function addLine(item = "", amount = "") {
+  function esc(value) { return String(value ?? "").replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;"); }
+  function addLine(item = "", amount = "", details = {}) {
+    const quantity=details.quantity??1, unit=details.unit||"fixed", unitPrice=details.unitPrice??amount??"";
     const tr = document.createElement("tr");
+    tr.dataset.rateCode=details.rateCode||"";
     tr.innerHTML = `
-      <td><input type="text" class="line-item" placeholder="Beskrivelse" value="${String(item).replace(/"/g, "&quot;")}"></td>
-      <td><input type="number" class="line-amount" placeholder="kr" inputmode="numeric" value="${amount}"></td>
+      <td><input type="text" class="line-item" placeholder="Beskrivelse" value="${esc(item)}"><input type="text" class="line-description" placeholder="Detaljer (valgfritt)" value="${esc(details.description||"")}" style="margin-top:5px"></td>
+      <td><input type="number" class="line-quantity" min="0.01" step="0.01" value="${esc(quantity)}"></td>
+      <td><select class="line-unit"><option value="hour" ${unit==="hour"?"selected":""}>timer</option><option value="fixed" ${unit==="fixed"?"selected":""}>oppdrag</option><option value="quantity" ${unit==="quantity"?"selected":""}>stk</option></select></td>
+      <td><input type="number" class="line-price" min="0" step="0.01" value="${esc(unitPrice)}"></td><td class="line-total">0 kr</td>
       <td><button class="btn-remove-line" type="button">✕</button></td>`;
-    tr.querySelector(".line-amount").addEventListener("input", updateTotal);
+    tr.querySelectorAll("input,select").forEach((field)=>field.addEventListener("input",updateTotal));
     tr.querySelector(".btn-remove-line").addEventListener("click", () => { tr.remove(); updateTotal(); });
     linesBody.appendChild(tr);
     updateTotal();
@@ -53,12 +59,16 @@
   function getLines() {
     return Array.from(linesBody.querySelectorAll("tr")).map((tr) => ({
       item: tr.querySelector(".line-item").value.trim(),
-      amount: Number(tr.querySelector(".line-amount").value) || 0,
+      description:tr.querySelector(".line-description").value.trim(), quantity:Number(tr.querySelector(".line-quantity").value)||0,
+      unit:tr.querySelector(".line-unit").value, unitLabel:tr.querySelector(".line-unit").value==="hour"?"time":tr.querySelector(".line-unit").value==="fixed"?"oppdrag":"stk",
+      unitPrice:Number(tr.querySelector(".line-price").value)||0,
+      amount:Math.round(((Number(tr.querySelector(".line-quantity").value)||0)*(Number(tr.querySelector(".line-price").value)||0)+Number.EPSILON)*100)/100,
+      rateCode:tr.dataset.rateCode||"",
     })).filter((l) => l.item);
   }
   function updateTotal() {
-    const total = getLines().reduce((sum, l) => sum + l.amount, 0);
-    totalDisplay.textContent = `Total: ${total} kr`;
+    Array.from(linesBody.querySelectorAll("tr")).forEach((tr)=>{const q=Number(tr.querySelector(".line-quantity").value)||0,p=Number(tr.querySelector(".line-price").value)||0;tr.querySelector(".line-total").textContent=`${Math.round(q*p*100)/100} kr`;});
+    const total = getLines().reduce((sum, l) => sum + l.amount, 0); totalDisplay.textContent = `Total: ${Math.round(total*100)/100} kr`;
   }
 
   async function loadInvoice() {
@@ -79,10 +89,11 @@
       f.phone.value = inv.customerPhone || "";
       f.email.value = inv.customerEmail || "";
       f.address.value = inv.customerAddress || "";
+      invoiceDescription.value = inv.description || "";
 
       linesBody.innerHTML = "";
       if (inv.lines && inv.lines.length) {
-        inv.lines.forEach((l) => addLine(l.item, l.amount));
+        inv.lines.forEach((l) => addLine(l.item, l.amount, l));
       } else {
         addLine();
       }
@@ -110,7 +121,7 @@
           customerPhone: f.phone.value.trim(),
           customerEmail: f.email.value.trim(),
           customerAddress: f.address.value.trim(),
-          description: lines.map((l) => l.item).join(", "),
+          description: invoiceDescription.value.trim() || lines.map((l) => l.item).join(", "),
           lines,
         }),
       });
