@@ -39,6 +39,12 @@
   const customRateField = document.getElementById("customRateField");
   const customRateInput = document.getElementById("customRate");
   const notesInput = document.getElementById("workOrderNotes");
+  const customerEmailInput = document.getElementById("customerEmail");
+  const customerPhoneInput = document.getElementById("customerPhone");
+  const customerAddressInput = document.getElementById("customerAddress");
+  const pricingModeInput = document.getElementById("pricingMode");
+  const fixedPriceField = document.getElementById("fixedPriceField");
+  const fixedPriceInput = document.getElementById("fixedPrice");
   const historySearch = document.getElementById("historySearch");
   const historyStatus = document.getElementById("historyStatus");
   const historyContainer = document.getElementById("workOrderHistory");
@@ -52,6 +58,10 @@
   const confirmModalText = document.getElementById("confirmModalText");
   const confirmNo = document.getElementById("confirmNo");
   const confirmYes = document.getElementById("confirmYes");
+  const entryModal = document.getElementById("entryModal");
+  const entryForm = document.getElementById("entryForm");
+  const entryFields = document.getElementById("entryFields");
+  const entryError = document.getElementById("entryError");
 
   let openWorkOrder = null;
   let workOrders = [];
@@ -64,6 +74,8 @@
   let actionInFlight = false;
   let pendingConfirmation = null;
   let tickInterval = null;
+  let entryTargetId = null;
+  let entryOperationId = null;
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -220,6 +232,17 @@
     return totals;
   }
 
+  function renderProjectHistory(workOrder) {
+    const labels = { created: "Prosjekt opprettet", started: "Arbeidsøkt startet", paused: "Arbeidsøkt pauset", resumed: "Ny arbeidsøkt startet", stopped: "Arbeidsøkt avsluttet", completed: "Prosjekt fullført", cancelled: "Prosjekt avbrutt", notes_updated: "Prosjektbeskrivelse oppdatert", invoice_draft_created: "Fakturautkast opprettet" };
+    const items = (workOrder.events || []).filter((event) => labels[event.type]).map((event) => ({ at: event.at, title: labels[event.type], detail: event.description || "" }));
+    (workOrder.workIntervals || []).filter((interval) => interval.source === "manual").forEach((interval) => items.push({ at: interval.createdAt || interval.startedAt, title: "Tid lagt til manuelt", detail: `${interval.category === "purchase" ? "Innkjøp" : interval.category === "transport" ? "Transport" : "Arbeid"} · ${formatDuration(Math.max(0, (new Date(interval.endedAt) - new Date(interval.startedAt)) / 1000))}${interval.comment ? ` · ${interval.comment}` : ""}` }));
+    (workOrder.additionalCosts || []).forEach((item) => items.push({ at: item.occurredAt, title: "Utgift registrert", detail: `${item.item} · ${formatCurrency(item.amount)}` }));
+    (workOrder.materials || []).forEach((item) => items.push({ at: item.createdAt, title: "Materiale registrert", detail: `${item.item} · ${item.quantity} ${item.unit || "stk"}` }));
+    (workOrder.projectNotes || []).forEach((item) => items.push({ at: item.createdAt, title: "Notat", detail: item.text }));
+    items.sort((a, b) => new Date(b.at) - new Date(a.at));
+    return items.length ? `<ul class="interval-list">${items.map((item) => `<li><span>${escapeHtml(formatDateTime(item.at))}</span><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.detail)}</span></li>`).join("")}</ul>` : '<p class="muted">Ingen historikk registrert.</p>';
+  }
+
   function workOrderControls(workOrder) {
     if (!workOrder) return "";
     const id = escapeHtml(workOrder._id);
@@ -262,7 +285,7 @@
       return;
     }
 
-    createSection.classList.add("hidden");
+    createSection.classList.remove("hidden");
     const seconds = calculateWorkSeconds(openWorkOrder);
     const amount = calculateEstimatedAmount(openWorkOrder, seconds);
     const customer = openWorkOrder.customerSnapshot || {};
@@ -382,7 +405,7 @@
     customerResults.innerHTML = customerOptions.map((option, index) => {
       const customer = option.customer || {};
       const meta = [customer.phone, customer.email, customer.address].filter(Boolean).join(" · ");
-      const source = option.sourceType === "booking" ? "Booking" : "Prisforespørsel";
+      const source = option.sourceType === "booking" ? "Booking" : option.sourceType === "request" ? "Prisforespørsel" : "Kunderegister";
       return `
         <button type="button" class="customer-result" role="option" data-customer-index="${index}">
           <strong>${escapeHtml(customer.name || "Ukjent kunde")}</strong>
@@ -413,6 +436,9 @@
 
     if (!serviceNameInput.value.trim() && option.serviceName) serviceNameInput.value = option.serviceName;
     if (option.jobDate) jobDateInput.value = option.jobDate;
+    customerEmailInput.value = customer.email || "";
+    customerPhoneInput.value = customer.phone || "";
+    customerAddressInput.value = customer.address || "";
   }
 
   async function searchCustomers(query = "") {
@@ -445,11 +471,6 @@
   async function createWorkOrder(event) {
     event.preventDefault();
     if (actionInFlight) return;
-    if (openWorkOrder) {
-      setMessage("Ferdigstill eller avbryt det åpne oppdraget før du oppretter et nytt.", "error");
-      return;
-    }
-
     const hourlyRate = getHourlyRate();
     if (!Number.isFinite(hourlyRate) || hourlyRate <= 0) {
       setMessage("Skriv inn en gyldig timesats.", "error");
@@ -460,10 +481,13 @@
     const payload = {
       customerSourceType: selectedCustomer?.sourceType || "manual",
       customerSourceId: selectedCustomer?.sourceId || null,
-      customer: selectedCustomer?.customer || { name: customerSearch.value.trim() },
+      customerId: selectedCustomer?.sourceType === "customer" ? selectedCustomer.sourceId : null,
+      customer: selectedCustomer?.customer || { name: customerSearch.value.trim(), email: customerEmailInput.value.trim(), phone: customerPhoneInput.value.trim(), address: customerAddressInput.value.trim() },
       serviceName: serviceNameInput.value.trim(),
       jobDate: jobDateInput.value,
       hourlyRate,
+      pricingMode: pricingModeInput.value,
+      fixedPrice: fixedPriceInput.value,
       notes: notesInput.value.trim(),
     };
 
@@ -518,7 +542,7 @@
     document.body.classList.add("modal-open");
   }
 
-  function confirmationForAction(action, id, customerName) {
+  async function confirmationForAction(action, id, customerName) {
     if (action === "stop") {
       askForConfirmation({
         title: "Stoppe tidtakingen?",
@@ -529,13 +553,13 @@
       return;
     }
     if (action === "complete") {
-      askForConfirmation({
-        title: "Ferdigstille oppdraget?",
-        text: `Arbeidstid og beregnet arbeidsbeløp for ${customerName} lagres som ferdigstilt historikk.`,
-        confirmLabel: "Ferdigstill",
-        danger: false,
-        run: () => performAction(id, action),
-      });
+      try {
+        const data = await apiFetch(`/admin/work-orders/${encodeURIComponent(id)}/completion-check`);
+        const check = data.completionCheck || { blocking: [], warnings: [] };
+        if (check.blocking.length) { setMessage(check.blocking.join(" "), "error"); return; }
+        const warningText = check.warnings.length ? ` Kontroller: ${check.warnings.join(" ")}` : "";
+        askForConfirmation({ title: "Ferdigstille prosjektet?", text: `All tid, utgifter, materialer og notater for ${customerName} bevares. Prosjektet blir klart til fakturering.${warningText}`, confirmLabel: "Fullfør prosjekt", danger: false, run: () => performAction(id, action, { confirmWarnings: true }) });
+      } catch (error) { setMessage(error.message, "error"); }
       return;
     }
     if (action === "cancel") {
@@ -548,7 +572,7 @@
     }
   }
 
-  async function performAction(id, action) {
+  async function performAction(id, action, extra = {}) {
     if (actionInFlight) return;
     actionInFlight = true;
     setActionButtonsDisabled(true);
@@ -557,7 +581,7 @@
     try {
       const data = await apiFetch(`/admin/work-orders/${encodeURIComponent(id)}/action`, {
         method: "POST",
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action, ...extra }),
       });
 
       if (detailWorkOrder && detailWorkOrder._id === id) detailWorkOrder = data.workOrder;
@@ -610,6 +634,62 @@
     }
   }
 
+  function localDateTimeValue(date = new Date()) {
+    const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 16);
+  }
+
+  function openEntry(kind, id) {
+    entryTargetId = id;
+    entryOperationId = globalThis.crypto?.randomUUID?.() || `entry-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    entryForm.dataset.kind = kind;
+    entryError.textContent = "";
+    const billable = '<label class="check-field"><input name="billable" type="checkbox" checked> Skal med på kundens fakturagrunnlag</label>';
+    if (kind === "time") {
+      document.getElementById("entryModalTitle").textContent = "Legg til tid manuelt";
+      entryFields.innerHTML = `<div class="entry-field"><label>Kategori</label><select name="category"><option value="work">Arbeid</option><option value="purchase">Innkjøp</option><option value="transport">Transport</option></select></div><div class="entry-field"><label>Fra</label><input name="startedAt" type="datetime-local" value="${localDateTimeValue()}" required></div><div class="entry-field"><label>Til</label><input name="endedAt" type="datetime-local" value="${localDateTimeValue(new Date(Date.now() + 60 * 60000))}" required></div><div class="entry-field"><label>Kommentar</label><input name="comment" maxlength="1000"></div>${billable}`;
+    } else if (kind === "expense") {
+      document.getElementById("entryModalTitle").textContent = "Ny utgift";
+      entryFields.innerHTML = `<div class="entry-field"><label>Beløp</label><input name="amount" type="number" min="0.01" step="0.01" inputmode="decimal" required></div><div class="entry-field"><label>Beskrivelse</label><input name="description" maxlength="500" required></div><div class="entry-field"><label>Leverandør</label><input name="supplier" maxlength="160"></div><div class="entry-field"><label>Dato</label><input name="occurredAt" type="date" value="${getOsloDateInputValue()}" required></div>${billable}`;
+    } else if (kind === "material") {
+      document.getElementById("entryModalTitle").textContent = "Nytt materiale";
+      entryFields.innerHTML = `<div class="entry-field"><label>Beskrivelse</label><input name="item" maxlength="300" required></div><div class="entry-field"><label>Antall</label><input name="quantity" type="number" min="0.01" step="0.01" value="1" required></div><div class="entry-field"><label>Enhet</label><input name="unit" value="stk" maxlength="40"></div><div class="entry-field"><label>Innkjøpspris per enhet (valgfritt)</label><input name="purchaseUnitPrice" type="number" min="0.01" step="0.01"></div><div class="entry-field"><label>Kundepris per enhet (valgfritt)</label><input name="unitPrice" type="number" min="0.01" step="0.01"></div><div class="entry-field"><label>Kommentar</label><input name="comment" maxlength="500"></div>${billable}`;
+    } else {
+      document.getElementById("entryModalTitle").textContent = "Nytt notat";
+      entryFields.innerHTML = '<div class="entry-field"><label>Notat</label><textarea name="text" maxlength="2000" required></textarea></div>';
+    }
+    entryModal.classList.remove("hidden");
+    document.body.classList.add("modal-open");
+  }
+
+  async function saveEntry(event) {
+    event.preventDefault();
+    if (actionInFlight || !entryTargetId) return;
+    const kind = entryForm.dataset.kind;
+    const form = new FormData(entryForm);
+    const payload = Object.fromEntries(form.entries());
+    payload.operationId = entryOperationId;
+    if (kind !== "note") payload.billable = form.has("billable");
+    if (kind === "time") {
+      payload.startedAt = new Date(payload.startedAt).toISOString();
+      payload.endedAt = new Date(payload.endedAt).toISOString();
+    }
+    if (kind === "expense") payload.occurredAt = new Date(`${payload.occurredAt}T12:00:00`).toISOString();
+    const endpoint = kind === "time" ? "time-entries" : kind === "expense" ? "expenses" : kind === "material" ? "materials" : "notes";
+    actionInFlight = true;
+    document.getElementById("saveEntry").disabled = true;
+    try {
+      const data = await apiFetch(`/admin/work-orders/${encodeURIComponent(entryTargetId)}/${endpoint}`, { method: "POST", body: JSON.stringify(payload) });
+      entryModal.classList.add("hidden");
+      entryOperationId = null;
+      detailWorkOrder = data.workOrder;
+      await loadDashboard(false);
+      renderDetailModal();
+      setMessage(data.overlapWarning || "Registreringen er lagret.", data.overlapWarning ? "info" : "success");
+    } catch (error) { entryError.textContent = error.message; }
+    finally { actionInFlight = false; document.getElementById("saveEntry").disabled = false; }
+  }
+
   function renderDetailModal() {
     if (!detailWorkOrder) return;
     const workOrder = detailWorkOrder;
@@ -631,7 +711,7 @@
       </div>
 
       <div class="detail-grid work-order-detail-grid">
-        <div><span>Kunde</span><strong>${escapeHtml(customer.name || "Ukjent kunde")}</strong></div>
+        <div><span>Kunde</span><strong>${workOrder.customerId ? `<a href="kunde.html?id=${encodeURIComponent(workOrder.customerId)}">${escapeHtml(customer.name || "Ukjent kunde")}</a>` : escapeHtml(customer.name || "Ukjent kunde")}</strong></div>
         <div><span>Kontakt</span><strong>${escapeHtml(contactParts.join(" · ") || "–")}</strong></div>
         <div><span>Oppdrag</span><strong>${escapeHtml(workOrder.serviceName)}</strong></div>
         <div><span>Dato</span><strong>${escapeHtml(formatDate(workOrder.jobDate))}</strong></div>
@@ -642,6 +722,8 @@
         <div><span>${completed ? "Arbeidsbeløp" : "Estimert beløp"}</span><strong data-live-amount-id="${escapeHtml(workOrder._id)}">${escapeHtml(formatCurrency(amount, !completed && workOrder.status !== "stopped"))}</strong></div>
       </div>
 
+      ${!["completed", "cancelled"].includes(workOrder.status) ? `<div class="meter-controls detail-controls"><button type="button" class="secondary-btn" data-entry="time" data-id="${escapeHtml(workOrder._id)}">+ Tid</button><button type="button" class="secondary-btn" data-entry="expense" data-id="${escapeHtml(workOrder._id)}">+ Utgift</button><button type="button" class="secondary-btn" data-entry="material" data-id="${escapeHtml(workOrder._id)}">+ Materiale</button><button type="button" class="secondary-btn" data-entry="note" data-id="${escapeHtml(workOrder._id)}">+ Notat</button></div>` : ""}
+
       <section class="detail-section">
         <h3>Tidslogg</h3>
         <p class="muted">Arbeid ${escapeHtml(formatDuration(categoryTotals.work))} · Innkjøp ${escapeHtml(formatDuration(categoryTotals.purchase))} · Transport ${escapeHtml(formatDuration(categoryTotals.transport))}</p>
@@ -650,7 +732,7 @@
 
       <section class="detail-section">
         <h3>Utgifter · ${escapeHtml(formatCurrency(expenseTotal))}</h3>
-        ${expenses.length ? `<ul class="interval-list">${expenses.map((expense) => `<li><span>${escapeHtml(formatDateTime(expense.occurredAt))}</span><strong>${escapeHtml(expense.item)}</strong><span>${escapeHtml(formatCurrency(expense.amount))}${expense.receiptUrl ? ` · <a href="${escapeHtml(expense.receiptUrl)}" target="_blank" rel="noopener">Kvittering</a>` : ""}</span></li>`).join("")}</ul>` : '<p class="muted">Ingen utgifter registrert.</p>'}
+        ${expenses.length ? `<ul class="interval-list">${expenses.map((expense) => `<li><span>${escapeHtml(formatDateTime(expense.occurredAt))}</span><strong>${escapeHtml(expense.item)}</strong><span>${escapeHtml(formatCurrency(expense.amount))} · ${expense.billable === false ? "Intern" : "Fakturerbar"}${expense.receiptUrl ? ` · <a href="${escapeHtml(expense.receiptUrl)}" target="_blank" rel="noopener">Kvittering</a>` : ""}</span></li>`).join("")}</ul>` : '<p class="muted">Ingen utgifter registrert.</p>'}
       </section>
 
       <section class="detail-section">
@@ -663,6 +745,8 @@
         ${projectNotes.length ? `<ul class="interval-list">${projectNotes.map((note) => `<li><span>${escapeHtml(formatDateTime(note.createdAt))}</span><strong>${escapeHtml(note.text)}</strong><span></span></li>`).join("")}</ul>` : '<p class="muted">Ingen løpende notater registrert.</p>'}
       </section>
 
+      <section class="detail-section"><h3>Historikk</h3>${renderProjectHistory(workOrder)}</section>
+
       <section class="detail-section">
         <label for="detailNotes"><strong>Notater</strong></label>
         <textarea id="detailNotes" rows="5" maxlength="5000">${escapeHtml(workOrder.notes || "")}</textarea>
@@ -670,6 +754,9 @@
       </section>
 
       ${workOrderControls(workOrder) ? `<div class="meter-controls detail-controls">${workOrderControls(workOrder)}</div>` : ""}`;
+    if (workOrder.status === "completed") {
+      detailModalContent.insertAdjacentHTML("beforeend", `<div class="meter-controls detail-controls">${workOrder.invoiceId ? `<a class="primary-btn" href="faktura-detalj.html?id=${encodeURIComponent(workOrder.invoiceId)}">Åpne faktura</a>` : `<a class="primary-btn" href="faktura-ny.html?workOrderId=${encodeURIComponent(workOrder._id)}">Opprett fakturautkast</a>`}</div>`);
+    }
   }
 
   async function openDetails(id) {
@@ -758,6 +845,12 @@
     if (custom) customRateInput.focus();
   });
 
+  pricingModeInput.addEventListener("change", () => {
+    const usesFixed = ["fixed", "hybrid"].includes(pricingModeInput.value);
+    fixedPriceField.classList.toggle("hidden", !usesFixed);
+    fixedPriceInput.required = usesFixed;
+  });
+
   createForm.addEventListener("submit", createWorkOrder);
   historySearch.addEventListener("input", renderHistory);
   historyStatus.addEventListener("change", renderHistory);
@@ -765,6 +858,11 @@
   logoutBtn.addEventListener("click", () => localStorage.removeItem(KEY_STORAGE));
 
   document.addEventListener("click", (event) => {
+    const entryButton = event.target.closest("[data-entry]");
+    if (entryButton) {
+      openEntry(entryButton.dataset.entry, entryButton.dataset.id);
+      return;
+    }
     const detailButton = event.target.closest(".open-job-detail");
     if (detailButton) {
       openDetails(detailButton.dataset.id);
@@ -791,6 +889,11 @@
   });
 
   closeDetailModalBtn.addEventListener("click", closeDetailModal);
+  document.getElementById("closeEntryModal").addEventListener("click", () => {
+    entryModal.classList.add("hidden");
+    if (detailModal.classList.contains("hidden")) document.body.classList.remove("modal-open");
+  });
+  entryForm.addEventListener("submit", saveEntry);
   confirmNo.addEventListener("click", closeConfirmModal);
   confirmYes.addEventListener("click", async () => {
     const run = pendingConfirmation;
@@ -816,6 +919,21 @@
           selectCustomer(option);
           createSection.scrollIntoView({ behavior: "smooth", block: "start" });
           setMessage("Bookingen er hentet inn. Velg riktig timesats og opprett oppdraget.", "success");
+        }
+      }
+      const requestId = new URLSearchParams(window.location.search).get("requestId");
+      if (requestId) {
+        const data = await apiFetch(`/admin/work-orders/customer-options?sourceType=request&sourceId=${encodeURIComponent(requestId)}`);
+        const option = (data.customerOptions || [])[0];
+        if (option) { selectCustomer(option); createSection.scrollIntoView({ behavior: "smooth", block: "start" }); setMessage("Prisforespørselen er hentet inn. Kontroller pris og opprett prosjektet.", "success"); }
+      }
+      const customerId = new URLSearchParams(window.location.search).get("customerId");
+      if (customerId) {
+        const data = await apiFetch(`/admin/work-orders/customer-options?sourceType=customer&sourceId=${encodeURIComponent(customerId)}`);
+        const option = (data.customerOptions || []).find((candidate) => candidate.sourceType === "customer" && candidate.sourceId === customerId);
+        if (option) {
+          selectCustomer(option);
+          createSection.scrollIntoView({ behavior: "smooth", block: "start" });
         }
       }
       const openId = new URLSearchParams(window.location.search).get("open");

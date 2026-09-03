@@ -94,7 +94,7 @@
         <tbody>${rows}</tbody>
       </table>`;
 
-    // Klikk på rad -> åpne faktura (kommer i Steg 3/5; nå viser vi en placeholder)
+    // Klikk på rad åpner den faktiske fakturadetaljen.
     content.querySelectorAll(".inv-row-link").forEach((row) => {
       row.addEventListener("click", () => {
         const id = row.getAttribute("data-id");

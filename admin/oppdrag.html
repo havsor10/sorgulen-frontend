@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin – Oppdrag / Takstameter | Sørgulen Industriservice</title>
   <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin-shell.css">
 </head>
 <body>
   <header>
@@ -16,6 +17,7 @@
       <a href="admin-dashboard.html">Bookinger</a>
       <a href="foresporsler.html">Forespørsler</a>
       <a href="fakturaer.html">Fakturaer</a>
+      <a href="kunder.html">Kunder</a>
       <a href="oppdrag.html" class="active" aria-current="page">Oppdrag / Takstameter</a>
     </nav>
   </header>
@@ -36,7 +38,7 @@
 
     <section id="createWorkOrderSection" class="create-form work-order-create" aria-labelledby="createWorkOrderHeading">
       <h2 id="createWorkOrderHeading">Opprett nytt oppdrag</h2>
-      <p class="form-help">Søk i eksisterende bookinger og forespørsler. Hvis kunden ikke finnes, kan du skrive navnet direkte uten at det opprettes et nytt kunderegister.</p>
+      <p class="form-help">Søk i kunderegister, bookinger og forespørsler. Hvis kunden ikke finnes, opprettes én kundepost sammen med prosjektet.</p>
 
       <form id="createWorkOrderForm" class="work-order-form">
         <div class="work-order-form-grid">
@@ -77,6 +79,21 @@
           <div id="customRateField" class="form-field hidden">
             <label for="customRate">Egen timesats</label>
             <input id="customRate" type="number" min="1" max="100000" step="0.01" inputmode="decimal" placeholder="Kr/time">
+          </div>
+
+          <div class="form-field">
+            <label for="pricingMode">Prismodell</label>
+            <select id="pricingMode"><option value="hourly">Timespris</option><option value="fixed">Fastpris</option><option value="hybrid">Fastpris + timer/tillegg</option></select>
+          </div>
+          <div id="fixedPriceField" class="form-field hidden">
+            <label for="fixedPrice">Avtalt fastpris</label>
+            <input id="fixedPrice" type="number" min="0.01" step="0.01" inputmode="decimal">
+          </div>
+
+          <div id="manualCustomerFields" class="manual-customer-fields full-width-field">
+            <div class="form-field"><label for="customerEmail">E-post</label><input id="customerEmail" type="email" autocomplete="email"></div>
+            <div class="form-field"><label for="customerPhone">Telefon</label><input id="customerPhone" type="tel" autocomplete="tel"></div>
+            <div class="form-field"><label for="customerAddress">Adresse</label><input id="customerAddress" type="text" autocomplete="street-address"></div>
           </div>
 
           <div class="form-field full-width-field">
@@ -131,6 +148,15 @@
         <button type="button" id="confirmYes" class="danger-btn">Bekreft</button>
       </div>
     </div>
+  </div>
+
+  <div id="entryModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="entryModalTitle">
+    <form id="entryForm" class="modal-card small">
+      <div class="modal-header"><h2 id="entryModalTitle">Legg til tid</h2><button type="button" id="closeEntryModal" class="icon-btn">×</button></div>
+      <div id="entryFields"></div>
+      <p id="entryError" class="error-text" role="alert"></p>
+      <button id="saveEntry" type="submit" class="primary-btn">Lagre</button>
+    </form>
   </div>
 
   <script src="../config.js"></script>

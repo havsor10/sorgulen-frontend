@@ -10,6 +10,9 @@
   const cancelBtn = document.getElementById("cancelBtn");
   const logoutBtn = document.getElementById("logoutBtn");
   const invoiceDescription = document.getElementById("invoiceDescription");
+  const dueDateInput = document.getElementById("dueDate");
+  const aiLinesBtn = document.getElementById("aiLinesBtn");
+  let vatRate = 0;
 
   const f = {
     name: document.getElementById("custName"),
@@ -68,7 +71,7 @@
   }
   function updateTotal() {
     Array.from(linesBody.querySelectorAll("tr")).forEach((tr)=>{const q=Number(tr.querySelector(".line-quantity").value)||0,p=Number(tr.querySelector(".line-price").value)||0;tr.querySelector(".line-total").textContent=`${Math.round(q*p*100)/100} kr`;});
-    const total = getLines().reduce((sum, l) => sum + l.amount, 0); totalDisplay.textContent = `Total: ${Math.round(total*100)/100} kr`;
+    const total = getLines().reduce((sum, l) => sum + l.amount, 0),tax=Math.round(total*vatRate)/100; totalDisplay.textContent = vatRate ? `Delsum: ${Math.round(total*100)/100} kr · MVA ${vatRate}%: ${Math.round(tax*100)/100} kr · Total: ${Math.round((total+tax)*100)/100} kr` : `Total: ${Math.round(total*100)/100} kr`;
   }
 
   async function loadInvoice() {
@@ -78,6 +81,7 @@
       if (!res.ok) throw new Error("Kunne ikke hente faktura");
       const data = await res.json();
       const inv = data.invoice;
+      vatRate = inv.vatRegisteredSnapshot ? Number(inv.taxRate || 0) : 0;
 
       if (inv.status !== "draft") {
         setMessage("Denne fakturaen er sendt og kan ikke redigeres.", "error");
@@ -90,6 +94,7 @@
       f.email.value = inv.customerEmail || "";
       f.address.value = inv.customerAddress || "";
       invoiceDescription.value = inv.description || "";
+      dueDateInput.value = inv.dueDate ? new Date(inv.dueDate).toISOString().slice(0, 10) : "";
 
       linesBody.innerHTML = "";
       if (inv.lines && inv.lines.length) {
@@ -123,6 +128,7 @@
           customerAddress: f.address.value.trim(),
           description: invoiceDescription.value.trim() || lines.map((l) => l.item).join(", "),
           lines,
+          dueDate: dueDateInput.value || null,
         }),
       });
       if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || "Kunne ikke lagre"); }
@@ -135,6 +141,19 @@
   }
 
   addLineBtn.addEventListener("click", () => addLine());
+  aiLinesBtn.addEventListener("click", async () => {
+    aiLinesBtn.disabled = true;
+    setMessage("Lager forslag til tydeligere fakturatekst…");
+    try {
+      const res = await fetch(`${API_BASE}/invoices/${invoiceId}/ai-lines`, { method: "POST", headers: headers() });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Kunne ikke lage forslag");
+      linesBody.innerHTML = "";
+      (data.lines || []).forEach((line) => addLine(line.item, line.amount, line));
+      setMessage(data.aiAvailable ? "Forslaget er satt inn. Kontroller og lagre." : "AI var ikke tilgjengelig. De eksisterende linjene er beholdt.", "success");
+    } catch (error) { setMessage(error.message, "error"); }
+    finally { aiLinesBtn.disabled = false; }
+  });
   saveBtn.addEventListener("click", save);
   saveBtn.textContent = "💾 Lagre endringer";
   cancelBtn.addEventListener("click", () => { window.location.href = `faktura-detalj.html?id=${encodeURIComponent(invoiceId)}`; });
