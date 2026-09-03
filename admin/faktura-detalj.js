@@ -42,12 +42,14 @@
       : "Utkast (uten nummer)";
 
     const linesRows = (inv.lines || []).map((l) =>
-      `<tr><td>${escapeHtml(l.item)}</td><td class="amt">${escapeHtml(l.amount)} kr</td></tr>`
+      `<tr><td>${escapeHtml(l.item)}${l.description?`<br><small>${escapeHtml(l.description)}</small>`:""}</td><td>${l.quantity!=null&&l.unitPrice!=null?`${escapeHtml(l.quantity)} ${escapeHtml(l.unitLabel||"")} × ${escapeHtml(l.unitPrice)} kr`:""}</td><td class="amt">${escapeHtml(l.amount)} kr</td></tr>`
     ).join("");
 
-    const ref = inv.sourceRef
-      ? `Hentet fra ${inv.sourceType === "booking" ? "bestilling" : "forespørsel"} #${escapeHtml(inv.sourceRef)}`
-      : "Manuell faktura";
+    const ref = inv.sourceType === "workOrder"
+      ? `Hentet fra oppdrag${inv.sourceRef ? ` #${escapeHtml(inv.sourceRef)}` : ""}`
+      : inv.sourceRef
+        ? `Hentet fra ${inv.sourceType === "booking" ? "bestilling" : "forespørsel"} #${escapeHtml(inv.sourceRef)}`
+        : "Manuell faktura";
 
     // Knapper avhenger av status
     let actions = "";
