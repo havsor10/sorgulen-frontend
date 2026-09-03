@@ -53,12 +53,11 @@
 
     // Knapper avhenger av status
     let actions = "";
-    const key = encodeURIComponent(getAdminKey());
-    actions += `<a class="btn-preview" href="${API_BASE}/invoices/${inv._id}/preview?key=${key}" target="_blank">📄 Forhåndsvis PDF</a>`;
+    actions += `<button class="btn-preview" data-action="preview">📄 Forhåndsvis PDF</button>`;
     if (inv.status === "draft") {
       actions += `<a class="btn-edit" href="faktura-rediger.html?id=${encodeURIComponent(inv._id)}">✏️ Rediger</a>`;
       if (inv.customerEmail) {
-        actions += `<button class="btn-send" data-action="send">📧 Send faktura</button>`;
+        actions += `<button class="btn-send" data-action="send">📧 Kontroller og send</button>`;
       }
       actions += `<button class="btn-delete" data-action="delete">🗑 Slett utkast</button>`;
     } else if (inv.status === "sent") {
@@ -89,6 +88,7 @@
         <div class="fd-section">
           <div class="fd-label">Spesifikasjon</div>
           <table class="fd-lines"><tbody>${linesRows}</tbody></table>
+          ${inv.vatRegisteredSnapshot ? `<div class="fd-total" style="font-size:14px;color:#aab3bf">Delsum: ${escapeHtml(inv.subtotal)} kr · MVA ${escapeHtml(inv.taxRate)} %: ${escapeHtml(inv.taxAmount)} kr</div>` : ""}
           <div class="fd-total">Total: ${escapeHtml(inv.amount)} kr</div>
         </div>
 
@@ -105,6 +105,8 @@
 
         <div class="fd-section fd-actions">${actions}</div>
 
+        ${inv.status === "draft" && inv.customerEmail ? `<div class="fd-section" id="emailComposer"><div class="fd-label">E-post til ${escapeHtml(inv.customerEmail)}</div><button class="btn-edit" type="button" data-action="email-suggestion">Lag e-postforslag</button><label class="fd-label" for="emailSubject" style="display:block;margin-top:14px">Emne</label><textarea id="emailSubject" rows="2" style="width:100%">${escapeHtml(inv.emailDraft?.subject || "")}</textarea><label class="fd-label" for="emailBody" style="display:block;margin-top:10px">Melding</label><textarea id="emailBody" rows="9" style="width:100%">${escapeHtml(inv.emailDraft?.body || "")}</textarea><p class="fd-warn">Fakturaen sendes ikke før du trykker «Kontroller og send» og bekrefter.</p></div>` : ""}
+
         ${inv.status === "draft" && !inv.customerEmail ? `<p class="fd-warn">⚠ Mangler e-post – legg til via Rediger for å kunne sende automatisk.</p>` : ""}
         ${inv.status === "sent" ? `<p class="fd-info">🔒 Sendt faktura er låst. Feil? Lag en kreditnota (kommer).</p>` : ""}
       </div>`;
@@ -117,10 +119,29 @@
 
   async function handleAction(action, inv) {
     try {
-      if (action === "send") {
+      if (action === "preview") {
+        setMessage("Lager forhåndsvisning…");
+        const res = await fetch(`${API_BASE}/invoices/${inv._id}/preview`, { headers: headers() });
+        if (!res.ok) throw new Error("Kunne ikke lage forhåndsvisning");
+        const url = URL.createObjectURL(await res.blob());
+        window.open(url, "_blank", "noopener");
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+      } else if (action === "email-suggestion") {
+        setMessage("Lager e-postforslag…");
+        const res = await fetch(`${API_BASE}/invoices/${inv._id}/email-suggestion`, { method: "POST", headers: headers() });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Kunne ikke lage e-postforslag");
+        document.getElementById("emailSubject").value = data.subject;
+        document.getElementById("emailBody").value = data.body;
+        setMessage(data.aiAvailable ? "AI-forslaget er klart. Kontroller og rediger før sending." : "Standard e-postutkast er klart. AI var ikke tilgjengelig.");
+      } else if (action === "send") {
+        const subject = document.getElementById("emailSubject")?.value.trim();
+        const body = document.getElementById("emailBody")?.value.trim();
+        if (!subject || !body) throw new Error("Lag eller skriv e-postemne og melding før sending.");
         if (!confirm("Sende fakturaen til kunden nå? Fakturaen får et fakturanummer og blir låst.")) return;
         setMessage("Sender faktura…");
-        const res = await fetch(`${API_BASE}/invoices/${inv._id}/send`, { method: "POST", headers: headers() });
+        const operationId = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
+        const res = await fetch(`${API_BASE}/invoices/${inv._id}/send`, { method: "POST", headers: headers(), body: JSON.stringify({ operationId, subject, body }) });
         if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || "Kunne ikke sende"); }
         setMessage("Faktura sendt! ✓", "success");
         load();
@@ -137,12 +158,13 @@
         setMessage("Utkast slettet.", "success");
         setTimeout(() => { window.location.href = "fakturaer.html"; }, 800);
       } else if (action === "credit") {
-        if (!confirm("Lage en kreditnota som opphever denne fakturaen? Originalen blir merket «kreditert». Dette er den lovlige måten å rette en sendt faktura på.")) return;
+        if (!confirm("Opprette et redigerbart kreditnotautkast? Originalen merkes først kreditert når kreditnotaen faktisk er sendt.")) return;
         setMessage("Lager kreditnota…");
         const res = await fetch(`${API_BASE}/invoices/${inv._id}/credit`, { method: "POST", headers: headers() });
         if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || "Kunne ikke lage kreditnota"); }
-        setMessage("Kreditnota laget! ✓", "success");
-        load();
+        const data = await res.json();
+        setMessage("Kreditnota opprettet som utkast. Kontroller før sending.", "success");
+        setTimeout(() => { window.location.href = `faktura-detalj.html?id=${encodeURIComponent(data.creditNote._id)}`; }, 500);
       }
     } catch (err) {
       setMessage(err.message || "Noe gikk galt", "error");

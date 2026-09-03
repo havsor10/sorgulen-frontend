@@ -41,6 +41,7 @@ button,a { -webkit-tap-highlight-color:transparent; }
 .booking-item { grid-template-columns:minmax(0,1fr) auto; }
 .task-item:last-child,.booking-item:last-child { border-bottom:0; }
 .priority-dot { width:8px; height:8px; border-radius:50%; background:#768293; }
+.priority-dot.critical { background:#f0525c; box-shadow:0 0 0 3px rgba(240,82,92,.14); }
 .priority-dot.high { background:#ef6b73; }
 .priority-dot.medium { background:#d2a959; }
 .task-item h3,.booking-item h3 { margin:0 0 4px; font-size:15px; }
@@ -54,7 +55,7 @@ button,a { -webkit-tap-highlight-color:transparent; }
 .small-sheet { align-self:center; }
 .quick-field { display:grid; gap:7px; margin:16px 0; }
 .quick-field label { color:#cbd2db; font-size:13px; font-weight:700; }
-.quick-field input,.quick-field textarea { width:100%; min-height:48px; padding:12px; background:#0e1115; color:#fff; border:1px solid #363e49; border-radius:9px; font:16px Arial,sans-serif; }
+.quick-field input,.quick-field select,.quick-field textarea { width:100%; min-height:48px; padding:12px; background:#0e1115; color:#fff; border:1px solid #363e49; border-radius:9px; font:16px Arial,sans-serif; }
 .quick-field textarea { min-height:92px; resize:vertical; }
 .home-sheet>.primary-action { width:100%; margin-top:8px; }
 .form-error { min-height:18px; color:#ffaaaa; font-size:13px; }

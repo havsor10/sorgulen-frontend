@@ -177,6 +177,7 @@
         <div style="font-size:12px; color:#9aa6b8; margin-bottom:8px;">Status og oppfølging:</div>
         <div class="req-actions">
           <button class="btn-accept" data-action="accept" style="background:#2e8b57;">✓ Kunde vil ha jobben</button>
+          <button class="btn-project" data-action="project" style="background:#3a6ea5;">Opprett prosjekt</button>
           <button class="btn-completed" data-action="completed" style="background:#1f7a5a;">🔧 Marker som utført</button>
           <button class="btn-decline" data-action="decline" style="background:#a0522d;">✗ Kunde takket nei</button>
           <button class="btn-archive" data-action="archive" style="background:#555;">📁 Arkiver</button>
@@ -184,6 +185,16 @@
         </div>
       </div>`;
     }).join("");
+
+    const requestedId = new URLSearchParams(location.search).get("open");
+    if (requestedId) {
+      const requestedCard = [...reqList.querySelectorAll(".req-card")].find((card) => card.dataset.id === requestedId);
+      if (requestedCard) {
+        requestedCard.setAttribute("tabindex", "-1");
+        requestedCard.focus({ preventScroll: true });
+        requestedCard.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
   }
 
   function invoiceBlock(r) {
@@ -274,6 +285,22 @@
     return res.json();
   }
 
+  async function openProtectedPdf(path) {
+    const res = await fetch(`${API_BASE}${path}`, { headers: headers() });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || "Kunne ikke åpne PDF");
+    }
+
+    const blobUrl = URL.createObjectURL(await res.blob());
+    const popup = window.open(blobUrl, "_blank", "noopener");
+    if (!popup) {
+      URL.revokeObjectURL(blobUrl);
+      throw new Error("Nettleseren blokkerte forhåndsvisningen. Tillat sprettoppvinduer og prøv igjen.");
+    }
+    window.setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+  }
+
   // Event delegation for handlingsknappene
   reqList.addEventListener("click", async (e) => {
     const btn = e.target.closest("button[data-action]");
@@ -316,9 +343,7 @@
         }
         setMessage("Tilbudstekst lagret.", "success");
       } else if (action === "pdf-preview") {
-        // Åpner PDF direkte fra backend (pålitelig, omgår Cloudinary-cache)
-        const key = encodeURIComponent(getAdminKey());
-        window.open(`${API_BASE}/requests/${id}/pdf-preview?key=${key}`, "_blank");
+        await openProtectedPdf(`/requests/${id}/pdf-preview`);
       } else if (action === "preview-email") {
         // Viser e-postforhåndsvisning rett på siden (bruker teksten i feltet)
         const msg = card.querySelector(".offerMsg").value;
@@ -342,6 +367,9 @@
       } else if (action === "accept") {
         await patchRequest(id, { status: "accepted" });
         setMessage("Markert som aktiv – kunden vil ha jobben.", "success");
+      } else if (action === "project") {
+        window.location.href = `oppdrag.html?requestId=${encodeURIComponent(id)}`;
+        return;
       } else if (action === "completed") {
         await patchRequest(id, { status: "completed" });
         setMessage("Markert som utført – klar til fakturering.", "success");
@@ -357,8 +385,7 @@
         }
         setMessage("Faktura laget. Se gjennom og send.", "success");
       } else if (action === "invoice-preview") {
-        const key = encodeURIComponent(getAdminKey());
-        window.open(`${API_BASE}/requests/${id}/invoice-preview?key=${key}`, "_blank");
+        await openProtectedPdf(`/requests/${id}/invoice-preview`);
         return;
       } else if (action === "invoice-send") {
         if (!confirm("Sende fakturaen til kunden på e-post nå?")) return;

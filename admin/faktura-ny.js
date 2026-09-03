@@ -18,6 +18,7 @@
   const ratesList = document.getElementById("ratesList");
   const closeRatesBtn = document.getElementById("closeRatesBtn");
   let rates = [];
+  let vatRate = 0;
 
   const f = {
     name: document.getElementById("custName"),
@@ -27,7 +28,7 @@
   };
 
   // Kilde-info fra oppslag (tom = manuell faktura)
-  let source = { sourceType: "manual", sourceRef: null, sourceId: null };
+  let source = { sourceType: "manual", sourceRef: null, sourceId: null, customerId: null };
 
   function getAdminKey() {
     let key = localStorage.getItem(KEY_STORAGE) || "";
@@ -88,7 +89,8 @@
   function updateTotal() {
     Array.from(linesBody.querySelectorAll("tr")).forEach((tr) => { const q=Number(tr.querySelector(".line-quantity").value)||0; const p=Number(tr.querySelector(".line-price").value)||0; tr.querySelector(".line-total").textContent=`${Math.round(q*p*100)/100} kr`; });
     const total = getLines().reduce((sum, l) => sum + l.amount, 0);
-    totalDisplay.textContent = `Total: ${Math.round(total * 100) / 100} kr`;
+    const tax = Math.round(total * vatRate) / 100;
+    totalDisplay.textContent = vatRate ? `Delsum: ${Math.round(total * 100) / 100} kr · MVA ${vatRate}%: ${Math.round(tax * 100) / 100} kr · Total: ${Math.round((total + tax) * 100) / 100} kr` : `Total: ${Math.round(total * 100) / 100} kr`;
   }
 
   // --- Oppslag via referansenummer ---
@@ -111,7 +113,7 @@
       f.address.value = data.customer.address || "";
 
       // Sett kilde
-      source = { sourceType: data.sourceType, sourceRef: data.sourceRef, sourceId: data.sourceId };
+      source = { sourceType: data.sourceType, sourceRef: data.sourceRef, sourceId: data.sourceId, customerId: data.customerId || null };
 
       // Fyll en linje fra beskrivelse + foreslått beløp
       linesBody.innerHTML = "";
@@ -152,6 +154,8 @@
           sourceType: source.sourceType,
           sourceRef: source.sourceRef,
           sourceId: source.sourceId,
+          customerId: source.customerId,
+          dueDate: document.getElementById("dueDate").value || null,
         }),
       });
       if (!res.ok) {
@@ -190,6 +194,7 @@
     window.location.href = "login.html";
   });
 
+  fetch(`${API_BASE}/invoices/config`, { headers: headers() }).then((res)=>res.json()).then((data)=>{vatRate=Number(data.vatRate)||0;updateTotal();}).catch(()=>{});
   const workOrderId = new URLSearchParams(location.search).get("workOrderId");
-  if (workOrderId) fetch(`${API_BASE}/invoices/work-order/${encodeURIComponent(workOrderId)}`, { headers: headers() }).then(async(res)=>{const data=await res.json(); if(!res.ok)throw new Error(data.error); f.name.value=data.customer.name||""; f.phone.value=data.customer.phone||""; f.email.value=data.customer.email||""; f.address.value=data.customer.address||""; invoiceDescription.value=data.description||""; source={sourceType:data.sourceType,sourceRef:data.sourceRef,sourceId:data.sourceId}; linesBody.innerHTML=""; (data.lines||[]).forEach((l)=>addLine(l.item,l.amount,l)); if(!linesBody.children.length)addLine(); }).catch((err)=>setMessage(err.message,"error")); else addLine();
+  if (workOrderId) fetch(`${API_BASE}/invoices/work-order/${encodeURIComponent(workOrderId)}`, { headers: headers() }).then(async(res)=>{const data=await res.json(); if(!res.ok)throw new Error(data.error); f.name.value=data.customer.name||""; f.phone.value=data.customer.phone||""; f.email.value=data.customer.email||""; f.address.value=data.customer.address||""; invoiceDescription.value=data.description||""; source={sourceType:data.sourceType,sourceRef:data.sourceRef,sourceId:data.sourceId,customerId:data.customerId||null}; linesBody.innerHTML=""; (data.lines||[]).forEach((l)=>addLine(l.item,l.amount,l)); if(!linesBody.children.length)addLine(); }).catch((err)=>setMessage(err.message,"error")); else addLine();
 })();
