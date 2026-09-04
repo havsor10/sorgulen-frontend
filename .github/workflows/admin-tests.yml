@@ -27,7 +27,7 @@ jobs:
           node --check admin/kunde-v2.js
           node --check admin/hjem.js
           node --check admin/work-order-time.js
-          node --check admin/lager.js
+          node --check admin/lager-runtime.js
           node --check admin/inventory-project.js
           node --check admin/inventory-material-edit.js
       - name: Kjør frontendtester
