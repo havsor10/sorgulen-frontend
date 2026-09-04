@@ -61,3 +61,9 @@ test("large creation forms are secondary panels opened by explicit actions", () 
   assert.match(bookings, /data-admin-open="#createBookingSection"/);
   assert.match(bookings, /id="createBookingSection"[^>]*hidden/);
 });
+
+test("the retired root booking URL redirects into the canonical admin shell", () => {
+  const legacyEntry = read("admin-dashboard.html");
+  assert.match(legacyEntry, /url=\/admin\/admin-dashboard\.html/);
+  assert.doesNotMatch(legacyEntry, /createBookingForm|admin-section-links|class="logout"/);
+});
