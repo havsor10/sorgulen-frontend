@@ -2,6 +2,12 @@
   "use strict";
   if (!location.pathname.endsWith("/oppdrag.html")) return;
 
+  if (!document.querySelector('script[src^="inventory-material-edit.js"]')) {
+    const materialEditor = document.createElement("script");
+    materialEditor.src = "inventory-material-edit.js?v=20260904-inventory2";
+    document.head.appendChild(materialEditor);
+  }
+
   const API = (window.CONFIG && window.CONFIG.API_BASE_URL) || "https://sorgulen-backend-2.onrender.com/api";
   const KEY = "sorgulen_admin_key";
   const detail = document.getElementById("detailModalContent");
