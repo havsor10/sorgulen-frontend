@@ -15,6 +15,7 @@
   const page = mount.dataset.page || "";
   ensureAsset("link", { rel: "stylesheet", href: "operations.css?v=20260904-inventory1" });
   if (!["home", "inventory"].includes(page)) ensureAsset("script", { src: "operations-ui.js?v=20260904-inventory1" });
+  if (page === "jobs") ensureAsset("script", { src: "inventory-material-edit.js?v=20260904-inventory1" });
 
   const navItems = [
     { key: "home", href: "hjem.html", label: "Hjem" },
