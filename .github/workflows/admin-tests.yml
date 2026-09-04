@@ -30,5 +30,6 @@ jobs:
           node --check admin/lager-runtime.js
           node --check admin/inventory-project.js
           node --check admin/inventory-material-edit.js
+          node --check admin/broyting.js
       - name: Kjør frontendtester
         run: node --test tests/*.test.js

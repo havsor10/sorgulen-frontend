@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b0f14">
+  <title>Brøytemodus – Sørgulen admin</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin-shell.css">
+  <link rel="stylesheet" href="admin-pages.css">
+  <link rel="stylesheet" href="broyting.css?v=20260904-snow1">
+</head>
+<body>
+  <div id="adminShell" data-page="snow"></div>
+  <script src="admin-shell.js?v=20260904-snow1"></script>
+
+  <main class="admin-main snow-main">
+    <header class="snow-topbar">
+      <div>
+        <p class="admin-eyebrow">Vinterdrift</p>
+        <h1>Brøytemodus</h1>
+        <p id="snowSubline">Én kø. Ett neste steg.</p>
+      </div>
+      <div class="snow-top-actions">
+        <span id="snowConnection" class="snow-connection">Tilkoblet</span>
+        <button id="snowRefresh" type="button" class="admin-icon-button" aria-label="Oppdater">↻</button>
+      </div>
+    </header>
+
+    <div id="snowNotice" class="snow-notice hidden" role="status" aria-live="polite"></div>
+
+    <section id="noRound" class="snow-launch admin-card hidden">
+      <p class="section-kicker">Ny økt</p>
+      <h2>Start brøyterunde</h2>
+      <p>Faste kunder og nye brøytebestillinger samles automatisk i samme kø.</p>
+      <form id="startRoundForm" class="snow-form-grid">
+        <label>Dato<input name="roundDate" type="date" required></label>
+        <label>Standard tid pr. kunde<input name="defaultServiceMinutes" type="number" min="1" max="480" value="15" inputmode="numeric"></label>
+        <label>Prismodell<select name="defaultPricingMode"><option value="hourly">Timepris</option><option value="fixed">Fastpris</option></select></label>
+        <label>Standard timepris<input name="defaultHourlyRate" type="number" min="1" step="1" value="850" inputmode="decimal"></label>
+        <label id="roundFixedWrap" class="hidden">Standard fastpris<input name="defaultFixedPrice" type="number" min="1" step="1" inputmode="decimal"></label>
+        <label class="snow-check wide"><input name="autoQueueAgreements" type="checkbox" checked> Legg aktive faste brøytekunder i køen</label>
+        <p id="startRoundError" class="snow-error wide"></p>
+        <button class="snow-primary snow-xl wide" type="submit">START BRØYTERUNDE</button>
+      </form>
+    </section>
+
+    <div id="activeRound" class="hidden">
+      <section id="activeJobCard" class="snow-focus snow-focus-active hidden"></section>
+      <section id="nextJobCard" class="snow-focus snow-focus-next"></section>
+
+      <section class="snow-command-row">
+        <button id="quickAddBtn" class="snow-primary" type="button">+ NY BRØYTING</button>
+        <button id="optimizeBtn" class="snow-secondary" type="button">OPTIMALISER RUTE</button>
+        <button id="agreementsBtn" class="snow-secondary" type="button">FASTE KUNDER</button>
+      </section>
+
+      <section class="snow-summary" aria-label="Status for brøyterunden">
+        <div><span>Venter</span><strong id="sumQueued">0</strong></div>
+        <div><span>Ferdig</span><strong id="sumDone">0</strong></div>
+        <div><span>Ca. igjen</span><strong id="sumRemaining">–</strong></div>
+      </section>
+
+      <section class="admin-section snow-queue-section">
+        <div class="section-heading-row">
+          <div><p class="section-kicker">Arbeidsliste</p><h2>Brøytekø</h2></div>
+          <span id="queueCount" class="snow-pill">0</span>
+        </div>
+        <div id="snowQueue" class="snow-queue"></div>
+      </section>
+
+      <section id="deferredSection" class="admin-section hidden">
+        <div class="section-heading-row"><div><p class="section-kicker">Senere</p><h2>Utsatt</h2></div></div>
+        <div id="snowDeferred" class="snow-queue"></div>
+      </section>
+
+      <details class="admin-section snow-details">
+        <summary>Ferdige kunder i denne runden</summary>
+        <div id="snowDone" class="snow-done-list"></div>
+      </details>
+
+      <button id="finishRoundBtn" class="snow-finish-round" type="button">Avslutt brøyterunde</button>
+    </div>
+  </main>
+
+  <div id="snowModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="snowModalTitle">
+    <div class="modal-card snow-modal-card">
+      <div class="modal-header">
+        <div><p id="snowModalEyebrow" class="section-kicker">Brøyting</p><h2 id="snowModalTitle">Brøytemodus</h2></div>
+        <button id="snowModalClose" class="admin-icon-button" type="button" aria-label="Lukk">×</button>
+      </div>
+      <div id="snowModalBody"></div>
+    </div>
+  </div>
+
+  <script src="../config.js?v=20260904-snow1"></script>
+  <script src="broyting.js?v=20260904-snow1"></script>
+</body>
+</html>
