@@ -13,8 +13,8 @@
   const fmtDate = (value) => value ? new Intl.DateTimeFormat("no-NO", { timeZone: "Europe/Oslo", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(value)) : "–";
   const fmtMoney = (value) => new Intl.NumberFormat("no-NO", { style: "currency", currency: "NOK", minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(Number(value) || 0);
   const fmtDuration = (seconds) => {
-    const total = Math.max(0, Math.round(Number(seconds) || 0));
-    const h = Math.floor(total / 3600); const m = Math.round((total % 3600) / 60);
+    const total = Math.max(0, Math.floor(Number(seconds) || 0));
+    const h = Math.floor(total / 3600); const m = Math.floor((total % 3600) / 60);
     return h ? `${h} t${m ? ` ${m} min` : ""}` : `${m} min`;
   };
   const statusText = { planned: "Planlagt", active: "Aktiv", paused: "Pauset", stopped: "Mellom økter", completed: "Ferdig", cancelled: "Avbrutt", draft: "Utkast", sent: "Sendt", paid: "Betalt", credited: "Kreditert" };
@@ -104,8 +104,6 @@
     const due = billingResponse?.billing?.due || { due: false };
     const draftChanges = (billingResponse?.billing?.drafts || []).filter((item) => item.changed);
     const rate = recentRate(workOrders);
-    const expenses = (basis.entries || []).filter((entry) => entry.type === "expense");
-    const materials = (basis.entries || []).filter((entry) => entry.type === "material");
     const schedule = customer.billingSchedule || { mode: "manual", intervalDays: 14, anchorDate: "" };
 
     document.getElementById("pageTitle").textContent = customer.name;
@@ -118,7 +116,7 @@
           <div class="customer-ops-stat"><span>Foreløpig grunnlag</span><strong>${esc(fmtMoney(basis.total || 0))}</strong></div>
         </div>
         ${due.due ? `<div class="billing-ready"><strong>Klar for periodisk fakturering.</strong> Det finnes ${esc(basis.count)} ikke-fakturerte poster.</div>` : ""}
-        ${draftChanges.map((draft) => `<div class="billing-draft-warning"><strong>Fakturagrunnlaget er endret etter at utkastet ble laget.</strong><span>${draft.added?.length || 0} nye og ${draft.removed?.length || 0} fjernede/endrede poster.</span><p style="margin:8px 0 0"><a href="faktura-detalj.html?id=${encodeURIComponent(draft.invoiceId)}">Åpne fakturautkast</a></p></div>`).join("")}
+        ${draftChanges.map((draft) => `<div class="billing-draft-warning"><strong>Fakturagrunnlaget er endret etter at utkastet ble laget.</strong><span>${draft.added?.length || 0} nye, ${draft.removed?.length || 0} fjernede og ${draft.modified?.length || 0} endrede poster.</span><p style="margin:8px 0 0"><a href="faktura-detalj.html?id=${encodeURIComponent(draft.invoiceId)}">Åpne fakturautkast</a></p></div>`).join("")}
         <div class="customer-ops-actions">
           <button type="button" class="primary-btn" data-customer-time="${esc(customer._id)}" data-rate="${esc(rate)}">+ Legg til arbeid</button>
           <a class="secondary-btn" href="oppdrag.html?customerId=${encodeURIComponent(customer._id)}">Nytt prosjekt</a>
