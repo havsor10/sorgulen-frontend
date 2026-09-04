@@ -11,10 +11,11 @@
     Object.entries(attrs).forEach(([name, value]) => node.setAttribute(name, value));
     document.head.appendChild(node);
   }
-  ensureAsset("link", { rel: "stylesheet", href: "operations.css?v=20260904-clickfix1" });
-  ensureAsset("script", { src: "operations-ui.js?v=20260904-clickfix1" });
 
   const page = mount.dataset.page || "";
+  ensureAsset("link", { rel: "stylesheet", href: "operations.css?v=20260904-clickfix2" });
+  if (page !== "home") ensureAsset("script", { src: "operations-ui.js?v=20260904-clickfix2" });
+
   const navItems = [
     { key: "home", href: "hjem.html", label: "Hjem" },
     { key: "jobs", href: "oppdrag.html", label: "Oppdrag" },
