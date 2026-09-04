@@ -23,7 +23,7 @@ test("every primary and related admin page mounts the same shell", () => {
   for (const [file, page] of pages) {
     const html = read(file);
     assert.match(html, new RegExp(`id="adminShell" data-page="${page}"`), file);
-    assert.match(html, /<script src="admin-shell\.js"><\/script>/, file);
+    assert.match(html, /<script src="admin-shell\.js(?:\?[^\"]*)?"><\/script>/, file);
     assert.match(html, /admin-shell\.css/, file);
     assert.doesNotMatch(html, /admin-section-links|class="logout"|<header>\s*<h1>Admin\s*[–-]/, file);
   }
