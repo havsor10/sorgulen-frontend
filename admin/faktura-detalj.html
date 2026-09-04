@@ -2,57 +2,20 @@
 <html lang="no">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Faktura | Sørgulen Industriservice</title>
   <link rel="stylesheet" href="admin.css">
   <link rel="stylesheet" href="admin-shell.css">
-  <style>
-    .fd-wrap { max-width: 680px; margin: 0 auto; padding: 20px; }
-    .fd-card { background: #1e1e1e; border: 1px solid #333; border-radius: 10px; padding: 22px; margin-bottom: 18px; }
-    .fd-head { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; }
-    .fd-num { font-size: 22px; font-weight: 800; color: #fff; }
-    .fd-badge { display:inline-block; padding:4px 12px; border-radius:999px; font-size:13px; font-weight:600; }
-    .badge-draft { background:#2a2a2a; color:#c0c0c0; }
-    .badge-sent { background:#2e2710; color:#e0c060; }
-    .badge-paid { background:#14331a; color:#7fe098; }
-    .badge-credited { background:#2a1518; color:#d98a8a; }
-    .fd-section { margin-top:18px; }
-    .fd-label { font-size:12px; color:#9aa6b8; text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px; }
-    .fd-value { font-size:15px; color:#e8eefb; }
-    .fd-lines { width:100%; border-collapse:collapse; margin-top:6px; }
-    .fd-lines td { padding:8px 0; border-bottom:1px solid #2a2a2a; color:#e8eefb; font-size:14px; }
-    .fd-lines td.amt { text-align:right; color:#e0c060; white-space:nowrap; }
-    .fd-total { text-align:right; font-size:18px; font-weight:800; color:#e0c060; margin-top:10px; }
-    .fd-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
-    .fd-actions button, .fd-actions a {
-      border:none; border-radius:8px; padding:12px 20px; font-size:14px; font-weight:600;
-      cursor:pointer; text-decoration:none; display:inline-block;
-    }
-    .btn-preview { background:#c0392b; color:#fff; }
-    .btn-edit { background:#3a6ea5; color:#fff; }
-    .btn-send { background:#12c285; color:#06231a; }
-    .btn-paid { background:#2e8b57; color:#fff; }
-    .btn-delete { background:#7a1f1f; color:#fff; }
-    .fd-info { font-size:13px; color:#8fe0a8; margin-top:10px; }
-    .fd-warn { font-size:13px; color:#f0a85f; margin-top:10px; }
-    .fd-loading { text-align:center; color:#888; padding:50px; }
-    #emailComposer textarea { width:100%;box-sizing:border-box;background:#101318;color:#f2f4f6;border:1px solid #353c46;border-radius:8px;padding:11px;font:15px Arial,sans-serif;resize:vertical; }
-  </style>
+  <link rel="stylesheet" href="admin-pages.css">
 </head>
 <body>
-  <header>
-    <h1>Faktura</h1>
-    <a href="login.html" id="logoutBtn" class="logout">Logg ut</a>
-    <div class="admin-tools">
-      <a href="fakturaer.html" style="color:#6fb6f0; text-decoration:none;">← Tilbake til fakturaer</a>
-    </div>
-  </header>
-
-  <main class="fd-wrap">
-    <div id="statusMessage" class="status-message" style="display:none;"></div>
+  <div id="adminShell" data-page="invoices"></div>
+  <script src="admin-shell.js"></script>
+  <main class="admin-main admin-main--narrow fd-wrap">
+    <header class="admin-page-header"><div><p class="admin-eyebrow">Fakturadetalj</p><h1>Faktura</h1><p><a class="quiet-link" href="fakturaer.html">← Tilbake til fakturaer</a></p></div></header>
+    <div id="statusMessage" class="status-message"></div>
     <div id="fdContent"><div class="fd-loading">Laster faktura…</div></div>
   </main>
-
   <script src="../config.js"></script>
   <script src="faktura-detalj.js"></script>
 </body>

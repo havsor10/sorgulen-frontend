@@ -6,26 +6,24 @@
   <title>Admin – Bookinger | Sørgulen Industriservice</title>
   <link rel="stylesheet" href="admin.css">
   <link rel="stylesheet" href="admin-shell.css">
+  <link rel="stylesheet" href="admin-pages.css">
 </head>
 <body>
-  <header>
-    <h1>Admin – Bookinger</h1>
-    <a href="login.html" id="logoutBtn" class="logout">Logg ut</a>
+  <div id="adminShell" data-page="bookings"></div>
+  <script src="admin-shell.js"></script>
 
-    <nav class="admin-section-links" aria-label="Adminnavigasjon">
-      <a href="hjem.html" style="display:inline-block; background:#252b34; color:#fff; text-decoration:none; padding:10px 22px; border-radius:8px; font-size:15px; font-weight:600;">Hjem</a>
-      <a href="foresporsler.html" style="display:inline-block; background:#007acc; color:#fff; text-decoration:none; padding:10px 22px; border-radius:8px; font-size:15px; font-weight:600;">📋 Prisforespørsler →</a>
-      <a href="statistikk.html" style="display:inline-block; background:#2e8b57; color:#fff; text-decoration:none; padding:10px 22px; border-radius:8px; font-size:15px; font-weight:600; margin-left:8px;">📊 Statistikk →</a>
-      <a href="fakturaer.html" style="display:inline-block; background:#c79a3a; color:#1a1407; text-decoration:none; padding:10px 22px; border-radius:8px; font-size:15px; font-weight:600; margin-left:8px;">🧾 Fakturaer →</a>
-      <a href="oppdrag.html" style="display:inline-block; background:#15c987; color:#06140f; text-decoration:none; padding:10px 22px; border-radius:8px; font-size:15px; font-weight:700;">⏱ Oppdrag / Takstameter →</a>
-    </nav>
+  <main class="admin-main">
+    <header class="admin-page-header">
+      <div><p class="admin-eyebrow">Innboks og plan</p><h1>Bookinger</h1><p>Finn, behandle og opprett bestillinger.</p></div>
+      <div class="admin-page-actions"><button class="primary-btn" type="button" data-admin-open="#createBookingSection" aria-expanded="false">Ny booking</button></div>
+    </header>
 
-    <div class="admin-tools">
+    <div class="admin-tools admin-toolbar">
       <input type="text" id="searchInput" placeholder="Søk navn, telefon, e-post, tjeneste...">
-      <button id="refreshBtn" type="button">Oppdater</button>
+      <button id="refreshBtn" class="admin-icon-button" type="button" aria-label="Oppdater bookinger">↻</button>
     </div>
 
-    <div class="navbar">
+    <div class="navbar admin-filter-tabs" aria-label="Filtrer bookinger">
       <button class="tab active" data-tab="all" data-label="Alle">Alle</button>
       <button class="tab" data-tab="pending" data-label="Venter">Venter</button>
       <button class="tab" data-tab="planned" data-label="Planlagt">Planlagt</button>
@@ -33,11 +31,9 @@
       <button class="tab" data-tab="paid" data-label="Betalt">Betalt</button>
       <button class="tab" data-tab="cancelled" data-label="Kansellert">Kansellert</button>
     </div>
-  </header>
 
-  <main>
-    <section class="create-form">
-      <h2>Opprett manuell booking</h2>
+    <section id="createBookingSection" class="create-form admin-create-panel hidden" data-admin-panel>
+      <div class="admin-create-panel-head"><h2>Ny booking</h2><button class="admin-icon-button" type="button" data-admin-close aria-label="Lukk skjema">×</button></div>
       <form id="createBookingForm" class="form-grid">
         <input type="text" id="createName" placeholder="Navn" required>
         <input type="tel" id="createPhone" placeholder="Telefon" required>

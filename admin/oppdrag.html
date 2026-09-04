@@ -6,38 +6,31 @@
   <title>Admin – Oppdrag / Takstameter | Sørgulen Industriservice</title>
   <link rel="stylesheet" href="admin.css">
   <link rel="stylesheet" href="admin-shell.css">
+  <link rel="stylesheet" href="admin-pages.css">
 </head>
 <body>
-  <header>
-    <h1>Admin – Oppdrag / Takstameter</h1>
-    <a href="login.html" id="logoutBtn" class="logout">Logg ut</a>
-
-    <nav class="admin-section-links" aria-label="Adminnavigasjon">
-      <a href="hjem.html">Hjem</a>
-      <a href="admin-dashboard.html">Bookinger</a>
-      <a href="foresporsler.html">Forespørsler</a>
-      <a href="fakturaer.html">Fakturaer</a>
-      <a href="kunder.html">Kunder</a>
-      <a href="oppdrag.html" class="active" aria-current="page">Oppdrag / Takstameter</a>
-    </nav>
-  </header>
+  <div id="adminShell" data-page="jobs"></div>
+  <script src="admin-shell.js"></script>
 
   <main class="work-order-main">
+    <header class="admin-page-header">
+      <div><p class="admin-eyebrow">Arbeidsflate</p><h1>Oppdrag</h1><p>Åpne prosjekter, tidtaking og historikk.</p></div>
+      <div class="admin-page-actions"><button class="primary-btn" type="button" data-admin-open="#createWorkOrderSection" aria-expanded="false">Nytt prosjekt</button></div>
+    </header>
     <div id="statusMessage" class="status-message" role="status" aria-live="polite"></div>
 
-    <section id="activeWorkOrderSection" aria-labelledby="activeWorkOrderHeading">
+    <section id="activeWorkOrderSection" class="admin-section" aria-labelledby="activeWorkOrderHeading">
       <div class="section-heading-row">
         <div>
-          <p class="section-kicker">Tidtaking</p>
-          <h2 id="activeWorkOrderHeading">Aktivt oppdrag</h2>
+          <p class="section-kicker">Tidtaking</p><h2 id="activeWorkOrderHeading">Pågår nå</h2>
         </div>
-        <button id="refreshBtn" class="secondary-btn" type="button">Oppdater</button>
+        <button id="refreshBtn" class="admin-icon-button" type="button" aria-label="Oppdater oppdrag">↻</button>
       </div>
       <div id="activeWorkOrderContent" class="active-work-order-content"></div>
     </section>
 
-    <section id="createWorkOrderSection" class="create-form work-order-create" aria-labelledby="createWorkOrderHeading">
-      <h2 id="createWorkOrderHeading">Opprett nytt oppdrag</h2>
+    <section id="createWorkOrderSection" class="create-form work-order-create admin-create-panel hidden" data-admin-panel aria-labelledby="createWorkOrderHeading">
+      <div class="admin-create-panel-head"><h2 id="createWorkOrderHeading">Nytt prosjekt</h2><button class="admin-icon-button" type="button" data-admin-close aria-label="Lukk skjema">×</button></div>
       <p class="form-help">Søk i kunderegister, bookinger og forespørsler. Hvis kunden ikke finnes, opprettes én kundepost sammen med prosjektet.</p>
 
       <form id="createWorkOrderForm" class="work-order-form">
@@ -106,11 +99,11 @@
       </form>
     </section>
 
-    <section class="work-history-section" aria-labelledby="historyHeading">
+    <section class="work-history-section admin-section" aria-labelledby="historyHeading">
       <div class="section-heading-row">
         <div>
           <p class="section-kicker">Oppdragslogg</p>
-          <h2 id="historyHeading">Oppdragshistorikk</h2>
+          <h2 id="historyHeading">Pågående og historikk</h2>
         </div>
       </div>
 

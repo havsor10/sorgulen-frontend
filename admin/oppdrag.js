@@ -281,11 +281,9 @@
           <strong>Ingen aktiv tidtaking.</strong>
           <span>Opprett et oppdrag nedenfor, og trykk START når arbeidet begynner.</span>
         </div>`;
-      createSection.classList.remove("hidden");
       return;
     }
 
-    createSection.classList.remove("hidden");
     const seconds = calculateWorkSeconds(openWorkOrder);
     const amount = calculateEstimatedAmount(openWorkOrder, seconds);
     const customer = openWorkOrder.customerSnapshot || {};
@@ -360,7 +358,7 @@
       return;
     }
 
-    historyContainer.innerHTML = visible.map((workOrder) => {
+    const renderCard = (workOrder) => {
       const customer = workOrder.customerSnapshot || {};
       const seconds = calculateWorkSeconds(workOrder);
       const amount = calculateEstimatedAmount(workOrder, seconds);
@@ -392,7 +390,14 @@
             <button type="button" class="details-link open-job-detail" data-id="${escapeHtml(workOrder._id)}">Åpne</button>
           </div>
         </article>`;
-    }).join("");
+    };
+
+    const ongoing = visible.filter((workOrder) => PROJECT_OPEN_STATUSES.has(workOrder.status));
+    const remaining = visible.filter((workOrder) => !PROJECT_OPEN_STATUSES.has(workOrder.status));
+    historyContainer.innerHTML = [
+      ongoing.length ? `<section class="work-order-group"><h3 class="work-order-group-title">Pågående prosjekter</h3>${ongoing.map(renderCard).join("")}</section>` : "",
+      remaining.length ? `<section class="work-order-group"><h3 class="work-order-group-title">Planlagt og tidligere</h3>${remaining.map(renderCard).join("")}</section>` : "",
+    ].join("");
   }
 
   function renderCustomerResults(options) {
@@ -916,6 +921,7 @@
         const data = await apiFetch(`/admin/work-orders/customer-options?sourceType=booking&sourceId=${encodeURIComponent(bookingId)}`);
         const option = (data.customerOptions || []).find((candidate) => candidate.sourceType === "booking" && candidate.sourceId === bookingId);
         if (option) {
+          createSection.classList.remove("hidden");
           selectCustomer(option);
           createSection.scrollIntoView({ behavior: "smooth", block: "start" });
           setMessage("Bookingen er hentet inn. Velg riktig timesats og opprett oppdraget.", "success");
@@ -925,13 +931,14 @@
       if (requestId) {
         const data = await apiFetch(`/admin/work-orders/customer-options?sourceType=request&sourceId=${encodeURIComponent(requestId)}`);
         const option = (data.customerOptions || [])[0];
-        if (option) { selectCustomer(option); createSection.scrollIntoView({ behavior: "smooth", block: "start" }); setMessage("Prisforespørselen er hentet inn. Kontroller pris og opprett prosjektet.", "success"); }
+        if (option) { createSection.classList.remove("hidden"); selectCustomer(option); createSection.scrollIntoView({ behavior: "smooth", block: "start" }); setMessage("Prisforespørselen er hentet inn. Kontroller pris og opprett prosjektet.", "success"); }
       }
       const customerId = new URLSearchParams(window.location.search).get("customerId");
       if (customerId) {
         const data = await apiFetch(`/admin/work-orders/customer-options?sourceType=customer&sourceId=${encodeURIComponent(customerId)}`);
         const option = (data.customerOptions || []).find((candidate) => candidate.sourceType === "customer" && candidate.sourceId === customerId);
         if (option) {
+          createSection.classList.remove("hidden");
           selectCustomer(option);
           createSection.scrollIntoView({ behavior: "smooth", block: "start" });
         }

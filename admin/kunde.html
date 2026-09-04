@@ -6,16 +6,15 @@
   <title>Kunde | Sørgulen Industriservice</title>
   <link rel="stylesheet" href="admin.css">
   <link rel="stylesheet" href="admin-shell.css">
+  <link rel="stylesheet" href="admin-pages.css">
 </head>
 <body>
-  <header>
-    <h1 id="pageTitle">Kunde</h1>
-    <a href="login.html" id="logoutBtn" class="logout">Logg ut</a>
-    <nav class="admin-section-links" aria-label="Adminnavigasjon">
-      <a href="hjem.html">Hjem</a><a href="oppdrag.html">Oppdrag</a><a href="admin-dashboard.html">Bookinger</a><a href="foresporsler.html">Forespørsler</a><a href="fakturaer.html">Fakturaer</a><a class="active" href="kunder.html">Kunder</a>
-    </nav>
-  </header>
+  <div id="adminShell" data-page="customers"></div>
+  <script src="admin-shell.js"></script>
   <main class="customer-main">
+    <header class="admin-page-header">
+      <div><p class="admin-eyebrow">Kundedetalj</p><h1 id="pageTitle">Kunde</h1><p><a class="quiet-link" href="kunder.html">← Tilbake til kunder</a></p></div>
+    </header>
     <div id="customerStatus" class="status-message" role="status"></div>
     <div id="customerDetail" class="customer-detail"><p>Laster kunde…</p></div>
   </main>

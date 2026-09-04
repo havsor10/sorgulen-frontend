@@ -2,54 +2,23 @@
 <html lang="no">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin – Statistikk | Sørgulen Industriservice</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Statistikk | Sørgulen Industriservice</title>
   <link rel="stylesheet" href="admin.css">
-  <style>
-    .stat-wrap { max-width: 900px; margin: 0 auto; padding: 20px; }
-    .stat-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 14px; margin-bottom: 24px;
-    }
-    .stat-card {
-      background-color: #1e1e1e; border: 1px solid #333; border-radius: 8px;
-      padding: 18px; text-align: center;
-    }
-    .stat-num { font-size: 30px; font-weight: 700; color: #4fc78a; margin: 0; line-height: 1.1; }
-    .stat-label { color: #9aa6b8; font-size: 13px; margin-top: 6px; }
-    .stat-sub { color: #6f7c90; font-size: 11px; margin-top: 2px; }
-    .chart-card {
-      background-color: #1e1e1e; border: 1px solid #333; border-radius: 8px;
-      padding: 18px; margin-bottom: 20px;
-    }
-    .chart-card h3 { margin: 0 0 14px; font-size: 15px; color: #d6dce6; }
-    .chart-svg { width: 100%; height: auto; display: block; }
-    .stat-loading { text-align: center; color: #888; padding: 50px 20px; }
-    .stat-note { color: #6f7c90; font-size: 12px; margin-top: 8px; }
-  </style>
+  <link rel="stylesheet" href="admin-shell.css">
+  <link rel="stylesheet" href="admin-pages.css">
 </head>
 <body>
-  <header>
-    <h1>Admin – Statistikk</h1>
-    <a href="login.html" id="logoutBtn" class="logout">Logg ut</a>
-
-    <div class="admin-tools">
-      <a href="hjem.html" style="color:#fff; text-decoration:none; margin-right:14px;">Hjem</a>
-      <a href="admin-dashboard.html" style="color:#6fb6f0; text-decoration:none; margin-right:14px;">← Bookinger</a>
-      <a href="foresporsler.html" style="color:#6fb6f0; text-decoration:none; margin-right:14px;">Forespørsler</a>
-      <a href="oppdrag.html" style="color:#4fc78a; text-decoration:none; margin-right:14px;">Oppdrag / Takstameter</a>
-      <button id="refreshBtn" type="button">Oppdater</button>
-    </div>
-  </header>
-
-  <main class="stat-wrap">
-    <div id="statusMessage" class="status-message" style="display:none;"></div>
-
-    <div id="statContent">
-      <div class="stat-loading">Laster statistikk…</div>
-    </div>
+  <div id="adminShell" data-page="more"></div>
+  <script src="admin-shell.js"></script>
+  <main class="admin-main stat-wrap">
+    <header class="admin-page-header">
+      <div><p class="admin-eyebrow">Sekundær oversikt</p><h1>Statistikk</h1><p>Besøk og aktivitet – uten å ta plass fra det operative arbeidet.</p></div>
+      <div class="admin-page-actions"><button id="refreshBtn" class="admin-icon-button" type="button" aria-label="Oppdater statistikk">↻</button></div>
+    </header>
+    <div id="statusMessage" class="status-message"></div>
+    <div id="statContent"><div class="stat-loading">Laster statistikk…</div></div>
   </main>
-
   <script src="../config.js"></script>
   <script src="statistikk.js"></script>
 </body>
