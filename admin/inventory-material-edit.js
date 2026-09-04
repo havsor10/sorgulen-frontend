@@ -46,7 +46,7 @@
     modal.querySelector("#inventoryMaterialEditTitle").textContent = material.item || "Korriger materiale";
     body.innerHTML = `<form id="managedMaterialForm" class="operation-grid">
       <div class="operation-field wide"><label>Materiale</label><input name="item" maxlength="300" value="${esc(material.item)}" required></div>
-      <div class="operation-field"><label>Antall brukt</label><input name="quantity" type="number" min="0.01" step="0.01" value="${esc(material.quantity)}" required></div>
+      <div class="operation-field"><label>Antall brukt</label><input name="quantity" type="number" min="0.001" step="0.001" value="${esc(material.quantity)}" required></div>
       <div class="operation-field"><label>Enhet</label><input value="${esc(material.unit || "stk")}" disabled></div>
       <div class="operation-field"><label>Innkjøpspris</label><input name="purchaseUnitPrice" type="number" min="0" step="0.01" value="${esc(material.purchaseUnitPrice ?? "")}"></div>
       <div class="operation-field"><label>Kundepris</label><input name="unitPrice" type="number" min="0" step="0.01" value="${esc(material.unitPrice ?? "")}"></div>
@@ -100,4 +100,4 @@
       else remove(found.material, found.orderId);
     } catch (error) { alert(error.message); }
   }, true);
-}());
+})();
