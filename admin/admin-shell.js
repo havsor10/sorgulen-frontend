@@ -11,8 +11,8 @@
     Object.entries(attrs).forEach(([name, value]) => node.setAttribute(name, value));
     document.head.appendChild(node);
   }
-  ensureAsset("link", { rel: "stylesheet", href: "operations.css" });
-  ensureAsset("script", { src: "operations-ui.js" });
+  ensureAsset("link", { rel: "stylesheet", href: "operations.css?v=20260904-clickfix1" });
+  ensureAsset("script", { src: "operations-ui.js?v=20260904-clickfix1" });
 
   const page = mount.dataset.page || "";
   const navItems = [
