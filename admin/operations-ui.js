@@ -31,9 +31,9 @@
       return Number.isFinite(start) && Number.isFinite(end) && end >= start ? Math.floor((end - start) / 1000) : 0;
     };
     const durationText = (seconds) => {
-      const total = Math.max(0, Math.round(Number(seconds) || 0));
+      const total = Math.max(0, Math.floor(Number(seconds) || 0));
       const hours = Math.floor(total / 3600);
-      const minutes = Math.round((total % 3600) / 60);
+      const minutes = Math.floor((total % 3600) / 60);
       if (hours && minutes) return `${hours} t ${minutes} min`;
       if (hours) return `${hours} t`;
       return `${minutes} min`;
@@ -67,6 +67,7 @@
       state.modalMode = null;
       state.currentOrder = null;
       document.body.classList.remove("modal-open");
+      sheet.onclick = null;
       sheet.innerHTML = "";
     }
     modal.addEventListener("click", (event) => { if (event.target === modal) closeModal(); });
@@ -75,6 +76,7 @@
     function showModal({ title, subtitle = "", wide = false, body = "" }) {
       modal.hidden = false;
       document.body.classList.add("modal-open");
+      sheet.onclick = null;
       sheet.className = `operation-sheet${wide ? " operation-sheet-wide" : ""}`;
       sheet.innerHTML = `<div class="operation-head"><div><h2>${esc(title)}</h2>${subtitle ? `<p>${esc(subtitle)}</p>` : ""}</div><button type="button" class="admin-icon-button" data-operation-close aria-label="Lukk">×</button></div>${body}`;
       sheet.querySelector("[data-operation-close]").addEventListener("click", closeModal);
@@ -88,7 +90,7 @@
     function timeFormMarkup({ orderId = "", customerId = "", entry = null, rate = 850 } = {}) {
       const seconds = entry ? intervalSeconds(entry) : 0;
       const hours = Math.floor(seconds / 3600);
-      const minutes = Math.round((seconds % 3600) / 60);
+      const minutes = Math.floor((seconds % 3600) / 60);
       const workDate = entry?.workDate || dateValue(entry?.startedAt) || today();
       const selectedRate = Number(entry?.hourlyRateSnapshot ?? rate ?? 850) || 850;
       return `<form id="operationTimeForm" data-order-id="${esc(orderId)}" data-customer-id="${esc(customerId)}" data-entry-id="${esc(entry?.entryId || "")}">
@@ -169,7 +171,7 @@
     function expenseFormMarkup(orderId, item) {
       return `<form id="operationEditForm" data-kind="expense" data-order-id="${esc(orderId)}" data-entry-id="${esc(item.entryId)}"><div class="operation-grid">
         <div class="operation-field wide"><label>Beskrivelse</label><input name="description" value="${esc(item.item)}" required></div>
-        <div class="operation-field"><label>Beløp</label><input name="amount" type="number" min="0.01" step="0.01" value="${esc(item.amount)}" required></div>
+        <div class="operation-field"><label>Beløp</label><input name="amount" type="number" min="0.01" max="1000000" step="0.01" value="${esc(item.amount)}" required></div>
         <div class="operation-field"><label>Leverandør</label><input name="supplier" value="${esc(item.supplier || "")}"></div>
         <div class="operation-field"><label>Dato</label><input name="occurredAt" type="date" value="${esc(dateValue(item.occurredAt) || today())}" required></div>
         <label class="operation-check"><input name="billable" type="checkbox" ${item.billable === false ? "" : "checked"}> Fakturerbar</label>
@@ -178,10 +180,10 @@
     function materialFormMarkup(orderId, item) {
       return `<form id="operationEditForm" data-kind="material" data-order-id="${esc(orderId)}" data-entry-id="${esc(item.entryId)}"><div class="operation-grid">
         <div class="operation-field wide"><label>Materiale</label><input name="item" value="${esc(item.item)}" required></div>
-        <div class="operation-field"><label>Antall</label><input name="quantity" type="number" min="0.01" step="0.01" value="${esc(item.quantity)}" required></div>
+        <div class="operation-field"><label>Antall</label><input name="quantity" type="number" min="0.01" max="100000" step="0.01" value="${esc(item.quantity)}" required></div>
         <div class="operation-field"><label>Enhet</label><input name="unit" value="${esc(item.unit || "stk")}"></div>
-        <div class="operation-field"><label>Innkjøpspris</label><input name="purchaseUnitPrice" type="number" min="0" step="0.01" value="${esc(item.purchaseUnitPrice ?? "")}"></div>
-        <div class="operation-field"><label>Kundepris</label><input name="unitPrice" type="number" min="0" step="0.01" value="${esc(item.unitPrice ?? "")}"></div>
+        <div class="operation-field"><label>Innkjøpspris</label><input name="purchaseUnitPrice" type="number" min="0" max="1000000" step="0.01" value="${esc(item.purchaseUnitPrice ?? "")}"></div>
+        <div class="operation-field"><label>Kundepris</label><input name="unitPrice" type="number" min="0" max="1000000" step="0.01" value="${esc(item.unitPrice ?? "")}"></div>
         <div class="operation-field wide"><label>Kommentar</label><input name="comment" value="${esc(item.comment || "")}"></div>
         <label class="operation-check"><input name="billable" type="checkbox" ${item.billable === false ? "" : "checked"}> Fakturerbar</label>
       </div><p id="operationError" class="operation-error"></p><div class="operation-actions"><button type="button" class="secondary-btn" data-operation-close-2>Avbryt</button><button type="submit" class="primary-btn">Lagre</button></div></form>`;
@@ -254,7 +256,11 @@
         const seconds = intervalSeconds(entry);
         const rate = Number(entry.hourlyRateSnapshot ?? order.hourlyRate ?? 0);
         const amount = (seconds / 3600) * rate;
-        return `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(entry.comment || categoryName(entry.category))}<span class="operation-source">${entry.source === "manual" ? "Manuell" : "Takstameter"}</span></strong><p>${esc(entry.workDate || dateValue(entry.startedAt))} · ${esc(durationText(seconds))} · ${esc(categoryName(entry.category))} · ${esc(money(rate))}/t · ${esc(money(amount))}${entry.billable === false ? " · Intern" : ""}</p></div><div class="operations-entry-actions"><button class="secondary-btn" data-op-edit="time" data-entry-id="${esc(entry.entryId)}">Rediger</button><button class="secondary-btn operation-danger" data-op-delete="time" data-entry-id="${esc(entry.entryId)}" data-label="${esc(entry.comment || "tidsregistreringen")}">Slett</button></div></div>`;
+        const openTimer = entry.source !== "manual" && !entry.endedAt;
+        const actions = openTimer
+          ? '<span class="operation-source">Pågår – stopp eller pause før redigering</span>'
+          : `<button class="secondary-btn" data-op-edit="time" data-entry-id="${esc(entry.entryId)}">Rediger</button><button class="secondary-btn operation-danger" data-op-delete="time" data-entry-id="${esc(entry.entryId)}" data-label="${esc(entry.comment || "tidsregistreringen")}">Slett</button>`;
+        return `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(entry.comment || categoryName(entry.category))}<span class="operation-source">${entry.source === "manual" ? "Manuell" : "Takstameter"}</span></strong><p>${esc(entry.workDate || dateValue(entry.startedAt))} · ${esc(durationText(seconds))} · ${esc(categoryName(entry.category))} · ${esc(money(rate))}/t · ${esc(money(amount))}${entry.billable === false ? " · Intern" : ""}</p></div><div class="operations-entry-actions">${actions}</div></div>`;
       }, "Ingen tid registrert.");
       const expenseRows = list(expenses, (item) => `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(item.item)}</strong><p>${esc(dateValue(item.occurredAt))} · ${esc(money(item.amount))}${item.supplier ? ` · ${esc(item.supplier)}` : ""}${item.billable === false ? " · Intern" : ""}</p></div><div class="operations-entry-actions"><button class="secondary-btn" data-op-edit="expense" data-entry-id="${esc(item.entryId)}">Rediger</button><button class="secondary-btn operation-danger" data-op-delete="expense" data-entry-id="${esc(item.entryId)}" data-label="${esc(item.item)}">Slett</button></div></div>`, "Ingen utgifter registrert.");
       const materialRows = list(materials, (item) => `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(item.item)}</strong><p>${esc(item.quantity)} ${esc(item.unit || "stk")}${item.unitPrice != null ? ` · ${esc(money(Number(item.quantity) * Number(item.unitPrice)))}` : " · Pris ikke satt"}${item.billable === false ? " · Intern" : ""}</p></div><div class="operations-entry-actions"><button class="secondary-btn" data-op-edit="material" data-entry-id="${esc(item.entryId)}">Rediger</button><button class="secondary-btn operation-danger" data-op-delete="material" data-entry-id="${esc(item.entryId)}" data-label="${esc(item.item)}">Slett</button></div></div>`, "Ingen materialer registrert.");
@@ -270,7 +276,7 @@
         showModal({ title: "Rediger registreringer", subtitle: `${order.customerSnapshot?.name || "Kunde"} · ${order.serviceName}`, wide: true, body: managerMarkup(order) });
         sheet.querySelector("[data-op-add-time]").addEventListener("click", () => openManualTime({ orderId, rate: order.hourlyRate }));
         sheet.querySelector("[data-op-edit-project]").addEventListener("click", () => openProjectEdit(orderId));
-        sheet.addEventListener("click", async (event) => {
+        sheet.onclick = async (event) => {
           const edit = event.target.closest("[data-op-edit]");
           const del = event.target.closest("[data-op-delete]");
           if (edit) {
@@ -303,7 +309,7 @@
               location.reload();
             } catch (error) { alert(error.message); }
           }
-        });
+        };
       } catch (error) { showModal({ title: "Kunne ikke hente registreringene", body: `<p class="operation-error">${esc(error.message)}</p>` }); }
     }
 
@@ -339,7 +345,7 @@
         const warning = document.createElement("div");
         warning.id = "invoiceBasisWarning";
         warning.className = "billing-draft-warning";
-        warning.innerHTML = `<strong>Fakturagrunnlaget er endret</strong><span>${data.added?.length || 0} nye og ${data.removed?.length || 0} fjernede/endrede registreringer. Kontroller utkastet før sending.</span><div class="customer-ops-actions" style="margin-top:9px"><button type="button" class="secondary-btn" id="syncInvoiceBasis">Oppdater fakturautkast</button></div>`;
+        warning.innerHTML = `<strong>Fakturagrunnlaget er endret</strong><span>${data.added?.length || 0} nye, ${data.removed?.length || 0} fjernede og ${data.modified?.length || 0} endrede registreringer. Kontroller utkastet før sending.</span><div class="customer-ops-actions" style="margin-top:9px"><button type="button" class="secondary-btn" id="syncInvoiceBasis">Oppdater fakturautkast</button></div>`;
         content.parentNode.insertBefore(warning, content);
         warning.querySelector("#syncInvoiceBasis").addEventListener("click", async (event) => {
           const button = event.currentTarget;
