@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Lager – Sørgulen admin</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin-shell.css">
+  <link rel="stylesheet" href="admin-pages.css">
+  <link rel="stylesheet" href="lager.css">
+</head>
+<body>
+  <div id="adminShell" data-page="inventory"></div>
+  <script src="admin-shell.js"></script>
+
+  <main class="admin-main inventory-main">
+    <header class="admin-page-header">
+      <div>
+        <p class="admin-eyebrow">Beholdning</p>
+        <h1>Lager</h1>
+        <p>Finn deler raskt, registrer beholdning og bruk varer direkte på oppdrag.</p>
+      </div>
+      <div class="admin-page-actions">
+        <button id="createItemBtn" class="primary-btn" type="button">+ Registrer vare</button>
+      </div>
+    </header>
+
+    <div id="inventoryStatus" class="status-message" role="status" aria-live="polite"></div>
+
+    <section id="lowStockSection" class="inventory-alert hidden" aria-labelledby="lowStockTitle">
+      <div>
+        <p class="section-kicker">Krever handling</p>
+        <h2 id="lowStockTitle">Lav beholdning</h2>
+        <p id="lowStockText"></p>
+      </div>
+      <button id="showLowStockBtn" type="button" class="secondary-btn">Vis varer</button>
+    </section>
+
+    <section class="admin-section inventory-list-section" aria-labelledby="inventoryTitle">
+      <div class="section-heading-row">
+        <div>
+          <p class="section-kicker">Oversikt</p>
+          <h2 id="inventoryTitle">Varer</h2>
+        </div>
+        <button id="refreshInventoryBtn" class="admin-icon-button" type="button" aria-label="Oppdater lager">↻</button>
+      </div>
+
+      <div class="inventory-toolbar">
+        <label class="inventory-search">
+          <span class="sr-only">Søk i lager</span>
+          <input id="inventorySearch" type="search" autocomplete="off" placeholder="Søk filter, olje, merke, delenummer…">
+        </label>
+        <select id="inventoryCategory" aria-label="Filtrer kategori">
+          <option value="">Alle kategorier</option>
+        </select>
+        <label class="inventory-low-toggle">
+          <input id="inventoryLowOnly" type="checkbox">
+          <span>Kun lav beholdning</span>
+        </label>
+      </div>
+
+      <div id="inventoryMeta" class="inventory-meta"></div>
+      <div id="inventoryList" class="inventory-list" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <div id="inventoryModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="inventoryModalTitle">
+    <div class="modal-card inventory-modal-card">
+      <div class="modal-header">
+        <div>
+          <p id="inventoryModalEyebrow" class="section-kicker"></p>
+          <h2 id="inventoryModalTitle">Lager</h2>
+        </div>
+        <button id="closeInventoryModal" type="button" class="admin-icon-button" aria-label="Lukk">×</button>
+      </div>
+      <div id="inventoryModalContent"></div>
+    </div>
+  </div>
+
+  <script src="../config.js"></script>
+  <script src="lager.js"></script>
+</body>
+</html>
