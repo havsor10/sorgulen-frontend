@@ -33,7 +33,7 @@
           ${navItems.map((item) => `<a class="admin-nav-link${activeClass(item.key)}" href="${item.href}"${activeAttr(item.key)}>${item.label}</a>`).join("")}
         </nav>
         <div class="admin-header-actions">
-          <a class="admin-quiet-action" href="statistikk.html">Mer</a>
+          <a class="admin-quiet-action" href="statistikk.html">Statistikk</a>
           <a class="admin-quiet-action" id="logoutBtn" href="login.html">Logg ut</a>
         </div>
       </div>
