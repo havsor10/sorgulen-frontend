@@ -6,7 +6,7 @@ const path = require("node:path");
 function read(relative) { return fs.readFileSync(path.resolve(__dirname, "..", relative), "utf8"); }
 
 test("inventory use is sent as one backend operation rather than client-side stock math", () => {
-  const js = read("admin/lager.js");
+  const js = read("admin/lager-runtime.js");
   assert.match(js, /operationId:\s*uuid\("inventory-use"\)/);
   assert.match(js, /\/admin\/inventory\/\$\{encodeURIComponent\(item\._id\)\}\/use/);
   assert.doesNotMatch(js, /stockQuantity\s*=\s*stockQuantity\s*-/);
@@ -20,8 +20,9 @@ test("inventory-linked project material is corrected through inventory API", () 
 });
 
 test("image registration requires user confirmation through the normal product form", () => {
-  const js = read("admin/lager.js");
+  const js = read("admin/lager-runtime.js");
   assert.match(js, /AI-forslag lagt inn/);
-  assert.match(js, /Kontroller spesielt varenummer/);
-  assert.doesNotMatch(js, /analyzeSelectedImage[\s\S]{0,200}method:\s*"POST"[\s\S]{0,100}admin\/inventory\/"/);
+  assert.match(js, /Kontroller varenummer og modell/);
+  assert.match(js, /form\.addEventListener\("submit"/);
+  assert.doesNotMatch(js, /analyze-image[\s\S]{0,200}forceCreate/);
 });
