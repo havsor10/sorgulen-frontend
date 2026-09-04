@@ -36,3 +36,10 @@ test("operation manager exposes edit and delete actions", () => {
   assert.match(operations, /data-op-delete/);
   assert.match(operations, /sync-basis/);
 });
+
+test("invoice warnings distinguish added removed and modified entries", () => {
+  const operations = read("admin/operations-ui.js");
+  const customer = read("admin/kunde-v2.js");
+  assert.match(operations, /data\.modified\?\.length/);
+  assert.match(customer, /draft\.modified\?\.length/);
+});
