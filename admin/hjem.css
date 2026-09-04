@@ -1,14 +1,8 @@
 :root { color-scheme: dark; }
 * { box-sizing: border-box; }
 .home-body { margin:0; background:#0b0e12; color:#f5f7fa; font-family:Arial,sans-serif; }
-.home-header,.home-nav,.home-main { width:min(760px,100%); margin:0 auto; }
-.home-header { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:22px 18px 14px; }
-.home-header h1 { margin:3px 0 0; font-size:clamp(24px,6vw,34px); }
 .eyebrow { margin:0; color:#8d98a8; font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
 .quiet-link { color:#b9c1cc; text-decoration:none; font-size:14px; }
-.home-nav { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; padding:0 14px 14px; }
-.home-nav a { min-height:42px; display:grid; place-items:center; padding:0 8px; border-radius:9px; color:#aab3bf; text-decoration:none; text-align:center; font-size:14px; }
-.home-nav a.active { background:#1b2028; color:#fff; }
 .home-main { display:grid; gap:34px; padding:8px 16px calc(42px + env(safe-area-inset-bottom)); }
 .home-status { min-height:18px; color:#9aa5b4; font-size:13px; }
 .home-status.error { color:#ffaaaa; }
@@ -59,6 +53,5 @@ button,a { -webkit-tap-highlight-color:transparent; }
 .quick-field textarea { min-height:92px; resize:vertical; }
 .home-sheet>.primary-action { width:100%; margin-top:8px; }
 .form-error { min-height:18px; color:#ffaaaa; font-size:13px; }
-@media(min-width:520px){.home-nav{grid-template-columns:repeat(5,minmax(0,1fr))}}
 @media(min-width:720px){ .home-modal{align-items:center}.main-actions .primary-action,.main-actions .secondary-action{min-width:150px} }
-@media(max-width:430px){ .home-header{padding-top:18px}.home-main{padding-inline:12px}.focus-card{padding:17px}.task-action{padding:0 11px}.task-item{gap:9px;padding:14px 12px}.quick-action{min-width:90px}.main-actions>*{flex:1} }
+@media(max-width:430px){ .home-main{padding-inline:12px}.focus-card{padding:17px}.task-action{padding:0 11px}.task-item{gap:9px;padding:14px 12px}.quick-action{min-width:90px}.main-actions>*{flex:1} }

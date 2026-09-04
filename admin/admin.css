@@ -125,22 +125,6 @@ header h1 {
   background-color: #2980d9;
 }
 
-/* Logg ut-knapp i adminpanelet */
-.logout {
-  position: absolute;
-  right: 20px;
-  top: 20px;
-  background-color: #b30000;
-  color: #fff;
-  padding: 8px 14px;
-  border-radius: 5px;
-  text-decoration: none;
-  font-weight: 600;
-}
-.logout:hover {
-  background-color: #cc3333;
-}
-
 .admin-tools {
   margin: 16px auto 0;
   max-width: 920px;
@@ -419,35 +403,6 @@ button,.btn{min-height:44px;touch-action:manipulation;}
 }
 
 /* === Oppdrag / Takstameter === */
-.admin-section-links {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 14px auto 4px;
-  padding: 0 8px;
-}
-
-.admin-section-links a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  box-sizing: border-box;
-  padding: 10px 16px;
-  border-radius: 8px;
-  background: #253248;
-  color: #fff;
-  text-decoration: none;
-  font-weight: 700;
-  margin: 0 !important;
-}
-
-.admin-section-links a.active {
-  background: #15c987;
-  color: #06140f;
-}
-
 .work-order-main {
   width: min(1100px, 100%);
   margin: 0 auto;
@@ -867,8 +822,6 @@ button,.btn{min-height:44px;touch-action:manipulation;}
 }
 
 @media (max-width: 720px) {
-  .admin-section-links { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); }
-  .admin-section-links a { justify-content: center; text-align: center; font-size: 13px !important; padding: 9px 8px !important; }
   .work-order-main { padding: 14px 12px 36px; }
   .section-heading-row { align-items: center; }
   .meter-card { padding: 16px; }

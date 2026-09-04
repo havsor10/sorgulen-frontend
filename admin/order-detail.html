@@ -6,16 +6,14 @@
   <title>Bestilling – detaljer | Sørgulen Industriservice</title>
   <link rel="stylesheet" href="admin.css">
   <link rel="stylesheet" href="admin-shell.css">
+  <link rel="stylesheet" href="admin-pages.css">
 </head>
 <body>
-  <header>
-    <h1>Bestillingsdetaljer</h1>
-    <nav class="navbar">
-      <a href="admin-dashboard.html" class="tab">Tilbake</a>
-    </nav>
-  </header>
+  <div id="adminShell" data-page="bookings"></div>
+  <script src="admin-shell.js"></script>
 
   <main class="detail-main">
+    <header class="admin-page-header"><div><p class="admin-eyebrow">Booking</p><h1>Bestillingsdetaljer</h1><p><a class="quiet-link" href="admin-dashboard.html">← Tilbake til bookinger</a></p></div></header>
     <div id="orderInfo" class="detail-card">Laster...</div>
   </main>
 

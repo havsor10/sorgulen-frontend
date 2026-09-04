@@ -5,18 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Jobb Oversikt – Kart | Sørgulen Industriservice</title>
   <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin-shell.css">
+  <link rel="stylesheet" href="admin-pages.css">
   <!-- Leaflet for kart -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-u07kLseDtF2OnCMMU6IB2teMhr2qcXJFJd1XRnSA9ST9CzG6ENlzWNWVM94mHJi0" crossorigin="" />
 </head>
 <body>
-  <header>
-    <h1>Jobboversikt – Kart</h1>
-    <nav class="navbar">
-      <a href="admin-dashboard.html" class="tab">Tilbake til oversikt</a>
-    </nav>
-  </header>
-  <main>
-    <div id="jobsMap" style="height:80vh; width:100%; border-radius:12px;"></div>
+  <div id="adminShell" data-page="bookings"></div>
+  <script src="admin-shell.js"></script>
+  <main class="admin-main">
+    <header class="admin-page-header"><div><p class="admin-eyebrow">Bookinger</p><h1>Kart</h1><p><a class="quiet-link" href="admin-dashboard.html">← Tilbake til bookinger</a></p></div></header>
+    <div id="jobsMap" class="admin-map"></div>
   </main>
   <!-- Leaflet script -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-b+eEdFqHFoFTlqw3Yax85GazaogIcNnR8T9HzBU1Jrky7BNSz7IIeRqfS4WZnqIA" crossorigin=""></script>

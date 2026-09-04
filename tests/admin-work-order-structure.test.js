@@ -7,13 +7,14 @@ const root = path.resolve(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "admin/oppdrag.html"), "utf8");
 const script = fs.readFileSync(path.join(root, "admin/oppdrag.js"), "utf8");
 const css = fs.readFileSync(path.join(root, "admin/admin.css"), "utf8");
+const shell = fs.readFileSync(path.join(root, "admin/admin-shell.js"), "utf8");
 
 test("all JavaScript element references exist exactly once in the page", () => {
   const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map((match) => match[1]);
   const duplicateIds = ids.filter((id, index) => ids.indexOf(id) !== index);
   assert.deepEqual(duplicateIds, []);
 
-  const dynamicIds = [...script.matchAll(/\sid="([^"]+)"/g)].map((match) => match[1]);
+  const dynamicIds = [...`${script}\n${shell}`.matchAll(/\sid=\\?"([^"\\]+)\\?"/g)].map((match) => match[1]);
   const referencedIds = [...script.matchAll(/getElementById\("([^"]+)"\)/g)].map((match) => match[1]);
   for (const id of referencedIds) {
     assert.ok(ids.includes(id) || dynamicIds.includes(id), `Missing HTML element #${id}`);
@@ -32,7 +33,7 @@ test("keeps the integration inside admin and free from local-only or iframe fall
   const combined = `${html}\n${script}`;
   assert.doesNotMatch(combined, /<iframe\b/i);
   assert.doesNotMatch(combined, /localhost|127\.0\.0\.1/i);
-  assert.match(html, /href="admin-dashboard\.html"/);
+  assert.match(`${html}\n${shell}`, /href=\\?"admin-dashboard\.html/);
   assert.match(script, /\/admin\/work-orders\/active/);
 });
 

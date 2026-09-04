@@ -7,6 +7,7 @@ const root = path.resolve(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "admin/hjem.html"), "utf8");
 const js = fs.readFileSync(path.join(root, "admin/hjem.js"), "utf8");
 const css = fs.readFileSync(path.join(root, "admin/hjem.css"), "utf8");
+const shellCss = fs.readFileSync(path.join(root, "admin/admin-shell.css"), "utf8");
 
 test("home prioritizes current work, actions and latest bookings", () => {
   assert.match(html, /focusContent/);
@@ -25,8 +26,8 @@ test("every project quick action is wired to a protected backend route", () => {
 
 test("home has responsive touch targets and no horizontal navigation scrolling", () => {
   assert.match(css, /min-height:46px/);
-  assert.match(css, /grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
-  assert.doesNotMatch(css, /overflow-x:auto/);
+  assert.match(shellCss, /grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
+  assert.match(shellCss, /position:fixed/);
   assert.match(css, /@media\(max-width:430px\)/);
   assert.match(html, /viewport-fit=cover/);
 });

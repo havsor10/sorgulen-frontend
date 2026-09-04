@@ -6,72 +6,19 @@
   <title>Admin – Forespørsler | Sørgulen Industriservice</title>
   <link rel="stylesheet" href="admin.css">
   <link rel="stylesheet" href="admin-shell.css">
-  <style>
-    /* Side-spesifikke stiler i samme palett som admin.css */
-    .req-wrap { max-width: 900px; margin: 0 auto; padding: 20px; }
-    .req-card {
-      background-color: #1e1e1e; border: 1px solid #333; border-radius: 8px;
-      padding: 18px; margin-bottom: 16px;
-    }
-    .req-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
-    .req-customer { font-size: 17px; font-weight: 600; margin: 0 0 4px; }
-    .req-meta { color: #9aa6b8; font-size: 13px; }
-    .req-desc {
-      background: #161616; border: 1px solid #2c2c2c; border-radius: 6px;
-      padding: 12px; margin: 12px 0; color: #d6dce6; line-height: 1.5; white-space: pre-wrap;
-    }
-    .req-images { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
-    .req-images a { display: block; width: 90px; height: 90px; border-radius: 6px; overflow: hidden; border: 1px solid #333; }
-    .req-images img { width: 100%; height: 100%; object-fit: cover; }
-
-    .req-ai { border-left: 3px solid #007acc; padding: 10px 14px; margin: 12px 0; background: #15212e; border-radius: 0 6px 6px 0; }
-    .req-ai-error { border-left-color: #d8893a; background: #2a2014; color: #e8c08f; }
-    .req-ai h4 { margin: 0 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #6fb6f0; }
-    .req-ai-error h4 { color: #e8c08f; }
-    .req-ai-row { font-size: 14px; margin: 3px 0; color: #cdd6e3; }
-    .req-ai-price { font-size: 18px; font-weight: 700; color: #4fc78a; }
-    .req-warn { color: #f0a85f; font-size: 13px; margin-top: 6px; }
-    .req-badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; letter-spacing: .03em; }
-    .badge-new { background: #2a2410; color: #e0c88f; }
-    .badge-reviewed { background: #15301f; color: #8fe0a8; }
-    .badge-sent { background: #15212e; color: #6fb6f0; }
-    .badge-offer { background: #1d1530; color: #b794f0; }
-    .badge-accepted { background: #15301f; color: #4fc78a; }
-    .badge-completed { background: #133028; color: #5fd0a8; }
-    .badge-invoiced { background: #2e2710; color: #e0c060; }
-    .badge-paid { background: #14331a; color: #7fe098; }
-    .badge-declined { background: #2a1518; color: #d98a8a; }
-    .badge-archived { background: #2a2a2a; color: #999; }
-    .badge-scope { background: #3a1620; color: #ff9fb0; }
-
-    .req-admin { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; margin-top: 12px; }
-    @media (max-width: 560px) { .req-admin { grid-template-columns: 1fr 1fr; } }
-    .req-admin label { display: block; font-size: 12px; color: #9aa6b8; margin-bottom: 4px; }
-    .req-admin input {
-      width: 100%; background: #161616; border: 1px solid #2c2c2c; border-radius: 6px;
-      padding: 8px; color: #f0f0f0; box-sizing: border-box;
-    }
-    .req-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-    .req-actions button { padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; color: #fff; }
-    .btn-save { background: #007acc; }
-    .btn-sent { background: #2e8b57; }
-    .btn-archive { background: #555; }
-    .req-empty { text-align: center; color: #888; padding: 50px 20px; }
-  </style>
+  <link rel="stylesheet" href="admin-pages.css">
 </head>
 <body>
-  <header>
-    <h1>Admin – Forespørsler</h1>
-    <a href="login.html" id="logoutBtn" class="logout">Logg ut</a>
+  <div id="adminShell" data-page="requests"></div>
+  <script src="admin-shell.js"></script>
 
-    <div class="admin-tools">
-      <a href="hjem.html" style="color:#fff; text-decoration:none; margin-right:14px;">Hjem</a>
-      <a href="admin-dashboard.html" style="color:#6fb6f0; text-decoration:none; margin-right:14px;">← Bookinger</a>
-      <a href="oppdrag.html" style="color:#4fc78a; text-decoration:none; margin-right:14px;">Oppdrag / Takstameter</a>
-      <button id="refreshBtn" type="button">Oppdater</button>
-    </div>
+  <main class="admin-main">
+    <header class="admin-page-header">
+      <div><p class="admin-eyebrow">Kundehenvendelser</p><h1>Forespørsler</h1><p>Vurder, besvar og følg opp prisforespørsler.</p></div>
+      <div class="admin-page-actions"><button id="refreshBtn" class="admin-icon-button" type="button" aria-label="Oppdater forespørsler">↻</button></div>
+    </header>
 
-    <div class="navbar">
+    <div class="navbar admin-filter-tabs" aria-label="Filtrer forespørsler">
       <button class="tab active" data-tab="all">Alle</button>
       <button class="tab" data-tab="new">Nye</button>
       <button class="tab" data-tab="reviewed">Vurdert</button>
@@ -83,9 +30,6 @@
       <button class="tab" data-tab="declined">Avslått</button>
       <button class="tab" data-tab="archived">Arkivert</button>
     </div>
-  </header>
-
-  <main>
     <div id="statusMessage" class="status-message"></div>
     <div class="req-wrap" id="reqList"></div>
   </main>
