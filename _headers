@@ -1,7 +1,12 @@
-/
-*
+/*
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: no-referrer-when-downgrade
   Permissions-Policy: geolocation=(), microphone=(), camera=()
   Cache-Control: public, max-age=3600
+
+/admin/*
+  Cache-Control: no-store, max-age=0
+
+/config.js
+  Cache-Control: no-store, max-age=0
