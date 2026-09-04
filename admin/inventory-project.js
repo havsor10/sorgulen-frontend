@@ -64,7 +64,7 @@
       function showSelection(item) {
         selection.innerHTML = `<form id="projectInventoryUseForm" class="operation-grid" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--admin-border-soft)">
           <div class="operation-field wide"><strong>${esc(item.name)}</strong><span class="operation-source">${esc(qty(item.stockQuantity))} ${esc(item.unit || "stk")} på lager</span></div>
-          <div class="operation-field"><label>Antall brukt</label><input name="quantity" type="number" min="0.01" max="${esc(item.stockQuantity)}" step="0.01" value="1" required></div>
+          <div class="operation-field"><label>Antall brukt</label><input name="quantity" type="number" min="0.001" max="${esc(item.stockQuantity)}" step="0.001" value="1" required></div>
           <div class="operation-field"><label>Kundepris / enhet</label><input name="unitPrice" type="number" min="0" step="0.01" value="${esc(item.defaultCustomerUnitPrice ?? "")}"></div>
           <label class="operation-check"><input name="billable" type="checkbox" checked> Fakturerbar</label>
           <div class="operation-field wide"><label>Kommentar</label><input name="comment" maxlength="500" placeholder="Valgfritt"></div>
@@ -106,4 +106,4 @@
   const observer = new MutationObserver(() => enhance());
   observer.observe(detail, { childList: true, subtree: true });
   enhance();
-}());
+})();
