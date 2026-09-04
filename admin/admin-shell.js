@@ -13,8 +13,9 @@
   }
 
   const page = mount.dataset.page || "";
-  ensureAsset("link", { rel: "stylesheet", href: "operations.css?v=20260904-clickfix2" });
-  if (page !== "home") ensureAsset("script", { src: "operations-ui.js?v=20260904-clickfix2" });
+  ensureAsset("link", { rel: "stylesheet", href: "operations.css?v=20260904-inventory1" });
+  if (!["home", "inventory"].includes(page)) ensureAsset("script", { src: "operations-ui.js?v=20260904-inventory1" });
+  if (page === "jobs") ensureAsset("script", { src: "inventory-material-edit.js?v=20260904-inventory1" });
 
   const navItems = [
     { key: "home", href: "hjem.html", label: "Hjem" },
@@ -45,6 +46,7 @@
           ${navItems.map((item) => `<a class="admin-nav-link${activeClass(item.key)}" href="${item.href}"${activeAttr(item.key)}><span>${item.label}</span>${badge(item.key)}</a>`).join("")}
         </nav>
         <div class="admin-header-actions">
+          <a class="admin-quiet-action${activeClass("inventory")}" href="lager.html"${activeAttr("inventory")}><span>Lager</span>${badge("inventory")}</a>
           <a class="admin-quiet-action" href="statistikk.html">Statistikk</a>
           <a class="admin-quiet-action" id="logoutBtn" href="login.html">Logg ut</a>
         </div>
@@ -52,7 +54,7 @@
     </header>
     <nav class="admin-mobile-nav" aria-label="Mobilnavigasjon">
       ${mobileItems.map((item) => `<a class="admin-mobile-link${activeClass(item.key)}" href="${item.href}"${activeAttr(item.key)}><span class="admin-mobile-icon" aria-hidden="true">${mobileIcon(item.key)}</span><span class="admin-mobile-label">${item.label}</span>${badge(item.key)}</a>`).join("")}
-      <button class="admin-mobile-link${["bookings", "requests", "more"].includes(page) ? " is-active" : ""}" id="adminMoreButton" type="button" aria-expanded="false" aria-controls="adminMoreMenu">
+      <button class="admin-mobile-link${["bookings", "requests", "inventory", "more"].includes(page) ? " is-active" : ""}" id="adminMoreButton" type="button" aria-expanded="false" aria-controls="adminMoreMenu">
         <span class="admin-mobile-icon" aria-hidden="true">•••</span><span class="admin-mobile-label">Mer</span>${badge("more")}
       </button>
     </nav>
@@ -61,6 +63,7 @@
       <div class="admin-more-head"><strong>Mer</strong><button id="adminMoreClose" class="admin-icon-button" type="button" aria-label="Lukk meny">×</button></div>
       <a class="admin-more-link${activeClass("bookings")}" href="admin-dashboard.html"${activeAttr("bookings")}><span>Bookinger</span><span class="admin-more-tail">${badge("bookings")}<span aria-hidden="true">›</span></span></a>
       <a class="admin-more-link${activeClass("requests")}" href="foresporsler.html"${activeAttr("requests")}><span>Forespørsler</span><span class="admin-more-tail">${badge("requests")}<span aria-hidden="true">›</span></span></a>
+      <a class="admin-more-link${activeClass("inventory")}" href="lager.html"${activeAttr("inventory")}><span>Lager</span><span class="admin-more-tail">${badge("inventory")}<span aria-hidden="true">›</span></span></a>
       <a class="admin-more-link${activeClass("more")}" href="statistikk.html"${activeAttr("more")}><span>Statistikk</span><span aria-hidden="true">›</span></a>
       <button class="admin-more-link admin-menu-logout" id="adminMobileLogout" type="button"><span>Logg ut</span><span aria-hidden="true">›</span></button>
     </aside>
@@ -89,19 +92,30 @@
     });
   }
 
+  async function fetchJson(url, adminKey) {
+    try {
+      const response = await fetch(url, { headers: { "x-admin-key": adminKey } });
+      if (!response.ok) return null;
+      return response.json();
+    } catch (_) { return null; }
+  }
+
   async function loadBadges() {
     const adminKey = (localStorage.getItem("sorgulen_admin_key") || "").trim();
     if (!adminKey) return;
     const apiBase = (window.CONFIG && window.CONFIG.API_BASE_URL) || "https://sorgulen-backend-2.onrender.com/api";
-    try {
-      const response = await fetch(`${apiBase}/admin/operations/notifications`, { headers: { "x-admin-key": adminKey } });
-      if (!response.ok) return;
-      const data = await response.json();
-      Object.entries(data.badges || {}).forEach(([key, value]) => showBadge(key, value));
-      window.dispatchEvent(new CustomEvent("sorgulen:notifications", { detail: data }));
-    } catch (_) {
-      // Navigasjonen skal fungere selv om varslingsendepunktet er midlertidig utilgjengelig.
+    const [operations, inventory] = await Promise.all([
+      fetchJson(`${apiBase}/admin/operations/notifications`, adminKey),
+      fetchJson(`${apiBase}/admin/inventory/summary`, adminKey),
+    ]);
+    if (operations) {
+      Object.entries(operations.badges || {}).forEach(([key, value]) => showBadge(key, value));
+      window.dispatchEvent(new CustomEvent("sorgulen:notifications", { detail: operations }));
     }
+    const inventoryCount = Math.max(0, Number(inventory?.lowStockCount) || 0);
+    showBadge("inventory", inventoryCount);
+    const existingMore = Math.max(0, Number(operations?.badges?.more) || 0);
+    showBadge("more", existingMore + inventoryCount);
   }
 
   moreButton.addEventListener("click", () => setMenu(!moreMenu.classList.contains("is-open")));
