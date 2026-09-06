@@ -26,6 +26,7 @@ jobs:
           node --check admin/operations-ui.js
           node --check admin/kunde-v2.js
           node --check admin/hjem.js
+          node --check admin/home-project-link.js
           node --check admin/work-order-time.js
           node --check admin/lager-runtime.js
           node --check admin/inventory-project.js
