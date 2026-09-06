@@ -12,36 +12,84 @@
   <div id="adminShell" data-page="invoices"></div>
   <script src="admin-shell.js"></script>
   <main class="admin-main admin-main--narrow nf-wrap">
-    <header class="admin-page-header"><div><p class="admin-eyebrow">Fakturautkast</p><h1>Ny faktura</h1><p><a class="quiet-link" href="fakturaer.html">← Tilbake til fakturaer</a></p></div></header>
+    <header class="admin-page-header">
+      <div>
+        <p class="admin-eyebrow">Fakturautkast</p>
+        <h1>Ny faktura</h1>
+        <p><a class="quiet-link" href="fakturaer.html">← Tilbake til fakturaer</a></p>
+      </div>
+    </header>
     <div id="statusMessage" class="status-message"></div>
 
     <section class="nf-card">
       <h3>Hent fra bestilling eller forespørsel</h3>
       <p class="hint">Skriv inn referansenummeret for å fylle inn kjent informasjon. Hopp over dette for en manuell faktura.</p>
-      <div class="nf-lookup-row"><div class="nf-field"><label for="refInput">Referansenummer</label><input type="number" id="refInput" placeholder="f.eks. 1001" inputmode="numeric"></div><button class="btn-lookup" id="lookupBtn" type="button">Hent</button></div>
+      <div class="nf-lookup-row">
+        <div class="nf-field"><label for="refInput">Referansenummer</label><input type="number" id="refInput" placeholder="f.eks. 1001" inputmode="numeric"></div>
+        <button class="btn-lookup" id="lookupBtn" type="button">Hent</button>
+      </div>
       <div class="lookup-result" id="lookupResult"></div>
     </section>
 
     <section class="nf-card">
-      <h3>Kunde</h3>
-      <div class="nf-row"><div class="nf-field"><label for="custName">Navn *</label><input type="text" id="custName" required></div><div class="nf-field"><label for="custPhone">Telefon</label><input type="text" id="custPhone"></div></div>
-      <div class="nf-row"><div class="nf-field"><label for="custEmail">E-post</label><input type="email" id="custEmail"></div></div>
-      <div class="nf-field"><label for="custAddress">Adresse</label><input type="text" id="custAddress" placeholder="Gate, postnr, sted"></div>
+      <h3>Faktura til</h3>
+      <div class="nf-row">
+        <div class="nf-field"><label for="custName">Navn / firmanavn *</label><input type="text" id="custName" required></div>
+        <div class="nf-field"><label for="custOrg">Org.nr. (bedriftskunde)</label><input type="text" id="custOrg" inputmode="numeric"></div>
+      </div>
+      <div class="nf-row">
+        <div class="nf-field"><label for="custPhone">Telefon</label><input type="text" id="custPhone"></div>
+        <div class="nf-field"><label for="custEmail">E-post</label><input type="email" id="custEmail"></div>
+      </div>
+      <div class="nf-field"><label for="custAddress">Adresse *</label><input type="text" id="custAddress" placeholder="Gateadresse"></div>
+      <div class="nf-row">
+        <div class="nf-field"><label for="custPostal">Postnummer</label><input type="text" id="custPostal" inputmode="numeric" maxlength="20"></div>
+        <div class="nf-field"><label for="custCity">Poststed</label><input type="text" id="custCity"></div>
+      </div>
+    </section>
+
+    <section class="nf-card">
+      <h3>Gjelder</h3>
+      <div class="nf-field nf-spaced"><label for="invoiceDescription">Overordnet beskrivelse</label><textarea id="invoiceDescription" rows="3" placeholder="Hva ble utført?"></textarea></div>
+      <div class="nf-row">
+        <div class="nf-field"><label for="serviceDateFrom">Utført dato *</label><input id="serviceDateFrom" type="date"></div>
+        <div class="nf-field"><label for="serviceDateTo">Til dato (valgfritt)</label><input id="serviceDateTo" type="date"></div>
+      </div>
+      <div class="nf-field"><label for="serviceLocation">Arbeidssted *</label><input id="serviceLocation" type="text" placeholder="Gateadresse eller sted"></div>
+      <p class="hint" id="paymentTermsHint">Forfallsdato settes av serveren når fakturaen utstedes.</p>
     </section>
 
     <section class="nf-card">
       <h3>Hva skal faktureres</h3>
       <p class="hint">Velg en lagret sats eller legg inn beskrivelse, tidsbruk/antall og sats selv. Summen regnes automatisk og kontrolleres av serveren.</p>
-      <div class="nf-field nf-spaced"><label for="dueDate">Forfallsdato (valgfritt)</label><input id="dueDate" type="date"></div>
-      <div class="nf-field nf-spaced"><label for="invoiceDescription">Overordnet beskrivelse</label><textarea id="invoiceDescription" rows="3" placeholder="Hva ble utført?"></textarea></div>
-      <table class="lines-table"><thead><tr><th>Beskrivelse</th><th>Tid/antall</th><th>Enhet</th><th>Sats</th><th>Sum</th><th></th></tr></thead><tbody id="linesBody"></tbody></table>
-      <div class="rate-toolbar"><button class="btn-rates" id="ratesBtn" type="button">Satser</button><button class="btn-add-line" id="addLineBtn" type="button">+ Manuell linje</button></div>
+      <table class="lines-table">
+        <thead><tr><th>Beskrivelse</th><th>Tid/antall</th><th>Enhet</th><th>Sats</th><th>Sum</th><th></th></tr></thead>
+        <tbody id="linesBody"></tbody>
+      </table>
+      <div class="rate-toolbar">
+        <button class="btn-rates" id="ratesBtn" type="button">Satser</button>
+        <button class="btn-add-line" id="addLineBtn" type="button">+ Manuell linje</button>
+      </div>
       <div class="nf-total" id="totalDisplay">Total: 0 kr</div>
+      <p class="hint" id="vatHint"></p>
     </section>
 
-    <div class="nf-actions"><button class="btn-save" id="saveBtn" type="button">Lagre som utkast</button><button class="btn-cancel" id="cancelBtn" type="button">Avbryt</button></div>
+    <div class="nf-actions">
+      <button class="btn-save" id="saveBtn" type="button">Lagre som utkast</button>
+      <button class="btn-cancel" id="cancelBtn" type="button">Avbryt</button>
+    </div>
   </main>
-  <div class="rate-modal hidden" id="ratesModal" role="dialog" aria-modal="true" aria-labelledby="ratesTitle"><div class="rate-panel"><div class="rate-heading"><div><h2 id="ratesTitle">Velg sats</h2><p class="hint">Satsen kopieres inn på fakturaen som et historisk øyeblikksbilde.</p></div><button class="btn-cancel" id="closeRatesBtn" type="button">Lukk</button></div><div id="ratesList">Henter satser…</div></div></div>
+
+  <div class="rate-modal hidden" id="ratesModal" role="dialog" aria-modal="true" aria-labelledby="ratesTitle">
+    <div class="rate-panel">
+      <div class="rate-heading">
+        <div><h2 id="ratesTitle">Velg sats</h2><p class="hint">Satsen kopieres inn på fakturaen som et historisk øyeblikksbilde.</p></div>
+        <button class="btn-cancel" id="closeRatesBtn" type="button">Lukk</button>
+      </div>
+      <div id="ratesList">Henter satser…</div>
+    </div>
+  </div>
+
   <script src="../config.js"></script>
   <script src="faktura-ny.js"></script>
 </body>
