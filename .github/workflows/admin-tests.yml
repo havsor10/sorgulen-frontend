@@ -32,5 +32,11 @@ jobs:
           node --check admin/inventory-project.js
           node --check admin/inventory-material-edit.js
           node --check admin/broyting.js
+          node --check admin/faktura-ny.js
+          node --check admin/faktura-rediger.js
+          node --check admin/faktura-detalj.js
+          node --check admin/fakturaer.js
+          node --check admin/foresporsler.js
+          node --check admin/foresporsler-invoice-bridge.js
       - name: Kjør frontendtester
         run: node --test tests/*.test.js
