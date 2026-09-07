@@ -14,6 +14,7 @@
 
   const page = mount.dataset.page || "";
   ensureAsset("link", { rel: "stylesheet", href: "operations.css?v=20260904-snow1" });
+  ensureAsset("link", { rel: "stylesheet", href: "ai-guide.css?v=20260907-ai1" });
   if (!["home", "inventory", "snow"].includes(page)) ensureAsset("script", { src: "operations-ui.js?v=20260904-snow1" });
   if (page === "jobs") ensureAsset("script", { src: "inventory-material-edit.js?v=20260904-snow1" });
 
@@ -35,6 +36,7 @@
   }
 
   document.body.classList.add("admin-app");
+  ensureAsset("script", { src: "ai-guide.js?v=20260907-ai1" });
   mount.innerHTML = `
     <header class="admin-app-header">
       <div class="admin-header-inner">
