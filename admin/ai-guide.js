@@ -5,28 +5,53 @@
 
   const API_BASE = (window.CONFIG && window.CONFIG.API_BASE_URL) || "https://sorgulen-backend-2.onrender.com/api";
   const KEY_STORAGE = "sorgulen_admin_key";
-  const HISTORY_STORAGE = "sorgulen_ai_guide_history_v1";
+  const HISTORY_STORAGE = "sorgulen_ai_guide_history_v2";
   const MAX_LOCAL_HISTORY = 24;
   let busy = false;
 
   const pageKey = document.getElementById("adminShell")?.dataset.page || "";
   const suggestionsByPage = {
-    home: ["Oppsummer det viktigste eg må gjøre i dag", "Ka bør eg prioritere først?", "Har eg noe som burde faktureres?"],
-    jobs: ["Oppsummer dette prosjektet", "Ka mangler før dette er klart for faktura?", "Hvordan bør eg registrere tid, utgift eller materiale her?"],
-    customers: ["Oppsummer denne kunden", "Har denne kunden åpne oppdrag eller ubetalte fakturaer?", "Ka bør eg følge opp med denne kunden?"],
-    invoices: ["Forklar statusen på denne fakturaen", "Ka mangler før fakturaen kan utstedes?", "Forklar forskjellen på utkast, utstedt og sendt"],
-    requests: ["Oppsummer denne forespørselen", "Ka er neste riktige steg her?", "Er det noe eg bør kontrollere før tilbudet sendes?"],
-    bookings: ["Oppsummer bookingene mine", "Ka er neste planlagte jobb?", "Er det noe som krever handling?"],
-    inventory: ["Ka begynner eg å gå tom for?", "Forklar hvordan eg bør bruke Lager mot et oppdrag", "Finn viktige lagerbevegelser eg bør være obs på"],
-    snow: ["Oppsummer Brøytemodus akkurat nå", "Kor mange kunder står igjen?", "Ka bør eg prioritere i brøytekøen?"],
+    home: ["Ka bør eg prioritere først?", "Kven venter på svar?", "Ka bør faktureres?"],
+    jobs: ["Oppsummer prosjektet", "Ka mangler før faktura?", "Hvordan registrerer eg dette riktig?"],
+    customers: ["Oppsummer kunden", "Har kunden noe åpent?", "Ka bør eg følge opp?"],
+    invoices: ["Ka er status?", "Ka mangler før utstedelse?", "Ka gjør eg videre?"],
+    requests: ["Oppsummer forespørselen", "Ka er neste steg?", "Ka bør eg kontrollere?"],
+    bookings: ["Ka krever handling?", "Ka er neste jobb?", "Oppsummer bookingene"],
+    inventory: ["Ka begynner eg å gå tom for?", "Vis viktige lagerbevegelser", "Hvordan bruker eg dette på oppdrag?"],
+    snow: ["Ka skjer i Brøytemodus?", "Kor mange står igjen?", "Kven bør eg ta neste?"],
   };
-  const defaultSuggestions = ["Gi meg en kort driftsoversikt", "Kven venter på svar fra meg?", "Forklar hvordan eg bør registrere en kostnad" ];
+  const defaultSuggestions = ["Gi meg kort driftsoversikt", "Kven venter på meg?", "Ka bør eg gjøre først?"];
+
+  function cleanStoredView(view) {
+    if (!view || typeof view !== "object") return null;
+    const reply = view.reply && typeof view.reply === "object" ? view.reply : null;
+    if (!reply) return null;
+    return {
+      reply: {
+        mode: String(reply.mode || "plain").slice(0, 30),
+        summary: String(reply.summary || reply.answer || "").slice(0, 600),
+        cards: Array.isArray(reply.cards) ? reply.cards.slice(0, 4) : [],
+        steps: Array.isArray(reply.steps) ? reply.steps.slice(0, 4) : [],
+        note: String(reply.note || "").slice(0, 400),
+        followUps: Array.isArray(reply.followUps) ? reply.followUps.slice(0, 3) : [],
+      },
+      links: Array.isArray(view.links) ? view.links.slice(0, 6) : [],
+      media: Array.isArray(view.media) ? view.media.slice(0, 3) : [],
+    };
+  }
 
   function loadHistory() {
     try {
       const value = JSON.parse(sessionStorage.getItem(HISTORY_STORAGE) || "[]");
       if (!Array.isArray(value)) return [];
-      return value.slice(-MAX_LOCAL_HISTORY).filter((entry) => ["user", "assistant"].includes(entry?.role) && typeof entry?.content === "string");
+      return value.slice(-MAX_LOCAL_HISTORY).map((entry) => {
+        if (!["user", "assistant"].includes(entry?.role) || typeof entry?.content !== "string") return null;
+        return {
+          role: entry.role,
+          content: entry.content.slice(0, 4000),
+          view: entry.role === "assistant" ? cleanStoredView(entry.view) : null,
+        };
+      }).filter(Boolean);
     } catch (_) {
       return [];
     }
@@ -89,11 +114,11 @@
         <button class="sai-head-button" type="button" data-ai-close aria-label="Lukk AI-veileder">×</button>
       </div>
     </div>
-    <div class="sai-readonly-note"><span class="sai-readonly-dot" aria-hidden="true"></span><span>Veileder og leser data. Endrer ingenting uten en egen godkjent handling.</span></div>
+    <div class="sai-readonly-note"><span class="sai-readonly-dot" aria-hidden="true"></span><span>Leser data · endrer ingenting</span></div>
     <div class="sai-messages" id="saiMessages" aria-live="polite"></div>
     <div class="sai-suggestions" id="saiSuggestions" aria-label="Forslag til spørsmål"></div>
     <form class="sai-form" id="saiForm">
-      <textarea id="saiInput" rows="1" maxlength="4000" placeholder="Spør om kunden, prosjektet, faktura, tid, utgifter…" aria-label="Spør Sørgulen AI"></textarea>
+      <textarea id="saiInput" rows="1" maxlength="4000" placeholder="Spør kort om det du lurer på…" aria-label="Spør Sørgulen AI"></textarea>
       <button class="sai-send" id="saiSend" type="submit">Send</button>
     </form>
   `;
@@ -112,7 +137,7 @@
     launcher.setAttribute("aria-expanded", String(open));
     backdrop.hidden = !open;
     document.body.classList.toggle("sai-open", open);
-    contextNode.textContent = `Ser kontekst fra: ${contextLabel()}`;
+    contextNode.textContent = `Ser: ${contextLabel()}`;
     if (open) {
       renderConversation();
       renderSuggestions();
@@ -135,83 +160,175 @@
     const empty = document.createElement("div");
     empty.className = "sai-empty";
     const strong = document.createElement("strong");
-    strong.textContent = "Spør meg om det du ser i admin.";
+    strong.textContent = "Spør. Eg gir deg kort svar.";
     const p = document.createElement("p");
-    p.textContent = "Eg kan oppsummere kunder og oppdrag, forklare fakturaer og hjelpe deg velge riktig registrering for tid, innkjøp, transport, utgifter og materialer.";
+    p.textContent = "Eg bruker små kort, tall og steg når det gjør svaret raskere å forstå.";
     empty.append(strong, p);
     messages.appendChild(empty);
+  }
+
+  function safeAdminHref(value) {
+    const href = String(value || "");
+    return /^[a-z0-9._-]+\.html(?:\?[^\s]*)?$/i.test(href) ? href : "";
+  }
+
+  function safeMediaUrl(value) {
+    try {
+      const url = new URL(String(value || ""));
+      return url.protocol === "https:" ? url.toString() : "";
+    } catch (_) {
+      return "";
+    }
+  }
+
+  function linkMapFor(data) {
+    const map = new Map();
+    (data.links || []).forEach((link) => {
+      const href = safeAdminHref(link?.href);
+      if (href && link?.key) map.set(String(link.key), { ...link, href });
+    });
+    return map;
+  }
+
+  function renderCard(card, links) {
+    const link = card?.linkKey ? links.get(String(card.linkKey)) : null;
+    const node = document.createElement(link ? "a" : "div");
+    node.className = `sai-card tone-${["info", "success", "warning", "danger"].includes(card?.tone) ? card.tone : "neutral"}`;
+    if (link) node.href = link.href;
+
+    if (card?.title) {
+      const title = document.createElement("span");
+      title.className = "sai-card-title";
+      title.textContent = String(card.title);
+      node.appendChild(title);
+    }
+    if (card?.value) {
+      const value = document.createElement("strong");
+      value.className = "sai-card-value";
+      value.textContent = String(card.value);
+      node.appendChild(value);
+    }
+    if (card?.detail) {
+      const detail = document.createElement("span");
+      detail.className = "sai-card-detail";
+      detail.textContent = String(card.detail);
+      node.appendChild(detail);
+    }
+    if (link) {
+      const action = document.createElement("span");
+      action.className = "sai-card-action";
+      action.textContent = card?.actionLabel || "Åpne";
+      node.appendChild(action);
+    }
+    return node;
+  }
+
+  function renderStructuredReply(data) {
+    const reply = data?.reply || {};
+    const wrap = document.createElement("div");
+    wrap.className = "sai-message is-assistant";
+    const result = document.createElement("div");
+    result.className = `sai-result mode-${String(reply.mode || "plain")}`;
+    const links = linkMapFor(data);
+
+    const summaryText = String(reply.summary || reply.answer || "").trim();
+    if (summaryText) {
+      const answer = document.createElement("p");
+      answer.className = "sai-answer";
+      answer.textContent = summaryText;
+      result.appendChild(answer);
+    }
+
+    const cards = Array.isArray(reply.cards) ? reply.cards.slice(0, 4) : [];
+    if (cards.length) {
+      const grid = document.createElement("div");
+      grid.className = "sai-card-grid";
+      cards.forEach((card) => grid.appendChild(renderCard(card, links)));
+      result.appendChild(grid);
+    }
+
+    const steps = Array.isArray(reply.steps) ? reply.steps.slice(0, 4) : [];
+    if (steps.length) {
+      const list = document.createElement("ol");
+      list.className = "sai-step-list";
+      steps.forEach((step) => {
+        const li = document.createElement("li");
+        const number = document.createElement("span");
+        number.className = "sai-step-number";
+        number.textContent = String(list.children.length + 1);
+        const copy = document.createElement("span");
+        copy.className = "sai-step-copy";
+        const title = document.createElement("strong");
+        title.textContent = String(step?.title || "");
+        copy.appendChild(title);
+        if (step?.detail) {
+          const detail = document.createElement("span");
+          detail.textContent = String(step.detail);
+          copy.appendChild(detail);
+        }
+        li.append(number, copy);
+        list.appendChild(li);
+      });
+      result.appendChild(list);
+    }
+
+    const media = (data.media || []).slice(0, 3).map((item) => ({ ...item, url: safeMediaUrl(item?.url) })).filter((item) => item.url);
+    if (media.length) {
+      const row = document.createElement("div");
+      row.className = "sai-media-row";
+      media.forEach((item) => {
+        const figure = document.createElement("figure");
+        figure.className = "sai-media";
+        const img = document.createElement("img");
+        img.src = item.url;
+        img.alt = String(item.alt || "Relevant bilde fra saken");
+        img.loading = "lazy";
+        figure.appendChild(img);
+        row.appendChild(figure);
+      });
+      result.appendChild(row);
+    }
+
+    if (reply.note) {
+      const note = document.createElement("p");
+      note.className = "sai-note";
+      note.textContent = String(reply.note);
+      result.appendChild(note);
+    }
+
+    const usedKeys = new Set(cards.map((card) => String(card?.linkKey || "")).filter(Boolean));
+    const remainingLinks = (data.links || []).filter((link) => link?.key && !usedKeys.has(String(link.key)) && safeAdminHref(link.href)).slice(0, 2);
+    if (remainingLinks.length) {
+      const row = document.createElement("div");
+      row.className = "sai-links";
+      remainingLinks.forEach((link) => {
+        const anchor = document.createElement("a");
+        anchor.className = "sai-link";
+        anchor.href = safeAdminHref(link.href);
+        anchor.textContent = link.label || "Åpne";
+        row.appendChild(anchor);
+      });
+      result.appendChild(row);
+    }
+
+    wrap.appendChild(result);
+    messages.appendChild(wrap);
   }
 
   function renderConversation() {
     messages.replaceChildren();
     if (!history.length) renderEmpty();
-    history.forEach((entry) => addBubble(entry.role, entry.content));
-    messages.scrollTop = messages.scrollHeight;
-  }
-
-  function makeSection(title, items, warning = false) {
-    if (!Array.isArray(items) || !items.length) return null;
-    const section = document.createElement("div");
-    section.className = "sai-section";
-    const heading = document.createElement("p");
-    heading.className = "sai-section-title";
-    heading.textContent = title;
-    const list = document.createElement("ul");
-    list.className = `sai-points${warning ? " sai-warnings" : ""}`;
-    items.forEach((item) => {
-      const li = document.createElement("li");
-      li.textContent = String(item || "");
-      list.appendChild(li);
+    history.forEach((entry) => {
+      if (entry.role === "assistant" && entry.view) renderStructuredReply(entry.view);
+      else addBubble(entry.role, entry.content);
     });
-    section.append(heading, list);
-    return section;
-  }
-
-  function renderStructuredReply(data) {
-    const wrap = document.createElement("div");
-    wrap.className = "sai-message is-assistant";
-    const result = document.createElement("div");
-    result.className = "sai-result";
-    const answer = document.createElement("p");
-    answer.className = "sai-answer";
-    answer.textContent = data.reply?.answer || "";
-    result.appendChild(answer);
-
-    const points = makeSection("Viktig", data.reply?.keyPoints);
-    const warnings = makeSection("Pass på", data.reply?.warnings, true);
-    if (points) result.appendChild(points);
-    if (warnings) result.appendChild(warnings);
-
-    const safeLinks = (data.links || []).filter((link) => /^[a-z0-9._-]+\.html(?:\?[^\s]*)?$/i.test(String(link.href || "")));
-    if (safeLinks.length) {
-      const section = document.createElement("div");
-      section.className = "sai-section";
-      const title = document.createElement("p");
-      title.className = "sai-section-title";
-      title.textContent = "Åpne i admin";
-      const row = document.createElement("div");
-      row.className = "sai-links";
-      safeLinks.forEach((link) => {
-        const anchor = document.createElement("a");
-        anchor.className = "sai-link";
-        anchor.href = link.href;
-        anchor.textContent = link.label || "Åpne";
-        row.appendChild(anchor);
-      });
-      section.append(title, row);
-      result.appendChild(section);
-    }
-
-    wrap.appendChild(result);
-    messages.appendChild(wrap);
     messages.scrollTop = messages.scrollHeight;
-    renderSuggestions(data.reply?.followUps);
   }
 
   function renderSuggestions(override) {
     suggestions.replaceChildren();
     const list = Array.isArray(override) && override.length ? override : (suggestionsByPage[pageKey] || defaultSuggestions);
-    list.slice(0, 4).forEach((text) => {
+    list.slice(0, 3).forEach((text) => {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "sai-suggestion";
@@ -224,14 +341,14 @@
 
   function resizeInput() {
     input.style.height = "auto";
-    input.style.height = `${Math.min(150, Math.max(48, input.scrollHeight))}px`;
+    input.style.height = `${Math.min(120, Math.max(46, input.scrollHeight))}px`;
   }
 
   async function apiChat(question, previousHistory) {
     const response = await fetch(`${API_BASE}/admin/assistant/guide/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-admin-key": adminKey() },
-      body: JSON.stringify({ question, history: previousHistory.slice(-10), pageContext: currentPageContext() }),
+      body: JSON.stringify({ question, history: previousHistory.map(({ role, content }) => ({ role, content })).slice(-10), pageContext: currentPageContext() }),
     });
     const data = await response.json().catch(() => null);
     if (response.status === 401 || response.status === 403) {
@@ -247,26 +364,30 @@
     const question = String(rawQuestion || "").trim().slice(0, 4000);
     if (!question || busy) return;
     const previousHistory = history.slice(-10);
-    history.push({ role: "user", content: question });
+    history.push({ role: "user", content: question, view: null });
     saveHistory();
     renderConversation();
     renderSuggestions();
     input.value = "";
     resizeInput();
 
-    const loading = addBubble("assistant", "Henter relevant informasjon fra admin…", "is-loading");
+    const loading = addBubble("assistant", "Sjekker…", "is-loading");
     messages.scrollTop = messages.scrollHeight;
     busy = true;
     sendButton.disabled = true;
     try {
       const data = await apiChat(question, previousHistory);
       loading.remove();
-      const answer = String(data.reply?.answer || "").trim();
-      if (!answer) throw new Error("AI-veilederen returnerte ikke et svar.");
-      history.push({ role: "assistant", content: answer });
+      const summary = String(data.reply?.summary || data.reply?.answer || "").trim();
+      if (!summary) throw new Error("AI-veilederen returnerte ikke et svar.");
+      history.push({
+        role: "assistant",
+        content: summary,
+        view: cleanStoredView({ reply: data.reply, links: data.links || [], media: data.media || [] }),
+      });
       saveHistory();
       renderConversation();
-      renderStructuredReply(data);
+      renderSuggestions(data.reply?.followUps);
     } catch (error) {
       loading.remove();
       const message = error?.message || "Kunne ikke kontakte AI-veilederen.";
@@ -308,7 +429,7 @@
     if (event.key === "Escape" && panel.classList.contains("is-open")) setOpen(false);
   });
 
-  contextNode.textContent = `Ser kontekst fra: ${contextLabel()}`;
+  contextNode.textContent = `Ser: ${contextLabel()}`;
   renderConversation();
   renderSuggestions();
   resizeInput();
