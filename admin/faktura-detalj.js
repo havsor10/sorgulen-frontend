@@ -1,13 +1,17 @@
 (() => {
   const API_BASE = (window.CONFIG && window.CONFIG.API_BASE_URL) || "https://sorgulen-backend-2.onrender.com/api";
   const KEY_STORAGE = "sorgulen_admin_key";
-
   const content = document.getElementById("fdContent");
   const statusMessage = document.getElementById("statusMessage");
-  const logoutBtn = document.getElementById("logoutBtn");
+  const invoiceId = new URLSearchParams(window.location.search).get("id");
 
-  const params = new URLSearchParams(window.location.search);
-  const invoiceId = params.get("id");
+  const statusLabels = {
+    draft: "Utkast",
+    issued: "Utstedt",
+    sent: "Sendt",
+    paid: "Betalt",
+    credited: "Kreditert",
+  };
 
   function getAdminKey() {
     let key = localStorage.getItem(KEY_STORAGE) || "";
@@ -17,183 +21,318 @@
     }
     return key.trim();
   }
-  function headers() {
-    return { "Content-Type": "application/json", "x-admin-key": getAdminKey() };
-  }
+  function headers() { return { "Content-Type": "application/json", "x-admin-key": getAdminKey() }; }
   function setMessage(message, type = "info") {
     if (!statusMessage) return;
     statusMessage.textContent = message;
-    statusMessage.style.display = "block";
+    statusMessage.style.display = message ? "block" : "none";
     statusMessage.style.color = type === "error" ? "#ff8a8a" : "#8fe0a8";
-    if (type !== "error") setTimeout(() => { statusMessage.style.display = "none"; }, 3500);
+    if (message && type !== "error") setTimeout(() => { statusMessage.style.display = "none"; }, 4500);
   }
-  function escapeHtml(s) {
-    return String(s == null ? "" : s)
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  function escapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
-  const statusLabels = { draft: "Utkast", sent: "Sendt", paid: "Betalt", credited: "Kreditert" };
-  function fmtDate(d) {
-    return d ? new Date(d).toLocaleDateString("no-NO", { day: "2-digit", month: "2-digit", year: "numeric" }) : "–";
+  function fmtDate(value) {
+    if (!value) return "–";
+    const text = String(value);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+      const [y, m, d] = text.split("-");
+      return `${d}.${m}.${y}`;
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "–";
+    return date.toLocaleDateString("no-NO", { day: "2-digit", month: "2-digit", year: "numeric" });
+  }
+  function money(value) {
+    const n = Number(value);
+    return `${new Intl.NumberFormat("nb-NO", { maximumFractionDigits: 2 }).format(Number.isFinite(n) ? n : 0)} kr`;
+  }
+  function quantity(value) {
+    const n = Number(value);
+    return new Intl.NumberFormat("nb-NO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number.isFinite(n) ? n : 0);
+  }
+  function documentName(inv) {
+    if (!inv.invoiceNumber) return inv.isCreditNote ? "Kreditnotautkast" : "Fakturautkast";
+    return inv.isCreditNote ? `Kreditnota ${inv.invoiceNumber}` : `Faktura ${inv.invoiceNumber}`;
+  }
+  function sourceLabel(inv) {
+    if (inv.sourceType === "workOrder") return `Hentet fra oppdrag${inv.sourceRef ? ` #${inv.sourceRef}` : ""}`;
+    if (inv.sourceType === "customer") return "Samlefaktura fra kundens registreringer";
+    if (inv.sourceRef) return `Hentet fra ${inv.sourceType === "booking" ? "bestilling" : "forespørsel"} #${inv.sourceRef}`;
+    return "Manuell faktura";
+  }
+  function customerAddress(inv) {
+    const rows = [inv.customerAddress, [inv.customerPostalCode, inv.customerCity].filter(Boolean).join(" ")].filter(Boolean);
+    return rows.map((row) => escapeHtml(row)).join("<br>");
+  }
+  function latestFailedEmail(inv) {
+    return [...(inv.emailLog || [])].reverse().find((entry) => entry.status === "failed") || null;
+  }
+
+  function actionButtons(inv) {
+    const buttons = [`<button class="btn-preview" data-action="preview">📄 Forhåndsvis PDF</button>`];
+    if (inv.status === "draft") {
+      if (!inv.invoiceNumber) buttons.push(`<a class="btn-edit" href="faktura-rediger.html?id=${encodeURIComponent(inv._id)}">✏️ Rediger utkast</a>`);
+      buttons.push(`<button class="btn-send" data-action="issue">${inv.isCreditNote ? "Utsted kreditnota" : "Utsted faktura"}</button>`);
+      if (!inv.invoiceNumber) buttons.push(`<button class="btn-delete" data-action="delete">🗑 Slett utkast</button>`);
+    }
+    if (inv.status === "issued") {
+      if (inv.customerEmail) buttons.push(`<button class="btn-send" data-action="send">📧 Send til kunde</button>`);
+      if (!inv.isCreditNote) buttons.push(`<button class="btn-delete" data-action="credit" style="background:#8a5a1f;">↩️ Krediter</button>`);
+    }
+    if (inv.status === "sent") {
+      if (!inv.isCreditNote) buttons.push(`<button class="btn-paid" data-action="paid">💰 Marker betalt</button>`);
+      if (!inv.isCreditNote) buttons.push(`<button class="btn-delete" data-action="credit" style="background:#8a5a1f;">↩️ Krediter</button>`);
+    }
+    if (inv.status === "paid" && !inv.isCreditNote) {
+      buttons.push(`<button class="btn-delete" data-action="credit" style="background:#8a5a1f;">↩️ Krediter</button>`);
+    }
+    return buttons.join("");
+  }
+
+  function emailComposer(inv) {
+    if (inv.status !== "issued") return "";
+    const failed = latestFailedEmail(inv);
+    if (!inv.customerEmail) {
+      return `<div class="fd-section"><p class="fd-warn">Fakturaen er utstedt, men kunden mangler e-post. PDF-en kan fortsatt åpnes og leveres på annen måte.</p></div>`;
+    }
+    return `
+      <div class="fd-section" id="emailComposer">
+        <div class="fd-label">E-post til ${escapeHtml(inv.customerEmail)}</div>
+        ${failed ? `<p class="fd-warn">Siste sending feilet: ${escapeHtml(failed.error || "ukjent feil")}. Fakturaen er fortsatt utstedt og kan sendes på nytt.</p>` : ""}
+        <button class="btn-edit" type="button" data-action="email-suggestion">Lag e-postforslag</button>
+        <label class="fd-label" for="emailSubject" style="display:block;margin-top:14px">Emne</label>
+        <textarea id="emailSubject" rows="2" style="width:100%">${escapeHtml(inv.emailDraft?.subject || "")}</textarea>
+        <label class="fd-label" for="emailBody" style="display:block;margin-top:10px">Melding</label>
+        <textarea id="emailBody" rows="9" style="width:100%">${escapeHtml(inv.emailDraft?.body || "")}</textarea>
+        <p class="fd-info">PDF og økonomiske data er allerede låst. E-postteksten kan redigeres uten å endre fakturaen.</p>
+      </div>`;
+  }
+
+  function lifecycle(inv) {
+    if (!Array.isArray(inv.lifecycleLog) || !inv.lifecycleLog.length) return "";
+    const rows = inv.lifecycleLog.slice().reverse().slice(0, 12).map((event) =>
+      `<div style="padding:7px 0;border-bottom:1px solid #26303b"><strong>${escapeHtml(event.description || event.type)}</strong><br><small>${fmtDate(event.at)}</small></div>`
+    ).join("");
+    return `<div class="fd-section"><div class="fd-label">Historikk</div><div class="fd-value">${rows}</div></div>`;
   }
 
   function render(inv) {
-    const num = inv.invoiceNumber
-      ? (inv.isCreditNote ? `Kreditnota ${inv.invoiceNumber}` : `Faktura ${inv.invoiceNumber}`)
-      : "Utkast (uten nummer)";
-
-    const linesRows = (inv.lines || []).map((l) =>
-      `<tr><td>${escapeHtml(l.item)}${l.description?`<br><small>${escapeHtml(l.description)}</small>`:""}</td><td>${l.quantity!=null&&l.unitPrice!=null?`${escapeHtml(l.quantity)} ${escapeHtml(l.unitLabel||"")} × ${escapeHtml(l.unitPrice)} kr`:""}</td><td class="amt">${escapeHtml(l.amount)} kr</td></tr>`
-    ).join("");
-
-    const ref = inv.sourceType === "workOrder"
-      ? `Hentet fra oppdrag${inv.sourceRef ? ` #${escapeHtml(inv.sourceRef)}` : ""}`
-      : inv.sourceRef
-        ? `Hentet fra ${inv.sourceType === "booking" ? "bestilling" : "forespørsel"} #${escapeHtml(inv.sourceRef)}`
-        : "Manuell faktura";
-
-    // Knapper avhenger av status
-    let actions = "";
-    actions += `<button class="btn-preview" data-action="preview">📄 Forhåndsvis PDF</button>`;
-    if (inv.status === "draft") {
-      actions += `<a class="btn-edit" href="faktura-rediger.html?id=${encodeURIComponent(inv._id)}">✏️ Rediger</a>`;
-      if (inv.customerEmail) {
-        actions += `<button class="btn-send" data-action="send">📧 Kontroller og send</button>`;
-      }
-      actions += `<button class="btn-delete" data-action="delete">🗑 Slett utkast</button>`;
-    } else if (inv.status === "sent") {
-      actions += `<button class="btn-paid" data-action="paid">💰 Marker betalt</button>`;
-      actions += `<button class="btn-delete" data-action="credit" style="background:#8a5a1f;">↩️ Lag kreditnota</button>`;
-    } else if (inv.status === "paid") {
-      actions += `<button class="btn-delete" data-action="credit" style="background:#8a5a1f;">↩️ Lag kreditnota</button>`;
-    }
+    const linesRows = (inv.lines || []).map((line) => `
+      <tr>
+        <td>${escapeHtml(line.item || "")}${line.description ? `<br><small>${escapeHtml(line.description)}</small>` : ""}</td>
+        <td>${line.quantity != null && line.unitPrice != null ? `${quantity(line.quantity)} ${escapeHtml(line.unitLabel || "")} × ${money(line.unitPrice)}` : ""}</td>
+        <td class="amt">${money(line.amount)}</td>
+      </tr>`).join("");
+    const serviceDate = inv.serviceDateFrom
+      ? (inv.serviceDateTo && inv.serviceDateTo !== inv.serviceDateFrom ? `${fmtDate(inv.serviceDateFrom)}–${fmtDate(inv.serviceDateTo)}` : fmtDate(inv.serviceDateFrom))
+      : "–";
 
     content.innerHTML = `
       <div class="fd-card">
         <div class="fd-head">
-          <div class="fd-num">${escapeHtml(num)}</div>
+          <div class="fd-num">${escapeHtml(documentName(inv))}</div>
           <span class="fd-badge badge-${escapeHtml(inv.status)}">${escapeHtml(statusLabels[inv.status] || inv.status)}</span>
         </div>
-        <div class="fd-info" style="color:#9aa6b8;">${escapeHtml(ref)}</div>
+        <div class="fd-info" style="color:#9aa6b8;">${escapeHtml(sourceLabel(inv))}</div>
+
+        ${inv.status === "draft" ? `<div class="fd-section" id="issueValidation"><div class="fd-label">Kontroll før utstedelse</div><div class="fd-value">Kontrollerer fakturaen…</div></div>` : ""}
+        ${inv.status !== "draft" ? `<p class="fd-info">🔒 Utstedt dokument. Kunde, datoer, linjer, priser, MVA og betalingsinformasjon er låst i et historisk snapshot.</p>` : ""}
 
         <div class="fd-section">
-          <div class="fd-label">Kunde</div>
+          <div class="fd-label">Faktura til</div>
           <div class="fd-value">
-            ${escapeHtml(inv.customerName)}<br>
-            ${inv.customerAddress ? escapeHtml(inv.customerAddress) + "<br>" : ""}
-            ${inv.customerEmail ? escapeHtml(inv.customerEmail) + "<br>" : "<span style='color:#f0a85f;'>Ingen e-post</span><br>"}
+            <strong>${escapeHtml(inv.customerName || "–")}</strong><br>
+            ${customerAddress(inv) || "<span style='color:#f0a85f;'>Adresse mangler</span>"}<br>
+            ${inv.customerOrganizationNumber ? `Org.nr. ${escapeHtml(inv.customerOrganizationNumber)}<br>` : ""}
+            ${inv.customerEmail ? `${escapeHtml(inv.customerEmail)}<br>` : ""}
             ${inv.customerPhone ? escapeHtml(inv.customerPhone) : ""}
           </div>
         </div>
 
         <div class="fd-section">
-          <div class="fd-label">Spesifikasjon</div>
-          <table class="fd-lines"><tbody>${linesRows}</tbody></table>
-          ${inv.vatRegisteredSnapshot ? `<div class="fd-total" style="font-size:14px;color:#aab3bf">Delsum: ${escapeHtml(inv.subtotal)} kr · MVA ${escapeHtml(inv.taxRate)} %: ${escapeHtml(inv.taxAmount)} kr</div>` : ""}
-          <div class="fd-total">Total: ${escapeHtml(inv.amount)} kr</div>
-        </div>
-
-        <div class="fd-section">
-          <div class="fd-label">Datoer</div>
+          <div class="fd-label">Gjelder</div>
           <div class="fd-value">
-            ${inv.issuedAt ? "Fakturadato: " + fmtDate(inv.issuedAt) + "<br>" : ""}
-            ${inv.dueDate ? "Forfall: " + fmtDate(inv.dueDate) + "<br>" : ""}
-            ${inv.sentAt ? "<span style='color:#8fe0a8;'>Sendt: " + fmtDate(inv.sentAt) + "</span><br>" : ""}
-            ${inv.paidAt ? "<span style='color:#8fe0a8;'>Betalt: " + fmtDate(inv.paidAt) + "</span>" : ""}
-            ${!inv.issuedAt && !inv.dueDate ? "<span style='color:#9aa6b8;'>Settes når fakturaen sendes</span>" : ""}
+            <strong>${escapeHtml(inv.description || "–")}</strong><br>
+            Utført: ${escapeHtml(serviceDate)}<br>
+            Arbeidssted: ${escapeHtml(inv.serviceLocation || "–")}
           </div>
         </div>
 
-        <div class="fd-section fd-actions">${actions}</div>
+        <div class="fd-section">
+          <div class="fd-label">Fakturalinjer</div>
+          <table class="fd-lines"><tbody>${linesRows}</tbody></table>
+          ${inv.vatRegisteredSnapshot ? `<div class="fd-total" style="font-size:14px;color:#aab3bf">Delsum: ${money(inv.subtotal)} · MVA ${escapeHtml(inv.taxRate)} %: ${money(inv.taxAmount)}</div>` : `<p class="fd-info">Merverdiavgift er ikke beregnet.</p>`}
+          <div class="fd-total">${inv.isCreditNote ? "Kreditert" : "Total"}: ${money(inv.amount)}</div>
+        </div>
 
-        ${inv.status === "draft" && inv.customerEmail ? `<div class="fd-section" id="emailComposer"><div class="fd-label">E-post til ${escapeHtml(inv.customerEmail)}</div><button class="btn-edit" type="button" data-action="email-suggestion">Lag e-postforslag</button><label class="fd-label" for="emailSubject" style="display:block;margin-top:14px">Emne</label><textarea id="emailSubject" rows="2" style="width:100%">${escapeHtml(inv.emailDraft?.subject || "")}</textarea><label class="fd-label" for="emailBody" style="display:block;margin-top:10px">Melding</label><textarea id="emailBody" rows="9" style="width:100%">${escapeHtml(inv.emailDraft?.body || "")}</textarea><p class="fd-warn">Fakturaen sendes ikke før du trykker «Kontroller og send» og bekrefter.</p></div>` : ""}
+        <div class="fd-section">
+          <div class="fd-label">Dokumentdatoer</div>
+          <div class="fd-value">
+            Fakturanr.: ${inv.invoiceNumber || "–"}<br>
+            Fakturadato: ${fmtDate(inv.issuedAt)}<br>
+            Forfall: ${fmtDate(inv.dueDate)}
+            ${inv.sentAt ? `<br><span style="color:#8fe0a8;">Sendt: ${fmtDate(inv.sentAt)}</span>` : ""}
+            ${inv.paidAt ? `<br><span style="color:#8fe0a8;">Betalt: ${fmtDate(inv.paidAt)}</span>` : ""}
+            ${inv.creditedAt ? `<br><span style="color:#e0b66c;">Kreditert: ${fmtDate(inv.creditedAt)}</span>` : ""}
+          </div>
+        </div>
 
-        ${inv.status === "draft" && !inv.customerEmail ? `<p class="fd-warn">⚠ Mangler e-post – legg til via Rediger for å kunne sende automatisk.</p>` : ""}
-        ${inv.status === "sent" ? `<p class="fd-info">🔒 Sendt faktura er låst. Feil? Lag en kreditnota (kommer).</p>` : ""}
+        <div class="fd-section fd-actions">${actionButtons(inv)}</div>
+        ${emailComposer(inv)}
+        ${inv.creditNoteId ? `<div class="fd-section"><a class="btn-edit" href="faktura-detalj.html?id=${encodeURIComponent(inv.creditNoteId)}">Åpne tilhørende kreditnota</a></div>` : ""}
+        ${lifecycle(inv)}
       </div>`;
 
-    // Knappe-handlinger
-    content.querySelectorAll("[data-action]").forEach((btn) => {
-      btn.addEventListener("click", () => handleAction(btn.getAttribute("data-action"), inv));
+    content.querySelectorAll("[data-action]").forEach((element) => {
+      element.addEventListener("click", () => handleAction(element.getAttribute("data-action"), inv, element));
     });
+    if (inv.status === "draft") loadIssueValidation(inv);
   }
 
-  async function handleAction(action, inv) {
+  async function loadIssueValidation(inv) {
+    const box = document.getElementById("issueValidation");
+    if (!box) return;
     try {
-      if (action === "preview") {
-        setMessage("Lager forhåndsvisning…");
-        const res = await fetch(`${API_BASE}/invoices/${inv._id}/preview`, { headers: headers() });
-        if (!res.ok) throw new Error("Kunne ikke lage forhåndsvisning");
-        const url = URL.createObjectURL(await res.blob());
-        window.open(url, "_blank", "noopener");
-        setTimeout(() => URL.revokeObjectURL(url), 60000);
-      } else if (action === "email-suggestion") {
+      const res = await fetch(`${API_BASE}/invoices/${inv._id}/issue-validation`, { headers: headers() });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Kunne ikke kontrollere fakturaen");
+      if (data.canIssue) {
+        box.innerHTML = `<div class="fd-label">Kontroll før utstedelse</div><div class="fd-value" style="color:#8fe0a8;">✓ Klar til utstedelse. Fakturanummer tildeles først når du trykker «${inv.isCreditNote ? "Utsted kreditnota" : "Utsted faktura"}».</div>`;
+      } else {
+        box.innerHTML = `<div class="fd-label">Kan ikke utstede ennå</div><ul class="fd-validation-list">${(data.problems || []).map((problem) => `<li>${escapeHtml(problem)}</li>`).join("")}</ul>`;
+      }
+      const issueBtn = content.querySelector('[data-action="issue"]');
+      if (issueBtn) issueBtn.disabled = !data.canIssue;
+    } catch (err) {
+      box.innerHTML = `<div class="fd-label">Kontroll før utstedelse</div><div class="fd-warn">${escapeHtml(err.message || "Kontroll feilet")}</div>`;
+    }
+  }
+
+  async function preview(inv) {
+    setMessage("Lager PDF…");
+    const res = await fetch(`${API_BASE}/invoices/${inv._id}/preview`, { headers: headers() });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(text || "Kunne ikke lage PDF");
+    }
+    const url = URL.createObjectURL(await res.blob());
+    window.open(url, "_blank", "noopener");
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    setMessage("");
+  }
+
+  async function handleAction(action, inv, element) {
+    try {
+      if (action === "preview") return await preview(inv);
+
+      if (action === "issue") {
+        const validationRes = await fetch(`${API_BASE}/invoices/${inv._id}/issue-validation`, { headers: headers() });
+        const validation = await validationRes.json().catch(() => ({}));
+        if (!validationRes.ok) throw new Error(validation.error || "Kunne ikke kontrollere fakturaen");
+        if (!validation.canIssue) throw new Error(`Kan ikke utstede: ${(validation.problems || []).join(" ")}`);
+        const label = inv.isCreditNote ? "kreditnotaen" : "fakturaen";
+        if (!confirm(`Du er i ferd med å utstede ${label}. Fakturanummer vil bli tildelt og dokumentets økonomiske opplysninger låses.\n\nFortsette?`)) return;
+        if (element) element.disabled = true;
+        setMessage(`Utsteder ${label}…`);
+        const operationId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+        const res = await fetch(`${API_BASE}/invoices/${inv._id}/issue`, { method: "POST", headers: headers(), body: JSON.stringify({ operationId }) });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Kunne ikke utstede");
+        setMessage(`${inv.isCreditNote ? "Kreditnota" : "Faktura"} ${data.invoice.invoiceNumber} er utstedt og låst. ✓`, "success");
+        return load();
+      }
+
+      if (action === "email-suggestion") {
+        if (element) element.disabled = true;
         setMessage("Lager e-postforslag…");
         const res = await fetch(`${API_BASE}/invoices/${inv._id}/email-suggestion`, { method: "POST", headers: headers() });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || "Kunne ikke lage e-postforslag");
-        document.getElementById("emailSubject").value = data.subject;
-        document.getElementById("emailBody").value = data.body;
-        setMessage(data.aiAvailable ? "AI-forslaget er klart. Kontroller og rediger før sending." : "Standard e-postutkast er klart. AI var ikke tilgjengelig.");
-      } else if (action === "send") {
-        const subject = document.getElementById("emailSubject")?.value.trim();
-        const body = document.getElementById("emailBody")?.value.trim();
+        const subject = document.getElementById("emailSubject");
+        const body = document.getElementById("emailBody");
+        if (subject) subject.value = data.subject || "";
+        if (body) body.value = data.body || "";
+        setMessage(data.aiAvailable ? "AI-forslaget er klart. Kontroller teksten før sending." : "Standard e-postutkast er klart.", "success");
+        if (element) element.disabled = false;
+        return;
+      }
+
+      if (action === "send") {
+        const subject = document.getElementById("emailSubject")?.value.trim() || "";
+        const body = document.getElementById("emailBody")?.value.trim() || "";
         if (!subject || !body) throw new Error("Lag eller skriv e-postemne og melding før sending.");
-        if (!confirm("Sende fakturaen til kunden nå? Fakturaen får et fakturanummer og blir låst.")) return;
-        setMessage("Sender faktura…");
-        const operationId = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
-        const res = await fetch(`${API_BASE}/invoices/${inv._id}/send`, { method: "POST", headers: headers(), body: JSON.stringify({ operationId, subject, body }) });
-        if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || "Kunne ikke sende"); }
-        setMessage("Faktura sendt! ✓", "success");
-        load();
-      } else if (action === "paid") {
-        if (!confirm("Markere fakturaen som betalt?")) return;
+        if (!confirm(`Send ${inv.isCreditNote ? "kreditnota" : "faktura"} ${inv.invoiceNumber} til ${inv.customerEmail}?`)) return;
+        if (element) element.disabled = true;
+        setMessage("Sender e-post…");
+        const operationId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+        const res = await fetch(`${API_BASE}/invoices/${inv._id}/send`, {
+          method: "POST",
+          headers: headers(),
+          body: JSON.stringify({ operationId, subject, body }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "E-postsending feilet. Fakturaen er fortsatt utstedt og kan prøves sendt igjen.");
+        setMessage("Dokumentet er sendt. ✓", "success");
+        return load();
+      }
+
+      if (action === "paid") {
+        if (!confirm(`Markere faktura ${inv.invoiceNumber} som betalt?`)) return;
         const res = await fetch(`${API_BASE}/invoices/${inv._id}/paid`, { method: "POST", headers: headers() });
-        if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || "Kunne ikke markere betalt"); }
-        setMessage("Markert som betalt! 💰", "success");
-        load();
-      } else if (action === "delete") {
-        if (!confirm("Slette dette fakturautkastet permanent?")) return;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Kunne ikke markere betalt");
+        setMessage("Faktura markert som betalt. ✓", "success");
+        return load();
+      }
+
+      if (action === "delete") {
+        if (!confirm("Slette dette unummererte fakturautkastet permanent?")) return;
         const res = await fetch(`${API_BASE}/invoices/${inv._id}`, { method: "DELETE", headers: headers() });
-        if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || "Kunne ikke slette"); }
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Kunne ikke slette utkastet");
         setMessage("Utkast slettet.", "success");
-        setTimeout(() => { window.location.href = "fakturaer.html"; }, 800);
-      } else if (action === "credit") {
-        if (!confirm("Opprette et redigerbart kreditnotautkast? Originalen merkes først kreditert når kreditnotaen faktisk er sendt.")) return;
-        setMessage("Lager kreditnota…");
+        return setTimeout(() => { window.location.href = "fakturaer.html"; }, 400);
+      }
+
+      if (action === "credit") {
+        if (!confirm(`Opprette et kreditnotautkast som reverserer faktura ${inv.invoiceNumber}? Originalfakturaen beholdes i historikken.`)) return;
+        setMessage("Oppretter kreditnotautkast…");
         const res = await fetch(`${API_BASE}/invoices/${inv._id}/credit`, { method: "POST", headers: headers() });
-        if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || "Kunne ikke lage kreditnota"); }
-        const data = await res.json();
-        setMessage("Kreditnota opprettet som utkast. Kontroller før sending.", "success");
-        setTimeout(() => { window.location.href = `faktura-detalj.html?id=${encodeURIComponent(data.creditNote._id)}`; }, 500);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          if (data.creditNoteId) return window.location.href = `faktura-detalj.html?id=${encodeURIComponent(data.creditNoteId)}`;
+          throw new Error(data.error || "Kunne ikke opprette kreditnota");
+        }
+        setMessage("Kreditnotautkast opprettet. Kontroller og utsted det.", "success");
+        return setTimeout(() => { window.location.href = `faktura-detalj.html?id=${encodeURIComponent(data.creditNote._id)}`; }, 350);
       }
     } catch (err) {
+      if (element) element.disabled = false;
       setMessage(err.message || "Noe gikk galt", "error");
     }
   }
 
   async function load() {
-    if (statusMessage) statusMessage.style.display = "none"; // nullstill gamle meldinger
-    if (!invoiceId) { content.innerHTML = `<div class="fd-loading">Mangler faktura-ID.</div>`; return; }
+    if (!invoiceId) {
+      content.innerHTML = `<div class="fd-loading">Mangler faktura-ID.</div>`;
+      return;
+    }
     content.innerHTML = `<div class="fd-loading">Laster faktura…</div>`;
     try {
       const res = await fetch(`${API_BASE}/invoices/${invoiceId}`, { headers: headers() });
       if (res.status === 401 || res.status === 403) {
         localStorage.removeItem(KEY_STORAGE);
-        throw new Error("Feil admin-nøkkel. Last siden på nytt.");
+        throw new Error("Admin-tilgangen må fornyes. Last siden på nytt.");
       }
-      if (!res.ok) throw new Error("Kunne ikke hente faktura");
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Kunne ikke hente faktura");
       render(data.invoice);
     } catch (err) {
       content.innerHTML = `<div class="fd-loading">${escapeHtml(err.message || "Noe gikk galt")}</div>`;
     }
   }
-
-  if (logoutBtn) logoutBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    localStorage.removeItem(KEY_STORAGE);
-    window.location.href = "login.html";
-  });
 
   load();
 })();

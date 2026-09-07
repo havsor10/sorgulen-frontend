@@ -35,27 +35,39 @@
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
-  const statusLabels = { draft: "Utkast", sent: "Sendt", paid: "Betalt", credited: "Kreditert" };
+  const statusLabels = {
+    draft: "Utkast",
+    issued: "Utstedt",
+    sent: "Sendt",
+    paid: "Betalt",
+    credited: "Kreditert",
+  };
 
   function fmtDate(d) {
     return d ? new Date(d).toLocaleDateString("no-NO", { day: "2-digit", month: "2-digit", year: "numeric" }) : "–";
   }
 
+  function fmtMoney(value) {
+    const amount = Number(value);
+    return new Intl.NumberFormat("nb-NO", { maximumFractionDigits: 2 }).format(Number.isFinite(amount) ? amount : 0);
+  }
+
   function renderSummary(invoices) {
     const total = invoices.length;
     const drafts = invoices.filter((i) => i.status === "draft").length;
-    const unpaid = invoices.filter((i) => i.status === "sent").length;
-    const paid = invoices.filter((i) => i.status === "paid").length;
-    // Sum utestående (sendt, ikke betalt, ikke kreditnota)
+    const issued = invoices.filter((i) => i.status === "issued" && !i.isCreditNote).length;
+    const unpaid = invoices.filter((i) => i.status === "sent" && !i.isCreditNote).length;
+    const paid = invoices.filter((i) => i.status === "paid" && !i.isCreditNote).length;
     const outstanding = invoices
-      .filter((i) => i.status === "sent" && !i.isCreditNote)
-      .reduce((sum, i) => sum + (i.amount || 0), 0);
+      .filter((i) => ["issued", "sent"].includes(i.status) && !i.isCreditNote)
+      .reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
 
     summary.innerHTML = `
-      <div class="inv-stat"><div class="num">${total}</div><div class="lbl">Fakturaer totalt</div></div>
+      <div class="inv-stat"><div class="num">${total}</div><div class="lbl">Dokumenter totalt</div></div>
       <div class="inv-stat"><div class="num">${drafts}</div><div class="lbl">Utkast</div></div>
+      <div class="inv-stat"><div class="num">${issued}</div><div class="lbl">Utstedt, ikke sendt</div></div>
       <div class="inv-stat"><div class="num">${unpaid}</div><div class="lbl">Sendt, ikke betalt</div></div>
-      <div class="inv-stat"><div class="num">${outstanding} kr</div><div class="lbl">Utestående</div></div>
+      <div class="inv-stat"><div class="num">${fmtMoney(outstanding)} kr</div><div class="lbl">Utestående</div></div>
       <div class="inv-stat"><div class="num">${paid}</div><div class="lbl">Betalt</div></div>
     `;
   }
@@ -70,7 +82,7 @@
 
     const rows = invoices.map((inv) => {
       const num = inv.invoiceNumber
-        ? (inv.isCreditNote ? `Kreditnota ${inv.invoiceNumber}` : escapeHtml(inv.invoiceNumber))
+        ? (inv.isCreditNote ? `Kreditnota ${escapeHtml(inv.invoiceNumber)}` : escapeHtml(inv.invoiceNumber))
         : "<span style='color:#888;'>(utkast)</span>";
       const ref = inv.sourceRef ? `#${escapeHtml(inv.sourceRef)}` : (inv.sourceType === "manual" ? "Manuell" : "–");
       return `
@@ -79,7 +91,7 @@
           <td>${escapeHtml(inv.customerName)}</td>
           <td>${escapeHtml(ref)}</td>
           <td>${fmtDate(inv.issuedAt || inv.createdAt)}</td>
-          <td class="inv-amount">${escapeHtml(inv.amount)} kr</td>
+          <td class="inv-amount">${fmtMoney(inv.amount)} kr</td>
           <td><span class="inv-badge badge-${escapeHtml(inv.status)}">${escapeHtml(statusLabels[inv.status] || inv.status)}</span></td>
         </tr>`;
     }).join("");
@@ -94,7 +106,6 @@
         <tbody>${rows}</tbody>
       </table>`;
 
-    // Klikk på rad åpner den faktiske fakturadetaljen.
     content.querySelectorAll(".inv-row-link").forEach((row) => {
       row.addEventListener("click", () => {
         const id = row.getAttribute("data-id");
