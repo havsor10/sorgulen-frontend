@@ -95,7 +95,21 @@
 
   function renderState() {
     installHelp.hidden = !(isIOS && !isStandalone);
-    const permission = supported ? Notification.permission : "unsupported";
+
+    // iOS viser Web Push for webapper som er lagt til på Hjem-skjermen. I en
+    // vanlig Safari-fane kan PushManager mangle helt, så dette steget må vises
+    // før vi konkluderer med at nettleseren ikke støtter push.
+    if (isIOS && !isStandalone) {
+      statusTitle.textContent = "Legg admin på Hjem-skjermen";
+      statusText.textContent = "iPhone gir push til installerte webapper. Følg de tre stegene under.";
+      setStatusBadge("1 steg igjen", "is-warn");
+      enableBtn.textContent = "Vis hvordan eg gjør det";
+      enableBtn.disabled = false;
+      testBtn.disabled = true;
+      disableBtn.hidden = true;
+      applyPreferences({});
+      return;
+    }
 
     if (!supported) {
       statusTitle.textContent = "Push støttes ikke her";
@@ -108,17 +122,7 @@
       return;
     }
 
-    if (isIOS && !isStandalone) {
-      statusTitle.textContent = "Legg admin på Hjem-skjermen";
-      statusText.textContent = "iPhone gir push til installerte webapper. Følg de tre stegene under.";
-      setStatusBadge("1 steg igjen", "is-warn");
-      enableBtn.textContent = "Vis hvordan eg gjør det";
-      enableBtn.disabled = false;
-      testBtn.disabled = true;
-      disableBtn.hidden = true;
-      applyPreferences({});
-      return;
-    }
+    const permission = Notification.permission;
 
     if (!config?.configured || !config?.vapidPublicKey) {
       statusTitle.textContent = "Backend mangler push-konfigurasjon";
