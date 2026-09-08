@@ -15,6 +15,8 @@
   const page = mount.dataset.page || "";
   ensureAsset("link", { rel: "stylesheet", href: "operations.css?v=20260904-snow1" });
   ensureAsset("link", { rel: "stylesheet", href: "ai-guide.css?v=20260907-ai2" });
+  ensureAsset("link", { rel: "manifest", href: "manifest.webmanifest" });
+  ensureAsset("link", { rel: "apple-touch-icon", href: "../assets/logo.png" });
   if (!["home", "inventory", "snow"].includes(page)) ensureAsset("script", { src: "operations-ui.js?v=20260904-snow1" });
   if (page === "jobs") ensureAsset("script", { src: "inventory-material-edit.js?v=20260904-snow1" });
 
@@ -50,6 +52,7 @@
         <div class="admin-header-actions">
           <a class="admin-quiet-action${activeClass("snow")}" href="broyting.html"${activeAttr("snow")}><span>Brøyting</span>${badge("snow")}</a>
           <a class="admin-quiet-action${activeClass("inventory")}" href="lager.html"${activeAttr("inventory")}><span>Lager</span>${badge("inventory")}</a>
+          <a class="admin-quiet-action${activeClass("notifications")}" href="varslinger.html"${activeAttr("notifications")}>Varslinger</a>
           <a class="admin-quiet-action" href="statistikk.html">Statistikk</a>
           <a class="admin-quiet-action" id="logoutBtn" href="login.html">Logg ut</a>
         </div>
@@ -57,7 +60,7 @@
     </header>
     <nav class="admin-mobile-nav" aria-label="Mobilnavigasjon">
       ${mobileItems.map((item) => `<a class="admin-mobile-link${activeClass(item.key)}" href="${item.href}"${activeAttr(item.key)}><span class="admin-mobile-icon" aria-hidden="true">${mobileIcon(item.key)}</span><span class="admin-mobile-label">${item.label}</span>${badge(item.key)}</a>`).join("")}
-      <button class="admin-mobile-link${["bookings", "requests", "inventory", "snow", "more"].includes(page) ? " is-active" : ""}" id="adminMoreButton" type="button" aria-expanded="false" aria-controls="adminMoreMenu">
+      <button class="admin-mobile-link${["bookings", "requests", "inventory", "snow", "notifications", "more"].includes(page) ? " is-active" : ""}" id="adminMoreButton" type="button" aria-expanded="false" aria-controls="adminMoreMenu">
         <span class="admin-mobile-icon" aria-hidden="true">•••</span><span class="admin-mobile-label">Mer</span>${badge("more")}
       </button>
     </nav>
@@ -68,6 +71,7 @@
       <a class="admin-more-link${activeClass("bookings")}" href="admin-dashboard.html"${activeAttr("bookings")}><span>Bookinger</span><span class="admin-more-tail">${badge("bookings")}<span aria-hidden="true">›</span></span></a>
       <a class="admin-more-link${activeClass("requests")}" href="foresporsler.html"${activeAttr("requests")}><span>Forespørsler</span><span class="admin-more-tail">${badge("requests")}<span aria-hidden="true">›</span></span></a>
       <a class="admin-more-link${activeClass("inventory")}" href="lager.html"${activeAttr("inventory")}><span>Lager</span><span class="admin-more-tail">${badge("inventory")}<span aria-hidden="true">›</span></span></a>
+      <a class="admin-more-link${activeClass("notifications")}" href="varslinger.html"${activeAttr("notifications")}><span>Varslinger</span><span aria-hidden="true">›</span></a>
       <a class="admin-more-link${activeClass("more")}" href="statistikk.html"${activeAttr("more")}><span>Statistikk</span><span aria-hidden="true">›</span></a>
       <button class="admin-more-link admin-menu-logout" id="adminMobileLogout" type="button"><span>Logg ut</span><span aria-hidden="true">›</span></button>
     </aside>
@@ -157,6 +161,15 @@
       document.querySelector(`[data-admin-open="#${panel.id}"]`)?.setAttribute("aria-expanded", "false");
     }
   });
+
+  // Registrering alene spør aldri om varslingstillatelse. Tillatelsen gis kun
+  // etter brukertrykk på Varslinger-siden, slik iOS krever.
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("push-sw.js", { scope: "./" }).catch(() => {});
+  }
+  if (typeof navigator.clearAppBadge === "function") {
+    navigator.clearAppBadge().catch(() => {});
+  }
 
   window.SorgulenAdminShell = { refreshBadges: loadBadges };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", loadBadges, { once: true });

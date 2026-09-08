@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b0f13">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Sørgulen Admin">
+  <title>Varslinger – Sørgulen admin</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="../assets/logo.png">
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin-shell.css">
+  <link rel="stylesheet" href="admin-pages.css">
+  <link rel="stylesheet" href="varslinger.css?v=20260908-push1">
+</head>
+<body>
+  <div id="adminShell" data-page="notifications"></div>
+  <script src="admin-shell.js?v=20260908-push1"></script>
+
+  <main class="admin-main push-main">
+    <header class="admin-page-header">
+      <div>
+        <p class="admin-eyebrow">iPhone / Web Push</p>
+        <h1>Varslinger</h1>
+        <p>Få viktige adminvarsler på låseskjermen selv når admin er lukket.</p>
+      </div>
+    </header>
+
+    <div id="pushMessage" class="status-message" role="status" aria-live="polite"></div>
+
+    <section class="push-status-card" aria-labelledby="pushStatusTitle">
+      <div class="push-status-row">
+        <div>
+          <p class="section-kicker">Denne enheten</p>
+          <h2 id="pushStatusTitle">Varsling er ikke satt opp</h2>
+          <p id="pushStatusText">Kontrollerer støtte og status…</p>
+        </div>
+        <span id="pushStatusBadge" class="push-status-badge">Sjekker</span>
+      </div>
+      <div class="push-actions">
+        <button id="enablePushBtn" class="primary-btn" type="button">Slå på varsler</button>
+        <button id="testPushBtn" class="secondary-btn" type="button" disabled>Send testvarsel</button>
+        <button id="disablePushBtn" class="secondary-btn danger-lite" type="button" hidden>Slå av på denne enheten</button>
+      </div>
+    </section>
+
+    <section id="installHelp" class="admin-section push-install-card" hidden aria-labelledby="installHelpTitle">
+      <p class="section-kicker">iPhone</p>
+      <h2 id="installHelpTitle">Legg admin på Hjem-skjermen først</h2>
+      <ol class="push-steps">
+        <li><strong>Åpne denne siden i Safari</strong><span>Bruk Safari for enklest oppsett.</span></li>
+        <li><strong>Trykk Del</strong><span>Velg «Legg til på Hjem-skjermen».</span></li>
+        <li><strong>Åpne Sørgulen Admin fra ikonet</strong><span>Gå tilbake hit og trykk «Slå på varsler».</span></li>
+      </ol>
+    </section>
+
+    <section class="admin-section" aria-labelledby="pushTypesTitle">
+      <div class="section-heading-row">
+        <div>
+          <p class="section-kicker">Hva som får forstyrre deg</p>
+          <h2 id="pushTypesTitle">Varslingstyper</h2>
+        </div>
+      </div>
+
+      <div class="push-preferences">
+        <label class="push-pref">
+          <span><strong>Nye bookinger</strong><small>Varsler når en kunde booker en vanlig tjeneste.</small></span>
+          <input type="checkbox" data-push-pref="newBooking" checked disabled>
+        </label>
+        <label class="push-pref">
+          <span><strong>Nye prisforespørsler</strong><small>Varsler når en ny prisforespørsel kommer inn.</small></span>
+          <input type="checkbox" data-push-pref="newRequest" checked disabled>
+        </label>
+        <label class="push-pref">
+          <span><strong>Nye brøytebestillinger</strong><small>Prioritert varsel når en brøytebestilling kommer inn.</small></span>
+          <input type="checkbox" data-push-pref="newSnowJob" checked disabled>
+        </label>
+        <label class="push-pref">
+          <span><strong>Forfalte fakturaer</strong><small>Varsler én gang når en utstedt faktura har passert forfall.</small></span>
+          <input type="checkbox" data-push-pref="invoiceOverdue" checked disabled>
+        </label>
+        <label class="push-pref">
+          <span><strong>Oppdrag som stopper opp</strong><small>Varsler når et prosjekt har stått mellom økter i minst 3 dager.</small></span>
+          <input type="checkbox" data-push-pref="projectFollowUp" checked disabled>
+        </label>
+      </div>
+    </section>
+
+    <section class="admin-section push-privacy" aria-labelledby="privacyTitle">
+      <p class="section-kicker">Låseskjerm</p>
+      <h2 id="privacyTitle">Kort og diskret</h2>
+      <p>Varslene viser det du trenger for å forstå hva som har skjedd, men unngår normalt kundenavn, telefon, adresse og andre unødvendige personopplysninger på låseskjermen.</p>
+    </section>
+
+    <section class="admin-section push-devices" aria-labelledby="devicesTitle">
+      <div class="section-heading-row">
+        <div>
+          <p class="section-kicker">Aktive enheter</p>
+          <h2 id="devicesTitle">Tilkoblede varslinger</h2>
+        </div>
+        <button id="refreshPushBtn" class="admin-icon-button" type="button" aria-label="Oppdater varslinger">↻</button>
+      </div>
+      <div id="pushDevices" class="push-device-list"></div>
+    </section>
+  </main>
+
+  <script src="../config.js?v=20260908-push1"></script>
+  <script src="varslinger.js?v=20260908-push1"></script>
+</body>
+</html>

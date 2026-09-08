@@ -1,0 +1,17 @@
+{
+  "name": "Sørgulen Industriservice Admin",
+  "short_name": "Sørgulen Admin",
+  "description": "Admin for Sørgulen Industriservice",
+  "start_url": "/admin/hjem.html",
+  "scope": "/admin/",
+  "display": "standalone",
+  "background_color": "#0b0f13",
+  "theme_color": "#0b0f13",
+  "icons": [
+    {
+      "src": "/assets/logo.png",
+      "sizes": "any",
+      "type": "image/png"
+    }
+  ]
+}
