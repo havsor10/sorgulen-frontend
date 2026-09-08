@@ -7,7 +7,17 @@
   const KEY_STORAGE = "sorgulen_admin_key";
   const HISTORY_STORAGE = "sorgulen_ai_guide_history_v2";
   const MAX_LOCAL_HISTORY = 24;
+  const MAX_SOURCE_IMAGE_BYTES = 25 * 1024 * 1024;
+  const MAX_UPLOAD_IMAGE_BYTES = 1_500_000;
   let busy = false;
+  let imagePreparing = false;
+  let selectedImage = null;
+
+  const imageStyle = document.createElement("link");
+  imageStyle.rel = "stylesheet";
+  imageStyle.href = "ai-guide-image.css?v=20260909-image1";
+  imageStyle.dataset.saiImageStyle = "true";
+  if (!document.querySelector('link[data-sai-image-style="true"]')) document.head.appendChild(imageStyle);
 
   const pageKey = document.getElementById("adminShell")?.dataset.page || "";
   const suggestionsByPage = {
@@ -118,8 +128,23 @@
     <div class="sai-messages" id="saiMessages" aria-live="polite"></div>
     <div class="sai-suggestions" id="saiSuggestions" aria-label="Forslag til spørsmål"></div>
     <form class="sai-form" id="saiForm">
-      <textarea id="saiInput" rows="1" maxlength="4000" placeholder="Spør kort om det du lurer på…" aria-label="Spør Sørgulen AI"></textarea>
-      <button class="sai-send" id="saiSend" type="submit">Send</button>
+      <div class="sai-image-preview" id="saiImagePreview" hidden>
+        <img id="saiImagePreviewImg" alt="Bilde klart for AI-analyse">
+        <div class="sai-image-preview-copy">
+          <strong id="saiImagePreviewName">Bilde</strong>
+          <span id="saiImagePreviewMeta">Klart for analyse</span>
+        </div>
+        <button class="sai-image-remove" id="saiImageRemove" type="button" aria-label="Fjern bilde" title="Fjern bilde">×</button>
+      </div>
+      <div class="sai-compose-row">
+        <input id="saiImageInput" type="file" accept="image/*" hidden>
+        <button class="sai-image-button" id="saiImageButton" type="button" aria-label="Legg ved bilde" title="Legg ved bilde">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v13a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 18.5v-13Zm2.5-.5a.5.5 0 0 0-.5.5v9.15l2.9-2.9a2 2 0 0 1 2.83 0l1.22 1.22 1.72-1.72a2 2 0 0 1 2.83 0L18 11.75V5.5a.5.5 0 0 0-.5-.5h-11Zm11.5 9.58-1.92-1.92-2.42 2.42a1 1 0 0 1-1.42 0l-1.93-1.93L6 17.46v1.04a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5v-3.92ZM9 8.5A1.5 1.5 0 1 1 6 8.5a1.5 1.5 0 0 1 3 0Z"/></svg>
+        </button>
+        <textarea id="saiInput" rows="1" maxlength="4000" placeholder="Spør kort om det du lurer på…" aria-label="Spør Sørgulen AI"></textarea>
+        <button class="sai-send" id="saiSend" type="submit">Send</button>
+      </div>
+      <p class="sai-image-status" id="saiImageStatus" aria-live="polite" hidden></p>
     </form>
   `;
 
@@ -130,6 +155,14 @@
   const input = panel.querySelector("#saiInput");
   const sendButton = panel.querySelector("#saiSend");
   const contextNode = panel.querySelector("#saiContextLabel");
+  const imageInput = panel.querySelector("#saiImageInput");
+  const imageButton = panel.querySelector("#saiImageButton");
+  const imagePreview = panel.querySelector("#saiImagePreview");
+  const imagePreviewImg = panel.querySelector("#saiImagePreviewImg");
+  const imagePreviewName = panel.querySelector("#saiImagePreviewName");
+  const imagePreviewMeta = panel.querySelector("#saiImagePreviewMeta");
+  const imageRemove = panel.querySelector("#saiImageRemove");
+  const imageStatus = panel.querySelector("#saiImageStatus");
 
   function setOpen(open) {
     panel.classList.toggle("is-open", open);
@@ -162,7 +195,7 @@
     const strong = document.createElement("strong");
     strong.textContent = "Spør. Eg gir deg kort svar.";
     const p = document.createElement("p");
-    p.textContent = "Eg bruker små kort, tall og steg når det gjør svaret raskere å forstå.";
+    p.textContent = "Skriv et spørsmål eller legg ved et bilde. Eg bruker kort, tall og steg når det gjør svaret raskere å forstå.";
     empty.append(strong, p);
     messages.appendChild(empty);
   }
@@ -344,11 +377,159 @@
     input.style.height = `${Math.min(120, Math.max(46, input.scrollHeight))}px`;
   }
 
-  async function apiChat(question, previousHistory) {
+  function setImageStatus(message = "", isError = false) {
+    const text = String(message || "").trim();
+    imageStatus.textContent = text;
+    imageStatus.hidden = !text;
+    imageStatus.classList.toggle("is-error", Boolean(isError));
+  }
+
+  function setComposerDisabled() {
+    const disabled = busy || imagePreparing;
+    sendButton.disabled = disabled;
+    imageButton.disabled = disabled;
+    imageInput.disabled = disabled;
+  }
+
+  function clearSelectedImage() {
+    selectedImage = null;
+    imageInput.value = "";
+    imagePreview.hidden = true;
+    imagePreviewImg.removeAttribute("src");
+    imagePreviewName.textContent = "Bilde";
+    imagePreviewMeta.textContent = "Klart for analyse";
+    setImageStatus();
+  }
+
+  function renderSelectedImage() {
+    if (!selectedImage) {
+      clearSelectedImage();
+      return;
+    }
+    imagePreviewImg.src = selectedImage.previewUrl;
+    imagePreviewName.textContent = selectedImage.name || "Bilde";
+    imagePreviewMeta.textContent = `${Math.max(1, Math.round(selectedImage.byteLength / 1024))} KB · klart for AI-analyse`;
+    imagePreview.hidden = false;
+  }
+
+  function loadImage(file) {
+    return new Promise((resolve, reject) => {
+      const objectUrl = URL.createObjectURL(file);
+      const image = new Image();
+      image.onload = () => resolve({ image, objectUrl });
+      image.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Bildeformatet kunne ikke leses. Prøv JPEG/PNG/WebP eller ta et nytt bilde."));
+      };
+      image.src = objectUrl;
+    });
+  }
+
+  function canvasToJpeg(canvas, quality) {
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error("Kunne ikke klargjøre bildet."));
+      }, "image/jpeg", quality);
+    });
+  }
+
+  async function renderJpeg(image, maxDimension, quality) {
+    const sourceWidth = Number(image.naturalWidth || image.width || 0);
+    const sourceHeight = Number(image.naturalHeight || image.height || 0);
+    if (!sourceWidth || !sourceHeight) throw new Error("Bildet mangler gyldig størrelse.");
+
+    const scale = Math.min(1, maxDimension / Math.max(sourceWidth, sourceHeight));
+    const width = Math.max(1, Math.round(sourceWidth * scale));
+    const height = Math.max(1, Math.round(sourceHeight * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d", { alpha: false });
+    if (!context) throw new Error("Nettleseren kunne ikke behandle bildet.");
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, width, height);
+    context.drawImage(image, 0, 0, width, height);
+    return canvasToJpeg(canvas, quality);
+  }
+
+  function blobToDataUrl(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(new Error("Kunne ikke lese det klargjorte bildet."));
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  async function prepareImage(file) {
+    if (!(file instanceof File)) throw new Error("Velg et bilde først.");
+    if (!String(file.type || "").startsWith("image/")) throw new Error("Filen må være et bilde.");
+    if (file.size > MAX_SOURCE_IMAGE_BYTES) throw new Error("Originalbildet er for stort. Velg et bilde under 25 MB.");
+
+    const loaded = await loadImage(file);
+    try {
+      const attempts = [
+        [1800, 0.84],
+        [1800, 0.70],
+        [1500, 0.72],
+        [1200, 0.68],
+      ];
+      let blob = null;
+      for (const [maxDimension, quality] of attempts) {
+        blob = await renderJpeg(loaded.image, maxDimension, quality);
+        if (blob.size <= MAX_UPLOAD_IMAGE_BYTES) break;
+      }
+      if (!blob || blob.size > MAX_UPLOAD_IMAGE_BYTES) {
+        throw new Error("Bildet ble fortsatt for stort etter komprimering. Prøv et annet bilde.");
+      }
+
+      const previewUrl = await blobToDataUrl(blob);
+      const commaIndex = previewUrl.indexOf(",");
+      if (commaIndex < 0) throw new Error("Kunne ikke klargjøre bildet.");
+      return {
+        name: String(file.name || "Bilde").slice(0, 120),
+        mediaType: "image/jpeg",
+        data: previewUrl.slice(commaIndex + 1),
+        previewUrl,
+        byteLength: blob.size,
+      };
+    } finally {
+      URL.revokeObjectURL(loaded.objectUrl);
+    }
+  }
+
+  async function handleImageSelection(file) {
+    if (!file || busy || imagePreparing) return;
+    imagePreparing = true;
+    setComposerDisabled();
+    setImageStatus("Klargjør bilde for AI…");
+    try {
+      selectedImage = await prepareImage(file);
+      renderSelectedImage();
+      setImageStatus();
+      input.focus();
+    } catch (error) {
+      clearSelectedImage();
+      setImageStatus(error?.message || "Kunne ikke klargjøre bildet.", true);
+    } finally {
+      imagePreparing = false;
+      setComposerDisabled();
+    }
+  }
+
+  async function apiChat(question, previousHistory, image = null) {
+    const payload = {
+      question,
+      history: previousHistory.map(({ role, content }) => ({ role, content })).slice(-10),
+      pageContext: currentPageContext(),
+    };
+    if (image) payload.image = { mediaType: image.mediaType, data: image.data };
+
     const response = await fetch(`${API_BASE}/admin/assistant/guide/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-admin-key": adminKey() },
-      body: JSON.stringify({ question, history: previousHistory.map(({ role, content }) => ({ role, content })).slice(-10), pageContext: currentPageContext() }),
+      body: JSON.stringify(payload),
     });
     const data = await response.json().catch(() => null);
     if (response.status === 401 || response.status === 403) {
@@ -362,21 +543,26 @@
 
   async function ask(rawQuestion) {
     const question = String(rawQuestion || "").trim().slice(0, 4000);
-    if (!question || busy) return;
+    const image = selectedImage;
+    if ((!question && !image) || busy || imagePreparing) return;
+
     const previousHistory = history.slice(-10);
-    history.push({ role: "user", content: question, view: null });
+    const visibleUserMessage = image
+      ? `${question || "Bilde sendt"}\n📷 Bilde vedlagt`
+      : question;
+    history.push({ role: "user", content: visibleUserMessage, view: null });
     saveHistory();
     renderConversation();
     renderSuggestions();
     input.value = "";
     resizeInput();
 
-    const loading = addBubble("assistant", "Sjekker…", "is-loading");
+    const loading = addBubble("assistant", image ? "Ser på bildet…" : "Sjekker…", "is-loading");
     messages.scrollTop = messages.scrollHeight;
     busy = true;
-    sendButton.disabled = true;
+    setComposerDisabled();
     try {
-      const data = await apiChat(question, previousHistory);
+      const data = await apiChat(question, previousHistory, image);
       loading.remove();
       const summary = String(data.reply?.summary || data.reply?.answer || "").trim();
       if (!summary) throw new Error("AI-veilederen returnerte ikke et svar.");
@@ -386,6 +572,7 @@
         view: cleanStoredView({ reply: data.reply, links: data.links || [], media: data.media || [] }),
       });
       saveHistory();
+      clearSelectedImage();
       renderConversation();
       renderSuggestions(data.reply?.followUps);
     } catch (error) {
@@ -395,7 +582,7 @@
       messages.scrollTop = messages.scrollHeight;
     } finally {
       busy = false;
-      sendButton.disabled = false;
+      setComposerDisabled();
       input.focus();
     }
   }
@@ -403,6 +590,7 @@
   function clearConversation() {
     history = [];
     saveHistory();
+    clearSelectedImage();
     renderConversation();
     renderSuggestions();
     input.value = "";
@@ -417,6 +605,19 @@
   panel.querySelector("#saiForm").addEventListener("submit", (event) => {
     event.preventDefault();
     ask(input.value);
+  });
+  imageButton.addEventListener("click", () => {
+    if (!busy && !imagePreparing) imageInput.click();
+  });
+  imageInput.addEventListener("change", () => {
+    const [file] = imageInput.files || [];
+    if (file) handleImageSelection(file);
+  });
+  imageRemove.addEventListener("click", () => {
+    if (!busy && !imagePreparing) {
+      clearSelectedImage();
+      input.focus();
+    }
   });
   input.addEventListener("input", resizeInput);
   input.addEventListener("keydown", (event) => {
@@ -433,4 +634,5 @@
   renderConversation();
   renderSuggestions();
   resizeInput();
+  setComposerDisabled();
 })();
