@@ -24,6 +24,7 @@ jobs:
         run: |
           node --check admin/admin-shell.js
           node --check admin/ai-guide.js
+          node --check admin/ai-advisor-wow.js
           node --check admin/operations-ui.js
           node --check admin/kunde-v2.js
           node --check admin/hjem.js
