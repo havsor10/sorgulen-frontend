@@ -140,8 +140,10 @@
   text-align: center;
 }
 
+/* Keep the AI launcher anchored to the viewport. A previous relative override
+   made it scroll with the document and only appear at certain page positions. */
 .sai-launcher {
-  position: relative;
+  position: fixed;
 }
 
 .sai-launcher-badge {
