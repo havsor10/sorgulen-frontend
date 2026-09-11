@@ -3,5 +3,6 @@ Allow: /
 
 Disallow: /admin/
 Disallow: /login.html
+Disallow: /prosjekt.html
 
 Sitemap: https://sorgulen.no/sitemap.xml
