@@ -20,12 +20,6 @@
       .replaceAll("'", "&#039;");
   }
 
-  function osloDate(value) {
-    if (!value) return null;
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? null : date;
-  }
-
   function formatDate(value, withWeekday = true) {
     if (!value) return "Ikke satt";
     const date = /^\d{4}-\d{2}-\d{2}$/.test(String(value))
@@ -59,7 +53,6 @@
     const startDate = new Date(`${start}T12:00:00`);
     const endDate = new Date(`${end}T12:00:00`);
     if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return `${start}–${end}`;
-
     const sameMonth = startDate.getFullYear() === endDate.getFullYear() && startDate.getMonth() === endDate.getMonth();
     if (sameMonth) {
       const weekday = new Intl.DateTimeFormat("no-NO", { weekday: "long", timeZone: "Europe/Oslo" }).format(startDate);
@@ -89,7 +82,7 @@
     }).format(amount);
   }
 
-  function statusHelp(status) {
+  function fallbackStatusHelp(status) {
     return ({
       planned: "Oppdraget er opprettet og venter på oppstart.",
       active: "Det registreres arbeid på prosjektet nå.",
@@ -116,7 +109,6 @@
       card.classList.add("hidden");
       return;
     }
-
     safeImages.forEach((image) => {
       const figure = document.createElement("figure");
       figure.className = "portal-photo";
@@ -136,14 +128,39 @@
   }
 
   function procurementStatus(procurement) {
-    if (procurement.status === "awaiting_approval") return "Venter på din godkjenning";
-    if (procurement.status === "approved") return "Godkjent – klart for innkjøp";
-    if (procurement.status === "purchased") return "Innkjøpt";
+    return ({
+      awaiting_approval: "Venter på din godkjenning",
+      approved: "Godkjent – klart for innkjøp",
+      ordered: "Bestilt",
+      waiting_delivery: "Bestilt – venter på levering",
+      ready_pickup: "Klar for henting",
+      purchased: "Innkjøpt",
+    })[procurement.status] || "";
+  }
+
+  function procurementResult(procurement) {
+    if (procurement.status === "approved") {
+      return `<div class="approval-result success"><strong>Godkjent av deg</strong>${procurement.approvedAt ? `<span>${escapeHtml(formatDateTime(procurement.approvedAt))}</span>` : ""}<p>Håvard kan nå gå videre med innkjøpet.</p></div>`;
+    }
+    if (procurement.status === "ordered") {
+      return '<div class="approval-result success"><strong>Bestilt</strong><p>Innkjøpet er bestilt.</p></div>';
+    }
+    if (procurement.status === "waiting_delivery") {
+      return '<div class="approval-result purchased"><strong>Venter på levering</strong><p>Håvard oppdaterer siden når varen er klar.</p></div>';
+    }
+    if (procurement.status === "ready_pickup") {
+      return '<div class="approval-result success"><strong>Klar for henting</strong><p>Varen er klar og kan hentes inn til prosjektet.</p></div>';
+    }
+    if (procurement.status === "purchased") {
+      return `<div class="approval-result purchased"><strong>Innkjøpet er gjort</strong>${procurement.purchasedAt ? `<span>${escapeHtml(formatDateTime(procurement.purchasedAt))}</span>` : ""}<p>Du trenger ikke gjøre noe mer.</p></div>`;
+    }
     return "";
   }
 
   function renderProcurements(procurements) {
-    const visible = (procurements || []).filter((item) => ["awaiting_approval", "approved", "purchased"].includes(item.status));
+    const visible = (procurements || []).filter((item) => [
+      "awaiting_approval", "approved", "ordered", "waiting_delivery", "ready_pickup", "purchased",
+    ].includes(item.status));
     if (!visible.length) {
       procurementContainer.innerHTML = "";
       procurementContainer.classList.add("hidden");
@@ -161,8 +178,6 @@
         </li>`;
       }).join("");
       const awaiting = procurement.status === "awaiting_approval";
-      const approved = procurement.status === "approved";
-      const purchased = procurement.status === "purchased";
       return `<section class="portal-card procurement-card procurement-${escapeHtml(procurement.status)}" data-procurement-card="${escapeHtml(procurement.entryId)}">
         <p class="procurement-kicker">Innkjøp til prosjektet</p>
         <h2>${escapeHtml(procurement.title)}</h2>
@@ -181,9 +196,7 @@
               <button type="button" class="cancel-approval-button" data-cancel-approval="${escapeHtml(procurement.entryId)}">Avbryt</button>
             </div>
           </div>
-        </div>` : ""}
-        ${approved ? `<div class="approval-result success"><strong>Godkjent av deg</strong>${procurement.approvedAt ? `<span>${escapeHtml(formatDateTime(procurement.approvedAt))}</span>` : ""}<p>Håvard kan nå gå til innkjøp.</p></div>` : ""}
-        ${purchased ? `<div class="approval-result purchased"><strong>Innkjøpet er gjort</strong>${procurement.purchasedAt ? `<span>${escapeHtml(formatDateTime(procurement.purchasedAt))}</span>` : ""}<p>Du trenger ikke gjøre noe mer.</p></div>` : ""}
+        </div>` : procurementResult(procurement)}
       </section>`;
     }).join("");
     procurementContainer.classList.remove("hidden");
@@ -197,7 +210,9 @@
     document.getElementById("projectName").textContent = project.serviceName || "Prosjekt";
     document.getElementById("customerName").textContent = project.customerName ? `For ${project.customerName}` : "";
     document.getElementById("statusText").textContent = project.statusText || "Prosjektet er aktivt";
-    document.getElementById("statusHelp").textContent = statusHelp(project.status);
+    document.getElementById("statusHelp").textContent = project.statusHelp || fallbackStatusHelp(project.status);
+    const statusCard = document.getElementById("statusText").closest(".portal-card");
+    statusCard?.classList.toggle("status-attention", Boolean(project.statusAttention));
 
     const nextText = document.getElementById("nextWorkText");
     const nextSubtext = document.getElementById("nextWorkSubtext");
@@ -211,7 +226,7 @@
         : "Dette er forventet tidspunkt og kan endres. Siden oppdateres dersom planen endrer seg.";
     } else {
       nextText.textContent = "Ikke satt ennå";
-      nextSubtext.textContent = "Prosjektet er fortsatt aktivt. Siden oppdateres så snart neste arbeidsdag er satt.";
+      nextSubtext.textContent = project.nextWorkMessage || "Prosjektet er fortsatt aktivt. Siden oppdateres så snart neste arbeidsdag er satt.";
     }
 
     renderProcurements(project.procurements);
@@ -238,19 +253,14 @@
     const hoursFact = document.getElementById("hoursFact");
     const showLastWorked = Boolean(project.lastWorked);
     const showHours = project.hours != null && Number(project.hours) > 0;
-
     if (showLastWorked) {
       document.getElementById("lastWorked").textContent = formatDate(project.lastWorked, false);
       lastWorkedFact.classList.remove("hidden");
-    } else {
-      lastWorkedFact.classList.add("hidden");
-    }
+    } else lastWorkedFact.classList.add("hidden");
     if (showHours) {
       document.getElementById("hoursText").textContent = formatDuration(project.hours);
       hoursFact.classList.remove("hidden");
-    } else {
-      hoursFact.classList.add("hidden");
-    }
+    } else hoursFact.classList.add("hidden");
     workFactsCard.classList.toggle("hidden", !showLastWorked && !showHours);
 
     const workDaysCard = document.getElementById("workDaysCard");
@@ -267,17 +277,13 @@
         workDayList.appendChild(li);
       });
       workDaysCard.classList.remove("hidden");
-    } else {
-      workDaysCard.classList.add("hidden");
-    }
+    } else workDaysCard.classList.add("hidden");
 
     renderPhotos(project.images);
-
-    const updated = osloDate(project.updatedAt);
-    document.getElementById("updatedText").textContent = updated
+    const updated = project.updatedAt ? new Date(project.updatedAt) : null;
+    document.getElementById("updatedText").textContent = updated && !Number.isNaN(updated.getTime())
       ? `Sist oppdatert ${new Intl.DateTimeFormat("no-NO", { dateStyle: "long", timeStyle: "short", timeZone: "Europe/Oslo" }).format(updated)}`
       : "";
-
     projectContent.classList.remove("hidden");
   }
 
@@ -286,14 +292,16 @@
       customerName: "Eksempelkunde",
       serviceName: "Spyling og rengjøring av uteområde",
       status: "stopped",
-      statusText: "Mellom arbeidsøkter",
+      statusText: "Venter på din godkjenning",
+      statusHelp: "Se innkjøpet «Fugesand til området» nedenfor og godkjenn når det ser riktig ut.",
+      statusAttention: "approval",
       nextWork: { start: "2026-09-17", end: "2026-09-18", mode: "expected" },
       customerMessage: "Spylingen er godt i gang. Før neste del av jobben vil jeg avklare fugesand med deg.",
       procurements: [{
         entryId: "demo-fugesand",
         title: "Fugesand til området",
         supplier: "Eksempel leverandør",
-        customerNote: "Jeg har regnet ut mengden jeg mener området trenger. Prisene under er bare eksempeldata i denne demoen.",
+        customerNote: "Jeg har beregnet mengden jeg mener området trenger. Prisene under er eksempeldata i demoen.",
         status: "awaiting_approval",
         revision: 1,
         total: 1032,
@@ -329,7 +337,6 @@
     approvalInFlight = true;
     const buttons = document.querySelectorAll(`[data-confirm-approval="${CSS.escape(entryId)}"], [data-approve-procurement="${CSS.escape(entryId)}"]`);
     buttons.forEach((button) => { button.disabled = true; });
-
     try {
       let approved;
       if (isDemo) {
@@ -345,8 +352,10 @@
         if (!response.ok) throw new Error(data?.error || "Kunne ikke lagre godkjenningen.");
         approved = data.procurement;
       }
-
       currentProject.procurements = (currentProject.procurements || []).map((item) => item.entryId === entryId ? approved : item);
+      currentProject.statusText = "Innkjøpet er godkjent";
+      currentProject.statusHelp = "Håvard kan nå gå videre med innkjøpet.";
+      currentProject.statusAttention = "";
       currentProject.updatedAt = new Date().toISOString();
       render(currentProject);
     } catch (error) {
@@ -361,26 +370,19 @@
     const approve = event.target.closest("[data-approve-procurement]");
     if (approve) {
       const entryId = approve.dataset.approveProcurement;
-      const confirmBox = procurementContainer.querySelector(`[data-approval-confirm="${CSS.escape(entryId)}"]`);
-      if (confirmBox) confirmBox.classList.remove("hidden");
+      procurementContainer.querySelector(`[data-approval-confirm="${CSS.escape(entryId)}"]`)?.classList.remove("hidden");
       approve.classList.add("hidden");
       return;
     }
-
     const cancel = event.target.closest("[data-cancel-approval]");
     if (cancel) {
       const entryId = cancel.dataset.cancelApproval;
-      const confirmBox = procurementContainer.querySelector(`[data-approval-confirm="${CSS.escape(entryId)}"]`);
-      const approveButton = procurementContainer.querySelector(`[data-approve-procurement="${CSS.escape(entryId)}"]`);
-      if (confirmBox) confirmBox.classList.add("hidden");
-      if (approveButton) approveButton.classList.remove("hidden");
+      procurementContainer.querySelector(`[data-approval-confirm="${CSS.escape(entryId)}"]`)?.classList.add("hidden");
+      procurementContainer.querySelector(`[data-approve-procurement="${CSS.escape(entryId)}"]`)?.classList.remove("hidden");
       return;
     }
-
     const confirmButton = event.target.closest("[data-confirm-approval]");
-    if (confirmButton) {
-      confirmApproval(confirmButton.dataset.confirmApproval, Number(confirmButton.dataset.revision));
-    }
+    if (confirmButton) confirmApproval(confirmButton.dataset.confirmApproval, Number(confirmButton.dataset.revision));
   });
 
   async function load() {
@@ -388,12 +390,10 @@
       render(demoProject());
       return;
     }
-
     if (!accessToken) {
       showError("Denne prosjektlenken mangler tilgangsnøkkel. Bruk lenken du fikk fra Sørgulen Industriservice.");
       return;
     }
-
     try {
       const response = await fetch(`${API_BASE}/customer-project/access`, {
         method: "POST",
