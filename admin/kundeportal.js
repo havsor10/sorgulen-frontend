@@ -48,7 +48,7 @@
       localStorage.removeItem(KEY_STORAGE);
       throw new Error("Admin-nøkkel er feil eller mangler. Last siden på nytt og logg inn igjen.");
     }
-    if (!response.ok) throw new Error(data?.error || `API-feil ${response.status}`);
+    if (!response.ok) throw Object.assign(new Error(data?.error || `API-feil ${response.status}`), { data, status: response.status });
     return data;
   }
 
@@ -116,9 +116,16 @@
       researching: "Henter inn produkt / pris",
       awaiting_approval: "Venter på kundens godkjenning",
       approved: "Godkjent av kunden",
+      ordered: "Bestilt",
+      waiting_delivery: "Venter på levering",
+      ready_pickup: "Klar for henting",
       purchased: "Innkjøpt",
       cancelled: "Avbrutt",
     })[status] || status;
+  }
+
+  function buildPortalUrl(token) {
+    return token ? `${window.location.origin}/prosjekt.html#${encodeURIComponent(token)}` : "";
   }
 
   function renderProjectList() {
@@ -140,10 +147,12 @@
     return {
       enabled: false,
       tokenHint: "",
+      shareToken: "",
       customerMessage: "",
       nextWorkStart: "",
       nextWorkEnd: "",
       nextWorkMode: "expected",
+      scheduleExpired: false,
       showHours: true,
       showWorkHistory: true,
       showImages: true,
@@ -167,13 +176,28 @@
     }).join("")}</div>`;
   }
 
+  function procurementStatusControl(procurement) {
+    if (!["approved", "ordered", "waiting_delivery", "ready_pickup"].includes(procurement.status)) return "";
+    return `<div class="procurement-status-control">
+      <select data-procurement-status-select="${escapeHtml(procurement.entryId)}" aria-label="Innkjøpsstatus">
+        <option value="approved" ${procurement.status === "approved" ? "selected" : ""}>Godkjent – ikke kjøpt ennå</option>
+        <option value="ordered" ${procurement.status === "ordered" ? "selected" : ""}>Bestilt</option>
+        <option value="waiting_delivery" ${procurement.status === "waiting_delivery" ? "selected" : ""}>Venter på levering</option>
+        <option value="ready_pickup" ${procurement.status === "ready_pickup" ? "selected" : ""}>Klar for henting</option>
+        <option value="purchased">Innkjøpt</option>
+      </select>
+      <button type="button" class="secondary-btn" data-set-procurement-status="${escapeHtml(procurement.entryId)}">Oppdater status</button>
+    </div>`;
+  }
+
   function procurementCards(procurements) {
-    if (!procurements?.length) return '<p class="muted">Ingen innkjøp knyttet til kunden ennå. Hele denne delen er skjult på kundesiden til du lager et innkjøp.</p>';
+    if (!procurements?.length) return '<p class="muted">Ingen innkjøp knyttet til kunden ennå. Denne delen vises ikke på kundesiden før du sender et konkret innkjøp til godkjenning.</p>';
     return `<div class="procurement-admin-list">${procurements.slice().reverse().map((procurement) => {
-      const canEdit = !["purchased", "cancelled"].includes(procurement.status);
-      const canPurchase = procurement.status === "approved";
+      const canEdit = ["researching", "awaiting_approval", "approved"].includes(procurement.status);
       const canCancel = !["purchased", "cancelled"].includes(procurement.status);
-      const statusClass = procurement.status === "approved" || procurement.status === "purchased" ? "good" : procurement.status === "awaiting_approval" ? "waiting" : "";
+      const statusClass = ["approved", "ordered", "ready_pickup", "purchased"].includes(procurement.status)
+        ? "good"
+        : ["awaiting_approval", "waiting_delivery"].includes(procurement.status) ? "waiting" : "";
       return `<article class="procurement-admin-card ${statusClass}">
         <div class="procurement-admin-head">
           <div><strong>${escapeHtml(procurement.title)}</strong><span>${escapeHtml(procurementStatusLabel(procurement.status))}</span></div>
@@ -181,9 +205,9 @@
         </div>
         ${procurement.supplier ? `<p>Leverandør: ${escapeHtml(procurement.supplier)}</p>` : ""}
         <p>${(procurement.items || []).length} produktlinje${(procurement.items || []).length === 1 ? "" : "r"}${procurement.customerApprovedAt ? ` · Godkjent ${escapeHtml(formatDate(procurement.customerApprovedAt, { time: true }))}` : ""}</p>
+        ${procurementStatusControl(procurement)}
         <div class="portal-actions compact-actions">
           ${canEdit ? `<button type="button" class="secondary-btn" data-edit-procurement="${escapeHtml(procurement.entryId)}">Rediger</button>` : ""}
-          ${canPurchase ? `<button type="button" class="primary-btn" data-purchased-procurement="${escapeHtml(procurement.entryId)}">Marker som innkjøpt</button>` : ""}
           ${canCancel ? `<button type="button" class="secondary-btn" data-cancel-procurement="${escapeHtml(procurement.entryId)}">Avbryt</button>` : ""}
         </div>
       </article>`;
@@ -204,17 +228,20 @@
 
   function procurementForm(procurements) {
     const editing = procurements.find((item) => item.entryId === editingProcurementId) || null;
-    const items = editing?.items?.length ? editing.items : [{}];
-    const title = editing ? `Rediger innkjøp: ${editing.title}` : "Nytt innkjøp";
+    if (editing && !["researching", "awaiting_approval", "approved"].includes(editing.status)) {
+      editingProcurementId = null;
+    }
+    const activeEdit = procurements.find((item) => item.entryId === editingProcurementId) || null;
+    const items = activeEdit?.items?.length ? activeEdit.items : [{}];
     return `<div class="procurement-builder">
       <div class="procurement-builder-head">
-        <div><h4>${escapeHtml(title)}</h4><p class="muted">Mens du bare innhenter priser er dette skjult for kunden. Når alt er klart, sender du oversikten til kunden for godkjenning.</p></div>
-        ${editing ? '<button type="button" class="secondary-btn" id="cancelProcurementEdit">Lukk redigering</button>' : ""}
+        <div><h4>${escapeHtml(activeEdit ? `Rediger innkjøp: ${activeEdit.title}` : "Nytt innkjøp")}</h4><p class="muted">Mens du bare innhenter priser er dette skjult for kunden. Først når du sender det til godkjenning blir det synlig.</p></div>
+        ${activeEdit ? '<button type="button" class="secondary-btn" id="cancelProcurementEdit">Lukk redigering</button>' : ""}
       </div>
       <div class="portal-form-grid">
-        <div class="portal-field"><label for="procurementTitle">Hva skal kjøpes?</label><input id="procurementTitle" maxlength="220" value="${escapeHtml(editing?.title || "")}" placeholder="F.eks. Fugesand til området"></div>
-        <div class="portal-field"><label for="procurementSupplier">Leverandør</label><input id="procurementSupplier" maxlength="220" value="${escapeHtml(editing?.supplier || "")}" placeholder="F.eks. Byggmakker"></div>
-        <div class="portal-field full"><label for="procurementNote">Forklaring kunden skal se</label><textarea id="procurementNote" maxlength="1000" placeholder="F.eks. Jeg har beregnet dette som riktig mengde for området.">${escapeHtml(editing?.customerNote || "")}</textarea></div>
+        <div class="portal-field"><label for="procurementTitle">Hva skal kjøpes?</label><input id="procurementTitle" maxlength="220" value="${escapeHtml(activeEdit?.title || "")}" placeholder="F.eks. Fugesand til området"></div>
+        <div class="portal-field"><label for="procurementSupplier">Leverandør</label><input id="procurementSupplier" maxlength="220" value="${escapeHtml(activeEdit?.supplier || "")}" placeholder="F.eks. Byggmakker"></div>
+        <div class="portal-field full"><label for="procurementNote">Forklaring kunden skal se</label><textarea id="procurementNote" maxlength="1000" placeholder="F.eks. Jeg har beregnet dette som riktig mengde for området.">${escapeHtml(activeEdit?.customerNote || "")}</textarea></div>
       </div>
       <div class="procurement-items-head"><strong>Produkter, mengde og pris</strong><button id="addProcurementRow" type="button" class="secondary-btn">+ Produktlinje</button></div>
       <div id="procurementItems">${items.map(procurementLineRow).join("")}</div>
@@ -230,6 +257,7 @@
     const portal = { ...portalDefaults(), ...(selectedPortal || {}) };
     const customer = selectedWorkOrder.customerSnapshot || {};
     const linkActive = Boolean(portal.enabled && portal.tokenHint);
+    latestPortalUrl = buildPortalUrl(portal.shareToken) || latestPortalUrl;
 
     editor.classList.remove("portal-editor-empty");
     editor.innerHTML = `
@@ -247,24 +275,25 @@
 
       <section>
         <h3>1. Kundelenke</h3>
-        <p class="muted">Lenken åpner kun dette prosjektet. Den kan ikke brukes til å se andre kunder.</p>
+        <p class="muted">Denne lenken åpner kun dette prosjektet. Kunden kan bruke samme lenke gjennom hele oppdraget.</p>
         ${linkActive ? `<p><strong>Aktiv sikker lenke</strong> · slutter på …${escapeHtml(portal.tokenHint)}</p>` : ""}
         <div class="portal-actions">
-          <button id="generatePortalLink" type="button" class="primary-btn">${linkActive ? "Lag ny lenke" : "Opprett kundelenke"}</button>
+          ${!linkActive ? '<button id="generatePortalLink" type="button" class="primary-btn">Opprett kundelenke</button>' : '<button id="generatePortalLink" type="button" class="secondary-btn" data-regenerate="true">Lag ny lenke</button>'}
           ${linkActive ? '<button id="revokePortalLink" type="button" class="danger-btn">Deaktiver lenke</button>' : ""}
         </div>
-        ${latestPortalUrl ? `<div class="portal-link-box"><strong>Ny lenke er klar</strong><input id="portalUrl" value="${escapeHtml(latestPortalUrl)}" readonly><div class="portal-actions"><button id="copyPortalLink" type="button" class="secondary-btn">Kopier lenke</button><button id="sharePortalLink" type="button" class="secondary-btn">Del via SMS / e-post</button><a class="secondary-btn" href="${escapeHtml(latestPortalUrl)}" target="_blank" rel="noopener">Åpne kundesiden</a></div><small>Hele lenken vises bare etter at den er opprettet. Lager du en ny lenke, slutter den gamle å virke.</small></div>` : ""}
+        ${latestPortalUrl ? `<div class="portal-link-box"><strong>Kundelenke</strong><input id="portalUrl" value="${escapeHtml(latestPortalUrl)}" readonly><div class="portal-actions"><button id="copyPortalLink" type="button" class="secondary-btn">Kopier lenke</button><button id="sharePortalLink" type="button" class="secondary-btn">Del via SMS / e-post</button><a class="secondary-btn" href="${escapeHtml(latestPortalUrl)}" target="_blank" rel="noopener">Åpne kundesiden</a></div></div>` : linkActive ? '<p class="muted">Denne eldre lenken kan ikke vises igjen. Lag ny lenke én gang, så kan den deretter kopieres når som helst.</p>' : ""}
       </section>
 
       <hr>
 
       <form id="portalSettingsForm">
         <h3>2. Det viktigste kunden ser</h3>
+        ${portal.scheduleExpired ? '<div class="portal-warning"><strong>Neste arbeidsperiode er passert.</strong><span>Kunden ser ikke den gamle datoen. Sett en ny dato eller bruk «Foreslå neste mulighet».</span></div>' : ""}
         <div class="portal-form-grid">
           <div class="portal-field"><label for="nextWorkStart">Fra dato</label><input id="nextWorkStart" type="date" value="${escapeHtml(portal.nextWorkStart)}"></div>
           <div class="portal-field"><label for="nextWorkEnd">Til dato</label><input id="nextWorkEnd" type="date" value="${escapeHtml(portal.nextWorkEnd)}"></div>
           <div class="portal-field"><label for="nextWorkMode">Hvordan skal det stå?</label><select id="nextWorkMode"><option value="expected" ${portal.nextWorkMode !== "planned" ? "selected" : ""}>Forventet / trolig</option><option value="planned" ${portal.nextWorkMode === "planned" ? "selected" : ""}>Planlagt</option></select></div>
-          <div class="portal-field"><label>&nbsp;</label><button id="suggestNextWork" type="button" class="secondary-btn">Foreslå neste mulighet</button><small>Bruker skiftplanen og ekstra blokkerte dager. Du godkjenner alltid datoen selv.</small></div>
+          <div class="portal-field"><label>&nbsp;</label><button id="suggestNextWork" type="button" class="secondary-btn">Foreslå neste mulighet</button><small>Tar hensyn til skiftplan, hvile, private blokkeringer og andre kundeprosjekter.</small></div>
           <div class="portal-field full"><label for="customerMessage">Siste oppdatering til kunden</label><textarea id="customerMessage" maxlength="1500" placeholder="F.eks. Parkeringsområdet er ferdig. Neste gang fortsetter jeg langs garasjen.">${escapeHtml(portal.customerMessage)}</textarea></div>
         </div>
 
@@ -310,7 +339,9 @@
     if (showStatus) setStatus("Oppdaterer kundeportalen…");
     const data = await apiFetch(`/admin/customer-portal/${encodeURIComponent(selectedWorkOrder._id)}`);
     selectedPortal = data.portal || null;
+    latestPortalUrl = buildPortalUrl(selectedPortal?.shareToken);
     renderEditor();
+    await loadAvailability();
     if (showStatus) setStatus("Oppdatert.", "success");
   }
 
@@ -326,18 +357,20 @@
     setStatus("");
   }
 
-  async function generateLink() {
+  async function generateLink(regenerate = false) {
     if (!selectedWorkOrder || busy) return;
-    const replacing = Boolean(selectedPortal?.tokenHint && selectedPortal?.enabled);
-    if (replacing && !confirm("Lage ny lenke? Den gamle kundelenken slutter å virke med en gang.")) return;
+    if (regenerate && !confirm("Lage ny lenke? Den gamle kundelenken slutter å virke med en gang.")) return;
     busy = true;
-    setStatus("Lager sikker kundelenke…");
+    setStatus(regenerate ? "Lager ny sikker kundelenke…" : "Lager sikker kundelenke…");
     try {
-      const data = await apiFetch(`/admin/customer-portal/${encodeURIComponent(selectedWorkOrder._id)}/link`, { method: "POST", body: "{}" });
+      const data = await apiFetch(`/admin/customer-portal/${encodeURIComponent(selectedWorkOrder._id)}/link`, {
+        method: "POST",
+        body: JSON.stringify({ regenerate }),
+      });
       selectedPortal = data.portal;
-      latestPortalUrl = `${window.location.origin}/prosjekt.html#${encodeURIComponent(data.token)}`;
+      latestPortalUrl = buildPortalUrl(data.token || selectedPortal?.shareToken);
       renderEditor();
-      setStatus("Kundelenken er klar. Del den med kunden nå.", "success");
+      setStatus("Kundelenken er klar og kan brukes gjennom hele prosjektet.", "success");
     } catch (error) { setStatus(error.message, "error"); }
     finally { busy = false; }
   }
@@ -376,18 +409,22 @@
         body: JSON.stringify(payload),
       });
       selectedPortal = data.portal;
+      latestPortalUrl = buildPortalUrl(selectedPortal?.shareToken) || latestPortalUrl;
       renderEditor();
+      await loadAvailability();
       setStatus("Kundeoppdateringen er lagret.", "success");
-    } catch (error) { setStatus(error.message, "error"); }
-    finally { busy = false; }
+    } catch (error) {
+      const blocked = error.data?.blockedDates;
+      setStatus(blocked?.length ? `${error.message} Velg en annen periode.` : error.message, "error");
+    } finally { busy = false; }
   }
 
   async function suggestNextWork() {
     if (!selectedWorkOrder || busy) return;
     const from = addDays(todayOslo(), 1);
-    setStatus("Ser etter neste realistiske mulighet i skiftplanen…");
+    setStatus("Ser etter neste realistiske mulighet…");
     try {
-      const data = await apiFetch(`/admin/customer-portal/suggest-next?from=${encodeURIComponent(from)}`);
+      const data = await apiFetch(`/admin/customer-portal/suggest-next?from=${encodeURIComponent(from)}&workOrderId=${encodeURIComponent(selectedWorkOrder._id)}`);
       if (!data.suggestion) {
         setStatus("Fant ingen ledig periode i de neste 90 dagene.", "error");
         return;
@@ -415,9 +452,8 @@
     if (!selectedWorkOrder || busy) return;
     const title = document.getElementById("procurementTitle")?.value.trim();
     if (!title) { setStatus("Skriv hva som skal kjøpes inn.", "error"); return; }
-
     busy = true;
-    setStatus(status === "awaiting_approval" ? "Sender innkjøpsoversikten til kunden…" : "Lagrer innkjøpsarbeidet…");
+    setStatus(status === "awaiting_approval" ? "Sender innkjøpsoversikten til kunden…" : "Lagrer prisinnhentingen…");
     try {
       const payload = {
         title,
@@ -431,9 +467,10 @@
         : `/admin/customer-portal/${encodeURIComponent(selectedWorkOrder._id)}/procurements`;
       const data = await apiFetch(path, { method: editingProcurementId ? "PATCH" : "POST", body: JSON.stringify(payload) });
       selectedPortal = data.portal;
+      latestPortalUrl = buildPortalUrl(selectedPortal?.shareToken) || latestPortalUrl;
       editingProcurementId = null;
       renderEditor();
-      setStatus(status === "awaiting_approval" ? "Innkjøpet er nå synlig for kunden og venter på godkjenning." : "Lagret. Dette er fortsatt skjult for kunden.", "success");
+      setStatus(status === "awaiting_approval" ? "Innkjøpet er nå synlig for kunden og venter på godkjenning." : "Lagret internt. Kunden ser ikke dette ennå.", "success");
     } catch (error) { setStatus(error.message, "error"); }
     finally { busy = false; }
   }
@@ -443,15 +480,17 @@
     if (status === "purchased" && !confirm("Bekrefte at dette faktisk er kjøpt inn?")) return;
     if (status === "cancelled" && !confirm("Avbryte dette innkjøpet? Det forsvinner fra kundesiden.")) return;
     busy = true;
+    setStatus("Oppdaterer innkjøpsstatus…");
     try {
       const data = await apiFetch(`/admin/customer-portal/${encodeURIComponent(selectedWorkOrder._id)}/procurements/${encodeURIComponent(entryId)}`, {
         method: "PATCH",
         body: JSON.stringify({ status }),
       });
       selectedPortal = data.portal;
+      latestPortalUrl = buildPortalUrl(selectedPortal?.shareToken) || latestPortalUrl;
       editingProcurementId = null;
       renderEditor();
-      setStatus(status === "purchased" ? "Innkjøpet er markert som kjøpt. Kunden ser at det er ferdig." : "Innkjøpet er avbrutt og skjult for kunden.", "success");
+      setStatus(status === "cancelled" ? "Innkjøpet er avbrutt og skjult for kunden." : `Status satt til «${procurementStatusLabel(status)}».`, "success");
     } catch (error) { setStatus(error.message, "error"); }
     finally { busy = false; }
   }
@@ -476,9 +515,7 @@
     if (navigator.share) {
       try { await navigator.share({ title: "Følg prosjektet ditt", text, url: latestPortalUrl }); }
       catch (error) { if (error.name !== "AbortError") setStatus("Kunne ikke åpne deling.", "error"); }
-    } else {
-      await copyLink();
-    }
+    } else await copyLink();
   }
 
   function fileAsDataUrl(file) {
@@ -496,7 +533,6 @@
     const file = input?.files?.[0];
     if (!file) { setStatus("Velg et bilde først.", "error"); return; }
     if (file.size > 12 * 1024 * 1024) { setStatus("Bildet er for stort. Maks ca. 12 MB.", "error"); return; }
-
     busy = true;
     setStatus("Laster opp bildet…");
     try {
@@ -506,6 +542,7 @@
         body: JSON.stringify({ imageData, caption: document.getElementById("portalImageCaption").value.trim() }),
       });
       selectedPortal = data.portal;
+      latestPortalUrl = buildPortalUrl(selectedPortal?.shareToken) || latestPortalUrl;
       renderEditor();
       setStatus("Bildet er nå synlig på kundesiden.", "success");
     } catch (error) { setStatus(error.message, "error"); }
@@ -519,6 +556,7 @@
     try {
       const data = await apiFetch(`/admin/customer-portal/${encodeURIComponent(selectedWorkOrder._id)}/images/${encodeURIComponent(entryId)}`, { method: "DELETE" });
       selectedPortal = data.portal;
+      latestPortalUrl = buildPortalUrl(selectedPortal?.shareToken) || latestPortalUrl;
       renderEditor();
       setStatus("Bildet er fjernet fra kundesiden.", "success");
     } catch (error) { setStatus(error.message, "error"); }
@@ -529,7 +567,8 @@
     const from = todayOslo();
     blockDate.min = from;
     if (!blockDate.value) blockDate.value = addDays(from, 1);
-    const data = await apiFetch(`/admin/customer-portal/availability?from=${encodeURIComponent(from)}&days=21`);
+    const workOrderParam = selectedWorkOrder ? `&workOrderId=${encodeURIComponent(selectedWorkOrder._id)}` : "";
+    const data = await apiFetch(`/admin/customer-portal/availability?from=${encodeURIComponent(from)}&days=21${workOrderParam}`);
     availabilityStrip.innerHTML = (data.availability || []).map((day) => `<article class="availability-day ${day.available ? "available" : "blocked"}">
       <strong>${escapeHtml(formatDate(day.date, { weekday: true, short: true }))}</strong>
       <span>${day.available ? "Ledig" : "Opptatt"}</span>
@@ -574,7 +613,7 @@
   });
 
   editor.addEventListener("click", (event) => {
-    if (event.target.id === "generatePortalLink") generateLink();
+    if (event.target.id === "generatePortalLink") generateLink(event.target.dataset.regenerate === "true");
     else if (event.target.id === "revokePortalLink") revokeLink();
     else if (event.target.id === "refreshSelectedPortal") reloadSelectedPortal(true).catch((error) => setStatus(error.message, "error"));
     else if (event.target.id === "suggestNextWork") suggestNextWork();
@@ -586,14 +625,26 @@
     else if (event.target.closest(".remove-procurement-row")) {
       const row = event.target.closest(".procurement-item-row");
       if (editor.querySelectorAll(".procurement-item-row").length > 1) row?.remove();
-      else row?.querySelectorAll("input").forEach((input) => { input.value = input.dataset.procurementField === "quantity" ? "1" : input.dataset.procurementField === "unit" ? "stk" : ""; });
+      else row?.querySelectorAll("input").forEach((input) => {
+        input.value = input.dataset.procurementField === "quantity" ? "1" : input.dataset.procurementField === "unit" ? "stk" : "";
+      });
     } else {
       const save = event.target.closest("[data-save-procurement]");
       if (save) { saveProcurement(save.dataset.saveProcurement); return; }
       const edit = event.target.closest("[data-edit-procurement]");
-      if (edit) { editingProcurementId = edit.dataset.editProcurement; renderEditor(); editor.querySelector(".procurement-builder")?.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
-      const purchased = event.target.closest("[data-purchased-procurement]");
-      if (purchased) { updateProcurementStatus(purchased.dataset.purchasedProcurement, "purchased"); return; }
+      if (edit) {
+        editingProcurementId = edit.dataset.editProcurement;
+        renderEditor();
+        editor.querySelector(".procurement-builder")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      const setStatusButton = event.target.closest("[data-set-procurement-status]");
+      if (setStatusButton) {
+        const id = setStatusButton.dataset.setProcurementStatus;
+        const select = editor.querySelector(`[data-procurement-status-select="${CSS.escape(id)}"]`);
+        if (select) updateProcurementStatus(id, select.value);
+        return;
+      }
       const cancelProcurement = event.target.closest("[data-cancel-procurement]");
       if (cancelProcurement) { updateProcurementStatus(cancelProcurement.dataset.cancelProcurement, "cancelled"); return; }
       const deleteButton = event.target.closest("[data-delete-image]");
@@ -609,13 +660,15 @@
     const button = event.target.closest("[data-unblock-date]");
     if (button) unblockDay(button.dataset.unblockDate);
   });
-
   blockDayForm.addEventListener("submit", blockDay);
 
   document.addEventListener("DOMContentLoaded", async () => {
     try {
       setStatus("Henter prosjekter og skiftplan…");
-      await Promise.all([loadProjects(), loadAvailability()]);
+      await loadProjects();
+      const requestedId = new URLSearchParams(window.location.search).get("workOrderId");
+      if (requestedId && workOrders.some((order) => order._id === requestedId)) await selectProject(requestedId);
+      else await loadAvailability();
       setStatus("");
     } catch (error) {
       setStatus(error.message || "Kunne ikke hente kundeportalen.", "error");
