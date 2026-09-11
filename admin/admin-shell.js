@@ -20,6 +20,10 @@
   ensureAsset("link", { rel: "apple-touch-icon", href: "../assets/logo.png" });
   if (!["home", "inventory", "snow"].includes(page)) ensureAsset("script", { src: "operations-ui.js?v=20260904-snow1" });
   if (page === "jobs") ensureAsset("script", { src: "inventory-material-edit.js?v=20260904-snow1" });
+  if (page === "invoices") {
+    ensureAsset("link", { rel: "stylesheet", href: "fiken-invoice.css?v=20260911-fiken1" });
+    ensureAsset("script", { src: "fiken-invoice-bridge.js?v=20260911-fiken1" });
+  }
 
   const navItems = [
     { key: "home", href: "hjem.html", label: "Hjem" },
@@ -52,6 +56,7 @@
           ${navItems.map((item) => `<a class="admin-nav-link${activeClass(item.key)}" href="${item.href}"${activeAttr(item.key)}><span>${item.label}</span>${badge(item.key)}</a>`).join("")}
         </nav>
         <div class="admin-header-actions">
+          <a class="admin-quiet-action${activeClass("economy")}" href="okonomi.html"${activeAttr("economy")}>Økonomi</a>
           <a class="admin-quiet-action${activeClass("snow")}" href="broyting.html"${activeAttr("snow")}><span>Brøyting</span>${badge("snow")}</a>
           <a class="admin-quiet-action${activeClass("inventory")}" href="lager.html"${activeAttr("inventory")}><span>Lager</span>${badge("inventory")}</a>
           <a class="admin-quiet-action${activeClass("notifications")}" href="varslinger.html"${activeAttr("notifications")}>Varslinger</a>
@@ -62,13 +67,14 @@
     </header>
     <nav class="admin-mobile-nav" aria-label="Mobilnavigasjon">
       ${mobileItems.map((item) => `<a class="admin-mobile-link${activeClass(item.key)}" href="${item.href}"${activeAttr(item.key)}><span class="admin-mobile-icon" aria-hidden="true">${mobileIcon(item.key)}</span><span class="admin-mobile-label">${item.label}</span>${badge(item.key)}</a>`).join("")}
-      <button class="admin-mobile-link${["bookings", "requests", "inventory", "snow", "notifications", "more"].includes(page) ? " is-active" : ""}" id="adminMoreButton" type="button" aria-expanded="false" aria-controls="adminMoreMenu">
+      <button class="admin-mobile-link${["bookings", "requests", "inventory", "snow", "notifications", "economy", "more"].includes(page) ? " is-active" : ""}" id="adminMoreButton" type="button" aria-expanded="false" aria-controls="adminMoreMenu">
         <span class="admin-mobile-icon" aria-hidden="true">•••</span><span class="admin-mobile-label">Mer</span>${badge("more")}
       </button>
     </nav>
     <div class="admin-menu-backdrop" id="adminMenuBackdrop" hidden></div>
     <aside class="admin-more-menu" id="adminMoreMenu" aria-label="Flere adminvalg" aria-hidden="true">
       <div class="admin-more-head"><strong>Mer</strong><button id="adminMoreClose" class="admin-icon-button" type="button" aria-label="Lukk meny">×</button></div>
+      <a class="admin-more-link${activeClass("economy")}" href="okonomi.html"${activeAttr("economy")}><span>Økonomi · Fiken</span><span aria-hidden="true">›</span></a>
       <a class="admin-more-link${activeClass("snow")}" href="broyting.html"${activeAttr("snow")}><span>Brøyting</span><span class="admin-more-tail">${badge("snow")}<span aria-hidden="true">›</span></span></a>
       <a class="admin-more-link${activeClass("bookings")}" href="admin-dashboard.html"${activeAttr("bookings")}><span>Bookinger</span><span class="admin-more-tail">${badge("bookings")}<span aria-hidden="true">›</span></span></a>
       <a class="admin-more-link${activeClass("requests")}" href="foresporsler.html"${activeAttr("requests")}><span>Forespørsler</span><span class="admin-more-tail">${badge("requests")}<span aria-hidden="true">›</span></span></a>
@@ -164,8 +170,6 @@
     }
   });
 
-  // Registrering alene spør aldri om varslingstillatelse. Tillatelsen gis kun
-  // etter brukertrykk på Varslinger-siden, slik iOS krever.
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("push-sw.js", { scope: "./" }).catch(() => {});
   }
