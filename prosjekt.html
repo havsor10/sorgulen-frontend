@@ -47,7 +47,9 @@
         </div>
       </section>
 
-      <section id="materialCard" class="portal-card material-card hidden">
+      <div id="procurementContainer" class="hidden"></div>
+
+      <section id="legacyMaterialCard" class="portal-card material-card hidden">
         <h2>Innkjøp / materialer</h2>
         <p><strong id="materialTitle"></strong></p>
         <p id="materialMessage"></p>
@@ -58,16 +60,16 @@
         <p id="customerMessage" class="message-text"></p>
       </section>
 
-      <section id="workFactsCard" class="portal-card">
+      <section id="workFactsCard" class="portal-card hidden">
         <h2>Arbeid hittil</h2>
         <div class="fact-grid">
-          <div id="lastWorkedFact" class="fact">
+          <div id="lastWorkedFact" class="fact hidden">
             <span>Sist jobbet</span>
-            <strong id="lastWorked">Ikke registrert ennå</strong>
+            <strong id="lastWorked"></strong>
           </div>
-          <div id="hoursFact" class="fact">
+          <div id="hoursFact" class="fact hidden">
             <span>Registrert tid</span>
-            <strong id="hoursText">0 timer</strong>
+            <strong id="hoursText"></strong>
           </div>
         </div>
       </section>
