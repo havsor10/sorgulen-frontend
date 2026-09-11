@@ -2,18 +2,19 @@
 <html lang="no">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="referrer" content="no-referrer">
   <title>Følg prosjektet ditt | Sørgulen Industriservice</title>
   <link rel="stylesheet" href="prosjekt.css">
   <link rel="stylesheet" href="prosjekt-polish.css">
+  <link rel="stylesheet" href="prosjekt-personlig.css">
 </head>
 <body>
   <main class="portal-shell">
     <header class="portal-brand">
       <strong>Sørgulen Industriservice</strong>
-      <span>Følg prosjektet ditt</span>
+      <span>Personlig prosjektoppfølging</span>
     </header>
 
     <section id="loadingCard" class="portal-card loading-card" aria-live="polite">
@@ -26,19 +27,25 @@
     </section>
 
     <div id="projectContent" class="hidden">
-      <section class="portal-card project-heading">
-        <h2 id="projectName">Prosjekt</h2>
-        <p id="customerName"></p>
+      <section class="portal-card welcome-card">
+        <p class="welcome-eyebrow">Din oppfølging</p>
+        <h1 id="personalGreeting">Hei!</h1>
+        <p id="welcomeMessage" class="welcome-message">Her kan du følge prosjektet ditt. Jeg oppdaterer siden underveis, så du enkelt kan se hva som skjer videre.</p>
+        <div class="project-summary">
+          <span>Prosjektet ditt</span>
+          <strong id="projectName">Prosjekt</strong>
+        </div>
+        <p id="customerName" class="customer-source" aria-hidden="true"></p>
       </section>
 
       <section id="nextWorkCard" class="portal-card next-card">
-        <p class="next-kicker">Når kommer Håvard tilbake?</p>
+        <p class="next-kicker">Neste gang jeg forventer å være hos deg</p>
         <h1 id="nextWorkText">Ikke satt ennå</h1>
         <p id="nextWorkSubtext" class="next-note"></p>
       </section>
 
-      <section class="portal-card">
-        <h2>Status akkurat nå</h2>
+      <section class="portal-card status-card">
+        <h2>Slik ligger vi an nå</h2>
         <div class="status-line">
           <span class="status-dot" aria-hidden="true"></span>
           <div>
@@ -57,39 +64,59 @@
       </section>
 
       <section id="messageCard" class="portal-card message-card hidden">
-        <h2>Siste oppdatering</h2>
+        <p class="personal-kicker">Fra Håvard</p>
+        <h2>En oppdatering til deg</h2>
         <p id="customerMessage" class="message-text"></p>
       </section>
 
       <section id="workFactsCard" class="portal-card hidden">
-        <h2>Arbeid hittil</h2>
+        <h2>Arbeid på prosjektet ditt</h2>
+        <p class="section-explanation">Her ser du når jeg sist jobbet hos deg, og hvor mye arbeidstid som totalt er registrert på prosjektet så langt.</p>
         <div class="fact-grid">
           <div id="lastWorkedFact" class="fact hidden">
-            <span>Sist jobbet</span>
+            <span>Sist jobbet hos deg</span>
             <strong id="lastWorked"></strong>
+            <small>Datoen jeg sist var ute og jobbet på dette prosjektet.</small>
           </div>
           <div id="hoursFact" class="fact hidden">
-            <span>Registrert tid</span>
+            <span>Total arbeidstid brukt så langt</span>
             <strong id="hoursText"></strong>
+            <small>Summen av arbeidstid som er registrert på prosjektet.</small>
           </div>
         </div>
       </section>
 
       <section id="workDaysCard" class="portal-card hidden">
         <h2>Arbeidsdager</h2>
+        <p class="section-explanation">Dette er dagene jeg har vært hos deg og jobbet. Tiden til høyre viser registrert arbeidstid den dagen – ikke når jeg kommer neste gang.</p>
         <ul id="workDayList" class="work-day-list"></ul>
       </section>
 
       <section id="photosCard" class="portal-card hidden">
-        <h2>Bilder fra prosjektet</h2>
+        <h2>Bilder jeg har delt med deg</h2>
+        <p class="section-explanation">Her legger jeg ut bilder som er nyttige for å vise fremdriften i prosjektet.</p>
         <div id="photoGrid" class="photo-grid"></div>
       </section>
 
-      <p id="updatedText" class="portal-updated"></p>
+      <section class="portal-card contact-card">
+        <p class="personal-kicker">Trenger du meg?</p>
+        <h2>Du kan selvfølgelig ta kontakt</h2>
+        <p>Hvis noe ikke blir besvart her, er det bare å kontakte meg. Målet med siden er at du skal føle deg oppdatert og vite hva som skjer videre.</p>
+        <div class="contact-actions">
+          <a class="contact-primary" href="mailto:sor.industri@gmail.com">Send e-post til Håvard</a>
+          <a class="contact-secondary" href="kontakt.html">Se kontaktinformasjon</a>
+        </div>
+      </section>
+
+      <div class="portal-update-block">
+        <p id="updatedText" class="portal-updated"></p>
+        <p class="portal-updated-help">Dette viser når informasjonen på denne siden sist ble oppdatert, ikke når arbeidet ble utført.</p>
+      </div>
     </div>
   </main>
 
   <script src="config.js"></script>
   <script src="prosjekt.js"></script>
+  <script src="prosjekt-personlig.js"></script>
 </body>
 </html>
