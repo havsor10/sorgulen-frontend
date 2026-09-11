@@ -1,0 +1,86 @@
+/* Unified save/publish control for customer portal admin */
+.portal-publish-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 40;
+  margin: 18px -20px -20px;
+  padding: 14px 20px calc(14px + env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(255,255,255,.12);
+  background: rgba(18, 24, 31, .97);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.portal-publish-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+  color: #dfe7ee;
+}
+
+.portal-publish-dot {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 10px;
+  margin-top: .38rem;
+  border-radius: 999px;
+  background: #7f8a94;
+}
+
+.portal-publish-bar.dirty .portal-publish-dot { background: #f2b84b; }
+.portal-publish-bar.saved .portal-publish-dot { background: #43c77a; }
+.portal-publish-bar.error .portal-publish-dot { background: #e46b6b; }
+
+.portal-publish-copy strong,
+.portal-publish-copy small { display: block; }
+.portal-publish-copy strong { font-size: .98rem; }
+.portal-publish-copy small { margin-top: 2px; color: #aeb9c2; line-height: 1.35; }
+
+.portal-publish-button {
+  width: 100%;
+  min-height: 54px;
+  border: 0;
+  border-radius: 13px;
+  padding: 13px 16px;
+  background: #39b86d;
+  color: #07150d;
+  font: inherit;
+  font-weight: 850;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.portal-publish-button:disabled { opacity: .55; cursor: wait; }
+
+#savePortalSettings { display: none !important; }
+
+.portal-publish-confirmation {
+  margin: 14px 0 0;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(67, 199, 122, .35);
+  background: rgba(67, 199, 122, .10);
+  color: #eef7f1;
+}
+.portal-publish-confirmation[hidden] { display: none !important; }
+.portal-publish-confirmation strong { display: block; margin-bottom: 5px; }
+.portal-publish-confirmation p { margin: 0; color: #c8d5cc; line-height: 1.4; }
+.portal-publish-confirmation ul { margin: 9px 0 0; padding-left: 20px; color: #d8e4dc; }
+
+.portal-action-explainer {
+  display: block;
+  margin-top: 6px;
+  color: #aeb9c2;
+  font-size: .82rem;
+  line-height: 1.35;
+}
+
+@media (max-width: 820px) {
+  .portal-publish-bar {
+    margin-left: -14px;
+    margin-right: -14px;
+    margin-bottom: -14px;
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}
