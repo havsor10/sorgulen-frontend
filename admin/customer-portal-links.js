@@ -1,4 +1,12 @@
 (() => {
+  const style = document.createElement("style");
+  style.textContent = `
+    .customer-portal-link { margin-left: 8px; }
+    .history-action .customer-portal-link { display: inline-block; margin-top: 5px; }
+    @media (max-width: 640px) { .history-action .customer-portal-link { margin-left: 0; } }
+  `;
+  document.head.appendChild(style);
+
   function portalHref(id) {
     return `kundeportal.html?workOrderId=${encodeURIComponent(id)}`;
   }
