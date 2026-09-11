@@ -2,24 +2,25 @@
 <html lang="no">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Kundeportal | Sørgulen Industriservice</title>
   <link rel="stylesheet" href="admin.css">
   <link rel="stylesheet" href="admin-shell.css">
   <link rel="stylesheet" href="admin-pages.css">
   <link rel="stylesheet" href="kundeportal.css">
   <link rel="stylesheet" href="kundeportal-polish.css">
+  <link rel="stylesheet" href="kundeportal-mobile.css">
 </head>
 <body>
   <div id="adminShell" data-page="portal"></div>
   <script src="admin-shell.js"></script>
 
   <main class="portal-admin-main">
-    <header class="admin-page-header">
+    <header class="admin-page-header portal-page-header">
       <div>
         <p class="admin-eyebrow">Kundeoppfølging</p>
         <h1>Kundeportal</h1>
-        <p>Styr hva kunden ser, innkjøpsgodkjenning og når du forventer å komme tilbake.</p>
+        <p>Velg et prosjekt og styr akkurat det kunden skal se. Siden er laget for bruk fra telefon.</p>
       </div>
       <div class="admin-page-actions">
         <a class="secondary-btn" href="oppdrag.html">← Til oppdrag</a>
@@ -28,46 +29,57 @@
 
     <div id="portalStatus" class="portal-status-message" role="status" aria-live="polite"></div>
 
-    <section class="portal-admin-card" aria-labelledby="availabilityHeading">
-      <div class="section-heading-row">
-        <div>
-          <p class="section-kicker">Din tilgjengelighet</p>
-          <h2 id="availabilityHeading">Neste dager</h2>
-          <p class="muted">Skiftplanen går automatisk i 5-ukers syklus. Dager mellom nattevakter, hele dagen etter nattevakt, egne blokkeringer og andre reserverte kundeprosjekter tas med.</p>
-        </div>
-      </div>
-      <div id="availabilityStrip" class="availability-strip"></div>
-      <form id="blockDayForm" class="portal-actions">
-        <label class="portal-field">
-          <span>Ekstra dag du ikke kan jobbe</span>
-          <input id="blockDate" type="date" required>
-        </label>
-        <label class="portal-field">
-          <span>Årsak internt</span>
-          <input id="blockNote" type="text" maxlength="300" placeholder="F.eks. privat avtale">
-        </label>
-        <button class="secondary-btn" type="submit">Blokker dagen</button>
-      </form>
-    </section>
-
     <div class="portal-admin-layout">
-      <section class="portal-admin-card">
+      <section class="portal-admin-card portal-project-picker">
         <p class="section-kicker">Aktive prosjekter</p>
         <h2>Velg kunde</h2>
+        <p class="portal-card-help">Trykk på kunden du vil oppdatere. Hver kunde har kun tilgang til sin egen arbeidsordre.</p>
         <div id="projectList" class="portal-project-list"></div>
       </section>
 
       <section id="portalEditor" class="portal-admin-card portal-editor-empty">
         <div>
           <h2>Velg et prosjekt</h2>
-          <p>Her styrer du den enkle siden kunden får se.</p>
+          <p>Da får du opp kundelenke, neste besøk, synlighet, innkjøp og bilder.</p>
         </div>
       </section>
     </div>
+
+    <details class="portal-admin-card availability-details">
+      <summary>
+        <span>
+          <strong>Tilgjengelighet og blokkeringer</strong>
+          <small>Åpne når du vil se skiftplanen eller sperre en ekstra dag.</small>
+        </span>
+      </summary>
+      <div class="availability-details-content">
+        <div class="section-heading-row">
+          <div>
+            <p class="section-kicker">Din tilgjengelighet</p>
+            <h2 id="availabilityHeading">Neste dager</h2>
+            <p class="muted">Skiftplanen går automatisk i 5-ukers syklus. Dager mellom nattevakter, hele dagen etter nattevakt, egne blokkeringer og andre reserverte kundeprosjekter tas med.</p>
+          </div>
+        </div>
+        <div id="availabilityStrip" class="availability-strip"></div>
+        <form id="blockDayForm" class="availability-block-form">
+          <label class="portal-field">
+            <span>Ekstra dag du ikke kan jobbe</span>
+            <input id="blockDate" type="date" required>
+          </label>
+          <label class="portal-field">
+            <span>Årsak internt</span>
+            <input id="blockNote" type="text" maxlength="300" placeholder="F.eks. privat avtale">
+            <small>Kunden får aldri se årsaken.</small>
+          </label>
+          <button class="secondary-btn" type="submit">Blokker dagen</button>
+        </form>
+      </div>
+    </details>
   </main>
 
   <script src="../config.js"></script>
   <script src="kundeportal.js"></script>
   <script src="kundeportal-guard.js"></script>
+  <script src="kundeportal-mobile.js"></script>
 </body>
 </html>
