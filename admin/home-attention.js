@@ -96,7 +96,8 @@
         data-work-order-id="${escapeHtml(assistantAction.workOrderId)}"
         data-start="${escapeHtml(assistantAction.start || "")}"
         data-end="${escapeHtml(assistantAction.end || assistantAction.start || "")}"
-        data-customer="${escapeHtml(assistantAction.customerName || "kunden")}">${escapeHtml(action)}</button>`;
+        data-customer="${escapeHtml(assistantAction.customerName || "kunden")}"
+        data-message="${escapeHtml(assistantAction.customerMessage || "")}">${escapeHtml(action)}</button>`;
     }
     return `<a class="attention-action" href="${escapeHtml(href)}">${escapeHtml(action)}</a>`;
   }
@@ -114,7 +115,7 @@
         <div class="attention-status-row"><span class="attention-signal" aria-hidden="true"></span><span class="attention-status">${escapeHtml(status)}</span></div>
         <h3>${escapeHtml(task.title || "Krever handling")}</h3>
         ${task.detail ? `<p>${escapeHtml(task.detail)}</p>` : ""}
-        ${isAssistantReady ? '<p class="attention-assistant-note">Forslaget publiseres bare etter at du godkjenner det.</p>' : ""}
+        ${isAssistantReady ? '<p class="attention-assistant-note">Du ser den ferdige kundemeldingen før du godkjenner publisering.</p>' : ""}
       </div>
       ${taskActionMarkup(task, action, href)}
     </article>`;
@@ -236,10 +237,12 @@
     const start = button.dataset.start || "";
     const end = button.dataset.end || start;
     const customer = button.dataset.customer || "kunden";
+    const message = button.dataset.message || "";
     if (!workOrderId || !start) return;
 
     const dateText = start === end ? formatShortDate(start) : `${formatShortDate(start)} til ${formatShortDate(end)}`;
-    const approved = window.confirm(`Publisere ${dateText} som forventet neste arbeidsøkt for ${customer}? Kundesiden får også en ferdig statusmelding. Ingen melding sendes utenfor kundesiden.`);
+    const messagePreview = message ? `\n\nKundemelding:\n«${message}»` : "";
+    const approved = window.confirm(`Publisere ${dateText} som forventet neste arbeidsøkt for ${customer}?${messagePreview}\n\nDette oppdaterer bare kundesiden. Ingen SMS eller e-post sendes.`);
     if (!approved) return;
 
     actionBusy = true;
