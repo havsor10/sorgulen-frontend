@@ -34,6 +34,18 @@ test("attention engine uses visual priority, direct actions and a calm all-clear
   assert.match(attentionCss, /attention-card\.medium/);
 });
 
+test("assistant shows the customer draft before approving a proposed next day", () => {
+  assert.match(attentionJs, /publish_next_work/);
+  assert.match(attentionJs, /admin\/assistant\/actions\/next-work/);
+  assert.match(attentionJs, /expectedStart/);
+  assert.match(attentionJs, /expectedEnd/);
+  assert.match(attentionJs, /data-message/);
+  assert.match(attentionJs, /Kundemelding:/);
+  assert.match(attentionJs, /Ingen SMS eller e-post sendes/);
+  assert.match(attentionCss, /assistant-ready/);
+  assert.match(attentionCss, /attention-action--assistant/);
+});
+
 test("every project quick action is wired to a protected backend route", () => {
   assert.match(js, /data-quick="expense"/);
   assert.match(js, /data-quick="material"/);
