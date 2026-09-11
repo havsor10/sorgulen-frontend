@@ -60,7 +60,7 @@
     const paid = invoices.filter((i) => i.status === "paid" && !i.isCreditNote).length;
     const outstanding = invoices
       .filter((i) => ["issued", "sent"].includes(i.status) && !i.isCreditNote)
-      .reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
+      .reduce((sum, i) => sum + (Number(i.fiken?.outstandingBalance ?? i.amount) || 0), 0);
 
     summary.innerHTML = `
       <div class="inv-stat"><div class="num">${total}</div><div class="lbl">Dokumenter totalt</div></div>
@@ -81,16 +81,19 @@
     }
 
     const rows = invoices.map((inv) => {
-      const num = inv.invoiceNumber
-        ? (inv.isCreditNote ? `Kreditnota ${escapeHtml(inv.invoiceNumber)}` : escapeHtml(inv.invoiceNumber))
-        : "<span style='color:#888;'>(utkast)</span>";
+      const fikenNumber = Number(inv.fiken?.invoiceNumber) || null;
+      const localNumber = Number(inv.invoiceNumber) || null;
+      const displayNumber = fikenNumber || localNumber;
+      const num = displayNumber
+        ? (inv.isCreditNote ? `Kreditnota ${escapeHtml(displayNumber)}` : escapeHtml(displayNumber))
+        : (inv.fiken?.draftId ? "<span style='color:#aaa;'>Fiken-utkast</span>" : "<span style='color:#888;'>(utkast)</span>");
       const ref = inv.sourceRef ? `#${escapeHtml(inv.sourceRef)}` : (inv.sourceType === "manual" ? "Manuell" : "–");
       return `
         <tr class="inv-row-link" data-id="${escapeHtml(inv._id)}">
-          <td class="inv-num">${num}</td>
+          <td class="inv-num" data-fiken="${fikenNumber ? "true" : "false"}">${num}</td>
           <td>${escapeHtml(inv.customerName)}</td>
           <td>${escapeHtml(ref)}</td>
-          <td>${fmtDate(inv.issuedAt || inv.createdAt)}</td>
+          <td>${fmtDate(inv.fiken?.issuedAt || inv.issuedAt || inv.createdAt)}</td>
           <td class="inv-amount">${fmtMoney(inv.amount)} kr</td>
           <td><span class="inv-badge badge-${escapeHtml(inv.status)}">${escapeHtml(statusLabels[inv.status] || inv.status)}</span></td>
         </tr>`;

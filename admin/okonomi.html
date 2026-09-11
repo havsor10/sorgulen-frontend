@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Økonomi · Fiken | Sørgulen Industriservice</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin-shell.css">
+  <link rel="stylesheet" href="admin-pages.css">
+  <link rel="stylesheet" href="okonomi.css?v=20260911-fiken1">
+</head>
+<body>
+  <div id="adminShell" data-page="economy"></div>
+  <script src="admin-shell.js"></script>
+
+  <main class="admin-main eco-main">
+    <header class="admin-page-header eco-page-head">
+      <div>
+        <p class="admin-eyebrow">Fiken · økonomivakt</p>
+        <h1>Økonomi</h1>
+        <p id="ecoSubtitle">Regnskapstall fra Fiken, koblet med driften i Sørgulen Admin.</p>
+      </div>
+      <div class="admin-page-actions">
+        <button class="admin-icon-button" id="ecoRefresh" type="button" aria-label="Oppdater økonomi">↻</button>
+      </div>
+    </header>
+
+    <section class="eco-connection" id="ecoConnection" aria-live="polite">
+      <span class="eco-live-dot is-loading" id="ecoLiveDot"></span>
+      <div><strong id="ecoConnectionTitle">Kontrollerer Fiken…</strong><span id="ecoConnectionText">Henter tilkoblingsstatus.</span></div>
+    </section>
+
+    <section id="ecoSetup" class="eco-setup" hidden></section>
+
+    <div id="ecoDashboard" hidden>
+      <section class="eco-hero-grid" aria-label="Økonomioversikt">
+        <article class="eco-card eco-card--result">
+          <div class="eco-card-label">Forenklet resultat i år</div>
+          <strong class="eco-big-number" id="ecoResult">–</strong>
+          <span class="eco-card-foot" id="ecoResultFoot">Registrerte Fiken-salg minus forenklet kjøpskostnad</span>
+        </article>
+        <article class="eco-card">
+          <div class="eco-card-label">Skattereserve</div>
+          <strong class="eco-big-number" id="ecoTaxReserve">–</strong>
+          <span class="eco-card-foot" id="ecoTaxFoot">Forsiktig reserve – ikke beregnet forskuddsskatt</span>
+        </article>
+        <article class="eco-card">
+          <div class="eco-card-label">Utestående</div>
+          <strong class="eco-big-number" id="ecoOutstanding">–</strong>
+          <span class="eco-card-foot" id="ecoOutstandingFoot">–</span>
+        </article>
+        <article class="eco-card eco-card--dangerable" id="ecoOverdueCard">
+          <div class="eco-card-label">Forfalt</div>
+          <strong class="eco-big-number" id="ecoOverdue">–</strong>
+          <span class="eco-card-foot" id="ecoOverdueFoot">–</span>
+        </article>
+      </section>
+
+      <section class="eco-section eco-vat-section">
+        <div class="eco-section-head">
+          <div><p class="admin-eyebrow">MVA-vakt</p><h2>50 000-grensa</h2></div>
+          <span class="eco-pill" id="ecoVatState">–</span>
+        </div>
+        <div class="eco-vat-layout">
+          <div class="eco-vat-number-wrap">
+            <strong id="ecoVatSales">–</strong>
+            <span>registrerte netto salg siste 12 måneder</span>
+          </div>
+          <div class="eco-progress-wrap">
+            <div class="eco-progress-track" role="progressbar" aria-label="Fremdrift mot MVA-grensen" aria-valuemin="0" aria-valuemax="50000" id="ecoVatProgress">
+              <span id="ecoVatProgressFill"></span>
+            </div>
+            <div class="eco-progress-meta"><span>0 kr</span><strong id="ecoVatRemaining">–</strong><span>50 000 kr</span></div>
+          </div>
+        </div>
+        <p class="eco-caveat" id="ecoVatNote"></p>
+      </section>
+
+      <section class="eco-section eco-ai-section">
+        <div class="eco-section-head">
+          <div><p class="admin-eyebrow">Sørgulen AI</p><h2>Spør økonomisjefen</h2></div>
+          <span class="eco-pill eco-pill--ai">AI + Fiken</span>
+        </div>
+        <p class="eco-lead">AI-en får Fiken-tallene som faktagrunnlag og kombinerer dem med oppdrag, fakturagrunnlag og driftsradaren.</p>
+        <div class="eco-ai-actions">
+          <button type="button" data-eco-ai="Gi meg en økonomisjekk. Hva er viktigst akkurat nå, og hva bør eg gjøre først?">Økonomisjekk</button>
+          <button type="button" data-eco-ai="Hvor nær er eg MVA-grensa, og hva bør eg følge med på før eg eventuelt blir MVA-registrert?">MVA-vakt</button>
+          <button type="button" data-eco-ai="Hvor mye bør eg sette av som skattereserve akkurat nå? Skill tydelig mellom Fiken-tall og estimat.">Skattereserve</button>
+          <button type="button" data-eco-ai="Finn penger: hva er utestående, forfalt eller ferdig arbeid som kan være glemt å fakturere?">Finn penger</button>
+          <button type="button" data-eco-ai="Sammenlign inntekter, kostnader og forenklet resultat i år. Er det noe i driften eg bør justere?">Lønnsomhet</button>
+        </div>
+      </section>
+
+      <section class="eco-detail-grid">
+        <article class="eco-section">
+          <div class="eco-section-head"><div><p class="admin-eyebrow">I år</p><h2>Fiken-regnskap</h2></div></div>
+          <dl class="eco-kv">
+            <div><dt>Salg netto</dt><dd id="ecoSalesNet">–</dd></div>
+            <div><dt>Salg inkl. MVA</dt><dd id="ecoSalesGross">–</dd></div>
+            <div><dt>Forenklet kjøpskostnad</dt><dd id="ecoPurchaseCost">–</dd></div>
+            <div><dt>Forenklet driftsresultat</dt><dd id="ecoOperatingResult">–</dd></div>
+          </dl>
+        </article>
+
+        <article class="eco-section">
+          <div class="eco-section-head"><div><p class="admin-eyebrow">Fordringer</p><h2>Kundepenger</h2></div></div>
+          <dl class="eco-kv">
+            <div><dt>Ubetalte fakturaer</dt><dd id="ecoUnpaidCount">–</dd></div>
+            <div><dt>Utestående totalt</dt><dd id="ecoOutstandingDetail">–</dd></div>
+            <div><dt>Forfalte fakturaer</dt><dd id="ecoOverdueCount">–</dd></div>
+            <div><dt>Forfalt beløp</dt><dd id="ecoOverdueDetail">–</dd></div>
+          </dl>
+          <a class="eco-text-link" href="fakturaer.html">Åpne fakturaer →</a>
+        </article>
+      </section>
+
+      <section class="eco-section eco-control">
+        <div class="eco-section-head">
+          <div><p class="admin-eyebrow">Kontrollsenter</p><h2>Synk mot Fiken</h2></div>
+          <span class="eco-pill" id="ecoLastSync">–</span>
+        </div>
+        <div class="eco-control-actions">
+          <button class="eco-primary" id="ecoSyncInvoices" type="button">Synk betalingsstatus</button>
+          <button class="eco-secondary" id="ecoForceRefresh" type="button">Hent alle økonomitall på nytt</button>
+        </div>
+        <p class="eco-sync-result" id="ecoSyncResult" aria-live="polite"></p>
+      </section>
+
+      <section class="eco-trust">
+        <strong>Hva du kan stole på</strong>
+        <p>Registrerte salg, kjøp og betalingsstatus hentes fra Fiken. «Forenklet resultat» og «skattereserve» er styringstall, ikke skattemelding eller endelig skatteberegning. MVA-vakten er et varsel – Fiken/Skatteetaten er fasit for registrering.</p>
+      </section>
+    </div>
+  </main>
+
+  <script src="../config.js"></script>
+  <script src="okonomi.js?v=20260911-fiken1"></script>
+</body>
+</html>
