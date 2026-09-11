@@ -1,0 +1,60 @@
+.portal-warning {
+  display: grid;
+  gap: 3px;
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid #e5c979;
+  border-radius: 11px;
+  background: #fff8e5;
+  color: #62490f;
+}
+
+.portal-warning span {
+  color: #715b28;
+  font-size: .9rem;
+}
+
+.procurement-status-control {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .75);
+  border: 1px solid #dde5e0;
+}
+
+.procurement-status-control select {
+  min-width: 210px;
+  min-height: 40px;
+  border: 1px solid #cfd7dd;
+  border-radius: 9px;
+  padding: 8px 10px;
+  background: #fff;
+}
+
+.customer-portal-link {
+  margin-left: 8px;
+}
+
+.history-action .customer-portal-link {
+  display: inline-block;
+  margin-top: 5px;
+}
+
+@media (max-width: 640px) {
+  .procurement-status-control {
+    align-items: stretch;
+  }
+
+  .procurement-status-control select,
+  .procurement-status-control button {
+    width: 100%;
+  }
+
+  .history-action .customer-portal-link {
+    margin-left: 0;
+  }
+}
