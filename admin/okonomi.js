@@ -64,7 +64,7 @@
     el("ecoConnectionText").textContent = text;
   }
 
-  function envRow(name, ok, hint) {
+  function envRow(name, stateLabel, ok, hint) {
     const row = document.createElement("div");
     row.className = "eco-env-row";
     const copy = document.createElement("div");
@@ -81,7 +81,7 @@
     }
     const state = document.createElement("span");
     state.className = `eco-env-state${ok ? " is-ok" : ""}`;
-    state.textContent = ok ? "Klar" : "Mangler";
+    state.textContent = stateLabel;
     row.append(copy, state);
     return row;
   }
@@ -101,9 +101,9 @@
     const list = document.createElement("div");
     list.className = "eco-env-list";
     list.append(
-      envRow("FIKEN_API_TOKEN", status.tokenStoredServerSide, "Personlig API-nøkkel fra Fiken"),
-      envRow("FIKEN_COMPANY_SLUG", Boolean(status.company?.slug), "Valgfri hvis systemet finner riktig foretak automatisk"),
-      envRow("FIKEN_INCOME_ACCOUNT", Boolean(status.incomeAccount), "Påkrevd før faktura kan opprettes")
+      envRow("FIKEN_API_TOKEN", status.tokenStoredServerSide ? "Klar" : "Mangler", status.tokenStoredServerSide, "Personlig API-nøkkel fra Fiken"),
+      envRow("FIKEN_COMPANY_SLUG", status.company?.slug ? "Klar" : "Valgfri", true, "Kan utelates hvis systemet finner riktig foretak automatisk"),
+      envRow("FIKEN_INCOME_ACCOUNT", status.incomeAccount ? "Klar" : "Mangler", Boolean(status.incomeAccount), "Påkrevd før faktura kan opprettes")
     );
     const note = document.createElement("p");
     note.className = "eco-setup-note";
@@ -215,7 +215,8 @@
   async function load({ force = false } = {}) {
     if (busy) return;
     busy = true;
-    refresh.disabled = true;
+    if (refresh) refresh.disabled = true;
+    if (forceRefresh) forceRefresh.disabled = true;
     setConnection("loading", "Kontrollerer Fiken…", "Henter siste registrerte økonomidata.");
     try {
       if (!key()) {
@@ -223,11 +224,7 @@
         window.location.href = "login.html";
         return;
       }
-      status = (await api("/admin/fiken/status")).configured === undefined
-        ? null
-        : await api("/admin/fiken/status");
-      // Status kalles kun én gang i normal flyt; guard over gjør gamle cache-responser ufarlige.
-      if (!status) status = await api("/admin/fiken/status");
+      status = await api("/admin/fiken/status");
       await renderSetup();
 
       if (!status.configured) {
@@ -255,28 +252,31 @@
       setConnection("error", "Fiken kunne ikke leses", error.message || "Ukjent feil");
     } finally {
       busy = false;
-      refresh.disabled = false;
+      if (refresh) refresh.disabled = false;
+      if (forceRefresh) forceRefresh.disabled = false;
     }
   }
 
   async function syncOpen() {
     if (busy) return;
     busy = true;
-    syncInvoices.disabled = true;
+    if (syncInvoices) syncInvoices.disabled = true;
     const result = el("ecoSyncResult");
     result.className = "eco-sync-result";
     result.textContent = "Kontrollerer åpne Fiken-fakturaer…";
+    let shouldRefresh = false;
     try {
       const data = await api("/admin/fiken/invoices/sync-open", { method: "POST", body: "{}" });
       result.textContent = `${data.synced || 0} synkronisert · ${data.paid || 0} nye betalinger funnet${data.errors?.length ? ` · ${data.errors.length} feil` : ""}`;
-      await load({ force: true });
+      shouldRefresh = true;
     } catch (error) {
       result.classList.add("is-error");
       result.textContent = error.message || "Synk feilet";
     } finally {
       busy = false;
-      syncInvoices.disabled = false;
+      if (syncInvoices) syncInvoices.disabled = false;
     }
+    if (shouldRefresh) await load({ force: true });
   }
 
   refresh?.addEventListener("click", () => load({ force: true }));
