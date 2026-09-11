@@ -20,12 +20,10 @@
 }
 
 .portal-admin-card + .portal-admin-card { margin-top: 18px; }
-.portal-admin-card h2, .portal-admin-card h3 { margin-top: 0; }
+.portal-admin-card h2, .portal-admin-card h3, .portal-admin-card h4 { margin-top: 0; }
+.portal-admin-card hr { border: 0; border-top: 1px solid #e2e7ea; margin: 28px 0; }
 
-.portal-project-list {
-  display: grid;
-  gap: 10px;
-}
+.portal-project-list { display: grid; gap: 10px; }
 
 .portal-project-button {
   width: 100%;
@@ -111,6 +109,10 @@
   margin-top: 14px;
 }
 
+.compact-actions { margin-top: 0; }
+.compact-actions .secondary-btn,
+.compact-actions .primary-btn { padding: 8px 11px; }
+
 .portal-link-box {
   margin-top: 14px;
   background: #f5f8f6;
@@ -134,11 +136,7 @@
   margin-top: 8px;
 }
 
-.portal-check {
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-}
+.portal-check { display: inline-flex; gap: 8px; align-items: center; }
 
 .availability-strip {
   display: grid;
@@ -163,6 +161,84 @@
 .availability-day small { margin-top: 5px; color: #68737d; line-height: 1.3; }
 .availability-day button { margin-top: 8px; font-size: .8rem; }
 
+.procurement-admin-list {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0 18px;
+}
+
+.procurement-admin-card {
+  border: 1px solid #dce2e6;
+  border-left: 4px solid #8a939a;
+  border-radius: 12px;
+  padding: 13px;
+  background: #fafbfb;
+}
+
+.procurement-admin-card.waiting { border-left-color: #c58a13; background: #fffbf1; }
+.procurement-admin-card.good { border-left-color: #25804d; background: #f5fbf7; }
+.procurement-admin-card p { margin: 6px 0 0; color: #66717b; font-size: .9rem; }
+
+.procurement-admin-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.procurement-admin-head div strong,
+.procurement-admin-head div span { display: block; }
+.procurement-admin-head div span { margin-top: 2px; color: #65707a; font-size: .86rem; }
+
+.procurement-builder {
+  margin-top: 18px;
+  border: 1px solid #dce2e6;
+  border-radius: 14px;
+  padding: 16px;
+  background: #f8faf9;
+}
+
+.procurement-builder-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.procurement-builder-head h4 { margin-bottom: 4px; }
+.procurement-builder-head p { margin: 0; }
+
+.procurement-items-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin: 18px 0 10px;
+}
+
+.procurement-item-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(180px, 1.2fr) minmax(180px, 1.2fr) 100px 90px 130px minmax(150px, 1fr) auto;
+  gap: 9px;
+  align-items: end;
+  padding: 12px;
+  margin-bottom: 9px;
+  border: 1px solid #dfe5e8;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.procurement-item-row .portal-field label { font-size: .82rem; }
+.procurement-item-row .portal-field input { padding: 9px 10px; }
+.procurement-item-row .remove-procurement-row { margin-bottom: 2px; }
+
+.procurement-save-actions {
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
 .portal-photo-admin-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -185,10 +261,23 @@
 .portal-status-message.error { color: #9b2c2c; }
 .portal-status-message.success { color: #176139; }
 
+@media (max-width: 1180px) {
+  .procurement-item-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .procurement-item-row .remove-procurement-row { justify-self: start; }
+}
+
 @media (max-width: 920px) {
   .portal-admin-main { width: min(100% - 20px, 1000px); padding-top: 18px; }
   .portal-admin-layout { grid-template-columns: 1fr; }
   .portal-form-grid { grid-template-columns: 1fr; }
   .portal-field.full { grid-column: auto; }
   .availability-strip { grid-template-columns: repeat(7, 125px); }
+  .portal-editor-head,
+  .procurement-builder-head,
+  .procurement-admin-head { flex-direction: column; }
+  .procurement-item-row { grid-template-columns: 1fr; }
+  .procurement-save-actions { justify-content: stretch; }
+  .procurement-save-actions button { width: 100%; }
 }
