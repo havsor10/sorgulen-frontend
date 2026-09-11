@@ -1,0 +1,434 @@
+/* Mobil-first overstyringer for kundeportal-admin. Telefon er hovedverktøyet. */
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.portal-admin-main {
+  width: min(100% - 20px, 760px);
+  margin: 0 auto;
+  padding: 18px 0 calc(96px + env(safe-area-inset-bottom));
+}
+
+.portal-page-header {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.portal-page-header .admin-page-actions,
+.portal-page-header .admin-page-actions a {
+  width: 100%;
+}
+
+.portal-admin-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  min-width: 0;
+}
+
+.portal-admin-card {
+  min-width: 0;
+  width: 100%;
+  padding: 18px;
+  overflow-wrap: anywhere;
+}
+
+.portal-admin-card + .portal-admin-card {
+  margin-top: 0;
+}
+
+.portal-card-help,
+.portal-admin-card .muted {
+  color: var(--admin-muted);
+  line-height: 1.45;
+}
+
+.portal-project-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.portal-project-button {
+  min-width: 0;
+  width: 100%;
+  padding: 15px 14px;
+  background: var(--admin-panel);
+  color: var(--admin-text);
+  border-color: var(--admin-border);
+}
+
+.portal-project-button strong {
+  color: var(--admin-text);
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+
+.portal-project-button span {
+  color: var(--admin-muted);
+  line-height: 1.4;
+}
+
+.portal-editor-empty {
+  min-height: 220px;
+  padding: 30px 18px;
+}
+
+.portal-editor-head {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.portal-editor-head h2,
+.portal-editor-head p {
+  overflow-wrap: anywhere;
+}
+
+.portal-editor-head .compact-actions {
+  display: block;
+}
+
+/* Refresh er overflødig: data lastes ved valg og etter alle lagringer. */
+#refreshSelectedPortal {
+  display: none !important;
+}
+
+.portal-state-pill {
+  width: fit-content;
+}
+
+.portal-form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.portal-field,
+.portal-field.full {
+  min-width: 0;
+  grid-column: auto;
+}
+
+.portal-field input,
+.portal-field select,
+.portal-field textarea {
+  max-width: 100%;
+}
+
+.portal-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 9px;
+  width: 100%;
+  align-items: stretch;
+}
+
+.portal-actions > button,
+.portal-actions > a,
+.portal-actions > .primary-btn,
+.portal-actions > .secondary-btn,
+.portal-actions > .danger-btn {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+.compact-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.portal-link-box {
+  min-width: 0;
+  padding: 13px;
+}
+
+.portal-link-box input {
+  min-width: 0;
+  width: 100%;
+  font-size: 14px;
+}
+
+/* Ett forståelig valg per rad. */
+.portal-visibility {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.portal-check.portal-switch-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 78px;
+  padding: 13px 14px;
+  border: 1px solid var(--admin-border);
+  border-radius: 13px;
+  background: var(--admin-panel);
+  color: var(--admin-text);
+  cursor: pointer;
+}
+
+.portal-switch-copy {
+  min-width: 0;
+}
+
+.portal-switch-copy strong,
+.portal-switch-copy small {
+  display: block;
+}
+
+.portal-switch-copy strong {
+  color: var(--admin-text);
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.portal-switch-copy small {
+  margin-top: 5px;
+  color: var(--admin-muted);
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+
+.portal-check.portal-switch-row input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  width: 52px !important;
+  min-width: 52px;
+  height: 30px;
+  min-height: 30px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid #4a5563;
+  border-radius: 999px;
+  background: #2b313a;
+  box-shadow: none;
+  transition: background .15s ease, border-color .15s ease;
+}
+
+.portal-check.portal-switch-row input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #f5f7f9;
+  transition: transform .15s ease;
+}
+
+.portal-check.portal-switch-row input[type="checkbox"]:checked {
+  border-color: #4da779;
+  background: #23734b;
+}
+
+.portal-check.portal-switch-row input[type="checkbox"]:checked::after {
+  transform: translateX(22px);
+}
+
+.portal-check.portal-switch-row input[type="checkbox"]:focus-visible {
+  outline: 3px solid rgba(117, 201, 165, .35);
+  outline-offset: 3px;
+}
+
+/* Innkjøp: alltid nedover på telefon, aldri sideveis. */
+.procurement-admin-head,
+.procurement-builder-head,
+.procurement-status-control,
+.procurement-items-head {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.procurement-item-row {
+  display: grid;
+  grid-template-columns: 1fr !important;
+  gap: 11px;
+  min-width: 0;
+  padding: 13px;
+}
+
+.procurement-status-control select,
+.procurement-status-control button,
+.procurement-items-head button,
+.procurement-save-actions button {
+  width: 100%;
+  min-width: 0;
+}
+
+.procurement-item-row .remove-procurement-row {
+  width: 48px;
+  justify-self: start;
+}
+
+.portal-photo-admin-grid {
+  grid-template-columns: 1fr;
+}
+
+/* Tilgjengelighet er sekundært og ligger nederst, lukket som standard. */
+.availability-details {
+  margin-top: 14px;
+  padding: 0;
+}
+
+.availability-details > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 74px;
+  padding: 16px 18px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.availability-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.availability-details > summary::after {
+  content: "+";
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--admin-chip);
+  color: var(--admin-text);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.availability-details[open] > summary::after {
+  content: "–";
+}
+
+.availability-details > summary span,
+.availability-details > summary strong,
+.availability-details > summary small {
+  display: block;
+}
+
+.availability-details > summary strong {
+  color: var(--admin-text);
+  font-size: 16px;
+}
+
+.availability-details > summary small {
+  margin-top: 4px;
+  color: var(--admin-muted);
+  line-height: 1.35;
+}
+
+.availability-details-content {
+  padding: 0 18px 18px;
+  border-top: 1px solid var(--admin-border-soft);
+}
+
+.availability-strip {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  width: 100%;
+  overflow: visible;
+  padding: 0;
+}
+
+.availability-day {
+  min-width: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  align-items: center;
+  padding: 12px 13px;
+}
+
+.availability-day strong {
+  color: var(--admin-text);
+}
+
+.availability-day span {
+  grid-column: 2;
+  grid-row: 1;
+  margin: 0;
+  text-align: right;
+  font-weight: 750;
+}
+
+.availability-day small {
+  grid-column: 1 / -1;
+  color: var(--admin-muted);
+}
+
+.availability-day.available {
+  background: var(--admin-success-soft);
+  border-color: #285b49;
+}
+
+.availability-day.blocked {
+  background: var(--admin-danger-soft);
+  border-color: #6a3138;
+}
+
+.availability-day button {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.availability-block-form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.availability-block-form button {
+  width: 100%;
+}
+
+@media (min-width: 760px) {
+  .portal-admin-main {
+    width: min(100% - 36px, 780px);
+    padding-top: 28px;
+  }
+
+  .portal-admin-card {
+    padding: 22px;
+  }
+
+  .portal-page-header .admin-page-actions,
+  .portal-page-header .admin-page-actions a {
+    width: auto;
+  }
+
+  .portal-actions.link-actions,
+  .portal-link-box .portal-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .portal-photo-admin-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .availability-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
