@@ -108,6 +108,10 @@
   opacity: .78;
 }
 
+.attention-card.assistant-ready {
+  box-shadow: inset 0 0 0 1px rgba(130, 188, 255, .07);
+}
+
 .attention-icon {
   width: 48px;
   height: 48px;
@@ -177,6 +181,13 @@
   line-height: 1.45;
 }
 
+.attention-card .attention-assistant-note {
+  margin-top: 9px;
+  color: #8fbce9;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .attention-action {
   grid-column: 1 / -1;
   width: 100%;
@@ -185,18 +196,31 @@
   place-items: center;
   margin-top: 2px;
   padding: 0 15px;
+  border: 0;
   border-radius: 12px;
   color: #111418;
   background: #f2f5f7;
   text-decoration: none;
+  font: inherit;
   font-size: 15px;
   font-weight: 900;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.attention-action:disabled {
+  cursor: wait;
+  opacity: .65;
 }
 
 .critical .attention-action { background: #ff626e; color: #180609; }
 .high .attention-action { background: #ffbd62; color: #1c1204; }
 .medium .attention-action { background: #82bcff; color: #071422; }
 .low .attention-action { background: #dce2e8; }
+
+.attention-action--assistant {
+  box-shadow: 0 8px 24px rgba(98, 168, 255, .08);
+}
 
 .attention-ok {
   display: grid;
