@@ -518,33 +518,25 @@
     } else await copyLink();
   }
 
-  function fileAsDataUrl(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = () => reject(new Error("Kunne ikke lese bildet."));
-      reader.readAsDataURL(file);
-    });
-  }
-
   async function uploadImage() {
     if (!selectedWorkOrder || busy) return;
     const input = document.getElementById("portalImage");
     const file = input?.files?.[0];
     if (!file) { setStatus("Velg et bilde først.", "error"); return; }
-    if (file.size > 12 * 1024 * 1024) { setStatus("Bildet er for stort. Maks ca. 12 MB.", "error"); return; }
+    if (!window.SorgulenPortalImageUpload?.prepare) { setStatus("Bildeopplasting er ikke klar. Last siden på nytt.", "error"); return; }
     busy = true;
-    setStatus("Laster opp bildet…");
+    setStatus("Klargjør bildet for raskere opplasting…");
     try {
-      const imageData = await fileAsDataUrl(file);
+      const prepared = await window.SorgulenPortalImageUpload.prepare(file);
+      setStatus(prepared.compressed ? "Bildet er komprimert. Laster opp…" : "Laster opp bildet…");
       const data = await apiFetch(`/admin/customer-portal/${encodeURIComponent(selectedWorkOrder._id)}/images`, {
         method: "POST",
-        body: JSON.stringify({ imageData, caption: document.getElementById("portalImageCaption").value.trim() }),
+        body: JSON.stringify({ imageData: prepared.imageData, caption: document.getElementById("portalImageCaption").value.trim() }),
       });
       selectedPortal = data.portal;
       latestPortalUrl = buildPortalUrl(selectedPortal?.shareToken) || latestPortalUrl;
       renderEditor();
-      setStatus("Bildet er nå synlig på kundesiden.", "success");
+      setStatus(prepared.compressed ? "Bildet er komprimert og synlig på kundesiden." : "Bildet er nå synlig på kundesiden.", "success");
     } catch (error) { setStatus(error.message, "error"); }
     finally { busy = false; }
   }

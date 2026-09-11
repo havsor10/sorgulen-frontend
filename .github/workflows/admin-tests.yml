@@ -16,10 +16,10 @@ jobs:
     steps:
       - name: Hent kildekoden
         uses: actions/checkout@v4
-      - name: Bruk Node.js 20
+      - name: Bruk Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
       - name: Kontroller JavaScript-syntaks
         run: |
           node --check admin/admin-shell.js
@@ -43,6 +43,7 @@ jobs:
           node --check admin/foresporsler-invoice-bridge.js
           node --check admin/varslinger.js
           node --check admin/push-sw.js
+          node --check admin/portal-image-upload.js
           node --check admin/kundeportal.js
           node --check admin/kundeportal-guard.js
           node --check admin/customer-portal-links.js
