@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="referrer" content="no-referrer">
+  <title>Følg prosjektet ditt | Sørgulen Industriservice</title>
+  <link rel="stylesheet" href="prosjekt.css">
+</head>
+<body>
+  <main class="portal-shell">
+    <header class="portal-brand">
+      <strong>Sørgulen Industriservice</strong>
+      <span>Følg prosjektet ditt</span>
+    </header>
+
+    <section id="loadingCard" class="portal-card loading-card" aria-live="polite">
+      <strong>Henter prosjektet ditt…</strong>
+    </section>
+
+    <section id="errorCard" class="portal-card error-card hidden" role="alert">
+      <h1>Kunne ikke åpne prosjektet</h1>
+      <p id="errorText">Lenken kan være utløpt eller erstattet.</p>
+    </section>
+
+    <div id="projectContent" class="hidden">
+      <section class="portal-card project-heading">
+        <h2 id="projectName">Prosjekt</h2>
+        <p id="customerName"></p>
+      </section>
+
+      <section id="nextWorkCard" class="portal-card next-card">
+        <p class="next-kicker">Når kommer Håvard tilbake?</p>
+        <h1 id="nextWorkText">Ikke satt ennå</h1>
+        <p id="nextWorkSubtext" class="next-note"></p>
+      </section>
+
+      <section class="portal-card">
+        <h2>Status akkurat nå</h2>
+        <div class="status-line">
+          <span class="status-dot" aria-hidden="true"></span>
+          <div>
+            <strong id="statusText">Prosjektet er aktivt</strong>
+            <p id="statusHelp"></p>
+          </div>
+        </div>
+      </section>
+
+      <section id="materialCard" class="portal-card material-card hidden">
+        <h2>Innkjøp / materialer</h2>
+        <p><strong id="materialTitle"></strong></p>
+        <p id="materialMessage"></p>
+      </section>
+
+      <section id="messageCard" class="portal-card message-card hidden">
+        <h2>Siste oppdatering</h2>
+        <p id="customerMessage" class="message-text"></p>
+      </section>
+
+      <section id="workFactsCard" class="portal-card">
+        <h2>Arbeid hittil</h2>
+        <div class="fact-grid">
+          <div id="lastWorkedFact" class="fact">
+            <span>Sist jobbet</span>
+            <strong id="lastWorked">Ikke registrert ennå</strong>
+          </div>
+          <div id="hoursFact" class="fact">
+            <span>Registrert tid</span>
+            <strong id="hoursText">0 timer</strong>
+          </div>
+        </div>
+      </section>
+
+      <section id="workDaysCard" class="portal-card hidden">
+        <h2>Arbeidsdager</h2>
+        <ul id="workDayList" class="work-day-list"></ul>
+      </section>
+
+      <section id="photosCard" class="portal-card hidden">
+        <h2>Bilder fra prosjektet</h2>
+        <div id="photoGrid" class="photo-grid"></div>
+      </section>
+
+      <p id="updatedText" class="portal-updated"></p>
+    </div>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="prosjekt.js"></script>
+</body>
+</html>
