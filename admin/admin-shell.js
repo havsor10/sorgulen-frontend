@@ -3,6 +3,8 @@
 
   const mount = document.getElementById("adminShell");
   if (!mount) return;
+  const FIKEN_SYNC_STORAGE = "sorgulen_fiken_payment_sync_at";
+  const FIKEN_SYNC_INTERVAL_MS = 30 * 60 * 1000;
 
   function ensureAsset(tagName, attrs) {
     const key = attrs.href || attrs.src;
@@ -116,6 +118,26 @@
     } catch (_) { return null; }
   }
 
+  async function syncFikenIfDue(apiBase, adminKey) {
+    const last = Number(localStorage.getItem(FIKEN_SYNC_STORAGE) || 0);
+    if (Number.isFinite(last) && Date.now() - last < FIKEN_SYNC_INTERVAL_MS) return;
+    try {
+      const response = await fetch(`${apiBase}/admin/fiken/invoices/sync-open`, {
+        method: "POST",
+        headers: { "x-admin-key": adminKey },
+      });
+      if (response.ok) {
+        localStorage.setItem(FIKEN_SYNC_STORAGE, String(Date.now()));
+        const result = await response.json().catch(() => null);
+        if (Number(result?.paid || 0) > 0) {
+          window.dispatchEvent(new CustomEvent("sorgulen:fiken-payments", { detail: result }));
+        }
+      }
+    } catch (_) {
+      // Fiken-synk er best effort og må aldri blokkere vanlig admin.
+    }
+  }
+
   async function loadBadges() {
     const adminKey = (localStorage.getItem("sorgulen_admin_key") || "").trim();
     if (!adminKey) return;
@@ -135,6 +157,7 @@
     showBadge("snow", snowCount);
     const existingMore = Math.max(0, Number(operations?.badges?.more) || 0);
     showBadge("more", existingMore + inventoryCount + snowCount);
+    syncFikenIfDue(apiBase, adminKey);
   }
 
   moreButton.addEventListener("click", () => setMenu(!moreMenu.classList.contains("is-open")));
@@ -177,7 +200,7 @@
     navigator.clearAppBadge().catch(() => {});
   }
 
-  window.SorgulenAdminShell = { refreshBadges: loadBadges };
+  window.SorgulenAdminShell = { refreshBadges: loadBadges, syncFikenIfDue };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", loadBadges, { once: true });
   else loadBadges();
 }());
