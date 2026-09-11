@@ -1,0 +1,31 @@
+.status-attention {
+  border-color: #e1c16b;
+  background: #fffaf0;
+}
+
+.status-attention .status-dot {
+  background: #9a6900;
+}
+
+.procurement-ordered,
+.procurement-ready_pickup {
+  border-color: #b8dbc6;
+  background: #f7fcf9;
+}
+
+.procurement-waiting_delivery {
+  border-color: #dfc278;
+  background: #fffaf0;
+}
+
+.procurement-ordered .procurement-state,
+.procurement-ready_pickup .procurement-state,
+.procurement-purchased .procurement-state {
+  background: #e4f4ea;
+  color: #185c37;
+}
+
+.procurement-waiting_delivery .procurement-state {
+  background: #fff0c5;
+  color: #65480a;
+}
