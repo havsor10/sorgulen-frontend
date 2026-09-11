@@ -1,0 +1,290 @@
+/* Personlig, rolig og fullt responsiv kundeportal. */
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  background: #f2f5f6;
+}
+
+.portal-shell {
+  width: min(100% - 24px, 920px);
+  padding: clamp(16px, 3vw, 34px) 0 clamp(38px, 6vw, 72px);
+}
+
+.portal-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding: clamp(18px, 3vw, 28px);
+}
+
+.portal-brand {
+  padding: 4px 4px 18px;
+}
+
+.portal-brand strong {
+  font-size: clamp(1.02rem, 2vw, 1.14rem);
+}
+
+.welcome-card {
+  background: linear-gradient(145deg, #ffffff 0%, #f7faf8 100%);
+  border-color: #d8e4dd;
+}
+
+.welcome-eyebrow,
+.personal-kicker {
+  margin: 0 0 7px;
+  color: #397052;
+  font-size: .82rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.welcome-card h1 {
+  margin: 0;
+  font-size: clamp(1.7rem, 5vw, 2.35rem);
+  line-height: 1.1;
+  letter-spacing: -.025em;
+}
+
+.welcome-message {
+  max-width: 62ch;
+  margin: 12px 0 18px;
+  color: var(--muted);
+  font-size: clamp(.98rem, 2vw, 1.08rem);
+}
+
+.project-summary {
+  display: grid;
+  gap: 3px;
+  padding: 14px 16px;
+  border: 1px solid #dbe5df;
+  border-radius: 13px;
+  background: #fff;
+}
+
+.project-summary span {
+  color: var(--muted);
+  font-size: .82rem;
+}
+
+.project-summary strong {
+  color: var(--ink);
+  font-size: 1.02rem;
+}
+
+.customer-source {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.next-card {
+  padding: clamp(21px, 4vw, 32px);
+}
+
+.next-kicker {
+  font-size: clamp(.92rem, 2vw, 1rem);
+}
+
+.next-card h1 {
+  font-size: clamp(1.65rem, 5vw, 2.55rem);
+}
+
+.status-card h2,
+.message-card h2,
+.contact-card h2 {
+  margin-bottom: 12px;
+}
+
+.status-line strong {
+  font-size: clamp(1rem, 2.4vw, 1.14rem);
+}
+
+.section-explanation {
+  margin: -2px 0 16px !important;
+  color: var(--muted);
+  font-size: .94rem;
+  line-height: 1.48;
+}
+
+.fact-grid {
+  align-items: stretch;
+}
+
+.fact {
+  display: flex;
+  flex-direction: column;
+  min-height: 148px;
+  padding: 17px;
+}
+
+.fact span {
+  font-size: .86rem;
+}
+
+.fact strong {
+  margin-top: 6px;
+  font-size: clamp(1.15rem, 3vw, 1.35rem);
+}
+
+.fact small {
+  display: block;
+  margin-top: auto;
+  padding-top: 12px;
+  color: var(--muted);
+  font-size: .8rem;
+  line-height: 1.4;
+}
+
+.work-day-list li {
+  align-items: center;
+  min-width: 0;
+}
+
+.work-day-list strong,
+.work-day-list span {
+  min-width: 0;
+}
+
+.message-card {
+  background: #f1f7fb;
+  border-color: #d5e4f1;
+}
+
+.message-card .message-text {
+  color: var(--ink);
+  line-height: 1.6;
+}
+
+.procurement-card,
+.procurement-line,
+.procurement-line-numbers,
+.procurement-line a {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.contact-card {
+  background: #172d24;
+  border-color: #172d24;
+  color: #fff;
+}
+
+.contact-card .personal-kicker {
+  color: #a9d4bd;
+}
+
+.contact-card h2 {
+  color: #fff;
+}
+
+.contact-card p:not(.personal-kicker) {
+  color: #d7e6de;
+}
+
+.contact-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.contact-primary,
+.contact-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-weight: 800;
+  text-decoration: none;
+  text-align: center;
+}
+
+.contact-primary {
+  background: #fff;
+  color: #14261f;
+}
+
+.contact-secondary {
+  border: 1px solid #507060;
+  color: #fff;
+  background: rgba(255,255,255,.06);
+}
+
+.portal-update-block {
+  padding: 2px 4px 0;
+  text-align: center;
+}
+
+.portal-updated {
+  margin: 18px 0 0;
+  font-weight: 650;
+}
+
+.portal-updated-help {
+  max-width: 620px;
+  margin: 5px auto 0;
+  color: var(--muted);
+  font-size: .78rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 560px) {
+  .portal-shell {
+    width: min(100% - 18px, 920px);
+    padding-top: 10px;
+  }
+
+  .portal-card {
+    border-radius: 16px;
+    margin-bottom: 12px;
+  }
+
+  .fact-grid,
+  .photo-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .work-day-list li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  .work-day-list span {
+    text-align: right;
+  }
+}
+
+@media (min-width: 700px) {
+  .contact-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .photo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1000px) {
+  .portal-shell {
+    width: min(100% - 56px, 920px);
+  }
+
+  .portal-card {
+    box-shadow: 0 10px 32px rgba(15, 23, 42, .06);
+  }
+}
