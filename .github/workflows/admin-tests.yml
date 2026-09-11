@@ -42,5 +42,9 @@ jobs:
           node --check admin/foresporsler-invoice-bridge.js
           node --check admin/varslinger.js
           node --check admin/push-sw.js
+          node --check admin/kundeportal.js
+          node --check admin/kundeportal-guard.js
+          node --check admin/customer-portal-links.js
+          node --check prosjekt.js
       - name: Kjør frontendtester
         run: node --test tests/*.test.js
