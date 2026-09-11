@@ -32,13 +32,19 @@
     if (welcomeMessage) {
       const completed = /ferdig|avsluttet/i.test(String(document.getElementById("statusText")?.textContent || ""));
       const message = completed
-        ? `Takk for oppdraget. Her finner du oppsummeringen av ${service.toLowerCase()} og informasjonen som er registrert underveis.`
-        : `Her kan du følge ${service.toLowerCase()}. Jeg oppdaterer siden underveis, så du enkelt kan se hva som er gjort og hva som skjer videre.`;
+        ? `Takk for oppdraget. Her finner du oppsummeringen av prosjektet «${service}» og informasjonen som er registrert underveis.`
+        : `Her kan du følge prosjektet «${service}». Jeg oppdaterer siden underveis, så du enkelt kan se hva som er gjort og hva som skjer videre.`;
       replaceIfDifferent(welcomeMessage, message);
     }
 
     if (statusHelp) {
       const replacements = new Map([
+        ["Oppdraget er opprettet og venter på oppstart.", "Jeg har prosjektet ditt planlagt og oppdaterer siden når oppstarten nærmer seg."],
+        ["Det registreres arbeid på prosjektet nå.", "Jeg jobber med prosjektet ditt nå, og registrerer arbeidstiden underveis."],
+        ["Arbeidet er pauset akkurat nå.", "Jeg har pauset arbeidet midlertidig. Jeg oppdaterer siden når jeg fortsetter."],
+        ["Arbeidet fortsetter ved neste arbeidsøkt.", "Jeg er fortsatt i gang med prosjektet ditt. Arbeidet fortsetter ved neste arbeidsøkt."],
+        ["Oppdraget er ferdigstilt.", "Arbeidet er ferdig. Takk for oppdraget og tilliten."],
+        ["Oppdraget er avsluttet.", "Oppdraget er avsluttet. Ta gjerne kontakt hvis det er noe du lurer på."],
         ["Håvard kan nå gå videre med innkjøpet.", "Takk! Jeg kan nå gå videre med innkjøpet."],
         ["Håvard oppdaterer siden når varen er klar.", "Jeg oppdaterer siden når varen er klar."],
       ]);
@@ -46,11 +52,18 @@
       if (replacements.has(current)) replaceIfDifferent(statusHelp, replacements.get(current));
     }
 
-    if (nextWorkText?.textContent.trim() === "Ikke satt ennå" && nextWorkSubtext) {
-      replaceIfDifferent(
-        nextWorkSubtext,
-        "Jeg har ikke satt neste arbeidsdag ennå. Prosjektet er fortsatt aktivt, og jeg oppdaterer datoen her så snart den er avklart."
-      );
+    if (nextWorkSubtext) {
+      const current = nextWorkSubtext.textContent.trim();
+      if (nextWorkText?.textContent.trim() === "Ikke satt ennå") {
+        replaceIfDifferent(
+          nextWorkSubtext,
+          "Jeg har ikke satt neste arbeidsdag ennå. Prosjektet er fortsatt aktivt, og jeg oppdaterer datoen her så snart den er avklart."
+        );
+      } else if (current === "Denne arbeidsperioden er planlagt. Siden oppdateres dersom planen endrer seg.") {
+        replaceIfDifferent(nextWorkSubtext, "Dette er perioden jeg har planlagt å komme tilbake. Jeg oppdaterer siden dersom planen endrer seg.");
+      } else if (current === "Dette er forventet tidspunkt og kan endres. Siden oppdateres dersom planen endrer seg.") {
+        replaceIfDifferent(nextWorkSubtext, "Dette er når jeg forventer å kunne komme tilbake. Hvis planen endrer seg, oppdaterer jeg det her.");
+      }
     }
 
     document.querySelectorAll(".approval-result p").forEach((paragraph) => {
