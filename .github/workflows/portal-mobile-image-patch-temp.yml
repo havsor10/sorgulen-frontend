@@ -1,0 +1,71 @@
+name: Midlertidig portalbilde mobilpatch
+
+on:
+  push:
+    branches:
+      - hardening/kundeportal-mobil-bildeopplasting-20260912
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Hent branch
+        uses: actions/checkout@v4
+        with:
+          ref: hardening/kundeportal-mobil-bildeopplasting-20260912
+      - name: Bruk komprimert bildepayload i kundeportaladmin
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("admin/kundeportal.js")
+          text = path.read_text()
+
+          old_reader = '''  function fileAsDataUrl(file) {\n    return new Promise((resolve, reject) => {\n      const reader = new FileReader();\n      reader.onload = () => resolve(reader.result);\n      reader.onerror = () => reject(new Error("Kunne ikke lese bildet."));\n      reader.readAsDataURL(file);\n    });\n  }\n\n'''
+          if text.count(old_reader) != 1:
+              raise SystemExit(f"Forventet én gammel FileReader-hjelper, fant {text.count(old_reader)}")
+          text = text.replace(old_reader, "", 1)
+
+          replacements = [
+              (
+                  '    if (file.size > 12 * 1024 * 1024) { setStatus("Bildet er for stort. Maks ca. 12 MB.", "error"); return; }',
+                  '    if (!window.SorgulenPortalImageUpload?.prepare) { setStatus("Bildeopplasting er ikke klar. Last siden på nytt.", "error"); return; }'
+              ),
+              (
+                  '    setStatus("Laster opp bildet…");',
+                  '    setStatus("Klargjør bildet for raskere opplasting…");'
+              ),
+              (
+                  '      const imageData = await fileAsDataUrl(file);',
+                  '      const prepared = await window.SorgulenPortalImageUpload.prepare(file);\n      setStatus(prepared.compressed ? "Bildet er komprimert. Laster opp…" : "Laster opp bildet…");'
+              ),
+              (
+                  '        body: JSON.stringify({ imageData, caption: document.getElementById("portalImageCaption").value.trim() }),',
+                  '        body: JSON.stringify({ imageData: prepared.imageData, caption: document.getElementById("portalImageCaption").value.trim() }),'
+              ),
+              (
+                  '      setStatus("Bildet er nå synlig på kundesiden.", "success");',
+                  '      setStatus(prepared.compressed ? "Bildet er komprimert og synlig på kundesiden." : "Bildet er nå synlig på kundesiden.", "success");'
+              ),
+          ]
+
+          for old, new in replacements:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"Forventet ett treff, fant {count}: {old[:90]!r}")
+              text = text.replace(old, new, 1)
+
+          path.write_text(text)
+          Path(".github/workflows/portal-mobile-image-patch-temp.yml").unlink()
+          PY
+      - name: Commit patch og fjern workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin/kundeportal.js .github/workflows/portal-mobile-image-patch-temp.yml
+          git commit -m "Komprimer portalbilder før opplasting fra mobil"
+          git push origin HEAD:hardening/kundeportal-mobil-bildeopplasting-20260912
