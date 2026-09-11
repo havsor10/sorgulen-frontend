@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="hjem.css?v=20260904-clickfix2">
   <link rel="stylesheet" href="admin-shell.css?v=20260904-clickfix2">
   <link rel="stylesheet" href="home-project-link.css?v=20260906-projectopen1">
+  <link rel="stylesheet" href="home-attention.css?v=20260911-attention1">
 </head>
 <body class="home-body">
   <div id="adminShell" data-page="home"></div>
@@ -21,20 +22,21 @@
 
   <main class="admin-main admin-main--narrow home-main">
     <header class="admin-page-header">
-      <div><p class="admin-eyebrow">Oversikt</p><h1>God arbeidsdag</h1><p>Det viktigste akkurat nå.</p></div>
+      <div><p class="admin-eyebrow">Driftsassistent</p><h1>Hva trenger deg nå?</h1><p>Bare ting som faktisk krever handling blir løftet fram.</p></div>
     </header>
-    <div id="homeStatus" class="home-status" role="status" aria-live="polite">Henter dagens oversikt…</div>
+    <div id="homeStatus" class="home-status" role="status" aria-live="polite">Kontrollerer status…</div>
 
     <section id="focusSection" class="focus-section" aria-labelledby="focusTitle">
-      <div id="focusContent" class="home-card focus-card loading-card">Henter aktivt eller neste oppdrag…</div>
+      <div id="focusContent" class="home-card focus-card loading-card">Kontrollerer aktivt arbeid…</div>
     </section>
 
     <section aria-labelledby="tasksTitle">
-      <div class="section-title-row"><div><p class="eyebrow">Prioritert</p><h2 id="tasksTitle">Må gjøres</h2></div><button id="refreshBtn" class="icon-action" type="button" aria-label="Oppdater">↻</button></div>
+      <div class="section-title-row"><div><p class="eyebrow">Krever deg</p><h2 id="tasksTitle">Kontrollerer…</h2></div><button id="refreshBtn" class="icon-action" type="button" aria-label="Kontroller på nytt">↻</button></div>
       <div id="aiSummary" class="ai-summary hidden"></div>
-      <div id="taskList" class="task-list loading-card">Kontrollerer hva som krever handling…</div>
+      <div id="taskList" class="task-list loading-card">Finner bare det du faktisk trenger å ta stilling til…</div>
     </section>
 
+    <!-- Beholdes for kompatibilitet med eksisterende hjem.js, men skjules av oppmerksomhetsvisningen. -->
     <section id="ongoingSection" class="hidden" aria-labelledby="ongoingTitle">
       <div class="section-title-row"><div><p class="eyebrow">Prosjekter</p><h2 id="ongoingTitle">Pågående prosjekter</h2></div><a href="oppdrag.html" class="quiet-link">Se alle</a></div>
       <div id="ongoingProjects" class="booking-list"></div>
@@ -64,5 +66,6 @@
   <script src="work-order-time.js?v=20260904-clickfix2"></script>
   <script src="hjem.js?v=20260904-clickfix2"></script>
   <script src="home-project-link.js?v=20260906-projectopen1"></script>
+  <script src="home-attention.js?v=20260911-attention1"></script>
 </body>
 </html>
