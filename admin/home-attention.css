@@ -1,0 +1,296 @@
+:root {
+  --attention-red: #ff4d5a;
+  --attention-red-bg: #2a1217;
+  --attention-orange: #ffad3d;
+  --attention-orange-bg: #2a2114;
+  --attention-blue: #62a8ff;
+  --attention-blue-bg: #131f2d;
+  --attention-green: #54d89b;
+  --attention-green-bg: #10261d;
+}
+
+/* Forsiden skal vise handling, ikke administrativ støy. */
+#aiSummary,
+#ongoingSection,
+#latestTitle,
+#latestBookings,
+.home-main > section[aria-labelledby="latestTitle"] {
+  display: none !important;
+}
+
+.home-main {
+  gap: 22px;
+}
+
+.home-main .admin-page-header {
+  margin-bottom: 0;
+}
+
+.home-main .admin-page-header .admin-eyebrow {
+  color: #7d8998;
+}
+
+.home-main .admin-page-header h1 {
+  font-size: clamp(27px, 8vw, 36px);
+  letter-spacing: -0.035em;
+}
+
+.home-main .admin-page-header p:last-child {
+  max-width: 34rem;
+  color: #aab4c1;
+}
+
+.home-status:empty {
+  display: none;
+}
+
+.attention-section .section-title-row {
+  margin-bottom: 10px;
+}
+
+.attention-section .section-title-row h2 {
+  font-size: 24px;
+}
+
+.attention-caption {
+  margin: 4px 0 0;
+  color: #8f9aaa;
+  font-size: 13px;
+}
+
+.attention-list {
+  display: grid;
+  gap: 12px;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.attention-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 13px;
+  padding: 17px;
+  border: 1px solid #2d343f;
+  border-radius: 17px;
+  background: #151a20;
+  overflow: hidden;
+}
+
+.attention-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: #586474;
+}
+
+.attention-card.critical {
+  border-color: rgba(255, 77, 90, .55);
+  background: linear-gradient(145deg, var(--attention-red-bg), #17191e 72%);
+}
+.attention-card.critical::before { background: var(--attention-red); }
+
+.attention-card.high {
+  border-color: rgba(255, 173, 61, .42);
+  background: linear-gradient(145deg, var(--attention-orange-bg), #17191e 72%);
+}
+.attention-card.high::before { background: var(--attention-orange); }
+
+.attention-card.medium {
+  border-color: rgba(98, 168, 255, .34);
+  background: linear-gradient(145deg, var(--attention-blue-bg), #17191e 75%);
+}
+.attention-card.medium::before { background: var(--attention-blue); }
+
+.attention-card.low {
+  opacity: .78;
+}
+
+.attention-icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: rgba(255,255,255,.06);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.attention-copy {
+  min-width: 0;
+}
+
+.attention-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+
+.attention-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 25px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .055em;
+}
+
+.critical .attention-status { background: rgba(255,77,90,.16); color: #ff9fa7; }
+.high .attention-status { background: rgba(255,173,61,.14); color: #ffd18d; }
+.medium .attention-status { background: rgba(98,168,255,.14); color: #acd3ff; }
+.low .attention-status { background: #252b34; color: #b8c1cc; }
+
+.attention-signal {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.critical .attention-signal {
+  color: var(--attention-red);
+  animation: attentionPulse 1.45s ease-out infinite;
+}
+.high .attention-signal { color: var(--attention-orange); }
+.medium .attention-signal { color: var(--attention-blue); }
+.low .attention-signal { display: none; }
+
+.attention-card h3 {
+  margin: 0;
+  color: #f7f9fb;
+  font-size: 17px;
+  line-height: 1.28;
+  letter-spacing: -.012em;
+}
+
+.attention-card p {
+  margin: 7px 0 0;
+  color: #aab4c1;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.attention-action {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-height: 50px;
+  display: grid;
+  place-items: center;
+  margin-top: 2px;
+  padding: 0 15px;
+  border-radius: 12px;
+  color: #111418;
+  background: #f2f5f7;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.critical .attention-action { background: #ff626e; color: #180609; }
+.high .attention-action { background: #ffbd62; color: #1c1204; }
+.medium .attention-action { background: #82bcff; color: #071422; }
+.low .attention-action { background: #dce2e8; }
+
+.attention-ok {
+  display: grid;
+  grid-template-columns: 58px minmax(0,1fr);
+  gap: 15px;
+  align-items: center;
+  padding: 20px;
+  border: 1px solid rgba(84,216,155,.35);
+  border-radius: 18px;
+  background: linear-gradient(145deg, var(--attention-green-bg), #151a20 75%);
+}
+
+.attention-ok-icon {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  background: rgba(84,216,155,.12);
+  color: var(--attention-green);
+  font-size: 30px;
+  font-weight: 900;
+}
+
+.attention-ok h3 {
+  margin: 0 0 5px;
+  font-size: 20px;
+  color: #eafff5;
+}
+.attention-ok p { margin: 0; color: #9fc2b2; font-size: 14px; line-height: 1.45; }
+
+/* Aktivt arbeid skal kjennes live. */
+#focusSection.attention-live-focus .focus-card {
+  border-color: rgba(84,216,155,.48);
+  box-shadow: 0 0 0 1px rgba(84,216,155,.10), 0 0 28px rgba(84,216,155,.06);
+}
+
+#focusSection.attention-live-focus .status-pill.active {
+  position: relative;
+  padding-left: 24px;
+  background: rgba(84,216,155,.15);
+  color: #9bf2c8;
+}
+
+#focusSection.attention-live-focus .status-pill.active::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  margin-top: -3.5px;
+  border-radius: 50%;
+  background: #54d89b;
+  animation: attentionPulse 1.5s ease-out infinite;
+}
+
+/* Tall som ikke fører til handling skal ikke dominere. */
+#focusSection .project-stats { display: none; }
+
+.attention-hidden { display: none !important; }
+
+.attention-later {
+  margin-top: 12px;
+  border: 1px solid #242b34;
+  border-radius: 14px;
+  background: #11151a;
+}
+.attention-later summary {
+  padding: 14px 15px;
+  color: #9da8b5;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.attention-later-list { display: grid; gap: 8px; padding: 0 10px 10px; }
+.attention-later .attention-card { padding: 13px; }
+.attention-later .attention-icon { width: 40px; height: 40px; font-size: 20px; }
+.attention-later .attention-action { min-height: 44px; }
+
+@keyframes attentionPulse {
+  0% { box-shadow: 0 0 0 0 currentColor; opacity: 1; }
+  70% { box-shadow: 0 0 0 8px transparent; opacity: .95; }
+  100% { box-shadow: 0 0 0 0 transparent; opacity: 1; }
+}
+
+@media (max-width: 430px) {
+  .attention-card { grid-template-columns: 44px minmax(0,1fr); padding: 15px 14px; gap: 11px; }
+  .attention-icon { width: 44px; height: 44px; border-radius: 13px; font-size: 22px; }
+  .attention-card h3 { font-size: 16px; }
+  .attention-action { min-height: 52px; font-size: 15px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .attention-signal,
+  #focusSection.attention-live-focus .status-pill.active::before { animation: none !important; }
+}
