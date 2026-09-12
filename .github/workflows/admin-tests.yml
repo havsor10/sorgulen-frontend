@@ -23,6 +23,7 @@ jobs:
       - name: Kontroller JavaScript-syntaks
         run: |
           node --check admin/admin-shell.js
+          node --check admin/autopilot.js
           node --check admin/ai-guide.js
           node --check admin/ai-advisor-wow.js
           node --check admin/operations-ui.js
