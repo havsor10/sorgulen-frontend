@@ -23,19 +23,20 @@
 
   const navItems = [
     { key: "home", href: "hjem.html", label: "Hjem" },
+    { key: "autopilot", href: "autopilot.html", label: "Autopilot" },
     { key: "jobs", href: "oppdrag.html", label: "Oppdrag" },
     { key: "bookings", href: "admin-dashboard.html", label: "Bookinger" },
     { key: "requests", href: "foresporsler.html", label: "Forespørsler" },
     { key: "customers", href: "kunder.html", label: "Kunder" },
     { key: "invoices", href: "fakturaer.html", label: "Fakturaer" },
   ];
-  const mobileItems = navItems.filter((item) => ["home", "jobs", "customers", "invoices"].includes(item.key));
+  const mobileItems = navItems.filter((item) => ["home", "autopilot", "jobs", "invoices"].includes(item.key));
   const activeClass = (key) => key === page ? " is-active" : "";
   const activeAttr = (key) => key === page ? ' aria-current="page"' : "";
   const badge = (key) => `<span class="admin-nav-badge" data-admin-badge="${key}" hidden></span>`;
 
   function mobileIcon(key) {
-    return ({ home: "⌂", jobs: "◷", customers: "◎", invoices: "▤" })[key] || "•";
+    return ({ home: "⌂", autopilot: "✦", jobs: "◷", customers: "◎", invoices: "▤" })[key] || "•";
   }
 
   document.body.classList.add("admin-app");
@@ -116,10 +117,11 @@
     const adminKey = (localStorage.getItem("sorgulen_admin_key") || "").trim();
     if (!adminKey) return;
     const apiBase = (window.CONFIG && window.CONFIG.API_BASE_URL) || "https://sorgulen-backend-2.onrender.com/api";
-    const [operations, inventory, snow] = await Promise.all([
+    const [operations, inventory, snow, autopilot] = await Promise.all([
       fetchJson(`${apiBase}/admin/operations/notifications`, adminKey),
       fetchJson(`${apiBase}/admin/inventory/summary`, adminKey),
       fetchJson(`${apiBase}/admin/snow/state`, adminKey),
+      fetchJson(`${apiBase}/admin/autopilot/inbox/summary`, adminKey),
     ]);
     if (operations) {
       Object.entries(operations.badges || {}).forEach(([key, value]) => showBadge(key, value));
@@ -127,8 +129,11 @@
     }
     const inventoryCount = Math.max(0, Number(inventory?.lowStockCount) || 0);
     const snowCount = Math.max(0, Number(snow?.summary?.queued) || 0);
+    const autopilotCount = Math.max(0, Number(autopilot?.inbox?.counts?.pending) || 0)
+      + Math.max(0, Number(autopilot?.inbox?.counts?.revisionRequested) || 0);
     showBadge("inventory", inventoryCount);
     showBadge("snow", snowCount);
+    showBadge("autopilot", autopilotCount);
     const existingMore = Math.max(0, Number(operations?.badges?.more) || 0);
     showBadge("more", existingMore + inventoryCount + snowCount);
   }
