@@ -146,14 +146,14 @@
     allClear.hidden = pending.length > 0 || revisions.length > 0;
 
     const needsYou = pending.length;
-    subtitle.textContent = needsYou ? `${needsYou} ${needsYou === 1 ? "ting trenger" : "ting trenger"} deg.` : "Ingen nye beslutninger trenger deg akkurat nå.";
+    subtitle.textContent = needsYou ? `${needsYou} ting trenger deg.` : "Ingen nye beslutninger trenger deg akkurat nå.";
     status.textContent = needsYou ? `${needsYou} ting trenger deg` : "Sørgulen er under kontroll";
     mode.textContent = inbox.shadowOnly ? "Shadow Mode" : "Autopilot aktiv";
     dot.classList.toggle("is-ok", needsYou === 0);
     window.SorgulenAdminShell?.refreshBadges?.();
   }
 
-  async function load({ scan = false } = {}) {
+  async function load({ scan = false, sync = true } = {}) {
     if (busy) return;
     busy = true;
     refreshBtn.disabled = true;
@@ -164,7 +164,7 @@
         return;
       }
       if (scan) await api("/scan", { method: "POST", body: JSON.stringify({ days: 14 }) });
-      const data = await api("/inbox?state=all&limit=200");
+      const data = await api(`/inbox?state=all&limit=200&sync=${sync && !scan ? "true" : "false"}`);
       render(data.inbox);
     } catch (error) {
       setMessage(error.message || "Kunne ikke hente Autopilot", "error");
@@ -187,20 +187,22 @@
     busy = true;
     card.classList.add("is-busy");
     setMessage("");
+    let shouldReload = false;
     try {
       await api(`/inbox/${encodeURIComponent(id)}/decision`, {
         method: "POST",
         body: JSON.stringify({ choice, requestedChange }),
       });
       setMessage(choice === "approve" ? "Godkjent i Shadow Mode." : choice === "change" ? "Endringen er sendt tilbake til AI-køen." : "Saken er avvist.", "success");
-      await load();
+      shouldReload = true;
     } catch (error) {
       setMessage(error.message || "Kunne ikke lagre valget", "error");
-      if (error.code === "approval_changed" || error.code === "approval_superseded") await load();
+      shouldReload = error.code === "approval_changed" || error.code === "approval_superseded";
     } finally {
       busy = false;
       card.classList.remove("is-busy");
     }
+    if (shouldReload) await load({ sync: false });
   }
 
   document.addEventListener("click", (event) => {
@@ -218,7 +220,7 @@
     if (card) decide(card, button.dataset.choice);
   });
 
-  refreshBtn.addEventListener("click", () => load({ scan: true }));
+  refreshBtn.addEventListener("click", () => load({ scan: true, sync: false }));
   load();
-  setInterval(() => load(), 60_000);
+  setInterval(() => load({ sync: false }), 60_000);
 })();
