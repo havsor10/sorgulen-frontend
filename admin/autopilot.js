@@ -5,6 +5,7 @@
   const KEY_STORAGE = "sorgulen_admin_key";
   const approvalList = document.getElementById("approvalList");
   const revisionList = document.getElementById("revisionList");
+  const executionList = document.getElementById("executionList");
   const attentionSection = document.getElementById("attentionSection");
   const revisionSection = document.getElementById("revisionSection");
   const allClear = document.getElementById("allClear");
@@ -50,6 +51,7 @@
       const error = new Error(data.error || `Feil ${response.status}`);
       error.code = data.code;
       error.approval = data.approval;
+      error.execution = data.execution;
       throw error;
     }
     return data;
@@ -65,18 +67,20 @@
     create_invoice_draft: "Opprett fakturautkast",
     repair_invoice_basis: "Kontroller fakturagrunnlag",
     approve_purchase_execution: "Godkjenn innkjøp",
+    publish_next_work: "Publiser neste arbeidsdag",
   };
 
   const factLabels = {
     bookingDate: "Dato", bookingTime: "Tid", serviceName: "Tjeneste",
     workOrderId: "Oppdrag", estimatedTotal: "Beløp", lineCount: "Linjer",
-    total: "Beløp", supplier: "Leverandør", entryId: "Innkjøp",
+    total: "Beløp", amount: "Beløp", supplier: "Leverandør", entryId: "Innkjøp",
     expectedStart: "Fra", expectedEnd: "Til", customerMessage: "Kundemelding",
+    nextWorkStart: "Neste dag", nextWorkEnd: "Til", status: "Status",
   };
 
   function formatValue(key, value) {
     if (value === null || value === undefined || value === "") return "–";
-    if (["estimatedTotal", "total"].includes(key) && Number.isFinite(Number(value))) {
+    if (["estimatedTotal", "total", "amount"].includes(key) && Number.isFinite(Number(value))) {
       return `${new Intl.NumberFormat("nb-NO").format(Number(value))} kr`;
     }
     if (Array.isArray(value)) return value.length ? value.join(", ") : "–";
@@ -97,7 +101,7 @@
   function approvalCard(item) {
     const title = actionTitles[item.actionName] || item.actionName || "Sak til kontroll";
     return `
-      <article class="autopilot-card is-${esc(item.risk || "low")}" data-approval-id="${esc(item.id)}">
+      <article class="autopilot-card is-${esc(item.risk || "low")}" data-approval-id="${esc(item.id)}" data-action-name="${esc(item.actionName || "")}">
         <div class="autopilot-card-top">
           <h3>${esc(title)}</h3>
           <span class="autopilot-pill">${esc(riskLabel(item.risk))}</span>
@@ -129,7 +133,46 @@
     return `<div class="autopilot-watchdog-item"><strong>${esc(item.message || item.code)}</strong><small>${esc(riskLabel(item.severity))}</small></div>`;
   }
 
-  function render(inbox) {
+  function executionState(item) {
+    return ({
+      succeeded: "Utført",
+      failed: "Feilet",
+      superseded: "Ikke lenger aktuell",
+      undone: "Angret",
+      running: "Utfører…",
+      queued: "Venter",
+    })[item.state] || item.state || "Ukjent";
+  }
+
+  function executionTitle(item) {
+    if (item.actionName === "publish_next_work") return "Neste arbeidsdag publisert";
+    if (item.actionName === "create_invoice_draft") return "Fakturautkast opprettet";
+    return actionTitles[item.actionName] || item.actionName || "Autopilot-handling";
+  }
+
+  function executionCard(item) {
+    const undoOpen = item.actionName === "publish_next_work"
+      && item.state === "succeeded"
+      && item.undoUntil
+      && new Date(item.undoUntil).getTime() > Date.now();
+    const retry = item.state === "failed";
+    const details = item.result || item.actionData || {};
+    return `
+      <article class="autopilot-card autopilot-execution is-execution-${esc(item.state || "unknown")}" data-execution-id="${esc(item.id)}">
+        <div class="autopilot-card-top">
+          <h3>${esc(executionTitle(item))}</h3>
+          <span class="autopilot-pill">${esc(executionState(item))}</span>
+        </div>
+        ${facts(details)}
+        ${item.error?.message ? `<p class="autopilot-reason">${esc(item.error.message)}</p>` : ""}
+        ${undoOpen || retry ? `<div class="autopilot-execution-actions">
+          ${undoOpen ? '<button type="button" data-execution-action="undo">Angre</button>' : ""}
+          ${retry ? '<button type="button" data-execution-action="retry">Prøv igjen</button>' : ""}
+        </div>` : ""}
+      </article>`;
+  }
+
+  function renderInbox(inbox) {
     const approvals = inbox.approvals || [];
     const pending = approvals.filter((item) => item.state === "pending");
     const revisions = approvals.filter((item) => item.state === "revision_requested");
@@ -148,9 +191,16 @@
     const needsYou = pending.length;
     subtitle.textContent = needsYou ? `${needsYou} ting trenger deg.` : "Ingen nye beslutninger trenger deg akkurat nå.";
     status.textContent = needsYou ? `${needsYou} ting trenger deg` : "Sørgulen er under kontroll";
-    mode.textContent = inbox.shadowOnly ? "Shadow Mode" : "Autopilot aktiv";
+    mode.textContent = inbox.controlMode === "guarded" || inbox.executionEnabled ? "Guarded Autopilot" : "Shadow Mode";
     dot.classList.toggle("is-ok", needsYou === 0);
     window.SorgulenAdminShell?.refreshBadges?.();
+  }
+
+  function renderExecutions(executions = []) {
+    const visible = executions.slice(0, 12);
+    executionList.innerHTML = visible.length
+      ? visible.map(executionCard).join("")
+      : '<div class="autopilot-empty">Ingen Autopilot-handlinger er utført ennå.</div>';
   }
 
   async function load({ scan = false, sync = true } = {}) {
@@ -164,8 +214,12 @@
         return;
       }
       if (scan) await api("/scan", { method: "POST", body: JSON.stringify({ days: 14 }) });
-      const data = await api(`/inbox?state=all&limit=200&sync=${sync && !scan ? "true" : "false"}`);
-      render(data.inbox);
+      const [inboxData, executionData] = await Promise.all([
+        api(`/inbox?state=all&limit=200&sync=${sync && !scan ? "true" : "false"}`),
+        api("/executions?limit=12"),
+      ]);
+      renderInbox(inboxData.inbox);
+      renderExecutions(executionData.executions || []);
     } catch (error) {
       setMessage(error.message || "Kunne ikke hente Autopilot", "error");
     } finally {
@@ -174,9 +228,22 @@
     }
   }
 
+  function approvalSuccessMessage(actionName, response, choice) {
+    if (choice === "change") return "Endringen er sendt tilbake til AI-køen.";
+    if (choice === "reject") return "Saken er avvist.";
+    const execution = response.execution;
+    if (execution?.supported && execution.execution?.state === "succeeded") {
+      if (actionName === "create_invoice_draft") return "Godkjent. Fakturautkast er opprettet.";
+      return "Godkjent og utført.";
+    }
+    if (execution?.supported === false) return "Godkjent. Denne handlingen krever fortsatt manuell oppfølging.";
+    return "Godkjent.";
+  }
+
   async function decide(card, choice) {
     if (busy) return;
     const id = card.dataset.approvalId;
+    const actionName = card.dataset.actionName || "";
     const textarea = card.querySelector("textarea");
     if (choice === "reject" && !window.confirm("Avvise denne saken?")) return;
     const requestedChange = choice === "change" ? (textarea?.value || "").trim() : "";
@@ -189,11 +256,11 @@
     setMessage("");
     let shouldReload = false;
     try {
-      await api(`/inbox/${encodeURIComponent(id)}/decision`, {
+      const response = await api(`/inbox/${encodeURIComponent(id)}/decision`, {
         method: "POST",
         body: JSON.stringify({ choice, requestedChange }),
       });
-      setMessage(choice === "approve" ? "Godkjent i Shadow Mode." : choice === "change" ? "Endringen er sendt tilbake til AI-køen." : "Saken er avvist.", "success");
+      setMessage(approvalSuccessMessage(actionName, response, choice), "success");
       shouldReload = true;
     } catch (error) {
       setMessage(error.message || "Kunne ikke lagre valget", "error");
@@ -205,6 +272,29 @@
     if (shouldReload) await load({ sync: false });
   }
 
+  async function handleExecution(card, action) {
+    if (busy) return;
+    const id = card.dataset.executionId;
+    if (!id) return;
+    if (action === "undo" && !window.confirm("Angre denne automatiske endringen?")) return;
+    busy = true;
+    card.classList.add("is-busy");
+    setMessage("");
+    try {
+      await api(`/executions/${encodeURIComponent(id)}/${action}`, {
+        method: "POST",
+        body: JSON.stringify({}),
+      });
+      setMessage(action === "undo" ? "Autopilot-handlingen er angret." : "Handlingen ble kjørt på nytt.", "success");
+    } catch (error) {
+      setMessage(error.message || "Kunne ikke behandle handlingen", "error");
+    } finally {
+      busy = false;
+      card.classList.remove("is-busy");
+    }
+    await load({ sync: false });
+  }
+
   document.addEventListener("click", (event) => {
     const open = event.target.closest("[data-open-change]");
     if (open) {
@@ -214,6 +304,14 @@
       if (box?.classList.contains("is-open")) box.querySelector("textarea")?.focus();
       return;
     }
+
+    const executionButton = event.target.closest("[data-execution-action]");
+    if (executionButton) {
+      const card = executionButton.closest("[data-execution-id]");
+      if (card) handleExecution(card, executionButton.dataset.executionAction);
+      return;
+    }
+
     const button = event.target.closest("[data-choice]");
     if (!button) return;
     const card = button.closest("[data-approval-id]");
