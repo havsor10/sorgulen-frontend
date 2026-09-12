@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="admin-shell.css?v=20260904-clickfix2">
   <link rel="stylesheet" href="home-project-link.css?v=20260906-projectopen1">
   <link rel="stylesheet" href="home-attention.css?v=20260912-nextwork1">
+  <link rel="stylesheet" href="home-system-status.css?v=20260912-system1">
 </head>
 <body class="home-body">
   <div id="adminShell" data-page="home"></div>
@@ -24,6 +25,22 @@
     <header class="admin-page-header">
       <div><p class="admin-eyebrow">Driftsassistent</p><h1>Hva trenger deg nå?</h1><p>Bare ting som faktisk krever handling blir løftet fram.</p></div>
     </header>
+
+    <section id="systemStatusCard" class="system-status-card is-loading" aria-live="polite" aria-labelledby="systemStatusTitle">
+      <div class="system-status-main">
+        <span id="systemStatusIcon" class="system-status-icon" aria-hidden="true">…</span>
+        <div class="system-status-copy">
+          <h2 id="systemStatusTitle">Kontrollerer hele systemet…</h2>
+          <p id="systemStatusText">Bookinger, forespørsler, oppdrag, kundeportaler, faktura og Autopilot.</p>
+        </div>
+      </div>
+      <div id="systemStatusChecks" class="system-status-checks"></div>
+      <div class="system-status-footer">
+        <small id="systemStatusMeta">Kjører kontroll nå</small>
+        <button id="systemStatusRefresh" class="system-status-refresh" type="button">Kontroller på nytt</button>
+      </div>
+    </section>
+
     <div id="homeStatus" class="home-status" role="status" aria-live="polite">Kontrollerer status…</div>
 
     <section id="focusSection" class="focus-section" aria-labelledby="focusTitle">
@@ -67,5 +84,6 @@
   <script src="hjem.js?v=20260904-clickfix2"></script>
   <script src="home-project-link.js?v=20260906-projectopen1"></script>
   <script src="home-attention.js?v=20260912-nextwork1"></script>
+  <script src="home-system-status.js?v=20260912-system1"></script>
 </body>
 </html>
