@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b0f13">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Sørgulen Admin">
+  <title>Autopilot – Sørgulen admin</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="../assets/logo.png">
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin-shell.css">
+  <link rel="stylesheet" href="admin-pages.css">
+  <link rel="stylesheet" href="autopilot.css?v=20260912-v02">
+</head>
+<body>
+  <div id="adminShell" data-page="autopilot"></div>
+  <script src="admin-shell.js?v=20260912-v02"></script>
+
+  <main class="admin-main autopilot-main">
+    <header class="admin-page-header autopilot-header">
+      <div>
+        <p class="admin-eyebrow">Digital driftsleder</p>
+        <h1>Autopilot</h1>
+        <p id="autopilotSubtitle">Kontrollerer hva som trenger deg…</p>
+      </div>
+      <button id="refreshAutopilot" class="admin-icon-button" type="button" aria-label="Oppdater Autopilot">↻</button>
+    </header>
+
+    <section class="autopilot-status" aria-live="polite">
+      <div>
+        <span id="autopilotDot" class="autopilot-dot"></span>
+        <strong id="autopilotStatus">Sjekker systemet</strong>
+      </div>
+      <small id="autopilotMode">Shadow Mode</small>
+    </section>
+
+    <div id="autopilotMessage" class="status-message" role="status" aria-live="polite"></div>
+
+    <section id="allClear" class="autopilot-clear" hidden>
+      <span class="autopilot-clear-icon" aria-hidden="true">✓</span>
+      <h2>Sørgulen er under kontroll</h2>
+      <p>0 ting trenger deg akkurat nå.</p>
+    </section>
+
+    <section id="attentionSection" class="autopilot-section" hidden>
+      <div class="autopilot-section-head">
+        <div>
+          <p class="section-kicker">Dette trenger deg</p>
+          <h2><span id="pendingCount">0</span> saker</h2>
+        </div>
+      </div>
+      <div id="approvalList" class="autopilot-list"></div>
+    </section>
+
+    <section id="revisionSection" class="autopilot-section" hidden>
+      <div class="autopilot-section-head">
+        <div>
+          <p class="section-kicker">Sendt tilbake</p>
+          <h2>Endringer AI må behandle</h2>
+        </div>
+      </div>
+      <div id="revisionList" class="autopilot-list"></div>
+    </section>
+
+    <details class="autopilot-watchdog">
+      <summary><span>Andre ting AI følger med på</span><strong id="watchdogCount">0</strong></summary>
+      <div id="watchdogList" class="autopilot-watchdog-list"></div>
+    </details>
+
+    <p class="autopilot-shadow-note">V0.2 er fortsatt Shadow Mode: valgene dine lagres og revalideres, men utfører ikke kunde-, penge- eller fakturahandlinger ennå.</p>
+  </main>
+
+  <script src="../config.js?v=20260912-v02"></script>
+  <script src="autopilot.js?v=20260912-v02"></script>
+</body>
+</html>
