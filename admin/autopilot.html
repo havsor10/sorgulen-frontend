@@ -13,11 +13,11 @@
   <link rel="stylesheet" href="admin.css">
   <link rel="stylesheet" href="admin-shell.css">
   <link rel="stylesheet" href="admin-pages.css">
-  <link rel="stylesheet" href="autopilot.css?v=20260912-v02">
+  <link rel="stylesheet" href="autopilot.css?v=20260912-v03">
 </head>
 <body>
   <div id="adminShell" data-page="autopilot"></div>
-  <script src="admin-shell.js?v=20260912-v02"></script>
+  <script src="admin-shell.js?v=20260912-v03"></script>
 
   <main class="admin-main autopilot-main">
     <header class="admin-page-header autopilot-header">
@@ -34,7 +34,7 @@
         <span id="autopilotDot" class="autopilot-dot"></span>
         <strong id="autopilotStatus">Sjekker systemet</strong>
       </div>
-      <small id="autopilotMode">Shadow Mode</small>
+      <small id="autopilotMode">Guarded Autopilot</small>
     </section>
 
     <div id="autopilotMessage" class="status-message" role="status" aria-live="polite"></div>
@@ -65,15 +65,25 @@
       <div id="revisionList" class="autopilot-list"></div>
     </section>
 
+    <section id="executionSection" class="autopilot-section">
+      <div class="autopilot-section-head">
+        <div>
+          <p class="section-kicker">Gjort av Autopilot</p>
+          <h2>Siste handlinger</h2>
+        </div>
+      </div>
+      <div id="executionList" class="autopilot-list"></div>
+    </section>
+
     <details class="autopilot-watchdog">
       <summary><span>Andre ting AI følger med på</span><strong id="watchdogCount">0</strong></summary>
       <div id="watchdogList" class="autopilot-watchdog-list"></div>
     </details>
 
-    <p class="autopilot-shadow-note">V0.2 er fortsatt Shadow Mode: valgene dine lagres og revalideres, men utfører ikke kunde-, penge- eller fakturahandlinger ennå.</p>
+    <p class="autopilot-shadow-note">V0.3 er guardert: AI kan automatisk publisere en revalidert neste arbeidsdag og du kan angre den i 30 minutter. Godkjent fakturering oppretter kun utkast. AI kan fortsatt ikke kjøpe noe, bruke penger, utstede eller sende faktura eller sende e-post.</p>
   </main>
 
-  <script src="../config.js?v=20260912-v02"></script>
-  <script src="autopilot.js?v=20260912-v02"></script>
+  <script src="../config.js?v=20260912-v03"></script>
+  <script src="autopilot.js?v=20260912-v03"></script>
 </body>
 </html>
