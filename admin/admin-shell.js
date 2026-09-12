@@ -121,7 +121,7 @@
       fetchJson(`${apiBase}/admin/operations/notifications`, adminKey),
       fetchJson(`${apiBase}/admin/inventory/summary`, adminKey),
       fetchJson(`${apiBase}/admin/snow/state`, adminKey),
-      fetchJson(`${apiBase}/admin/autopilot/inbox?state=all&limit=1`, adminKey),
+      fetchJson(`${apiBase}/admin/autopilot/inbox/summary`, adminKey),
     ]);
     if (operations) {
       Object.entries(operations.badges || {}).forEach(([key, value]) => showBadge(key, value));
