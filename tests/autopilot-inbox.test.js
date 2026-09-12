@@ -26,7 +26,8 @@ test("Autopilot presents approve, change and reject controls", () => {
 
 test("Autopilot refresh can run a controlled shadow scan", () => {
   assert.match(js, /api\("\/scan"/);
-  assert.match(js, /sync=false/);
+  assert.match(js, /load\(\{ scan: true, sync: false \}\)/);
+  assert.match(js, /load\(\{ sync: false \}\)/);
 });
 
 test("admin shell makes Autopilot a primary destination without running full inbox sync", () => {
