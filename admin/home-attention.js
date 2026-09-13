@@ -210,7 +210,6 @@
 
   function removeOldNoise() {
     document.getElementById("aiSummary")?.classList.add("hidden");
-    document.getElementById("ongoingSection")?.classList.add("hidden");
     document.getElementById("attentionLater")?.remove();
   }
 
