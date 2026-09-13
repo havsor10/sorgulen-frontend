@@ -9,14 +9,19 @@ const js = fs.readFileSync(path.join(root, "admin/work-order-field.js"), "utf8")
 const compat = fs.readFileSync(path.join(root, "admin/work-order-field-compat.js"), "utf8");
 const css = fs.readFileSync(path.join(root, "admin/work-order-field.css"), "utf8");
 const inventory = fs.readFileSync(path.join(root, "admin/inventory-project.js"), "utf8");
+const operations = fs.readFileSync(path.join(root, "admin/operations-ui.js"), "utf8");
 
-test("oppdrag loads the dedicated field workspace after the legacy detail engine", () => {
+test("oppdrag loads the operations engine before the dedicated field workspace", () => {
+  assert.match(html, /operations\.css/);
+  assert.match(html, /operations-ui\.js/);
   assert.match(html, /work-order-field\.css/);
   assert.match(html, /work-order-field\.js/);
   assert.match(html, /work-order-field-compat\.js/);
-  assert.ok(html.indexOf("oppdrag.js") < html.indexOf("work-order-field.js"));
+  assert.ok(html.indexOf("oppdrag.js") < html.indexOf("operations-ui.js"));
+  assert.ok(html.indexOf("operations-ui.js") < html.indexOf("work-order-field.js"));
   assert.ok(html.indexOf("work-order-field.js") < html.indexOf("work-order-field-compat.js"));
   assert.match(html, /viewport-fit=cover/);
+  assert.match(operations, /window\.SorgulenOperations\s*=\s*\{[^}]*openManualTime[^}]*openManager/s);
 });
 
 test("field workspace starts with customer, job, total time, price and invoice readiness", () => {
@@ -68,6 +73,7 @@ test("daily log groups sessions, removes zero pauses and opens the real time edi
   assert.match(js, /Mangler beskrivelse/);
   assert.match(js, /openSessionEditor/);
   assert.match(js, /SorgulenOperations\?\.openManualTime/);
+  assert.match(operations, /async function openManualTime/);
   assert.match(js, /Rediger denne økten/);
   assert.match(css, /operation-modal\{z-index:12050!important\}/);
 });
