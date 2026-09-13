@@ -1,0 +1,4 @@
+/* Aktive kundar skal vere synlege på Hjem når hjem.js har funne pågåande prosjekt. */
+#ongoingSection:not(.hidden) {
+  display: block !important;
+}
