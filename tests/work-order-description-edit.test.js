@@ -8,10 +8,10 @@ const html = fs.readFileSync(path.join(root, "admin/oppdrag.html"), "utf8");
 const js = fs.readFileSync(path.join(root, "admin/work-order-description-edit.js"), "utf8");
 const css = fs.readFileSync(path.join(root, "admin/work-order-description-edit.css"), "utf8");
 
-test("oppdrag loads the direct description editor as field5", () => {
-  assert.match(html, /field-ui-20260913-5/);
-  assert.match(html, /work-order-description-edit\.css\?v=20260913-field5/);
-  assert.match(html, /work-order-description-edit\.js\?v=20260913-field5/);
+test("oppdrag loads the direct description editor after field workspace", () => {
+  assert.match(html, /meta name="sorgulen-build" content="field-ui-[^"]+"/);
+  assert.match(html, /work-order-description-edit\.css\?v=[^"]+/);
+  assert.match(html, /work-order-description-edit\.js\?v=[^"]+/);
   assert.ok(html.indexOf("work-order-field.js") < html.indexOf("work-order-description-edit.js"));
 });
 

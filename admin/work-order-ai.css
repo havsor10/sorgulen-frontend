@@ -1,0 +1,44 @@
+.work-ai-open{white-space:nowrap}
+.work-ai-toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));z-index:10050;max-width:min(88vw,420px);transform:translate(-50%,18px);opacity:0;pointer-events:none;padding:11px 15px;border:1px solid rgba(255,255,255,.16);border-radius:14px;background:#172231;color:#f7f9fc;font-weight:700;font-size:14px;box-shadow:0 18px 50px rgba(0,0,0,.35);transition:.18s ease}
+.work-ai-toast.show{opacity:1;transform:translate(-50%,0)}
+.work-ai-questions{margin:18px 0;border:1px solid rgba(102,173,255,.36);border-radius:20px;background:rgba(29,78,128,.14);overflow:hidden}
+.work-ai-questions-head{display:flex;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid rgba(255,255,255,.08)}
+.work-ai-questions-head span{display:block;color:#7eb8ff;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+.work-ai-questions-head strong{display:block;margin-top:3px;font-size:18px}
+.work-ai-question-list{display:grid;gap:0}
+.work-ai-question{padding:16px 18px;border-top:1px solid rgba(255,255,255,.06)}
+.work-ai-question:first-child{border-top:0}
+.work-ai-question p{margin:0 0 12px;line-height:1.45;color:#e8eef7}
+.work-ai-question>div{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.work-ai-link{border:0;background:transparent;color:#a8b6c9;padding:9px 8px;font:inherit;font-weight:700}
+.work-ai-modal{position:fixed;inset:0;z-index:11000;display:flex;align-items:flex-end;justify-content:center;padding:14px;background:rgba(2,7,14,.72);backdrop-filter:blur(8px)}
+.work-ai-modal[hidden]{display:none!important}
+.work-ai-sheet{width:min(760px,100%);max-height:92dvh;overflow:auto;border:1px solid rgba(255,255,255,.12);border-radius:24px 24px 18px 18px;background:#0d1621;color:#f5f7fa;box-shadow:0 28px 80px rgba(0,0,0,.55)}
+.work-ai-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.09);background:rgba(13,22,33,.96);backdrop-filter:blur(12px)}
+.work-ai-head span{display:block;color:#7eb8ff;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+.work-ai-head h2{margin:3px 0 0;font-size:22px}
+.work-ai-body{padding:18px 20px 24px}
+.work-ai-intro{margin:0 0 16px;color:#b3c0d0;line-height:1.5}
+.work-ai-picker{display:grid;gap:12px}
+.work-ai-preview{min-height:130px;display:grid;place-items:center;overflow:hidden;border:1px dashed rgba(255,255,255,.2);border-radius:16px;background:#09111a;color:#8190a3;text-align:center}
+.work-ai-preview img{display:block;width:100%;max-height:320px;object-fit:contain;background:#050a10}
+.work-ai-body>.primary-btn{width:100%;margin-top:12px}
+.work-ai-result-card{margin-top:18px;border:1px solid rgba(255,255,255,.1);border-radius:18px;background:#111c29;overflow:hidden}
+.work-ai-result-head{padding:16px 17px;border-bottom:1px solid rgba(255,255,255,.08)}
+.work-ai-result-head span{display:block;color:#91a5bd;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+.work-ai-result-head strong{display:block;margin-top:5px;line-height:1.4}
+.work-ai-warnings{padding:12px 16px;background:rgba(198,139,35,.12);border-bottom:1px solid rgba(241,184,67,.18)}
+.work-ai-warnings p{margin:5px 0;color:#f2ca75;line-height:1.42}
+.work-ai-actions{display:grid}
+.work-ai-action{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;padding:15px 16px;border-bottom:1px solid rgba(255,255,255,.07);cursor:pointer}
+.work-ai-action>input{width:20px;height:20px;margin-top:2px}
+.work-ai-action-copy{min-width:0}
+.work-ai-action-copy>strong{display:block;font-size:16px}
+.work-ai-action-copy>small{display:block;margin-top:5px;color:#c0ccda;line-height:1.45}
+.work-ai-action-copy>em{display:block;margin-top:7px;color:#8293a8;font-size:12px;font-style:normal;line-height:1.4}
+.work-ai-billable{display:flex;align-items:center;gap:8px;margin-top:11px;padding:9px 10px;border-radius:11px;background:#0a131e;color:#cad5e1;font-size:13px;font-weight:700}
+.work-ai-billable input{width:18px;height:18px}
+.work-ai-confirm-note{margin:14px 16px 10px;color:#9caabd;font-size:13px;line-height:1.45}
+#workAiApplyForm>.primary-btn{width:calc(100% - 32px);margin:0 16px 16px}
+.work-ai-empty{margin:16px;color:#abb8c8;line-height:1.5}
+@media(min-width:720px){.work-ai-modal{align-items:center}.work-ai-sheet{border-radius:24px}.work-ai-body{padding:22px 24px 28px}}
