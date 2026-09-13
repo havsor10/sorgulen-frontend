@@ -30,28 +30,46 @@ test("field workspace starts with customer, job, total time, price and invoice r
   assert.match(js, /mangler beskrivelse av hva som ble gjort/);
 });
 
-test("old exposed entry buttons are replaced by one add menu while inventory remains compatible", () => {
+test("invoice warnings have direct fix actions instead of dead-end messages", () => {
+  assert.match(js, /data-field-fix-email/);
+  assert.match(js, /data-field-email-form/);
+  assert.match(js, /data-field-edit-session/);
+  assert.match(js, /data-field-open-manager/);
+  assert.match(js, /\/admin\/customers\//);
+  assert.match(js, /refreshWorkspace/);
+  assert.match(js, /Legg inn e-post/);
+  assert.match(js, /Legg inn beskrivelse/);
+});
+
+test("add menu is a compact task picker while inventory remains compatible", () => {
   assert.match(js, /data-field-add-toggle/);
   assert.match(js, /data-field-add-menu/);
-  assert.match(js, /data-entry=\"time\"/);
+  assert.match(js, /data-field-add-time/);
   assert.match(js, /data-entry=\"expense\"/);
   assert.match(js, /data-entry=\"material\"/);
   assert.match(js, /data-entry=\"note\"/);
+  assert.match(js, /field-add-grid/);
   assert.match(inventory, /data-entry=material/);
+  assert.match(css, /field-add-grid/);
+  assert.match(css, /data-inventory-project-open/);
+  assert.match(css, /field-add-backdrop/);
   assert.match(css, /operations-edit-button\{display:none!important\}/);
   assert.match(compat, /data-field-workspace/);
   assert.match(compat, /operationsManager/);
   assert.match(compat, /fieldManagerSentinel/);
 });
 
-test("daily log groups sessions, pauses, descriptions and reusable session editing", () => {
+test("daily log groups sessions, removes zero pauses and opens the real time editor", () => {
   assert.match(js, /dailyLogMarkup/);
   assert.match(js, /pausePairs/);
+  assert.match(js, /seconds > 0/);
   assert.match(js, /field-day/);
   assert.match(js, /field-session/);
   assert.match(js, /Mangler beskrivelse/);
+  assert.match(js, /openSessionEditor/);
   assert.match(js, /SorgulenOperations\?\.openManualTime/);
   assert.match(js, /Rediger denne økten/);
+  assert.match(css, /operation-modal\{z-index:12050!important\}/);
 });
 
 test("secondary information is collapsed instead of occupying the field view", () => {
@@ -67,4 +85,5 @@ test("mobile detail is a full-screen field workspace with large controls", () =>
   assert.match(css, /field-add-main/);
   assert.match(css, /min-height:48px/);
   assert.match(css, /safe-area-inset-bottom/);
+  assert.match(css, /body\.field-add-open \.sai-launcher/);
 });
