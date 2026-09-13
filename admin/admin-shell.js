@@ -42,6 +42,7 @@
   document.body.classList.add("admin-app");
   ensureAsset("script", { src: "ai-guide.js?v=20260909-image1" });
   ensureAsset("script", { src: "ai-advisor-wow.js?v=20260910-wow1" });
+  ensureAsset("script", { src: "actionable-warnings.js?v=20260914-a1" });
   mount.innerHTML = `
     <header class="admin-app-header">
       <div class="admin-header-inner">
