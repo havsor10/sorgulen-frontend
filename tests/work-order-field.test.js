@@ -6,13 +6,16 @@ const path = require("node:path");
 const root = path.resolve(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "admin/oppdrag.html"), "utf8");
 const js = fs.readFileSync(path.join(root, "admin/work-order-field.js"), "utf8");
+const compat = fs.readFileSync(path.join(root, "admin/work-order-field-compat.js"), "utf8");
 const css = fs.readFileSync(path.join(root, "admin/work-order-field.css"), "utf8");
 const inventory = fs.readFileSync(path.join(root, "admin/inventory-project.js"), "utf8");
 
 test("oppdrag loads the dedicated field workspace after the legacy detail engine", () => {
   assert.match(html, /work-order-field\.css/);
   assert.match(html, /work-order-field\.js/);
+  assert.match(html, /work-order-field-compat\.js/);
   assert.ok(html.indexOf("oppdrag.js") < html.indexOf("work-order-field.js"));
+  assert.ok(html.indexOf("work-order-field.js") < html.indexOf("work-order-field-compat.js"));
   assert.match(html, /viewport-fit=cover/);
 });
 
@@ -36,6 +39,9 @@ test("old exposed entry buttons are replaced by one add menu while inventory rem
   assert.match(js, /data-entry=\"note\"/);
   assert.match(inventory, /data-entry=material/);
   assert.match(css, /operations-edit-button\{display:none!important\}/);
+  assert.match(compat, /data-field-workspace/);
+  assert.match(compat, /operationsManager/);
+  assert.match(compat, /fieldManagerSentinel/);
 });
 
 test("daily log groups sessions, pauses, descriptions and reusable session editing", () => {
