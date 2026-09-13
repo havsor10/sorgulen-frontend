@@ -9,6 +9,7 @@ const js = fs.readFileSync(path.join(root, "admin/hjem.js"), "utf8");
 const attentionJs = fs.readFileSync(path.join(root, "admin/home-attention.js"), "utf8");
 const css = fs.readFileSync(path.join(root, "admin/hjem.css"), "utf8");
 const attentionCss = fs.readFileSync(path.join(root, "admin/home-attention.css"), "utf8");
+const activeCustomersCss = fs.readFileSync(path.join(root, "admin/home-active-customers.css"), "utf8");
 const shellCss = fs.readFileSync(path.join(root, "admin/admin-shell.css"), "utf8");
 
 test("home prioritizes current work and concrete actions instead of dashboard noise", () => {
@@ -20,6 +21,17 @@ test("home prioritizes current work and concrete actions instead of dashboard no
   assert.match(attentionCss, /#latestBookings/);
   assert.match(attentionCss, /#ongoingSection/);
   assert.doesNotMatch(html, /Omsetning|Mulig inntekt|canvas|chart/i);
+});
+
+test("active customers are visible on home when ongoing projects exist", () => {
+  assert.match(html, /id="ongoingSection" aria-labelledby="ongoingTitle"/);
+  assert.doesNotMatch(html, /id="ongoingSection" class="hidden"/);
+  assert.match(html, /Aktive kunder/);
+  assert.match(html, /home-active-customers\.css/);
+  assert.match(activeCustomersCss, /#ongoingSection:not\(\.hidden\)/);
+  assert.doesNotMatch(attentionJs, /getElementById\("ongoingSection"\)\?\.classList\.add\("hidden"\)/);
+  assert.match(js, /ongoingProjects/);
+  assert.match(js, /status:\s*"stopped"|ongoingProjects/);
 });
 
 test("attention engine uses visual priority, direct actions and a calm all-clear state", () => {
