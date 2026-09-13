@@ -10,6 +10,7 @@
 
   let enhancing = false;
   let currentOrder = null;
+  let currentCompletionCheck = {};
   let currentControls = "";
   let currentInvoiceAction = "";
 
@@ -18,8 +19,16 @@
   const esc = (value) => String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
   const money = (value) => new Intl.NumberFormat("no-NO", { style: "currency", currency: "NOK", maximumFractionDigits: 2 }).format(Number(value) || 0);
 
-  async function api(path) {
-    const response = await fetch(`${API}${path}`, { cache: "no-store", headers: { "x-admin-key": localStorage.getItem(KEY) || "" } });
+  async function api(path, options = {}) {
+    const response = await fetch(`${API}${path}`, {
+      cache: "no-store",
+      ...options,
+      headers: {
+        "x-admin-key": localStorage.getItem(KEY) || "",
+        ...(options.body ? { "Content-Type": "application/json" } : {}),
+        ...(options.headers || {}),
+      },
+    });
     const data = await response.json().catch(() => null);
     if (response.status === 401 || response.status === 403) {
       localStorage.removeItem(KEY);
@@ -69,6 +78,7 @@
 
   function durationText(seconds) {
     const total = Math.max(0, Math.floor(Number(seconds) || 0));
+    if (total > 0 && total < 60) return "<1 min";
     const hours = Math.floor(total / 3600);
     const minutes = Math.floor((total % 3600) / 60);
     if (hours && minutes) return `${hours} t ${minutes} min`;
@@ -99,13 +109,65 @@
     return (order.workIntervals || []).filter((entry) => entry.endedAt && intervalSeconds(entry) > 0 && !String(entry.comment || "").trim());
   }
 
+  function handledCompletionText(text) {
+    const value = String(text || "");
+    return value === "En tidsregistrering er fortsatt åpen."
+      || value === "Prosjektet er allerede koblet til en faktura."
+      || value.includes("Kunden mangler e-postadresse")
+      || value.includes("mangler kundepris")
+      || value.includes("Fastpris er valgt")
+      || value.includes("Timesats mangler");
+  }
+
   function invoiceIssues(order, completionCheck) {
-    const ignored = ["En tidsregistrering er fortsatt åpen.", "Prosjektet er allerede koblet til en faktura."];
-    const blocking = (completionCheck?.blocking || []).filter((x) => !ignored.includes(x));
-    const warnings = [...(completionCheck?.warnings || [])];
-    const missing = missingDescriptions(order);
-    if (missing.length) warnings.push(`${missing.length} arbeidsøkt${missing.length === 1 ? "" : "er"} mangler beskrivelse av hva som ble gjort.`);
-    return { blocking, warnings, count: blocking.length + warnings.length };
+    const items = [];
+    const customer = order.customerSnapshot || {};
+
+    if (!String(customer.email || "").trim()) {
+      items.push({
+        key: "customer-email",
+        tone: "warning",
+        message: "Kunden mangler e-postadresse for elektronisk faktura.",
+        action: order.customerId ? "email" : "",
+        actionLabel: order.customerId ? "Legg inn e-post" : "",
+      });
+    }
+
+    for (const entry of missingDescriptions(order)) {
+      items.push({
+        key: `description-${entry.entryId}`,
+        tone: "warning",
+        message: `Arbeidsøkt ${dateTime(entry.startedAt)}–${clock(entry.endedAt)} mangler beskrivelse av hva som ble gjort.`,
+        action: "session",
+        actionId: entry.entryId,
+        actionLabel: "Legg inn beskrivelse",
+      });
+    }
+
+    for (const material of (order.materials || []).filter((x) => x.billable !== false && x.unitPrice == null)) {
+      items.push({
+        key: `material-${material.entryId}`,
+        tone: "warning",
+        message: `Materialet «${material.item}» mangler kundepris.`,
+        action: "registrations",
+        actionLabel: "Sett kundepris",
+      });
+    }
+
+    if (["fixed", "hybrid"].includes(order.pricingMode) && !(Number(order.fixedPrice) > 0)) {
+      items.push({ key: "fixed-price", tone: "blocking", message: "Fastpris er valgt, men fastpris mangler.", action: "registrations", actionLabel: "Sett pris" });
+    }
+    if (order.pricingMode !== "fixed" && !(Number(order.hourlyRate) > 0)) {
+      items.push({ key: "hourly-rate", tone: "blocking", message: "Timesats mangler.", action: "registrations", actionLabel: "Sett timesats" });
+    }
+
+    const generic = [
+      ...(completionCheck?.blocking || []).map((message) => ({ message, tone: "blocking" })),
+      ...(completionCheck?.warnings || []).map((message) => ({ message, tone: "warning" })),
+    ].filter((item) => !handledCompletionText(item.message));
+
+    generic.forEach((item, index) => items.push({ key: `generic-${index}`, ...item, action: "", actionLabel: "" }));
+    return { items, count: items.length };
   }
 
   function pausePairs(order) {
@@ -117,7 +179,8 @@
       if (pausedAt && ["resumed", "stopped", "completed", "cancelled"].includes(event.type)) {
         const start = new Date(pausedAt).getTime();
         const end = new Date(event.at).getTime();
-        if (Number.isFinite(start) && Number.isFinite(end) && end >= start) pauses.push({ startedAt: pausedAt, endedAt: event.at, seconds: Math.floor((end - start) / 1000) });
+        const seconds = Number.isFinite(start) && Number.isFinite(end) && end > start ? Math.floor((end - start) / 1000) : 0;
+        if (seconds > 0) pauses.push({ startedAt: pausedAt, endedAt: event.at, seconds });
         pausedAt = null;
       }
     }
@@ -216,8 +279,59 @@
     return `${money(order.hourlyRate)} / time`;
   }
 
+  function issueMarkup(issue, order) {
+    const action = issue.action === "email"
+      ? `<button type="button" class="field-issue-action" data-field-fix-email>${esc(issue.actionLabel)}</button>`
+      : issue.action === "session"
+        ? `<button type="button" class="field-issue-action" data-field-edit-session="${esc(issue.actionId)}">${esc(issue.actionLabel)}</button>`
+        : issue.action === "registrations"
+          ? `<button type="button" class="field-issue-action" data-field-open-manager>${esc(issue.actionLabel)}</button>`
+          : "";
+    const emailForm = issue.action === "email" && order.customerId
+      ? `<form class="field-inline-task" data-field-email-form hidden><label>E-postadresse<input name="email" type="email" autocomplete="email" placeholder="kunde@epost.no" required></label><p class="field-inline-error" data-field-email-error></p><div><button type="button" class="secondary-btn" data-field-email-cancel>Avbryt</button><button type="submit" class="primary-btn">Lagre e-post</button></div></form>`
+      : "";
+    return `<li class="field-issue ${issue.tone === "blocking" ? "blocking" : ""}" data-field-issue="${esc(issue.key)}"><div class="field-issue-row"><span>${esc(issue.message)}</span>${action}</div>${emailForm}</li>`;
+  }
+
+  function addMenuMarkup(order) {
+    if (["completed", "cancelled"].includes(order.status)) return "";
+    return `<div class="field-action-row">
+      <button type="button" class="field-add-main" data-field-add-toggle aria-expanded="false">+ Legg til registrering</button>
+      ${order.customerId ? `<a class="field-secondary-action" href="kunde.html?id=${encodeURIComponent(order.customerId)}">Kundeinfo</a>` : ""}
+      <div class="field-add-backdrop" data-field-add-backdrop hidden></div>
+      <section class="field-add-menu" data-field-add-menu hidden role="dialog" aria-modal="true" aria-label="Legg til på oppdrag">
+        <div class="field-add-head"><div><span>Legg til på oppdrag</span><strong>Hva vil du registrere?</strong></div><button type="button" data-field-add-close aria-label="Lukk">×</button></div>
+        <div class="field-add-grid">
+          <button type="button" class="field-add-option" data-field-add-time><span class="field-add-icon">◷</span><strong>Tid / arbeid</strong><small>Arbeidstid og hva du gjorde</small></button>
+          <button type="button" class="field-add-option" data-entry="expense" data-id="${esc(order._id)}"><span class="field-add-icon">kr</span><strong>Utgift</strong><small>Kjøp og andre kostnader</small></button>
+          <button type="button" class="field-add-option" data-entry="material" data-id="${esc(order._id)}"><span class="field-add-icon">▣</span><strong>Materiale</strong><small>Materiale kjøpt til oppdraget</small></button>
+          <button type="button" class="field-add-option" data-entry="note" data-id="${esc(order._id)}"><span class="field-add-icon">✎</span><strong>Notat</strong><small>Husk noe om arbeidet</small></button>
+        </div>
+      </section>
+    </div>`;
+  }
+
+  function closeAddMenu() {
+    detail.querySelector("[data-field-add-menu]")?.setAttribute("hidden", "");
+    detail.querySelector("[data-field-add-backdrop]")?.setAttribute("hidden", "");
+    detail.querySelector("[data-field-add-toggle]")?.setAttribute("aria-expanded", "false");
+    document.body.classList.remove("field-add-open");
+  }
+
+  function openAddMenu() {
+    const menu = detail.querySelector("[data-field-add-menu]");
+    const backdrop = detail.querySelector("[data-field-add-backdrop]");
+    if (!menu || !backdrop) return;
+    menu.removeAttribute("hidden");
+    backdrop.removeAttribute("hidden");
+    detail.querySelector("[data-field-add-toggle]")?.setAttribute("aria-expanded", "true");
+    document.body.classList.add("field-add-open");
+  }
+
   function render(order, completionCheck) {
+    closeAddMenu();
     currentOrder = order;
+    currentCompletionCheck = completionCheck || {};
     const customer = order.customerSnapshot || {};
     const issues = invoiceIssues(order, completionCheck);
     const missingPrice = (order.materials || []).some((x) => x.billable !== false && x.unitPrice == null);
@@ -230,17 +344,17 @@
         <div class="field-metrics">
           <div class="field-metric"><span>Arbeidstid</span><strong data-field-total-time>${esc(durationText(totalSeconds(order)))}</strong><small>Alle registrerte økter</small></div>
           <div class="field-metric"><span>Pris hittil</span><strong data-field-total-price>${esc(money(projectedTotal(order)))}</strong><small>${missingPrice ? "Foreløpig – materiale mangler pris" : "Fakturerbart registrert"}</small></div>
-          <div class="field-metric"><span>Fakturagrunnlag</span><strong>${issues.count ? `${issues.count} mangler` : "Klar ✓"}</strong><small>${issues.count ? "Trykk for å kontrollere" : "Alt viktig er registrert"}</small></div>
+          <div class="field-metric"><span>Fakturagrunnlag</span><strong>${issues.count ? `${issues.count} mangler` : "Klar ✓"}</strong><small>${issues.count ? "Trykk og ordne direkte" : "Alt viktig er registrert"}</small></div>
         </div>
-        <button type="button" class="field-readiness${issues.count ? "" : " ready"}" data-field-readiness-jump><span class="field-readiness-icon">${issues.count ? "!" : "✓"}</span><span class="field-readiness-copy"><strong>${issues.count ? "Fakturagrunnlaget trenger kontroll" : "Fakturagrunnlaget ser bra ut"}</strong><span>${issues.count ? `${issues.count} ting bør ordnes før faktura` : "Ingen manglende opplysninger funnet"}</span></span><span class="field-readiness-tail">›</span></button>
-        ${!["completed", "cancelled"].includes(order.status) ? `<div class="field-action-row"><div class="field-add-wrap"><button type="button" class="field-add-main" data-field-add-toggle aria-expanded="false">+ Legg til</button><div class="field-add-menu" data-field-add-menu hidden><button type="button" data-entry="time" data-id="${esc(order._id)}">Tid / arbeid</button><button type="button" data-entry="expense" data-id="${esc(order._id)}">Utgift</button><button type="button" data-entry="material" data-id="${esc(order._id)}">Materiale</button><button type="button" data-entry="note" data-id="${esc(order._id)}">Notat</button></div></div>${order.customerId ? `<a class="field-secondary-action" href="kunde.html?id=${encodeURIComponent(order.customerId)}">Kundeinfo</a>` : ""}</div>` : ""}
+        <button type="button" class="field-readiness${issues.count ? "" : " ready"}" data-field-readiness-jump><span class="field-readiness-icon">${issues.count ? "!" : "✓"}</span><span class="field-readiness-copy"><strong>${issues.count ? "Fakturagrunnlaget trenger kontroll" : "Fakturagrunnlaget ser bra ut"}</strong><span>${issues.count ? `${issues.count} ting kan ordnes herfra` : "Ingen manglende opplysninger funnet"}</span></span><span class="field-readiness-tail">›</span></button>
+        ${addMenuMarkup(order)}
       </section>
 
       <section class="field-section"><div class="field-section-head"><div><h3>Arbeidslogg</h3><p>Dato, klokkeslett, pauser og hva som ble gjort.</p></div></div><div class="field-log">${dailyLogMarkup(order)}</div></section>
 
-      <details id="fieldReadiness" class="field-collapse" ${issues.count ? "open" : ""}><summary>Fakturakontroll <span>${issues.count ? `${issues.count} ting å kontrollere` : "Klar"}</span></summary><div class="field-collapse-body">${issues.count ? `<ul class="field-issue-list">${issues.blocking.map((x) => `<li class="blocking">${esc(x)}</li>`).join("")}${issues.warnings.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : '<p class="field-clear-note">Kunden, prisgrunnlaget og registreringene har opplysningene systemet krever akkurat nå.</p>'}</div></details>
+      <details id="fieldReadiness" class="field-collapse" ${issues.count ? "open" : ""}><summary>Fakturakontroll <span>${issues.count ? `${issues.count} ting å ordne` : "Klar"}</span></summary><div class="field-collapse-body">${issues.count ? `<ul class="field-issue-list">${issues.items.map((issue) => issueMarkup(issue, order)).join("")}</ul>` : '<p class="field-clear-note">Kunden, prisgrunnlaget og registreringene har opplysningene systemet krever akkurat nå.</p>'}</div></details>
 
-      <details class="field-collapse"><summary>Kunde og prosjektinfo <span>${esc(pricingLabel(order))}</span></summary><div class="field-collapse-body"><div class="field-info-grid"><div><span>Kunde</span><strong>${esc(customer.name || "–")}</strong></div><div><span>Kontakt</span><strong>${esc(contact)}</strong></div><div><span>Oppdrag</span><strong>${esc(order.serviceName)}</strong></div><div><span>Oppdragsdato</span><strong>${esc(order.jobDate || "–")}</strong></div><div><span>Pris</span><strong>${esc(pricingLabel(order))}</strong></div><div><span>Kilde</span><strong>${esc(order.customerSourceType || "Manuell")}${order.sourceRefNumber ? ` · #${esc(order.sourceRefNumber)}` : ""}</strong></div></div></div></details>
+      <details id="fieldProjectInfo" class="field-collapse"><summary>Kunde og prosjektinfo <span>${esc(pricingLabel(order))}</span></summary><div class="field-collapse-body"><div class="field-info-grid"><div><span>Kunde</span><strong>${esc(customer.name || "–")}</strong></div><div><span>Kontakt</span><strong>${esc(contact)}</strong></div><div><span>Oppdrag</span><strong>${esc(order.serviceName)}</strong></div><div><span>Oppdragsdato</span><strong>${esc(order.jobDate || "–")}</strong></div><div><span>Pris</span><strong>${esc(pricingLabel(order))}</strong></div><div><span>Kilde</span><strong>${esc(order.customerSourceType || "Manuell")}${order.sourceRefNumber ? ` · #${esc(order.sourceRefNumber)}` : ""}</strong></div></div></div></details>
 
       <details class="field-collapse"><summary>Utgifter, materialer og notater <span>${(order.additionalCosts || []).length + (order.materials || []).length + (order.projectNotes || []).length} registreringer</span></summary><div class="field-collapse-body">${registrationsMarkup(order)}</div></details>
 
@@ -261,6 +375,15 @@
     currentInvoiceAction = invoiceLink ? invoiceLink.outerHTML : "";
   }
 
+  async function refreshWorkspace(orderId = currentOrder?._id) {
+    if (!orderId) return;
+    const [orderData, checkData] = await Promise.all([
+      api(`/admin/work-orders/${encodeURIComponent(orderId)}`),
+      api(`/admin/work-orders/${encodeURIComponent(orderId)}/completion-check`),
+    ]);
+    render(orderData.workOrder, checkData.completionCheck || {});
+  }
+
   async function enhance() {
     if (enhancing) return;
     if (detail.querySelector("[data-field-workspace]")) {
@@ -272,11 +395,7 @@
     enhancing = true;
     captureLegacyActions();
     try {
-      const [orderData, checkData] = await Promise.all([
-        api(`/admin/work-orders/${encodeURIComponent(id)}`),
-        api(`/admin/work-orders/${encodeURIComponent(id)}/completion-check`),
-      ]);
-      render(orderData.workOrder, checkData.completionCheck || {});
+      await refreshWorkspace(id);
     } catch (error) {
       console.warn("Kunne ikke bygge feltvisning:", error.message);
     } finally {
@@ -284,39 +403,101 @@
     }
   }
 
+  function openSessionEditor(entryId) {
+    if (!currentOrder) return;
+    const entry = (currentOrder.workIntervals || []).find((x) => x.entryId === entryId);
+    if (!entry) return;
+    if (window.SorgulenOperations?.openManualTime) {
+      closeAddMenu();
+      window.SorgulenOperations.openManualTime({ orderId: currentOrder._id, entry, rate: currentOrder.hourlyRate });
+    } else {
+      alert("Tidsredigering er ikke klar ennå. Oppdater siden og prøv igjen.");
+    }
+  }
+
   document.addEventListener("click", (event) => {
     const toggle = event.target.closest("[data-field-add-toggle]");
     if (toggle) {
-      const menu = detail.querySelector("[data-field-add-menu]");
-      if (!menu) return;
-      const open = menu.hidden;
-      menu.hidden = !open;
-      toggle.setAttribute("aria-expanded", String(open));
+      if (detail.querySelector("[data-field-add-menu]")?.hasAttribute("hidden")) openAddMenu();
+      else closeAddMenu();
       return;
     }
-    if (!event.target.closest(".field-add-wrap")) {
-      const menu = detail.querySelector("[data-field-add-menu]");
-      const addToggle = detail.querySelector("[data-field-add-toggle]");
-      if (menu) menu.hidden = true;
-      addToggle?.setAttribute("aria-expanded", "false");
+    if (event.target.closest("[data-field-add-close], [data-field-add-backdrop]")) {
+      closeAddMenu();
+      return;
     }
+    const addTime = event.target.closest("[data-field-add-time]");
+    if (addTime && currentOrder) {
+      event.preventDefault();
+      closeAddMenu();
+      window.SorgulenOperations?.openManualTime?.({ orderId: currentOrder._id, rate: currentOrder.hourlyRate });
+      return;
+    }
+    if (event.target.closest("[data-field-add-menu] [data-entry]")) closeAddMenu();
+
     const readiness = event.target.closest("[data-field-readiness-jump]");
     if (readiness) {
       const target = document.getElementById("fieldReadiness");
       if (target) { target.open = true; target.scrollIntoView({ behavior: "smooth", block: "center" }); }
       return;
     }
+
     const edit = event.target.closest("[data-field-edit-session]");
-    if (edit && currentOrder) {
-      const entry = (currentOrder.workIntervals || []).find((x) => x.entryId === edit.dataset.fieldEditSession);
-      if (!entry) return;
-      if (window.SorgulenOperations?.openManualTime) {
-        window.SorgulenOperations.openManualTime({ orderId: currentOrder._id, entry, rate: currentOrder.hourlyRate });
-      } else {
-        alert("Tidsredigering er ikke klar ennå. Oppdater siden og prøv igjen.");
-      }
+    if (edit) {
+      openSessionEditor(edit.dataset.fieldEditSession);
+      return;
     }
-  }, false);
+
+    const emailButton = event.target.closest("[data-field-fix-email]");
+    if (emailButton) {
+      const issue = emailButton.closest("[data-field-issue]");
+      const form = issue?.querySelector("[data-field-email-form]");
+      if (form) {
+        form.hidden = false;
+        emailButton.hidden = true;
+        form.elements.email.focus();
+      }
+      return;
+    }
+
+    const emailCancel = event.target.closest("[data-field-email-cancel]");
+    if (emailCancel) {
+      const issue = emailCancel.closest("[data-field-issue]");
+      const form = issue?.querySelector("[data-field-email-form]");
+      const button = issue?.querySelector("[data-field-fix-email]");
+      if (form) form.hidden = true;
+      if (button) button.hidden = false;
+      return;
+    }
+
+    const manager = event.target.closest("[data-field-open-manager]");
+    if (manager && currentOrder) {
+      window.SorgulenOperations?.openManager?.(currentOrder._id);
+    }
+  });
+
+  document.addEventListener("submit", async (event) => {
+    const form = event.target.closest("[data-field-email-form]");
+    if (!form || !currentOrder?.customerId) return;
+    event.preventDefault();
+    const email = String(new FormData(form).get("email") || "").trim();
+    const error = form.querySelector("[data-field-email-error]");
+    const save = form.querySelector('button[type="submit"]');
+    if (error) error.textContent = "";
+    if (!email) {
+      if (error) error.textContent = "Skriv inn e-postadressen.";
+      return;
+    }
+    save.disabled = true;
+    try {
+      await api(`/admin/customers/${encodeURIComponent(currentOrder.customerId)}`, { method: "PATCH", body: JSON.stringify({ email }) });
+      await refreshWorkspace(currentOrder._id);
+    } catch (err) {
+      if (error) error.textContent = err.message;
+    } finally {
+      save.disabled = false;
+    }
+  });
 
   const observer = new MutationObserver(() => window.setTimeout(enhance, 0));
   observer.observe(detail, { childList: true, subtree: true });
