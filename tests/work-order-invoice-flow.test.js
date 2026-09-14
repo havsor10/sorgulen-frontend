@@ -10,15 +10,15 @@ const invoiceHtml = fs.readFileSync(path.join(root, "admin/faktura-ny.html"), "u
 const invoicePicker = fs.readFileSync(path.join(root, "admin/invoice-work-order-picker.js"), "utf8");
 const invoiceJs = fs.readFileSync(path.join(root, "admin/faktura-ny.js"), "utf8");
 
-test("oppdrag cache-buster loads the completed work-order flow", () => {
-  assert.match(oppdragHtml, /20260915-flow1/);
-  assert.match(oppdragHtml, /completed-work-order-flow\.js\?v=20260915-flow1/);
+test("oppdrag cache-buster loads the closed work-order flow", () => {
+  assert.match(oppdragHtml, /20260915-flow2/);
+  assert.match(oppdragHtml, /completed-work-order-flow\.js\?v=20260915-flow2/);
   assert.doesNotMatch(oppdragHtml, /work-order-field-compat\.js\?v=20260914-ai1/);
 });
 
 test("completed uninvoiced work orders stay editable and invoice directly by id", () => {
-  assert.match(completedFlow, /order\.status !== "completed"/);
-  assert.match(completedFlow, /if \(order\.invoiceId\)/);
+  assert.match(completedFlow, /\["completed", "cancelled"\]\.includes\(order\.status\)/);
+  assert.match(completedFlow, /else if \(order\.invoiceId\)/);
   assert.match(completedFlow, /faktura-ny\.html\?workOrderId=/);
   assert.match(completedFlow, /Opprett faktura fra dette oppdraget/);
   assert.match(completedFlow, /data-completed-add-time/);
