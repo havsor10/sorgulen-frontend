@@ -33,7 +33,8 @@ jobs:
           node --check admin/home-project-link.js
           node --check admin/work-order-time.js
           node --check admin/work-order-field.js
-          node --check admin/work-order-field-compat.js
+          node --check admin/work-order-editor.js
+          node --check admin/work-order-ai.js
           node --check admin/lager-runtime.js
           node --check admin/inventory-project.js
           node --check admin/inventory-material-edit.js
