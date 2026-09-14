@@ -18,7 +18,8 @@
   ensureAsset("link", { rel: "stylesheet", href: "ai-advisor-wow.css?v=20260910-wow1" });
   ensureAsset("link", { rel: "manifest", href: "manifest.webmanifest" });
   ensureAsset("link", { rel: "apple-touch-icon", href: "../assets/logo.png" });
-  if (!["home", "inventory", "snow"].includes(page)) ensureAsset("script", { src: "operations-ui.js?v=20260904-snow1" });
+  // Oppdrag har nå én egen kontroller. Ikke last den gamle operations-ui i tillegg.
+  if (!["home", "inventory", "snow", "jobs"].includes(page)) ensureAsset("script", { src: "operations-ui.js?v=20260904-snow1" });
   if (page === "jobs") ensureAsset("script", { src: "inventory-material-edit.js?v=20260904-snow1" });
 
   const navItems = [
