@@ -16,10 +16,10 @@ test("oppdrag bruker én samlet editor for registreringer", () => {
 });
 
 test("editor støtter legg til, rediger og slett for alle registreringstyper", () => {
-  assert.match(source, /kind === "time"/);
-  assert.match(source, /kind === "expense"/);
-  assert.match(source, /kind === "material"/);
-  assert.match(source, /kind === "note"/);
+  assert.match(source, /function timeForm/);
+  assert.match(source, /function expenseForm/);
+  assert.match(source, /function materialForm/);
+  assert.match(source, /function noteForm/);
   assert.match(source, /method: editing \? "PATCH" : "POST"/);
   assert.match(source, /method: "DELETE"/);
   assert.match(source, /confirm\(/);
