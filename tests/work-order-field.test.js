@@ -46,14 +46,6 @@ test("invoice warnings have direct fix actions instead of dead-end messages", ()
   assert.match(js, /Legg inn beskrivelse/);
 });
 
-test("completed jobs expose the work-order id and a clear invoice action", () => {
-  assert.match(compat, /faktura-ny\.html\?workOrderId=/);
-  assert.match(compat, /fieldCompletedOrderId/);
-  assert.match(compat, /dataset\.entry\s*=\s*"completed"/);
-  assert.match(compat, /fieldInvoiceShortcut/);
-  assert.match(compat, /Opprett faktura/);
-});
-
 test("add menu is a compact task picker while inventory remains compatible", () => {
   assert.match(js, /data-field-add-toggle/);
   assert.match(js, /data-field-add-menu/);
@@ -70,6 +62,7 @@ test("add menu is a compact task picker while inventory remains compatible", () 
   assert.match(compat, /data-field-workspace/);
   assert.match(compat, /operationsManager/);
   assert.match(compat, /fieldManagerSentinel/);
+  assert.doesNotMatch(compat, /fieldInvoiceShortcut|fieldCompletedOrderId/);
 });
 
 test("daily log groups sessions, removes zero pauses and opens the real time editor", () => {
