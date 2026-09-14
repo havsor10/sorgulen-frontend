@@ -9,6 +9,7 @@
 
   let checking = false;
   let lastOrderId = "";
+  let lastOpenedOrderId = new URLSearchParams(location.search).get("open") || "";
 
   const esc = (value) => String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -17,10 +18,15 @@
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 
-  async function api(path) {
+  async function api(path, options = {}) {
     const response = await fetch(`${API}${path}`, {
       cache: "no-store",
-      headers: { "x-admin-key": localStorage.getItem(KEY) || "" },
+      ...options,
+      headers: {
+        "x-admin-key": localStorage.getItem(KEY) || "",
+        ...(options.body ? { "Content-Type": "application/json" } : {}),
+        ...(options.headers || {}),
+      },
     });
     const data = await response.json().catch(() => null);
     if (response.status === 401 || response.status === 403) {
@@ -28,13 +34,21 @@
       location.href = "login.html";
       throw new Error("Logg inn på nytt");
     }
-    if (!response.ok) throw new Error(data?.error || `API-feil ${response.status}`);
+    if (!response.ok) throw Object.assign(new Error(data?.error || `API-feil ${response.status}`), { data, status: response.status });
     return data;
   }
+
+  document.addEventListener("click", (event) => {
+    const opener = event.target.closest(".open-job-detail[data-id]");
+    if (opener?.dataset.id) lastOpenedOrderId = opener.dataset.id;
+  }, true);
 
   function orderIdFromDetail() {
     const workspace = detail.querySelector("[data-field-workspace][data-order-id]");
     if (workspace?.dataset.orderId) return workspace.dataset.orderId;
+
+    const closed = detail.querySelector("[data-field-closed-order-id]");
+    if (closed?.dataset.fieldClosedOrderId) return closed.dataset.fieldClosedOrderId;
 
     const completed = detail.querySelector("[data-field-completed-order-id]");
     if (completed?.dataset.fieldCompletedOrderId) return completed.dataset.fieldCompletedOrderId;
@@ -48,23 +62,41 @@
         return new URL(invoiceLink.getAttribute("href") || "", location.href).searchParams.get("workOrderId") || "";
       } catch (_) {}
     }
-    return "";
+    return lastOpenedOrderId || "";
   }
 
   function removePanel() {
     detail.querySelectorAll("[data-completed-workflow]").forEach((node) => node.remove());
   }
 
+  function exposeLegacyOrderId(order) {
+    if (detail.querySelector("[data-field-workspace], [data-field-closed-order-id]")) return;
+    if (!["completed", "cancelled"].includes(order.status)) return;
+    const marker = document.createElement("span");
+    marker.hidden = true;
+    marker.dataset.fieldClosedOrderId = String(order._id);
+    marker.dataset.entry = "closed-work-order";
+    marker.dataset.id = String(order._id);
+    detail.appendChild(marker);
+  }
+
   function renderPanel(order) {
     removePanel();
-    if (order.status !== "completed") return;
+    if (!["completed", "cancelled"].includes(order.status)) return;
 
     const host = detail.querySelector(".field-hero") || detail;
     const panel = document.createElement("section");
-    panel.className = "completed-workflow";
+    panel.className = `completed-workflow${order.status === "cancelled" ? " cancelled-workflow" : ""}`;
     panel.dataset.completedWorkflow = "true";
 
-    if (order.invoiceId) {
+    if (order.status === "cancelled") {
+      panel.innerHTML = `
+        <div class="completed-workflow-copy">
+          <strong>Oppdraget er avbrutt – men dataene er bevart</strong>
+          <span>Gjenåpne oppdraget for å redigere eller slette feilregistreringer. Deretter kan du ferdigstille og fakturere normalt.</span>
+        </div>
+        <button type="button" class="completed-workflow-primary" data-recover-cancelled-order>Gjenåpne for korrigering</button>`;
+    } else if (order.invoiceId) {
       panel.innerHTML = `
         <div class="completed-workflow-copy">
           <strong>Oppdraget er fakturert / har fakturautkast</strong>
@@ -107,15 +139,36 @@
       const order = data?.workOrder;
       if (!order) return;
       lastOrderId = orderId;
+      lastOpenedOrderId = orderId;
+      exposeLegacyOrderId(order);
       renderPanel(order);
     } catch (error) {
-      console.warn("Kunne ikke bygge ferdigstillingsflyt:", error.message);
+      console.warn("Kunne ikke bygge lukket oppdragsflyt:", error.message);
     } finally {
       checking = false;
     }
   }
 
-  detail.addEventListener("click", (event) => {
+  detail.addEventListener("click", async (event) => {
+    const recoverButton = event.target.closest("[data-recover-cancelled-order]");
+    if (recoverButton && lastOrderId) {
+      event.preventDefault();
+      recoverButton.disabled = true;
+      recoverButton.textContent = "Gjenåpner…";
+      try {
+        await api(`/admin/work-orders/${encodeURIComponent(lastOrderId)}/recover`, {
+          method: "POST",
+          body: JSON.stringify({}),
+        });
+        location.href = `oppdrag.html?open=${encodeURIComponent(lastOrderId)}&recovered=1`;
+      } catch (error) {
+        alert(error.message || "Kunne ikke gjenåpne oppdraget.");
+        recoverButton.disabled = false;
+        recoverButton.textContent = "Gjenåpne for korrigering";
+      }
+      return;
+    }
+
     const timeButton = event.target.closest("[data-completed-add-time]");
     if (!timeButton || !lastOrderId) return;
     event.preventDefault();
@@ -129,8 +182,10 @@
   const style = document.createElement("style");
   style.textContent = `
     .completed-workflow{margin-top:16px;padding:16px;border:1px solid #35506f;border-radius:18px;background:#0d1929;display:grid;gap:12px}
+    .completed-workflow.cancelled-workflow{border-color:#a94848;background:#241315}
     .completed-workflow-copy{display:grid;gap:4px}.completed-workflow-copy strong{font-size:17px}.completed-workflow-copy span{color:#9fb0c5;line-height:1.4}
-    .completed-workflow-primary{display:flex;align-items:center;justify-content:center;min-height:54px;padding:12px 16px;border-radius:14px;background:#e9eef5;color:#101722!important;text-decoration:none!important;font-weight:900;text-align:center}
+    .completed-workflow-primary{display:flex;width:100%;align-items:center;justify-content:center;min-height:54px;padding:12px 16px;border:0;border-radius:14px;background:#e9eef5;color:#101722!important;text-decoration:none!important;font:inherit;font-weight:900;text-align:center;cursor:pointer}
+    .completed-workflow-primary:disabled{opacity:.65;cursor:wait}
     .completed-workflow-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.completed-workflow-grid button,.completed-workflow-grid a{min-height:46px;border:1px solid #35475d;border-radius:12px;background:#172438;color:#f4f7fb;text-decoration:none;display:flex;align-items:center;justify-content:center;font:inherit;font-weight:700;padding:9px;text-align:center}
     @media(max-width:520px){.completed-workflow-grid{grid-template-columns:1fr 1fr}}
   `;
