@@ -11,6 +11,43 @@
     return "";
   };
 
+  function exposeCompletedInvoiceOrderId() {
+    if (detail.querySelector("[data-field-workspace], [data-field-completed-order-id]")) return;
+    const link = detail.querySelector('a[href*="faktura-ny.html?workOrderId="]');
+    if (!link) return;
+    try {
+      const url = new URL(link.getAttribute("href") || "", location.href);
+      const orderId = String(url.searchParams.get("workOrderId") || "").trim();
+      if (!orderId) return;
+      const sentinel = document.createElement("span");
+      sentinel.hidden = true;
+      sentinel.dataset.fieldCompletedOrderId = orderId;
+      sentinel.dataset.entry = "completed";
+      sentinel.dataset.id = orderId;
+      detail.appendChild(sentinel);
+    } catch (_) {}
+  }
+
+  function promoteInvoiceAction() {
+    const workspace = detail.querySelector("[data-field-workspace]");
+    if (!workspace || workspace.querySelector("[data-field-invoice-shortcut]")) return;
+    const sourceLink = workspace.querySelector('a[href*="faktura-ny.html?workOrderId="], a[href*="faktura-detalj.html?id="]');
+    if (!sourceLink) return;
+    const hero = workspace.querySelector(".field-hero");
+    if (!hero) return;
+
+    const wrap = document.createElement("div");
+    wrap.className = "field-invoice-shortcut";
+    wrap.dataset.fieldInvoiceShortcut = "true";
+
+    const link = sourceLink.cloneNode(true);
+    link.classList.add("field-invoice-shortcut-button");
+    const href = link.getAttribute("href") || "";
+    link.textContent = href.includes("faktura-ny.html") ? "Opprett faktura" : "Åpne faktura";
+    wrap.appendChild(link);
+    hero.appendChild(wrap);
+  }
+
   function markFieldWorkspace() {
     const workspace = detail.querySelector("[data-field-workspace]");
     if (!workspace) return;
@@ -123,13 +160,18 @@
     .field-register-row[data-field-registration-edit="true"]:active{background:rgba(126,184,255,.08)}
     .field-register-row[data-field-registration-edit="true"]:focus-visible{outline:2px solid #7eb8ff;outline-offset:2px}
     .operation-actions [data-operation-delete-current]{margin-right:auto}
+    .field-invoice-shortcut{margin-top:14px}
+    .field-invoice-shortcut-button{display:flex!important;width:100%;min-height:52px;align-items:center;justify-content:center;text-align:center;font-weight:800}
   `;
   document.head.appendChild(style);
 
-  new MutationObserver(() => {
+  function syncCompatibility() {
+    exposeCompletedInvoiceOrderId();
     markFieldWorkspace();
+    promoteInvoiceAction();
     installDeleteButton();
-  }).observe(document.body, { childList: true, subtree: true });
-  markFieldWorkspace();
-  installDeleteButton();
+  }
+
+  new MutationObserver(syncCompatibility).observe(document.body, { childList: true, subtree: true });
+  syncCompatibility();
 })();
