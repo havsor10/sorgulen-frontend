@@ -8,11 +8,11 @@ const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 
 test("AI-laget lastes før eksisterende oppdragslagring", () => {
   const html = read("admin/oppdrag.html");
-  const ai = html.indexOf('work-order-ai.js?v=20260914-ai1');
+  const ai = html.indexOf('work-order-ai.js?v=');
   const jobs = html.indexOf('<script src="oppdrag.js"></script>');
-  const operations = html.indexOf('operations-ui.js?v=20260914-ai1');
+  const operations = html.indexOf('operations-ui.js?v=');
   assert.ok(ai > 0 && ai < jobs && ai < operations);
-  assert.match(html, /work-order-ai\.css\?v=20260914-ai1/);
+  assert.match(html, /work-order-ai\.css\?v=[^"']+/);
 });
 
 test("automatisk korrektur går bare på fritekst, ikke priser eller produktnavn", () => {
