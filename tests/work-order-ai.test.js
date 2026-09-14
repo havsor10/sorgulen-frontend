@@ -6,13 +6,13 @@ const path = require("node:path");
 const root = path.resolve(__dirname, "..");
 const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 
-test("AI-laget lastes før eksisterende oppdragslagring", () => {
+test("AI-laget lastes før oppdragslagring og samlet editor", () => {
   const html = read("admin/oppdrag.html");
-  const ai = html.indexOf('work-order-ai.js?v=20260914-ai1');
+  const ai = html.indexOf("work-order-ai.js");
   const jobs = html.indexOf('<script src="oppdrag.js"></script>');
-  const operations = html.indexOf('operations-ui.js?v=20260914-ai1');
-  assert.ok(ai > 0 && ai < jobs && ai < operations);
-  assert.match(html, /work-order-ai\.css\?v=20260914-ai1/);
+  const editor = html.indexOf("work-order-editor.js");
+  assert.ok(ai > 0 && ai < jobs && ai < editor);
+  assert.match(html, /work-order-ai\.css\?v=20260914-clean1/);
 });
 
 test("automatisk korrektur går bare på fritekst, ikke priser eller produktnavn", () => {
