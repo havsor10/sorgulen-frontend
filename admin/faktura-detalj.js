@@ -69,6 +69,13 @@
   function latestFailedEmail(inv) {
     return [...(inv.emailLog || [])].reverse().find((entry) => entry.status === "failed") || null;
   }
+  function validationParts(validation) {
+    const warnings = Array.isArray(validation?.warnings) ? validation.warnings : [];
+    const blockers = Array.isArray(validation?.blockers)
+      ? validation.blockers
+      : (validation?.canOverride ? [] : (validation?.problems || []));
+    return { blockers, warnings };
+  }
 
   function actionButtons(inv) {
     const buttons = [`<button class="btn-preview" data-action="preview">📄 Forhåndsvis PDF</button>`];
@@ -198,13 +205,37 @@
       const res = await fetch(`${API_BASE}/invoices/${inv._id}/issue-validation`, { headers: headers() });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Kunne ikke kontrollere fakturaen");
-      if (data.canIssue) {
-        box.innerHTML = `<div class="fd-label">Kontroll før utstedelse</div><div class="fd-value" style="color:#8fe0a8;">✓ Klar til utstedelse. Fakturanummer tildeles først når du trykker «${inv.isCreditNote ? "Utsted kreditnota" : "Utsted faktura"}».</div>`;
-      } else {
-        box.innerHTML = `<div class="fd-label">Kan ikke utstede ennå</div><ul class="fd-validation-list">${(data.problems || []).map((problem) => `<li>${escapeHtml(problem)}</li>`).join("")}</ul>`;
-      }
+      const { blockers, warnings } = validationParts(data);
       const issueBtn = content.querySelector('[data-action="issue"]');
-      if (issueBtn) issueBtn.disabled = !data.canIssue;
+      const normalLabel = inv.isCreditNote ? "Utsted kreditnota" : "Utsted faktura";
+
+      if (blockers.length) {
+        box.innerHTML = `<div class="fd-label">Kan ikke utstede ennå</div><ul class="fd-validation-list">${blockers.map((problem) => `<li>${escapeHtml(problem)}</li>`).join("")}</ul>`;
+        if (issueBtn) {
+          issueBtn.disabled = true;
+          issueBtn.textContent = normalLabel;
+        }
+        return;
+      }
+
+      if (warnings.length) {
+        box.innerHTML = `
+          <div class="fd-label">Mangler valgfri informasjon</div>
+          <p class="fd-info">Du kan rette dette, eller utstede fakturaen uten opplysningene.</p>
+          <ul class="fd-validation-list">${warnings.map((warning) => `<li>${escapeHtml(warning)}</li>`).join("")}</ul>
+        `;
+        if (issueBtn) {
+          issueBtn.disabled = false;
+          issueBtn.textContent = inv.isCreditNote ? "Utsted kreditnota likevel" : "Utsted likevel";
+        }
+        return;
+      }
+
+      box.innerHTML = `<div class="fd-label">Kontroll før utstedelse</div><div class="fd-value" style="color:#8fe0a8;">✓ Klar til utstedelse. Fakturanummer tildeles først når du trykker «${normalLabel}».</div>`;
+      if (issueBtn) {
+        issueBtn.disabled = false;
+        issueBtn.textContent = normalLabel;
+      }
     } catch (err) {
       box.innerHTML = `<div class="fd-label">Kontroll før utstedelse</div><div class="fd-warn">${escapeHtml(err.message || "Kontroll feilet")}</div>`;
     }
@@ -231,13 +262,23 @@
         const validationRes = await fetch(`${API_BASE}/invoices/${inv._id}/issue-validation`, { headers: headers() });
         const validation = await validationRes.json().catch(() => ({}));
         if (!validationRes.ok) throw new Error(validation.error || "Kunne ikke kontrollere fakturaen");
-        if (!validation.canIssue) throw new Error(`Kan ikke utstede: ${(validation.problems || []).join(" ")}`);
+        const { blockers, warnings } = validationParts(validation);
+        if (blockers.length) throw new Error(`Kan ikke utstede: ${blockers.join(" ")}`);
+
         const label = inv.isCreditNote ? "kreditnotaen" : "fakturaen";
-        if (!confirm(`Du er i ferd med å utstede ${label}. Fakturanummer vil bli tildelt og dokumentets økonomiske opplysninger låses.\n\nFortsette?`)) return;
+        const warningText = warnings.length
+          ? `Følgende informasjon mangler:\n\n• ${warnings.join("\n• ")}\n\nDette er valgfritt. Vil du utstede ${label} likevel?`
+          : `Du er i ferd med å utstede ${label}. Fakturanummer vil bli tildelt og dokumentets økonomiske opplysninger låses.\n\nFortsette?`;
+        if (!confirm(warningText)) return;
+
         if (element) element.disabled = true;
         setMessage(`Utsteder ${label}…`);
         const operationId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
-        const res = await fetch(`${API_BASE}/invoices/${inv._id}/issue`, { method: "POST", headers: headers(), body: JSON.stringify({ operationId }) });
+        const res = await fetch(`${API_BASE}/invoices/${inv._id}/issue`, {
+          method: "POST",
+          headers: headers(),
+          body: JSON.stringify({ operationId, allowWarnings: warnings.length > 0 }),
+        });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || "Kunne ikke utstede");
         setMessage(`${inv.isCreditNote ? "Kreditnota" : "Faktura"} ${data.invoice.invoiceNumber} er utstedt og låst. ✓`, "success");
