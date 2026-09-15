@@ -20,7 +20,7 @@ test("issued invoice can be shared as PDF through the native share sheet", () =>
 
 test("manual delivery is explicit and never silently marks a share as sent", () => {
   assert.match(ui, /Ble fakturaen sendt\/levert til kunden\?/);
-  assert.match(ui, /method: "message"/);
-  assert.match(ui, /method: "shown"/);
+  assert.match(ui, /markDelivered\("message"\)/);
+  assert.match(ui, /markDelivered\("shown"\)/);
   assert.match(ui, /Marker levert på melding/);
 });
