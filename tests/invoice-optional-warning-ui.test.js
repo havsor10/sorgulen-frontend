@@ -8,13 +8,13 @@ const html = fs.readFileSync(path.join(root, "admin/faktura-detalj.html"), "utf8
 const ui = fs.readFileSync(path.join(root, "admin/faktura-detalj.js"), "utf8");
 
 test("invoice detail loads fresh override-aware controller", () => {
-  assert.match(html, /faktura-detalj\.js\?v=20260915-override1/);
+  assert.match(html, /faktura-detalj\.js\?v=20260915-audit1/);
 });
 
 test("warnings can be explicitly overridden but blockers cannot", () => {
   assert.match(ui, /validationParts/);
   assert.match(ui, /const \{ blockers, warnings \} = validationParts/);
-  assert.match(ui, /Utsted likevel/);
+  assert.match(ui, /Utsted faktura likevel/);
   assert.match(ui, /issueBtn\.disabled = true/);
   assert.match(ui, /issueBtn\.disabled = false/);
 });

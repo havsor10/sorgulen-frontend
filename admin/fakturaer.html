@@ -2,7 +2,8 @@
 <html lang="no">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="sorgulen-build" content="invoice-list-20260915-audit1">
   <title>Admin – Fakturaer | Sørgulen Industriservice</title>
   <link rel="stylesheet" href="admin.css">
   <link rel="stylesheet" href="admin-shell.css">
@@ -14,23 +15,15 @@
 
   <main class="admin-main inv-wrap">
     <header class="admin-page-header">
-      <div><p class="admin-eyebrow">Oppfølging</p><h1>Fakturaer</h1><p>Utkast, sending, forfall og betaling.</p></div>
-      <div class="admin-page-actions"><button class="primary-btn" id="newInvoiceBtn" type="button">Ny faktura</button><button id="refreshBtn" class="admin-icon-button" type="button" aria-label="Oppdater fakturaer">↻</button></div>
+      <div><p class="admin-eyebrow">Oppfølging</p><h1>Fakturaer</h1><p>Utkast, ferdige fakturaer, levering, forfall og betaling.</p></div>
+      <div class="admin-page-actions"><button class="primary-btn" id="newInvoiceBtn" type="button">+ Ny faktura</button><button id="refreshBtn" class="admin-icon-button" type="button" aria-label="Oppdater fakturaer">↻</button></div>
     </header>
-    <div id="statusMessage" class="status-message"></div>
-
-    <div class="inv-toolbar">
-      <button class="btn-backfill" id="backfillBtn" type="button">Tildel ref.nr til gamle jobber</button>
-    </div>
-
+    <div id="statusMessage" class="status-message" role="status" aria-live="polite"></div>
     <div class="inv-summary" id="invSummary"></div>
-
-    <div id="invContent">
-      <div class="inv-loading">Laster fakturaer…</div>
-    </div>
+    <div id="invContent"><div class="inv-loading">Laster fakturaer…</div></div>
   </main>
 
   <script src="../config.js"></script>
-  <script src="fakturaer.js"></script>
+  <script src="fakturaer.js?v=20260915-audit1"></script>
 </body>
 </html>
