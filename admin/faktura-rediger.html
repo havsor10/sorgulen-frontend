@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="sorgulen-build" content="invoice-edit-20260915-audit1">
   <title>Rediger faktura | Sørgulen Industriservice</title>
   <link rel="stylesheet" href="admin.css">
   <link rel="stylesheet" href="admin-shell.css">
@@ -19,22 +20,27 @@
         <p><a class="quiet-link" id="backLink" href="fakturaer.html">← Tilbake</a></p>
       </div>
     </header>
-    <div id="statusMessage" class="status-message"></div>
+    <div id="statusMessage" class="status-message" role="status" aria-live="polite"></div>
+
+    <section class="nf-card invoice-auto-doc-info">
+      <h3>Automatisk ved utstedelse</h3>
+      <p class="hint">Fakturanummer, fakturadato og forfallsdato fylles inn automatisk når du utsteder fakturaen.</p>
+    </section>
 
     <section class="nf-card">
       <h3>Faktura til</h3>
       <div class="nf-row">
         <div class="nf-field"><label for="custName">Navn / firmanavn *</label><input type="text" id="custName" required></div>
-        <div class="nf-field"><label for="custOrg">Org.nr. (bedriftskunde)</label><input type="text" id="custOrg" inputmode="numeric"></div>
+        <div class="nf-field"><label for="custOrg">Org.nr. <span class="hint">(valgfritt)</span></label><input type="text" id="custOrg" inputmode="numeric"></div>
       </div>
       <div class="nf-row">
-        <div class="nf-field"><label for="custPhone">Telefon</label><input type="text" id="custPhone"></div>
-        <div class="nf-field"><label for="custEmail">E-post</label><input type="email" id="custEmail"></div>
+        <div class="nf-field"><label for="custPhone">Telefon <span class="hint">(valgfritt)</span></label><input type="text" id="custPhone"></div>
+        <div class="nf-field"><label for="custEmail">E-post <span class="hint">(valgfritt)</span></label><input type="email" id="custEmail"></div>
       </div>
-      <div class="nf-field"><label for="custAddress">Adresse *</label><input type="text" id="custAddress"></div>
+      <div class="nf-field"><label for="custAddress">Adresse <span class="hint">(valgfritt)</span></label><input type="text" id="custAddress"></div>
       <div class="nf-row">
-        <div class="nf-field"><label for="custPostal">Postnummer</label><input type="text" id="custPostal" inputmode="numeric"></div>
-        <div class="nf-field"><label for="custCity">Poststed</label><input type="text" id="custCity"></div>
+        <div class="nf-field"><label for="custPostal">Postnummer <span class="hint">(valgfritt)</span></label><input type="text" id="custPostal" inputmode="numeric"></div>
+        <div class="nf-field"><label for="custCity">Poststed <span class="hint">(valgfritt)</span></label><input type="text" id="custCity"></div>
       </div>
     </section>
 
@@ -42,10 +48,10 @@
       <h3>Gjelder</h3>
       <div class="nf-field nf-spaced"><label for="invoiceDescription">Overordnet beskrivelse</label><textarea id="invoiceDescription" rows="3"></textarea></div>
       <div class="nf-row">
-        <div class="nf-field"><label for="serviceDateFrom">Utført dato *</label><input id="serviceDateFrom" type="date"></div>
-        <div class="nf-field"><label for="serviceDateTo">Til dato (valgfritt)</label><input id="serviceDateTo" type="date"></div>
+        <div class="nf-field"><label for="serviceDateFrom">Utført dato <span class="hint">(valgfritt)</span></label><input id="serviceDateFrom" type="date"></div>
+        <div class="nf-field"><label for="serviceDateTo">Til dato <span class="hint">(valgfritt)</span></label><input id="serviceDateTo" type="date"></div>
       </div>
-      <div class="nf-field"><label for="serviceLocation">Arbeidssted *</label><input id="serviceLocation" type="text"></div>
+      <div class="nf-field"><label for="serviceLocation">Arbeidssted <span class="hint">(valgfritt)</span></label><input id="serviceLocation" type="text"></div>
       <p class="hint" id="paymentTermsHint">Forfallsdato settes automatisk når fakturaen utstedes.</p>
     </section>
 
@@ -70,6 +76,6 @@
     </div>
   </main>
   <script src="../config.js"></script>
-  <script src="faktura-rediger.js"></script>
+  <script src="faktura-rediger.js?v=20260915-audit1"></script>
 </body>
 </html>
