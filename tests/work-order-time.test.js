@@ -1,6 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
+  intervalSeconds,
   calculateWorkSeconds,
   calculateEstimatedAmount,
 } = require("../admin/work-order-time");
@@ -20,6 +21,17 @@ test("excludes every pause from the displayed work time", () => {
   assert.equal(calculateEstimatedAmount(workOrder), 5_241.67);
 });
 
+test("manual time uses stored duration instead of synthetic start and end timestamps", () => {
+  const manual = {
+    source: "manual",
+    durationSeconds: 4_200,
+    startedAt: "2026-09-11T12:00:00.000Z",
+    endedAt: "2026-09-11T15:00:00.000Z",
+  };
+  assert.equal(intervalSeconds(manual), 4_200);
+  assert.equal(calculateWorkSeconds({ status: "planned", workIntervals: [manual] }), 4_200);
+});
+
 test("reconstructs an active timer from persisted timestamps after refresh", () => {
   const persistedJson = JSON.stringify({
     status: "active",
@@ -31,14 +43,8 @@ test("reconstructs an active timer from persisted timestamps after refresh", () 
   });
   const restored = JSON.parse(persistedJson);
 
-  assert.equal(
-    calculateWorkSeconds(restored, new Date("2026-09-02T10:00:00.000Z")),
-    6_300
-  );
-  assert.equal(
-    calculateWorkSeconds(restored, new Date("2026-09-02T10:00:01.000Z")),
-    6_301
-  );
+  assert.equal(calculateWorkSeconds(restored, new Date("2026-09-02T10:00:00.000Z")), 6_300);
+  assert.equal(calculateWorkSeconds(restored, new Date("2026-09-02T10:00:01.000Z")), 6_301);
 });
 
 test("a paused timer does not grow while the page stays open", () => {
@@ -48,7 +54,6 @@ test("a paused timer does not grow while the page stays open", () => {
       { startedAt: "2026-09-02T08:00:00.000Z", endedAt: "2026-09-02T09:00:00.000Z" },
     ],
   };
-
   assert.equal(calculateWorkSeconds(paused, new Date("2026-09-02T10:00:00.000Z")), 3_600);
   assert.equal(calculateWorkSeconds(paused, new Date("2026-09-03T10:00:00.000Z")), 3_600);
 });
@@ -61,7 +66,6 @@ test("completed history keeps the stored time and amount snapshots", () => {
     calculatedAmount: 1_905.89,
     workIntervals: [],
   };
-
   assert.equal(calculateWorkSeconds(completed), 8_072);
   assert.equal(calculateEstimatedAmount(completed), 1_905.89);
 });
