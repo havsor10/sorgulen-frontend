@@ -11,34 +11,36 @@
 .work-ai-question p{margin:0 0 12px;line-height:1.45;color:#e8eef7}
 .work-ai-question>div{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .work-ai-link{border:0;background:transparent;color:#a8b6c9;padding:9px 8px;font:inherit;font-weight:700}
-.work-ai-modal{position:fixed;inset:0;z-index:11000;display:flex;align-items:flex-end;justify-content:center;padding:14px;background:rgba(2,7,14,.72);backdrop-filter:blur(8px)}
+.work-ai-modal{position:fixed;inset:0;z-index:11000;display:flex;align-items:flex-end;justify-content:center;padding:14px;background:rgba(2,7,14,.72);backdrop-filter:blur(8px);overflow:hidden}
 .work-ai-modal[hidden]{display:none!important}
-.work-ai-sheet{width:min(760px,100%);max-height:92dvh;overflow:auto;border:1px solid rgba(255,255,255,.12);border-radius:24px 24px 18px 18px;background:#0d1621;color:#f5f7fa;box-shadow:0 28px 80px rgba(0,0,0,.55)}
+.work-ai-sheet{width:min(760px,100%);max-width:100%;max-height:92dvh;min-width:0;overflow-y:auto;overflow-x:hidden;box-sizing:border-box;border:1px solid rgba(255,255,255,.12);border-radius:24px 24px 18px 18px;background:#0d1621;color:#f5f7fa;box-shadow:0 28px 80px rgba(0,0,0,.55)}
 .work-ai-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.09);background:rgba(13,22,33,.96);backdrop-filter:blur(12px)}
 .work-ai-head span{display:block;color:#7eb8ff;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
 .work-ai-head h2{margin:3px 0 0;font-size:22px}
-.work-ai-body{padding:18px 20px 24px}
+.work-ai-body{padding:18px 20px 24px;min-width:0;overflow-x:hidden}
 .work-ai-intro{margin:0 0 16px;color:#b3c0d0;line-height:1.5}
-.work-ai-picker{display:grid;gap:12px}
+.work-ai-picker{display:grid;gap:12px;min-width:0}
 .work-ai-preview{min-height:130px;display:grid;place-items:center;overflow:hidden;border:1px dashed rgba(255,255,255,.2);border-radius:16px;background:#09111a;color:#8190a3;text-align:center}
 .work-ai-preview img{display:block;width:100%;max-height:320px;object-fit:contain;background:#050a10}
 .work-ai-body>.primary-btn{width:100%;margin-top:12px}
-.work-ai-result-card{margin-top:18px;border:1px solid rgba(255,255,255,.1);border-radius:18px;background:#111c29;overflow:hidden}
-.work-ai-result-head{padding:16px 17px;border-bottom:1px solid rgba(255,255,255,.08)}
+.work-ai-result-card{margin-top:18px;min-width:0;max-width:100%;border:1px solid rgba(255,255,255,.1);border-radius:18px;background:#111c29;overflow:hidden}
+.work-ai-result-head{padding:16px 17px;border-bottom:1px solid rgba(255,255,255,.08);min-width:0}
 .work-ai-result-head span{display:block;color:#91a5bd;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
-.work-ai-result-head strong{display:block;margin-top:5px;line-height:1.4}
+.work-ai-result-head strong{display:block;margin-top:5px;line-height:1.4;overflow-wrap:anywhere}
 .work-ai-warnings{padding:12px 16px;background:rgba(198,139,35,.12);border-bottom:1px solid rgba(241,184,67,.18)}
-.work-ai-warnings p{margin:5px 0;color:#f2ca75;line-height:1.42}
-.work-ai-actions{display:grid}
-.work-ai-action{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;padding:15px 16px;border-bottom:1px solid rgba(255,255,255,.07);cursor:pointer}
-.work-ai-action>input{width:20px;height:20px;margin-top:2px}
-.work-ai-action-copy{min-width:0}
-.work-ai-action-copy>strong{display:block;font-size:16px}
-.work-ai-action-copy>small{display:block;margin-top:5px;color:#c0ccda;line-height:1.45}
-.work-ai-action-copy>em{display:block;margin-top:7px;color:#8293a8;font-size:12px;font-style:normal;line-height:1.4}
-.work-ai-billable{display:flex;align-items:center;gap:8px;margin-top:11px;padding:9px 10px;border-radius:11px;background:#0a131e;color:#cad5e1;font-size:13px;font-weight:700}
-.work-ai-billable input{width:18px;height:18px}
-.work-ai-confirm-note{margin:14px 16px 10px;color:#9caabd;font-size:13px;line-height:1.45}
+.work-ai-warnings p{margin:5px 0;color:#f2ca75;line-height:1.42;overflow-wrap:anywhere}
+.work-ai-actions{display:grid;min-width:0;max-width:100%}
+.work-ai-action{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;min-width:0;max-width:100%;padding:15px 16px;box-sizing:border-box;border-bottom:1px solid rgba(255,255,255,.07);cursor:pointer;overflow:hidden}
+.work-ai-action>input{width:20px;height:20px;margin-top:2px;flex:none}
+.work-ai-action>span,.work-ai-action-copy{min-width:0;max-width:100%;overflow-wrap:anywhere}
+.work-ai-action-copy>strong,.work-ai-action>span>strong{display:block;font-size:16px;overflow-wrap:anywhere}
+.work-ai-action-copy>small,.work-ai-action>span>small{display:block;margin-top:5px;color:#c0ccda;line-height:1.45;overflow-wrap:anywhere}
+.work-ai-action-copy>em,.work-ai-action>span>em{display:block;margin-top:7px;color:#8293a8;font-size:12px;font-style:normal;line-height:1.4;overflow-wrap:anywhere}
+.work-ai-billable{display:grid;grid-template-columns:22px minmax(0,1fr);align-items:center;gap:8px;width:100%;max-width:100%;min-width:0;margin-top:11px;padding:9px 10px;box-sizing:border-box;border-radius:11px;background:#0a131e;color:#cad5e1;font-size:13px;font-weight:700;white-space:normal;overflow-wrap:anywhere}
+.work-ai-billable input{width:18px;height:18px;margin:0}
+.work-ai-confirm-note{margin:14px 16px 10px;color:#9caabd;font-size:13px;line-height:1.45;overflow-wrap:anywhere}
+#workAiApplyForm{min-width:0;max-width:100%;overflow:hidden}
 #workAiApplyForm>.primary-btn{width:calc(100% - 32px);margin:0 16px 16px}
 .work-ai-empty{margin:16px;color:#abb8c8;line-height:1.5}
+@media(max-width:520px){.work-ai-modal{padding:8px}.work-ai-body{padding:16px 12px 20px}.work-ai-head{padding:16px 14px}.work-ai-action{padding:14px 12px;gap:10px}.work-ai-result-head{padding:14px 12px}.work-ai-confirm-note{margin-left:12px;margin-right:12px}#workAiApplyForm>.primary-btn{width:calc(100% - 24px);margin-left:12px;margin-right:12px}}
 @media(min-width:720px){.work-ai-modal{align-items:center}.work-ai-sheet{border-radius:24px}.work-ai-body{padding:22px 24px 28px}}
