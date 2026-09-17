@@ -14,8 +14,7 @@
 
   const page = mount.dataset.page || "";
   ensureAsset("link", { rel: "stylesheet", href: "operations.css?v=20260904-snow1" });
-  ensureAsset("link", { rel: "stylesheet", href: "ai-guide.css?v=20260907-ai2" });
-  ensureAsset("link", { rel: "stylesheet", href: "ai-advisor-wow.css?v=20260910-wow1" });
+  if (page === "jobs") ensureAsset("link", { rel: "stylesheet", href: "ai-guide.css?v=20260917-project1" });
   ensureAsset("link", { rel: "manifest", href: "manifest.webmanifest" });
   ensureAsset("link", { rel: "apple-touch-icon", href: "../assets/logo.png" });
   if (!["home", "inventory", "snow"].includes(page)) ensureAsset("script", { src: "operations-ui.js?v=20260904-snow1" });
@@ -40,8 +39,7 @@
   }
 
   document.body.classList.add("admin-app");
-  ensureAsset("script", { src: "ai-guide.js?v=20260909-image1" });
-  ensureAsset("script", { src: "ai-advisor-wow.js?v=20260910-wow1" });
+  if (page === "jobs") ensureAsset("script", { src: "ai-guide.js?v=20260917-project1" });
   ensureAsset("script", { src: "actionable-warnings.js?v=20260914-a1" });
   mount.innerHTML = `
     <header class="admin-app-header">
