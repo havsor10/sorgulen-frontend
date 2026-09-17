@@ -5,92 +5,79 @@ const path = require("node:path");
 
 const root = path.resolve(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "admin/oppdrag.html"), "utf8");
-const js = fs.readFileSync(path.join(root, "admin/work-order-field.js"), "utf8");
-const compat = fs.readFileSync(path.join(root, "admin/work-order-field-compat.js"), "utf8");
+const field = fs.readFileSync(path.join(root, "admin/work-order-field.js"), "utf8");
+const editor = fs.readFileSync(path.join(root, "admin/work-order-editor.js"), "utf8");
 const css = fs.readFileSync(path.join(root, "admin/work-order-field.css"), "utf8");
+const editorCss = fs.readFileSync(path.join(root, "admin/work-order-editor.css"), "utf8");
 const inventory = fs.readFileSync(path.join(root, "admin/inventory-project.js"), "utf8");
-const operations = fs.readFileSync(path.join(root, "admin/operations-ui.js"), "utf8");
 
-test("oppdrag loads the operations engine before the dedicated field workspace", () => {
+test("oppdrag har én editor for workflow og registreringer", () => {
   assert.match(html, /operations\.css/);
-  assert.match(html, /operations-ui\.js/);
   assert.match(html, /work-order-field\.css/);
+  assert.match(html, /work-order-editor\.css/);
+  assert.match(html, /work-order-editor\.js/);
   assert.match(html, /work-order-field\.js/);
-  assert.match(html, /work-order-field-compat\.js/);
-  assert.ok(html.indexOf("oppdrag.js") < html.indexOf("operations-ui.js"));
-  assert.ok(html.indexOf("operations-ui.js") < html.indexOf("work-order-field.js"));
-  assert.ok(html.indexOf("work-order-field.js") < html.indexOf("work-order-field-compat.js"));
+  assert.ok(html.indexOf("oppdrag.js") < html.indexOf("work-order-editor.js"));
+  assert.ok(html.indexOf("work-order-editor.js") < html.indexOf("work-order-field.js"));
+  assert.doesNotMatch(html, /operations-ui\.js/);
+  assert.doesNotMatch(html, /work-order-field-compat\.js/);
+  assert.doesNotMatch(html, /work-order-description-edit\.js/);
+  assert.doesNotMatch(html, /completed-work-order-flow\.js/);
   assert.match(html, /viewport-fit=cover/);
-  assert.match(operations, /window\.SorgulenOperations\s*=\s*\{[^}]*openManualTime[^}]*openManager/s);
+  assert.match(editor, /window\.SorgulenOperations\s*=\s*\{[^}]*openManager[^}]*openRegistration/s);
 });
 
-test("field workspace starts with customer, job, total time, price and invoice readiness", () => {
-  assert.match(js, /data-field-workspace/);
-  assert.match(js, /Kundeoppdrag/);
-  assert.match(js, /Arbeidstid/);
-  assert.match(js, /Pris hittil/);
-  assert.match(js, /Fakturagrunnlag/);
-  assert.match(js, /completion-check/);
-  assert.match(js, /missingDescriptions/);
-  assert.match(js, /mangler beskrivelse av hva som ble gjort/);
+test("field workspace viser kunde, jobb, tid, pris og fakturakontroll", () => {
+  assert.match(field, /data-field-workspace/);
+  assert.match(field, /Kundeoppdrag/);
+  assert.match(field, /Arbeidstid/);
+  assert.match(field, /Pris hittil/);
+  assert.match(field, /Fakturagrunnlag/);
+  assert.match(field, /completion-check/);
+  assert.match(field, /missingDescriptions/);
 });
 
-test("invoice warnings have direct fix actions instead of dead-end messages", () => {
-  assert.match(js, /data-field-fix-email/);
-  assert.match(js, /data-field-email-form/);
-  assert.match(js, /data-field-edit-session/);
-  assert.match(js, /data-field-open-manager/);
-  assert.match(js, /\/admin\/customers\//);
-  assert.match(js, /refreshWorkspace/);
-  assert.match(js, /Legg inn e-post/);
-  assert.match(js, /Legg inn beskrivelse/);
+test("varsler har konkrete rettehandlinger", () => {
+  assert.match(field, /data-field-fix-email/);
+  assert.match(field, /data-field-email-form/);
+  assert.match(field, /data-field-edit-session/);
+  assert.match(field, /data-field-open-manager/);
+  assert.match(field, /\/admin\/customers\//);
+  assert.match(field, /refreshWorkspace/);
 });
 
-test("add menu is a compact task picker while inventory remains compatible", () => {
-  assert.match(js, /data-field-add-toggle/);
-  assert.match(js, /data-field-add-menu/);
-  assert.match(js, /data-field-add-time/);
-  assert.match(js, /data-entry=\"expense\"/);
-  assert.match(js, /data-entry=\"material\"/);
-  assert.match(js, /data-entry=\"note\"/);
-  assert.match(js, /field-add-grid/);
+test("registreringer går gjennom den samlede editoren", () => {
+  assert.match(field, /data-field-add-toggle/);
+  assert.match(field, /data-field-add-menu/);
+  assert.match(field, /data-entry=\"expense\"/);
+  assert.match(field, /data-entry=\"material\"/);
+  assert.match(field, /data-entry=\"note\"/);
   assert.match(inventory, /data-entry=material/);
-  assert.match(css, /field-add-grid/);
-  assert.match(css, /data-inventory-project-open/);
-  assert.match(css, /field-add-backdrop/);
-  assert.match(css, /operations-edit-button\{display:none!important\}/);
-  assert.match(compat, /data-field-workspace/);
-  assert.match(compat, /operationsManager/);
-  assert.match(compat, /fieldManagerSentinel/);
-  assert.doesNotMatch(compat, /fieldInvoiceShortcut|fieldCompletedOrderId/);
+  assert.match(editor, /data\.fieldRegistrationEdit = "true"/);
+  assert.match(editor, /openManager/);
+  assert.match(editor, /openRegistration/);
+  assert.match(editorCss, /field-work-controls\[data-workflow-owned="true"\]/);
 });
 
-test("daily log groups sessions, removes zero pauses and opens the real time editor", () => {
-  assert.match(js, /dailyLogMarkup/);
-  assert.match(js, /pausePairs/);
-  assert.match(js, /seconds > 0/);
-  assert.match(js, /field-day/);
-  assert.match(js, /field-session/);
-  assert.match(js, /Mangler beskrivelse/);
-  assert.match(js, /openSessionEditor/);
-  assert.match(js, /SorgulenOperations\?\.openManualTime/);
-  assert.match(operations, /async function openManualTime/);
-  assert.match(js, /Rediger denne økten/);
-  assert.match(css, /operation-modal\{z-index:12050!important\}/);
+test("manuell tid vises uten falske klokkeslett", () => {
+  assert.match(editor, /decorateManualSessions/);
+  assert.match(editor, /time\.textContent = "Manuell"/);
+  assert.match(editor, /cells\[0\]\.hidden = true/);
+  assert.match(editor, /manuell.*økt/s);
 });
 
-test("secondary information is collapsed instead of occupying the field view", () => {
-  assert.match(js, /Kunde og prosjektinfo/);
-  assert.match(js, /Utgifter, materialer og notater/);
-  assert.match(js, /Prosjektbeskrivelse/);
-  assert.match(js, /field-collapse/);
-  assert.doesNotMatch(js, /<section class=\"detail-section\"><h3>Tidslogg/);
+test("lukket og aktiv workflow eies av editoren", () => {
+  assert.match(editor, /Gjenåpne for korrigering/);
+  assert.match(editor, /Opprett faktura/);
+  assert.match(editor, /Åpne faktura/);
+  assert.match(editor, /Ferdigstill oppdrag/);
+  assert.match(editor, /data-editor-workflow-action/);
+  assert.match(editor, /data-editor-manage-order/);
 });
 
-test("mobile detail is a full-screen field workspace with large controls", () => {
+test("mobil detalj er fullskjerm med store kontroller", () => {
   assert.match(css, /height:100dvh/);
   assert.match(css, /field-add-main/);
   assert.match(css, /min-height:48px/);
   assert.match(css, /safe-area-inset-bottom/);
-  assert.match(css, /body\.field-add-open \.sai-launcher/);
 });
