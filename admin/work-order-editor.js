@@ -8,6 +8,8 @@
   const statusMessage = document.getElementById("statusMessage");
   if (!detail) return;
 
+  let lastOpenedOrderId = new URLSearchParams(location.search).get("open") || "";
+
   const esc = (value) => String(value ?? "")
     .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
@@ -76,6 +78,17 @@
   async function getOrder(orderId) {
     const data = await api(`/admin/work-orders/${encodeURIComponent(orderId)}`);
     return data.workOrder;
+  }
+
+  function ensureContextMarker() {
+    if (!lastOpenedOrderId || detail.querySelector("[data-field-workspace]")) return;
+    if (detail.querySelector("[data-work-action][data-id], [data-entry][data-id]")) return;
+    const marker = document.createElement("span");
+    marker.hidden = true;
+    marker.dataset.entry = "work-order-context";
+    marker.dataset.id = lastOpenedOrderId;
+    marker.dataset.workOrderContext = "true";
+    detail.appendChild(marker);
   }
 
   const modal = document.createElement("div");
@@ -202,6 +215,8 @@
   async function openRegistration({ orderId, kind, entryId = "" }) {
     try {
       const order = await getOrder(orderId);
+      if (order.status === "cancelled") throw new Error("Gjenåpne det avbrutte oppdraget før du endrer registreringer.");
+      if (order.invoiceId && !entryId) throw new Error("Oppdraget har faktura. Åpne fakturaen før du legger til nye registreringer.");
       const entry = entryId ? collectionFor(order, kind).find((item) => String(item.entryId) === String(entryId)) : null;
       if (entryId && !entry) throw new Error("Registreringen finnes ikke lenger. Oppdater siden og prøv igjen.");
       if (kind === "time" && entry && !entry.endedAt && entry.source !== "manual") throw new Error("Stopp eller pause takstameteret før økten redigeres.");
@@ -250,12 +265,14 @@
   async function openManager(orderId) {
     try {
       const order = await getOrder(orderId);
+      if (order.status === "cancelled") throw new Error("Gjenåpne det avbrutte oppdraget først.");
       const row = (kind, entry, title, meta) => `<button type="button" class="operations-entry work-order-editor-row" data-editor-open-kind="${kind}" data-editor-open-id="${esc(entry.entryId)}" data-editor-order-id="${esc(orderId)}"><span class="operations-entry-main"><strong>${esc(title)}</strong><span>${esc(meta)}</span></span><span aria-hidden="true">›</span></button>`;
-      const time = (order.workIntervals || []).map((entry) => row("time", entry, entry.comment || "Arbeidsøkt", `${dateValue(entry.startedAt)} · ${durationText(intervalSeconds(entry))}`)).join("");
+      const time = (order.workIntervals || []).map((entry) => row("time", entry, entry.comment || "Arbeidsøkt", `${entry.source === "manual" ? (entry.workDate || dateValue(entry.startedAt)) : dateValue(entry.startedAt)} · ${durationText(intervalSeconds(entry))}`)).join("");
       const expenses = (order.additionalCosts || []).map((entry) => row("expense", entry, entry.item, money(entry.amount))).join("");
       const materials = (order.materials || []).map((entry) => row("material", entry, entry.item, `${entry.quantity} ${entry.unit || "stk"}${entry.unitPrice == null ? " · pris mangler" : ` · ${money(Number(entry.quantity) * Number(entry.unitPrice))}`}`)).join("");
       const notes = (order.projectNotes || []).map((entry) => row("note", entry, entry.text, dateValue(entry.createdAt))).join("");
-      showModal("Registreringer", `${order.customerSnapshot?.name || "Kunde"} · ${order.serviceName}`, `<div class="work-order-editor-manager"><div class="work-order-editor-add"><button type="button" class="primary-btn" data-editor-add-kind="time">+ Tid</button><button type="button" class="secondary-btn" data-editor-add-kind="expense">+ Utgift</button><button type="button" class="secondary-btn" data-editor-add-kind="material">+ Materiale</button><button type="button" class="secondary-btn" data-editor-add-kind="note">+ Notat</button></div><section><h3>Tid</h3>${time || '<p class="muted">Ingen tid registrert.</p>'}</section><section><h3>Utgifter</h3>${expenses || '<p class="muted">Ingen utgifter.</p>'}</section><section><h3>Materialer</h3>${materials || '<p class="muted">Ingen materialer.</p>'}</section><section><h3>Notater</h3>${notes || '<p class="muted">Ingen notater.</p>'}</section></div>`, true);
+      const canAdd = !order.invoiceId;
+      showModal("Registreringer", `${order.customerSnapshot?.name || "Kunde"} · ${order.serviceName}`, `<div class="work-order-editor-manager">${canAdd ? `<div class="work-order-editor-add"><button type="button" class="primary-btn" data-editor-add-kind="time">+ Tid</button><button type="button" class="secondary-btn" data-editor-add-kind="expense">+ Utgift</button><button type="button" class="secondary-btn" data-editor-add-kind="material">+ Materiale</button><button type="button" class="secondary-btn" data-editor-add-kind="note">+ Notat</button></div>` : '<p class="muted">Nye registreringer legges ikkje til etter at faktura er opprettet.</p>'}<section><h3>Tid</h3>${time || '<p class="muted">Ingen tid registrert.</p>'}</section><section><h3>Utgifter</h3>${expenses || '<p class="muted">Ingen utgifter.</p>'}</section><section><h3>Materialer</h3>${materials || '<p class="muted">Ingen materialer.</p>'}</section><section><h3>Notater</h3>${notes || '<p class="muted">Ingen notater.</p>'}</section></div>`, true);
       sheet.querySelectorAll("[data-editor-add-kind]").forEach((button) => button.addEventListener("click", () => openRegistration({ orderId, kind: button.dataset.editorAddKind })));
       sheet.querySelectorAll("[data-editor-open-kind]").forEach((button) => button.addEventListener("click", () => openRegistration({ orderId, kind: button.dataset.editorOpenKind, entryId: button.dataset.editorOpenId })));
     } catch (error) {
@@ -271,6 +288,28 @@
     return "";
   }
 
+  function decorateManualSessions(workspace, order) {
+    for (const button of workspace.querySelectorAll("[data-field-edit-session]")) {
+      const entry = (order.workIntervals || []).find((item) => String(item.entryId) === String(button.dataset.fieldEditSession));
+      if (!entry || entry.source !== "manual") continue;
+      const session = button.closest(".field-session");
+      if (!session) continue;
+      session.dataset.manualSession = "true";
+      const time = session.querySelector(".field-session-time");
+      if (time) time.textContent = "Manuell";
+      const cells = [...session.querySelectorAll(".field-session-detail-grid > div")];
+      if (cells[0]) cells[0].hidden = true;
+      if (cells[1]) cells[1].hidden = true;
+    }
+    for (const day of workspace.querySelectorAll(".field-day")) {
+      const sessions = [...day.querySelectorAll(".field-session")];
+      if (sessions.length && sessions.every((session) => session.dataset.manualSession === "true")) {
+        const meta = day.querySelector(".field-day-title span");
+        if (meta) meta.textContent = `${sessions.length} manuell${sessions.length === 1 ? "" : "e"} økt${sessions.length === 1 ? "" : "er"}`;
+      }
+    }
+  }
+
   const decorating = new Map();
   async function decorateWorkspace(workspace) {
     const orderId = workspace?.dataset.orderId || "";
@@ -278,6 +317,7 @@
     decorating.set(orderId, true);
     try {
       const order = await getOrder(orderId);
+      lastOpenedOrderId = String(order._id || orderId);
       for (const group of workspace.querySelectorAll(".field-register-group")) {
         const kind = kindFromHeading(group.querySelector("h4")?.textContent);
         if (!kind) continue;
@@ -293,6 +333,7 @@
           row.setAttribute("aria-label", `Rediger ${kind === "expense" ? "utgift" : kind === "material" ? "materiale" : "notat"}`);
         });
       }
+      decorateManualSessions(workspace, order);
       applyWorkflow(workspace, order);
     } catch (_) {
       // Feltvisningen skal fortsatt fungere selv om ekstra redigeringsdata ikke kan hentes.
@@ -334,9 +375,11 @@
     } else if (displayStatus === "planned") {
       html = `${workflowButton("start", orderId, "Start arbeid", true)}${workflowButton("cancel", orderId, "Forkast")}`;
     } else if (displayStatus === "completed" && !order.invoiceId) {
-      html = `<a class="primary-btn work-order-invoice-action" href="faktura-ny.html?workOrderId=${encodeURIComponent(orderId)}">Opprett faktura</a>`;
+      html = `<a class="primary-btn work-order-invoice-action" href="faktura-ny.html?workOrderId=${encodeURIComponent(orderId)}">Opprett faktura</a><button type="button" class="secondary-btn" data-editor-manage-order="${esc(orderId)}">Registreringer / korriger</button>`;
     } else if (displayStatus === "completed" && order.invoiceId) {
       html = `<a class="primary-btn work-order-invoice-action" href="faktura-detalj.html?id=${encodeURIComponent(order.invoiceId)}">Åpne faktura</a>`;
+    } else if (displayStatus === "cancelled") {
+      html = workflowButton("recover", orderId, "Gjenåpne for korrigering", true);
     }
     controls.innerHTML = html;
   }
@@ -347,9 +390,15 @@
     if (!orderId || !action) return;
     if (action === "cancel" && !confirm("Forkaste oppdraget? Registrert historikk beholdes, men oppdraget markeres som avbrutt.")) return;
     if (action === "stop" && !confirm("Stoppe den aktive arbeidsøkten?")) return;
+    if (action === "recover" && !confirm("Gjenåpne det avbrutte oppdraget for korrigering? All registrert historikk beholdes.")) return;
 
     button.disabled = true;
     try {
+      if (action === "recover") {
+        await api(`/admin/work-orders/${encodeURIComponent(orderId)}/recover`, { method: "POST", body: JSON.stringify({}) });
+        location.href = `oppdrag.html?open=${encodeURIComponent(orderId)}&recovered=1`;
+        return;
+      }
       if (action === "complete") {
         const check = await api(`/admin/work-orders/${encodeURIComponent(orderId)}/completion-check`);
         const blocking = check.completionCheck?.blocking || [];
@@ -375,6 +424,12 @@
   }
 
   document.addEventListener("click", (event) => {
+    const opener = event.target.closest(".open-job-detail[data-id]");
+    if (opener?.dataset.id) {
+      lastOpenedOrderId = opener.dataset.id;
+      window.setTimeout(ensureContextMarker, 0);
+    }
+
     const entryButton = event.target.closest("[data-entry]");
     if (entryButton && entryButton.dataset.id && ["time", "expense", "material", "note"].includes(entryButton.dataset.entry)) {
       event.preventDefault();
@@ -393,7 +448,15 @@
     const registrationRow = event.target.closest("[data-field-registration-edit]");
     if (registrationRow) {
       event.preventDefault();
+      event.stopImmediatePropagation();
       openRegistration({ orderId: registrationRow.closest("[data-field-workspace]")?.dataset.orderId || "", kind: registrationRow.dataset.fieldRegistrationKind, entryId: registrationRow.dataset.entryId });
+      return;
+    }
+    const manageButton = event.target.closest("[data-editor-manage-order]");
+    if (manageButton) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      openManager(manageButton.dataset.editorManageOrder);
       return;
     }
     const workflowAction = event.target.closest("[data-editor-workflow-action]");
@@ -408,10 +471,12 @@
   });
 
   const observer = new MutationObserver(() => {
+    ensureContextMarker();
     const workspace = detail.querySelector("[data-field-workspace]");
     if (workspace) window.setTimeout(() => decorateWorkspace(workspace), 0);
   });
   observer.observe(detail, { childList: true, subtree: true });
+  ensureContextMarker();
   const initial = detail.querySelector("[data-field-workspace]");
   if (initial) decorateWorkspace(initial);
 
