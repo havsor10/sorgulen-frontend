@@ -137,7 +137,7 @@
     showBadge("snow", snowCount);
     showBadge("autopilot", autopilotCount);
     const existingMore = Math.max(0, Number(operations?.badges?.more) || 0);
-    showBadge("more", existingMore + inventoryCount + snowCount);
+    showBadge("more", existingMore + inventoryCount + snowCount + autopilotCount);
   }
 
   moreButton.addEventListener("click", () => setMenu(!moreMenu.classList.contains("is-open")));
