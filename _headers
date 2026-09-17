@@ -10,3 +10,18 @@
 
 /config.js
   Cache-Control: no-store, max-age=0
+
+/tjenester/broyting-pris-info.html
+  Link: <https://sorgulen.no/tjenester/broyting-pris-info.html>; rel="canonical"
+
+/tjenester/dekkskift-pris-info.html
+  Link: <https://sorgulen.no/tjenester/dekkskift-pris-info.html>; rel="canonical"
+
+/tjenester/diverse-pris-info.html
+  Link: <https://sorgulen.no/tjenester/diverse-pris-info.html>; rel="canonical"
+
+/tjenester/takrennevask-pris-info.html
+  Link: <https://sorgulen.no/tjenester/takrennevask-pris-info.html>; rel="canonical"
+
+/tjenester/dunkvask-pris-info.html
+  Link: <https://sorgulen.no/tjenester/dunkvask-pris-info.html>; rel="canonical"
