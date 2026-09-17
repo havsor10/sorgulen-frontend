@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#0b1017">
+  <title>Min jobb | Sørgulen Industriservice</title>
+  <link rel="stylesheet" href="min-jobb.css">
+</head>
+<body>
+  <main class="job-shell">
+    <header class="job-brand">
+      <a href="index.html" aria-label="Sørgulen Industriservice – forsiden">
+        <strong>Sørgulen Industriservice</strong>
+        <span>Min jobb</span>
+      </a>
+    </header>
+
+    <section id="loadingCard" class="job-card loading-card" aria-live="polite">
+      <div class="loading-dot" aria-hidden="true"></div>
+      <div>
+        <strong>Henter jobben din…</strong>
+        <span>Dette tar vanligvis bare et øyeblikk.</span>
+      </div>
+    </section>
+
+    <section id="errorCard" class="job-card error-card hidden" role="alert">
+      <p class="eyebrow">Min jobb</p>
+      <h1>Kunne ikke åpne jobben</h1>
+      <p id="errorText">Lenken kan være utløpt eller erstattet.</p>
+      <a href="kontakt.html" class="secondary-action">Kontakt Sørgulen Industriservice</a>
+    </section>
+
+    <div id="jobContent" class="hidden">
+      <section class="job-card hero-card">
+        <p id="serviceEyebrow" class="eyebrow">Jobben din</p>
+        <h1 id="serviceName">Oppdrag</h1>
+        <p id="customerGreeting" class="customer-greeting"></p>
+
+        <div id="statusPanel" class="status-panel" data-stage="booked">
+          <div class="status-icon" aria-hidden="true"><span></span></div>
+          <div>
+            <span class="status-label">Status akkurat nå</span>
+            <strong id="statusText">Bestillingen er mottatt</strong>
+            <p id="statusHelp"></p>
+          </div>
+        </div>
+
+        <div id="liveTime" class="live-time hidden">
+          <span id="liveTimeLabel">Arbeidstid så langt</span>
+          <strong id="workTime">0 min</strong>
+        </div>
+      </section>
+
+      <section class="job-card timeline-card" aria-labelledby="timelineTitle">
+        <div class="section-heading">
+          <p class="eyebrow">Fremdrift</p>
+          <h2 id="timelineTitle">Slik ligger jobben an</h2>
+        </div>
+        <ol id="jobTimeline" class="job-timeline"></ol>
+      </section>
+
+      <section class="job-card details-card">
+        <div class="section-heading">
+          <p class="eyebrow">Bestillingen</p>
+          <h2>Praktisk informasjon</h2>
+        </div>
+        <dl class="detail-list">
+          <div><dt>Dato</dt><dd id="bookingDate">–</dd></div>
+          <div><dt>Tidspunkt</dt><dd id="bookingTime">–</dd></div>
+          <div id="addressRow"><dt>Adresse</dt><dd id="jobAddress">–</dd></div>
+          <div id="startedRow" class="hidden"><dt>Startet</dt><dd id="startedAt">–</dd></div>
+          <div id="completedRow" class="hidden"><dt>Ferdig</dt><dd id="completedAt">–</dd></div>
+        </dl>
+      </section>
+
+      <section id="finishedCard" class="job-card finished-card hidden">
+        <div class="finished-check" aria-hidden="true">✓</div>
+        <div>
+          <p class="eyebrow">Ferdig</p>
+          <h2>Jobben er registrert som utført</h2>
+          <p id="finishedSummary"></p>
+        </div>
+      </section>
+
+      <section class="job-card contact-card">
+        <p class="eyebrow">Spørsmål?</p>
+        <h2>Ta kontakt hvis det er noe</h2>
+        <p>Du trenger ikke følge med på siden hele tiden. Den oppdateres automatisk når statusen endrer seg.</p>
+        <div class="contact-actions">
+          <a href="tel:+4740730187" class="primary-action">Ring 407 30 187</a>
+          <a href="mailto:sor.industri@gmail.com" class="secondary-action">Send e-post</a>
+        </div>
+      </section>
+
+      <p id="updatedText" class="last-updated" aria-live="polite"></p>
+    </div>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="min-jobb.js"></script>
+</body>
+</html>
