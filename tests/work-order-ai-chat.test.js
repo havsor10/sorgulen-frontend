@@ -13,6 +13,14 @@ test("AI-chatten er avgrenset til Oppdrag-siden og ikke en global launcher", () 
   assert.doesNotMatch(ai, /sorgulenAiLauncher|sai-launcher|position:fixed/);
 });
 
+test("admin-shell laster AI bare på Oppdrag", () => {
+  const shell = read("admin/admin-shell.js");
+  assert.match(shell, /if \(page === "jobs"\) ensureAsset\("link", \{ rel: "stylesheet", href: "ai-guide\.css\?v=20260917-project1" \}\)/);
+  assert.match(shell, /if \(page === "jobs"\) ensureAsset\("script", \{ src: "ai-guide\.js\?v=20260917-project1" \}\)/);
+  assert.doesNotMatch(shell, /ai-advisor-wow\.js/);
+  assert.doesNotMatch(shell, /ai-advisor-wow\.css/);
+});
+
 test("hvert oppdrag får separat AI-historikk og eksplisitt workOrderId-kontekst", () => {
   const ai = read("admin/ai-guide.js");
   assert.match(ai, /sorgulen_work_order_ai_chat_v1:/);
