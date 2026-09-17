@@ -1,0 +1,9 @@
+# Gamle og dupliserte offentlige URL-er
+/tjenester.html /#tjenester 301!
+/tjenester/broyting/tjenester_broyting-pris-info.html /tjenester/broyting-pris-info.html 301!
+/tjenester/broyting/tjenester_broyting-pris-info /tjenester/broyting-pris-info.html 301!
+
+# Tjenester som ikke lenger markedsføres som egne tjenester
+/tjenester/plenklipp-pris-info.html /#tjenester 301!
+/tjenester/takvask-pris-info.html /#tjenester 301!
+/tjenester/trefelling-pris-info.html /#tjenester 301!
