@@ -43,7 +43,7 @@
       const link = document.createElement("a");
       link.className = `admin-more-link${page === "autopilot" ? " is-active" : ""}`;
       link.href = "autopilot.html";
-      link.innerHTML = '<span>Autopilot</span><span aria-hidden="true">›</span>';
+      link.innerHTML = '<span>Autopilot</span><span class="admin-more-tail"><span class="admin-nav-badge" data-admin-badge="autopilot" hidden></span><span aria-hidden="true">›</span></span>';
       moreMenu.insertBefore(link, notifications || moreMenu.querySelector(".admin-menu-logout"));
     }
 
@@ -53,6 +53,8 @@
     document.querySelectorAll('.admin-more-link[href="admin-dashboard.html"] span:first-child').forEach((node) => {
       node.textContent = "Nye bestillinger";
     });
+
+    window.SorgulenAdminShell?.refreshBadges?.();
   }
 
   const statusText = {
@@ -94,8 +96,9 @@
     if (!location.pathname.endsWith("/order-detail.html")) return;
     const container = document.getElementById("orderInfo");
     const bookingId = new URL(location.href).searchParams.get("id");
-    if (!container || !bookingId || container.dataset.admin2Resolved === "1") return;
+    if (!container || !bookingId || container.dataset.admin2Resolved === "1" || container.dataset.admin2Loading === "1") return;
 
+    container.dataset.admin2Loading = "1";
     try {
       const [bookingData, workData] = await Promise.all([
         api(`/admin/bookings/${encodeURIComponent(bookingId)}`),
@@ -140,6 +143,8 @@
       });
     } catch (error) {
       console.warn("Admin 2.0 kunne ikke koble bestillingen til oppdrag:", error.message);
+    } finally {
+      delete container.dataset.admin2Loading;
     }
   }
 
