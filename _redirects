@@ -1,3 +1,9 @@
+# Rene offentlige URL-er
+# Brøytingsinnholdet ligger fortsatt i den gamle undermappen internt, men eksponeres
+# på én ren offentlig URL. Direkte besøk til gammel URL sendes permanent til den rene.
+/tjenester/broyting-pris-info.html /tjenester/broyting/tjenester_broyting-pris-info.html 200
+/tjenester/broyting-pris-info /tjenester/broyting/tjenester_broyting-pris-info.html 200
+
 # Gamle og dupliserte offentlige URL-er
 /tjenester.html /#tjenester 301!
 /tjenester/broyting/tjenester_broyting-pris-info.html /tjenester/broyting-pris-info.html 301!
