@@ -1,5 +1,9 @@
 // Velkomstoverlay + anonym besøkssporing for Sørgulen Industriservice.
 //
+// Denne filen lastes på alle offentlige sider. Derfor brukes den også som
+// bootstrap for site-consistency.js, som holder offentlig kontaktinformasjon
+// og eldre standardtekster konsekvente på tvers av nettsiden.
+//
 // Overlayet vises første gang en besøkende kommer inn på en av sidene.
 // Når besøkende klikker "Fortsett":
 //   1) Overlayet fjernes og huskes i localStorage (vises ikke igjen på enheten)
@@ -10,6 +14,19 @@
 // Ingen IP, ingen navn, ingen cookies. Derfor kreves heller ikke cookie-banner.
 
 (function () {
+  // Last felles offentlig nettstedskonfigurasjon fra samme mappe som denne filen.
+  // Dette skjer før eventuell tidlig retur for velkomstoverlayet.
+  try {
+    var ownSrc = document.currentScript && document.currentScript.src;
+    if (ownSrc && !document.querySelector('script[data-sorgulen-site-consistency]')) {
+      var consistencyScript = document.createElement("script");
+      consistencyScript.src = ownSrc.replace(/maintenance\.js(?:\?.*)?$/, "site-consistency.js");
+      consistencyScript.defer = true;
+      consistencyScript.setAttribute("data-sorgulen-site-consistency", "true");
+      document.head.appendChild(consistencyScript);
+    }
+  } catch (e) {}
+
   var API_BASE = (window.CONFIG && window.CONFIG.API_BASE_URL) || "https://sorgulen-backend-2.onrender.com/api";
 
   function getVisitorId() {
