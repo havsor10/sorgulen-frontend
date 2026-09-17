@@ -178,6 +178,10 @@
     cards.forEach((card, index) => {
       const procurement = reversed[index];
       if (!procurement) return;
+      const historyCount = procurement.correctionHistory?.length || 0;
+      const signature = `${procurement.entryId}:${procurement.status}:${procurement.revision}:${historyCount}`;
+      if (card.dataset.procurementCorrectionSignature === signature) return;
+      card.dataset.procurementCorrectionSignature = signature;
       card.dataset.procurementCorrectionId = procurement.entryId;
 
       card.querySelectorAll("[data-cancel-procurement]").forEach((button) => {
@@ -208,10 +212,10 @@
       }
       card.appendChild(actions);
 
-      if (procurement.correctionHistory?.length) {
+      if (historyCount) {
         const note = document.createElement("p");
         note.className = "procurement-correction-note";
-        note.textContent = `${procurement.correctionHistory.length} tidligere versjon${procurement.correctionHistory.length === 1 ? "" : "er"} er bevart i historikken.`;
+        note.textContent = `${historyCount} tidligere versjon${historyCount === 1 ? "" : "er"} er bevart i historikken.`;
         card.appendChild(note);
       }
     });
