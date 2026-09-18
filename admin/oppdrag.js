@@ -16,6 +16,8 @@
     cancelled: "Avbrutt",
   };
 
+  const effectiveStatus = (workOrder) => workOrder?.workflow?.status || workOrder?.status || "planned";
+
   const actionLabels = {
     start: "Starter oppdrag...",
     pause: "Pauser oppdrag...",
@@ -246,26 +248,26 @@
   function workOrderControls(workOrder) {
     if (!workOrder) return "";
     const id = escapeHtml(workOrder._id);
-    const disabledByOtherOpen = workOrder.status === "planned" && openWorkOrder && openWorkOrder._id !== workOrder._id;
+    const disabledByOtherOpen = effectiveStatus(workOrder) === "planned" && openWorkOrder && openWorkOrder._id !== workOrder._id;
 
-    if (workOrder.status === "planned") {
+    if (effectiveStatus(workOrder) === "planned") {
       return `
         <button class="work-btn work-btn-start" type="button" data-work-action="start" data-id="${id}" ${disabledByOtherOpen ? "disabled" : ""}>START</button>
         <button class="work-btn work-btn-ghost" type="button" data-work-action="cancel" data-id="${id}">Forkast</button>`;
     }
-    if (workOrder.status === "active") {
+    if (effectiveStatus(workOrder) === "active") {
       return `
         <button class="work-btn work-btn-pause" type="button" data-work-action="pause" data-id="${id}">PAUSE</button>
         <button class="work-btn work-btn-stop" type="button" data-work-action="stop" data-id="${id}">STOPP</button>
         <button class="work-btn work-btn-ghost" type="button" data-work-action="cancel" data-id="${id}">Avbryt oppdrag</button>`;
     }
-    if (workOrder.status === "paused") {
+    if (effectiveStatus(workOrder) === "paused") {
       return `
         <button class="work-btn work-btn-start" type="button" data-work-action="resume" data-id="${id}">FORTSETT</button>
         <button class="work-btn work-btn-stop" type="button" data-work-action="stop" data-id="${id}">STOPP</button>
         <button class="work-btn work-btn-ghost" type="button" data-work-action="cancel" data-id="${id}">Avbryt oppdrag</button>`;
     }
-    if (workOrder.status === "stopped") {
+    if (effectiveStatus(workOrder) === "stopped") {
       return `
         <button class="work-btn work-btn-start" type="button" data-work-action="resume" data-id="${id}">FORTSETT OPPDRAG</button>
         <button class="work-btn work-btn-complete" type="button" data-work-action="complete" data-id="${id}">FERDIGSTILL OPPDRAG</button>
@@ -340,8 +342,8 @@
     const query = (historySearch.value || "").trim().toLowerCase();
     const filter = historyStatus.value;
     return workOrders.filter((workOrder) => {
-      if (filter === "open" && !PROJECT_OPEN_STATUSES.has(workOrder.status)) return false;
-      if (!["all", "open"].includes(filter) && workOrder.status !== filter) return false;
+      if (filter === "open" && !PROJECT_OPEN_STATUSES.has(effectiveStatus(workOrder))) return false;
+      if (!["all", "open"].includes(filter) && effectiveStatus(workOrder) !== filter) return false;
       if (!query) return true;
       const customer = workOrder.customerSnapshot || {};
       return [customer.name, customer.email, customer.phone, workOrder.serviceName, workOrder.notes]
@@ -362,11 +364,11 @@
       const customer = workOrder.customerSnapshot || {};
       const seconds = calculateWorkSeconds(workOrder);
       const amount = calculateEstimatedAmount(workOrder, seconds);
-      const showAmount = workOrder.status !== "planned" && workOrder.status !== "cancelled";
-      const amountEstimated = !["completed", "stopped"].includes(workOrder.status);
+      const showAmount = effectiveStatus(workOrder) !== "planned" && effectiveStatus(workOrder) !== "cancelled";
+      const amountEstimated = !["completed", "stopped"].includes(effectiveStatus(workOrder));
 
       return `
-        <article class="work-history-card status-${escapeHtml(workOrder.status)}">
+        <article class="work-history-card status-${escapeHtml(effectiveStatus(workOrder))}">
           <div class="history-date">
             <span>Dato</span>
             <strong>${escapeHtml(formatDate(workOrder.jobDate))}</strong>
@@ -377,14 +379,14 @@
           </div>
           <div class="history-metric">
             <span>Arbeidstid</span>
-            <strong>${workOrder.status === "planned" ? "–" : escapeHtml(formatDuration(seconds))}</strong>
+            <strong>${effectiveStatus(workOrder) === "planned" ? "–" : escapeHtml(formatDuration(seconds))}</strong>
           </div>
           <div class="history-metric">
             <span>Beløp</span>
             <strong>${showAmount ? escapeHtml(formatCurrency(amount, amountEstimated)) : "–"}</strong>
           </div>
           <div class="history-status">
-            <span class="work-status-badge status-${escapeHtml(workOrder.status)}">${escapeHtml(statusLabels[workOrder.status] || workOrder.status)}</span>
+            <span class="work-status-badge status-${escapeHtml(effectiveStatus(workOrder))}">${escapeHtml(statusLabels[effectiveStatus(workOrder)] || effectiveStatus(workOrder))}</span>
           </div>
           <div class="history-action">
             <button type="button" class="details-link open-job-detail" data-id="${escapeHtml(workOrder._id)}">Åpne</button>
@@ -392,8 +394,8 @@
         </article>`;
     };
 
-    const ongoing = visible.filter((workOrder) => PROJECT_OPEN_STATUSES.has(workOrder.status));
-    const remaining = visible.filter((workOrder) => !PROJECT_OPEN_STATUSES.has(workOrder.status));
+    const ongoing = visible.filter((workOrder) => PROJECT_OPEN_STATUSES.has(effectiveStatus(workOrder)));
+    const remaining = visible.filter((workOrder) => !PROJECT_OPEN_STATUSES.has(effectiveStatus(workOrder)));
     historyContainer.innerHTML = [
       ongoing.length ? `<section class="work-order-group"><h3 class="work-order-group-title">Pågående prosjekter</h3>${ongoing.map(renderCard).join("")}</section>` : "",
       remaining.length ? `<section class="work-order-group"><h3 class="work-order-group-title">Planlagt og tidligere</h3>${remaining.map(renderCard).join("")}</section>` : "",
@@ -605,7 +607,7 @@
       };
       setMessage(successText[action] || "Oppdatert.", "success");
     } catch (err) {
-      if (err.data?.workOrder && OPEN_STATUSES.has(err.data.workOrder.status)) {
+      if (err.data?.workOrder && OPEN_STATUSES.has(err.data.effectiveStatus(workOrder))) {
         openWorkOrder = err.data.workOrder;
       }
       setMessage(err.message || "Handlingen kunne ikke lagres.", "error");
@@ -701,7 +703,7 @@
     const customer = workOrder.customerSnapshot || {};
     const seconds = calculateWorkSeconds(workOrder);
     const amount = calculateEstimatedAmount(workOrder, seconds);
-    const completed = workOrder.status === "completed";
+    const completed = effectiveStatus(workOrder) === "completed";
     const contactParts = [customer.phone, customer.email, customer.address].filter(Boolean);
     const expenses = workOrder.additionalCosts || [];
     const materials = workOrder.materials || [];
@@ -711,7 +713,7 @@
 
     detailModalContent.innerHTML = `
       <div class="detail-status-row">
-        <span class="work-status-badge status-${escapeHtml(workOrder.status)}">${escapeHtml(statusLabels[workOrder.status] || workOrder.status)}</span>
+        <span class="work-status-badge status-${escapeHtml(effectiveStatus(workOrder))}">${escapeHtml(statusLabels[effectiveStatus(workOrder)] || effectiveStatus(workOrder))}</span>
         <span>${escapeHtml(sourceLabel(workOrder))}${workOrder.sourceRefNumber ? ` · Ref #${escapeHtml(workOrder.sourceRefNumber)}` : ""}</span>
       </div>
 
@@ -724,10 +726,10 @@
         <div><span>Stopp</span><strong>${escapeHtml(formatDateTime(workOrder.stoppedAt))}</strong></div>
         <div><span>Arbeidstid</span><strong data-live-time-id="${escapeHtml(workOrder._id)}">${escapeHtml(formatDuration(seconds))}</strong></div>
         <div><span>Timesats</span><strong>${escapeHtml(formatCurrency(workOrder.hourlyRate))} / time</strong></div>
-        <div><span>${completed ? "Arbeidsbeløp" : "Estimert beløp"}</span><strong data-live-amount-id="${escapeHtml(workOrder._id)}">${escapeHtml(formatCurrency(amount, !completed && workOrder.status !== "stopped"))}</strong></div>
+        <div><span>${completed ? "Arbeidsbeløp" : "Estimert beløp"}</span><strong data-live-amount-id="${escapeHtml(workOrder._id)}">${escapeHtml(formatCurrency(amount, !completed && effectiveStatus(workOrder) !== "stopped"))}</strong></div>
       </div>
 
-      ${!["completed", "cancelled"].includes(workOrder.status) ? `<div class="meter-controls detail-controls"><button type="button" class="secondary-btn" data-entry="time" data-id="${escapeHtml(workOrder._id)}">+ Tid</button><button type="button" class="secondary-btn" data-entry="expense" data-id="${escapeHtml(workOrder._id)}">+ Utgift</button><button type="button" class="secondary-btn" data-entry="material" data-id="${escapeHtml(workOrder._id)}">+ Materiale</button><button type="button" class="secondary-btn" data-entry="note" data-id="${escapeHtml(workOrder._id)}">+ Notat</button></div>` : ""}
+      ${!["completed", "cancelled"].includes(effectiveStatus(workOrder)) ? `<div class="meter-controls detail-controls"><button type="button" class="secondary-btn" data-entry="time" data-id="${escapeHtml(workOrder._id)}">+ Tid</button><button type="button" class="secondary-btn" data-entry="expense" data-id="${escapeHtml(workOrder._id)}">+ Utgift</button><button type="button" class="secondary-btn" data-entry="material" data-id="${escapeHtml(workOrder._id)}">+ Materiale</button><button type="button" class="secondary-btn" data-entry="note" data-id="${escapeHtml(workOrder._id)}">+ Notat</button></div>` : ""}
 
       <section class="detail-section">
         <h3>Tidslogg</h3>
@@ -759,7 +761,7 @@
       </section>
 
       ${workOrderControls(workOrder) ? `<div class="meter-controls detail-controls">${workOrderControls(workOrder)}</div>` : ""}`;
-    if (workOrder.status === "completed") {
+    if (effectiveStatus(workOrder) === "completed") {
       detailModalContent.insertAdjacentHTML("beforeend", `<div class="meter-controls detail-controls">${workOrder.invoiceId ? `<a class="primary-btn" href="faktura-detalj.html?id=${encodeURIComponent(workOrder.invoiceId)}">Åpne faktura</a>` : `<a class="primary-btn" href="faktura-ny.html?workOrderId=${encodeURIComponent(workOrder._id)}">Opprett fakturautkast</a>`}</div>`);
     }
   }
@@ -792,7 +794,7 @@
     document.querySelectorAll("[data-live-amount-id]").forEach((element) => {
       const workOrder = findWorkOrder(element.dataset.liveAmountId);
       if (!workOrder) return;
-      const estimated = !["completed", "stopped"].includes(workOrder.status);
+      const estimated = !["completed", "stopped"].includes(effectiveStatus(workOrder));
       element.textContent = formatCurrency(calculateEstimatedAmount(workOrder), estimated);
     });
   }
