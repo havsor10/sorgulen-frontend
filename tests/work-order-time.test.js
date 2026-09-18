@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 const {
   intervalSeconds,
   calculateWorkSeconds,
+  calculateCurrentSessionSeconds,
   calculateEstimatedAmount,
 } = require("../admin/work-order-time");
 
@@ -63,6 +64,43 @@ test("a paused timer does not grow while the page stays open", () => {
 
   assert.equal(calculateWorkSeconds(paused, new Date("2026-09-02T10:00:00.000Z")), 3_600);
   assert.equal(calculateWorkSeconds(paused, new Date("2026-09-03T10:00:00.000Z")), 3_600);
+});
+
+
+test("live session timer resets after the previous stopped session", () => {
+  const order = {
+    status: "active",
+    events: [
+      { type: "stopped", at: "2026-09-17T14:00:00.000Z" },
+      { type: "resumed", at: "2026-09-18T10:03:00.000Z" },
+    ],
+    workIntervals: [
+      { source: "timer", startedAt: "2026-09-17T09:30:00.000Z", endedAt: "2026-09-17T14:00:00.000Z" },
+      { source: "manual", durationSeconds: 4200, startedAt: "2026-09-18T08:00:00.000Z", endedAt: "2026-09-18T09:10:00.000Z" },
+      { source: "timer", startedAt: "2026-09-18T10:03:00.000Z", endedAt: null },
+    ],
+  };
+
+  assert.equal(calculateWorkSeconds(order, new Date("2026-09-18T10:04:00.000Z")), 20_460);
+  assert.equal(calculateCurrentSessionSeconds(order, new Date("2026-09-18T10:04:00.000Z")), 60);
+});
+
+test("pause and resume stay inside the same current session", () => {
+  const order = {
+    status: "active",
+    events: [
+      { type: "stopped", at: "2026-09-17T14:00:00.000Z" },
+      { type: "resumed", at: "2026-09-18T08:00:00.000Z" },
+      { type: "paused", at: "2026-09-18T08:30:00.000Z" },
+      { type: "resumed", at: "2026-09-18T08:45:00.000Z" },
+    ],
+    workIntervals: [
+      { source: "timer", startedAt: "2026-09-18T08:00:00.000Z", endedAt: "2026-09-18T08:30:00.000Z" },
+      { source: "timer", startedAt: "2026-09-18T08:45:00.000Z", endedAt: null },
+    ],
+  };
+
+  assert.equal(calculateCurrentSessionSeconds(order, new Date("2026-09-18T09:00:00.000Z")), 2_700);
 });
 
 test("completed history keeps the stored time and amount snapshots", () => {
