@@ -173,45 +173,21 @@
     } catch {
       return;
     }
-    const reversed = [...(currentPortal?.procurements || [])].reverse();
-    const cards = [...editor.querySelectorAll(".procurement-admin-card")];
-    cards.forEach((card, index) => {
-      const procurement = reversed[index];
+
+    const visible = (currentPortal?.procurements || []).filter((procurement) => procurement.status !== "cancelled");
+    const byId = new Map(visible.map((procurement) => [procurement.entryId, procurement]));
+
+    editor.querySelectorAll(".procurement-admin-card[data-procurement-card-id]").forEach((card) => {
+      const procurement = byId.get(card.dataset.procurementCardId);
       if (!procurement) return;
+
       const historyCount = procurement.correctionHistory?.length || 0;
       const signature = `${procurement.entryId}:${procurement.status}:${procurement.revision}:${historyCount}`;
       if (card.dataset.procurementCorrectionSignature === signature) return;
       card.dataset.procurementCorrectionSignature = signature;
       card.dataset.procurementCorrectionId = procurement.entryId;
 
-      card.querySelectorAll("[data-cancel-procurement]").forEach((button) => {
-        button.textContent = "Fjern fra kundesiden";
-        button.title = "Skjuler innkjøpet for kunden, men beholder historikken i admin.";
-      });
-
-      card.querySelector(".procurement-correction-actions")?.remove();
       card.querySelector(".procurement-correction-note")?.remove();
-      if (!LOCKED.has(procurement.status)) return;
-
-      const actions = document.createElement("div");
-      actions.className = "procurement-correction-actions";
-      const correct = document.createElement("button");
-      correct.type = "button";
-      correct.className = "secondary-btn";
-      correct.textContent = "Korriger / erstatt";
-      correct.dataset.correctProcurement = procurement.entryId;
-      actions.appendChild(correct);
-
-      if (procurement.status === "purchased") {
-        const remove = document.createElement("button");
-        remove.type = "button";
-        remove.className = "secondary-btn";
-        remove.textContent = "Fjern fra kundesiden";
-        remove.dataset.removeLockedProcurement = procurement.entryId;
-        actions.appendChild(remove);
-      }
-      card.appendChild(actions);
-
       if (historyCount) {
         const note = document.createElement("p");
         note.className = "procurement-correction-note";
@@ -235,11 +211,12 @@
       if (item) openCorrection(item);
       return;
     }
-    const remove = event.target.closest("[data-remove-locked-procurement]");
+
+    const remove = event.target.closest("[data-remove-procurement]");
     if (remove) {
       event.preventDefault();
       event.stopPropagation();
-      const item = (currentPortal?.procurements || []).find((entry) => entry.entryId === remove.dataset.removeLockedProcurement);
+      const item = (currentPortal?.procurements || []).find((entry) => entry.entryId === remove.dataset.removeProcurement);
       if (item) removeProcurement(item);
     }
   }, true);
