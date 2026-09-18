@@ -1,6 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
+  intervalSeconds,
   calculateWorkSeconds,
   calculateEstimatedAmount,
 } = require("../admin/work-order-time");
@@ -18,6 +19,17 @@ test("excludes every pause from the displayed work time", () => {
 
   assert.equal(calculateWorkSeconds(workOrder), 22_200);
   assert.equal(calculateEstimatedAmount(workOrder), 5_241.67);
+});
+
+test("manual time uses stored duration instead of synthetic timestamps", () => {
+  const manual = {
+    source: "manual",
+    durationSeconds: 4200,
+    startedAt: "2026-09-11T12:00:00.000Z",
+    endedAt: "2026-09-11T15:00:00.000Z",
+  };
+  assert.equal(intervalSeconds(manual), 4200);
+  assert.equal(calculateWorkSeconds({ status: "planned", workIntervals: [manual] }), 4200);
 });
 
 test("reconstructs an active timer from persisted timestamps after refresh", () => {
