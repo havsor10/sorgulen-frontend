@@ -3,25 +3,25 @@
   if (typeof module === "object" && module.exports) module.exports = api;
   if (root) root.SorgulenWorkOrderTime = api;
 })(typeof window !== "undefined" ? window : globalThis, () => {
+  function intervalSeconds(interval, now = Date.now()) {
+    if (!interval) return 0;
+    const explicit = Number(interval.durationSeconds);
+    if (interval.source === "manual" && Number.isFinite(explicit) && explicit > 0) return Math.floor(explicit);
+    const safeNowMs = now instanceof Date ? now.getTime() : Number(now);
+    const nowMs = Number.isFinite(safeNowMs) ? safeNowMs : Date.now();
+    const startedAt = new Date(interval.startedAt).getTime();
+    const endedAt = interval.endedAt ? new Date(interval.endedAt).getTime() : nowMs;
+    if (!Number.isFinite(startedAt) || !Number.isFinite(endedAt) || endedAt < startedAt) return 0;
+    return Math.floor((endedAt - startedAt) / 1000);
+  }
+
   function calculateWorkSeconds(workOrder, now = Date.now()) {
     if (!workOrder) return 0;
     if (["completed", "cancelled"].includes(workOrder.status)) {
       return Math.max(0, Number(workOrder.totalWorkSeconds) || 0);
     }
 
-    const nowMs = now instanceof Date ? now.getTime() : Number(now);
-    const safeNowMs = Number.isFinite(nowMs) ? nowMs : Date.now();
-    let totalMs = 0;
-
-    for (const interval of workOrder.workIntervals || []) {
-      const startedAt = new Date(interval.startedAt).getTime();
-      const endedAt = interval.endedAt ? new Date(interval.endedAt).getTime() : safeNowMs;
-      if (!Number.isNaN(startedAt) && !Number.isNaN(endedAt) && endedAt >= startedAt) {
-        totalMs += endedAt - startedAt;
-      }
-    }
-
-    return Math.max(0, Math.floor(totalMs / 1000));
+    return (workOrder.workIntervals || []).reduce((sum, interval) => sum + intervalSeconds(interval, now), 0);
   }
 
   function calculateEstimatedAmount(workOrder, seconds = calculateWorkSeconds(workOrder)) {
@@ -32,5 +32,5 @@
     return Math.round((((Number(seconds) * rate) / 3600) + Number.EPSILON) * 100) / 100;
   }
 
-  return { calculateWorkSeconds, calculateEstimatedAmount };
+  return { intervalSeconds, calculateWorkSeconds, calculateEstimatedAmount };
 });

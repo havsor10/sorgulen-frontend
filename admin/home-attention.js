@@ -193,6 +193,13 @@
       return;
     }
 
+    if (home.ongoingProject) {
+      focusSection.classList.add("attention-live-focus");
+      const eyebrow = focusSection.querySelector(".eyebrow");
+      if (eyebrow) eyebrow.textContent = "MELLOM ØKTER";
+      return;
+    }
+
     const today = osloToday(0);
     const tomorrow = osloToday(1);
     const workDate = home.nextWorkOrder?.jobDate || "";

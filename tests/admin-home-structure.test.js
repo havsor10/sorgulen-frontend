@@ -32,6 +32,10 @@ test("active customers are visible on home when ongoing projects exist", () => {
   assert.doesNotMatch(attentionJs, /getElementById\("ongoingSection"\)\?\.classList\.add\("hidden"\)/);
   assert.match(js, /ongoingProjects/);
   assert.match(js, /status:\s*"stopped"|ongoingProjects/);
+  assert.match(js, /Start takstameter/);
+  assert.match(js, /Start ny økt/);
+  assert.match(js, /Fortsett \/ ny økt/);
+  assert.ok(html.indexOf('id="ongoingSection"') < html.indexOf('aria-labelledby="tasksTitle"'), "aktive kunder skal stå før oppfølgingsvarsler");
 });
 
 test("attention engine uses visual priority, direct actions and a calm all-clear state", () => {
