@@ -191,14 +191,20 @@
   }
 
   function procurementCards(procurements) {
-    if (!procurements?.length) return '<p class="muted">Ingen innkjøp knyttet til kunden ennå. Denne delen vises ikke på kundesiden før du sender et konkret innkjøp til godkjenning.</p>';
-    return `<div class="procurement-admin-list">${procurements.slice().reverse().map((procurement) => {
-      const canEdit = ["researching", "awaiting_approval", "approved"].includes(procurement.status);
-      const canCancel = !["purchased", "cancelled"].includes(procurement.status);
+    const visible = (procurements || []).filter((procurement) => procurement.status !== "cancelled");
+    if (!visible.length) return '<p class="muted">Ingen innkjøp knyttet til kunden ennå. Denne delen vises ikke på kundesiden før du sender et konkret innkjøp til godkjenning.</p>';
+    return `<div class="procurement-admin-list">${visible.slice().reverse().map((procurement) => {
+      const directEdit = ["researching", "awaiting_approval", "approved"].includes(procurement.status);
+      const lockedEdit = ["ordered", "waiting_delivery", "ready_pickup", "purchased"].includes(procurement.status);
       const statusClass = ["approved", "ordered", "ready_pickup", "purchased"].includes(procurement.status)
         ? "good"
         : ["awaiting_approval", "waiting_delivery"].includes(procurement.status) ? "waiting" : "";
-      return `<article class="procurement-admin-card ${statusClass}">
+      const editButton = directEdit
+        ? `<button type="button" class="secondary-btn" data-edit-procurement="${escapeHtml(procurement.entryId)}">Rediger</button>`
+        : lockedEdit
+          ? `<button type="button" class="secondary-btn" data-correct-procurement="${escapeHtml(procurement.entryId)}">Rediger</button>`
+          : "";
+      return `<article class="procurement-admin-card ${statusClass}" data-procurement-card-id="${escapeHtml(procurement.entryId)}">
         <div class="procurement-admin-head">
           <div><strong>${escapeHtml(procurement.title)}</strong><span>${escapeHtml(procurementStatusLabel(procurement.status))}</span></div>
           <strong>${escapeHtml(formatCurrency(procurement.total || 0))}</strong>
@@ -206,9 +212,9 @@
         ${procurement.supplier ? `<p>Leverandør: ${escapeHtml(procurement.supplier)}</p>` : ""}
         <p>${(procurement.items || []).length} produktlinje${(procurement.items || []).length === 1 ? "" : "r"}${procurement.customerApprovedAt ? ` · Godkjent ${escapeHtml(formatDate(procurement.customerApprovedAt, { time: true }))}` : ""}</p>
         ${procurementStatusControl(procurement)}
-        <div class="portal-actions compact-actions">
-          ${canEdit ? `<button type="button" class="secondary-btn" data-edit-procurement="${escapeHtml(procurement.entryId)}">Rediger</button>` : ""}
-          ${canCancel ? `<button type="button" class="secondary-btn" data-cancel-procurement="${escapeHtml(procurement.entryId)}">Avbryt</button>` : ""}
+        <div class="portal-actions compact-actions procurement-card-actions">
+          ${editButton}
+          <button type="button" class="secondary-btn procurement-remove-btn" data-remove-procurement="${escapeHtml(procurement.entryId)}">Fjern</button>
         </div>
       </article>`;
     }).join("")}</div>`;
