@@ -16,6 +16,10 @@
   const paymentTermsHint = document.getElementById("paymentTermsHint");
   const vatHint = document.getElementById("vatHint");
   const backLink = document.getElementById("backLink");
+  const discountType = document.getElementById("discountType");
+  const discountValue = document.getElementById("discountValue");
+  const discountLabel = document.getElementById("discountLabel");
+  const discountPreview = document.getElementById("discountPreview");
 
   let vatRate = 0;
   const f = {
@@ -105,17 +109,66 @@
     }).filter((line) => line.item);
   }
 
+  function discountFor(gross) {
+    const type = discountType?.value || "none";
+    const rawValue = Number(discountValue?.value || 0);
+    if (type === "none" || !(rawValue > 0)) return { type: "none", value: 0, amount: 0, error: "" };
+    if (type === "percent") {
+      if (rawValue > 100) return { type, value: rawValue, amount: 0, error: "Prosent-rabatt kan ikke være over 100 %." };
+      return { type, value: rawValue, amount: Math.round((gross * rawValue / 100 + Number.EPSILON) * 100) / 100, error: "" };
+    }
+    if (rawValue > gross) return { type, value: rawValue, amount: 0, error: "Fast rabatt kan ikke være større enn summen før rabatt." };
+    return { type: "fixed", value: rawValue, amount: Math.round((rawValue + Number.EPSILON) * 100) / 100, error: "" };
+  }
+
+  function updateDiscountInputs() {
+    if (!discountType || !discountValue) return;
+    const enabled = discountType.value !== "none";
+    discountValue.disabled = !enabled;
+    discountLabel.disabled = !enabled;
+    discountValue.placeholder = discountType.value === "percent" ? "F.eks. 10" : "F.eks. 500";
+    discountValue.max = discountType.value === "percent" ? "100" : "";
+    if (!enabled) discountValue.value = "0";
+  }
+
   function updateTotal() {
     for (const tr of linesBody.querySelectorAll("tr")) {
       const q = Number(tr.querySelector(".line-quantity").value) || 0;
       const p = Number(tr.querySelector(".line-price").value) || 0;
       tr.querySelector(".line-total").textContent = money(Math.round((q * p + Number.EPSILON) * 100) / 100);
     }
-    const subtotal = getLines().reduce((sum, line) => sum + line.amount, 0);
+    const gross = Math.round((getLines().reduce((sum, line) => sum + line.amount, 0) + Number.EPSILON) * 100) / 100;
+    const discount = discountFor(gross);
+    const subtotal = Math.round(((gross - discount.amount) + Number.EPSILON) * 100) / 100;
     const tax = Math.round((subtotal * vatRate / 100 + Number.EPSILON) * 100) / 100;
+    const total = Math.round((subtotal + tax + Number.EPSILON) * 100) / 100;
+    const saving = Math.round((discount.amount * (1 + vatRate / 100) + Number.EPSILON) * 100) / 100;
+
+    if (discount.error) {
+      discountPreview.hidden = false;
+      discountPreview.classList.add("is-error");
+      discountPreview.textContent = discount.error;
+    } else if (discount.type !== "none" && discount.amount > 0) {
+      discountPreview.hidden = false;
+      discountPreview.classList.remove("is-error");
+      const label = discountLabel.value.trim() || "Kunderabatt";
+      const suffix = discount.type === "percent" ? ` (${discount.value} %)` : "";
+      discountPreview.innerHTML = `
+        <strong>🎁 Kunden får rabatt</strong>
+        <span>Sum før rabatt: ${money(gross)}</span>
+        <span>${esc(label)}${suffix}: −${money(discount.amount)}</span>
+        <strong>Du sparer kunden ${money(saving)}</strong>`;
+    } else {
+      discountPreview.hidden = true;
+      discountPreview.classList.remove("is-error");
+      discountPreview.textContent = "";
+    }
+
     totalDisplay.textContent = vatRate
-      ? `Delsum: ${money(subtotal)} · MVA ${vatRate}%: ${money(tax)} · Total: ${money(subtotal + tax)}`
-      : `Total: ${money(subtotal)}`;
+      ? `Sum før rabatt: ${money(gross)} · Rabatt: ${money(discount.amount)} · MVA ${vatRate}%: ${money(tax)} · Total: ${money(total)}`
+      : discount.amount > 0
+        ? `Sum før rabatt: ${money(gross)} · Rabatt: −${money(discount.amount)} · Total: ${money(total)}`
+        : `Total: ${money(total)}`;
   }
 
   async function loadConfig() {
@@ -156,6 +209,10 @@
       serviceDateFrom.value = inv.serviceDateFrom || "";
       serviceDateTo.value = inv.serviceDateTo && inv.serviceDateTo !== inv.serviceDateFrom ? inv.serviceDateTo : "";
       serviceLocation.value = inv.serviceLocation || "";
+      discountType.value = inv.discountType || "none";
+      discountValue.value = Number(inv.discountValue || 0);
+      discountLabel.value = inv.discountLabel || "Kunderabatt";
+      updateDiscountInputs();
 
       linesBody.innerHTML = "";
       (inv.lines || []).forEach((line) => addLine(line.item, line.amount, line));
@@ -173,7 +230,12 @@
     const lines = getLines();
     if (!lines.length) { setMessage("Legg til minst én fakturalinje.", "error"); return; }
     if (lines.some((line) => !(line.quantity > 0) || line.unitPrice < 0)) { setMessage("Kontroller mengde og sats på fakturalinjene.", "error"); return; }
-    if (!(lines.reduce((sum, line) => sum + line.amount, 0) > 0)) { setMessage("Totalbeløpet må være større enn 0.", "error"); return; }
+    const gross = lines.reduce((sum, line) => sum + line.amount, 0);
+    if (!(gross > 0)) { setMessage("Totalbeløpet må være større enn 0.", "error"); return; }
+    const discount = discountFor(gross);
+    if (discount.error) { setMessage(discount.error, "error"); discountValue.focus(); return; }
+    if (discount.type !== "none" && !(discount.value > 0)) { setMessage("Skriv inn rabatten du vil gi.", "error"); discountValue.focus(); return; }
+    if (discount.amount >= gross) { setMessage("Rabatten kan ikke gjøre fakturaen til 0 kr. eller mindre.", "error"); discountValue.focus(); return; }
 
     saveBtn.disabled = true;
     setMessage("Lagrer endringer…");
@@ -194,6 +256,9 @@
           serviceDateTo: serviceDateTo.value || serviceDateFrom.value || "",
           serviceLocation: serviceLocation.value.trim(),
           lines,
+          discountType: discount.type,
+          discountValue: discount.value,
+          discountLabel: discount.type === "none" ? "Kunderabatt" : (discountLabel.value.trim() || "Kunderabatt"),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -205,6 +270,11 @@
       saveBtn.disabled = false;
     }
   }
+
+  discountType.addEventListener("change", () => { updateDiscountInputs(); updateTotal(); });
+  discountValue.addEventListener("input", updateTotal);
+  discountLabel.addEventListener("input", updateTotal);
+  updateDiscountInputs();
 
   addLineBtn.addEventListener("click", () => addLine());
   aiLinesBtn.addEventListener("click", async () => {
