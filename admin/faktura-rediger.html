@@ -6,7 +6,7 @@
   <title>Rediger faktura | Sørgulen Industriservice</title>
   <link rel="stylesheet" href="admin.css">
   <link rel="stylesheet" href="admin-shell.css">
-  <link rel="stylesheet" href="admin-pages.css">
+  <link rel="stylesheet" href="admin-pages.css?v=20260919-discount1">
 </head>
 <body>
   <div id="adminShell" data-page="invoices"></div>
@@ -64,12 +64,36 @@
       <p class="hint" id="vatHint"></p>
     </section>
 
+    <section class="nf-card" id="discount">
+      <h3>🎁 Kunderabatt</h3>
+      <p class="hint">Rabatten vises tydelig på fakturaen med original sum, rabatt og hvor mye kunden sparer.</p>
+      <div class="nf-row">
+        <div class="nf-field">
+          <label for="discountType">Rabattype</label>
+          <select id="discountType">
+            <option value="none">Ingen rabatt</option>
+            <option value="percent">Prosent</option>
+            <option value="fixed">Fast beløp</option>
+          </select>
+        </div>
+        <div class="nf-field">
+          <label for="discountValue">Rabatt</label>
+          <input id="discountValue" type="number" min="0" step="0.01" inputmode="decimal" value="0">
+        </div>
+      </div>
+      <div class="nf-field">
+        <label for="discountLabel">Tekst kunden ser på fakturaen</label>
+        <input id="discountLabel" type="text" maxlength="120" value="Kunderabatt" placeholder="F.eks. Fast kunderabatt">
+      </div>
+      <div class="invoice-discount-preview" id="discountPreview" hidden></div>
+    </section>
+
     <div class="nf-actions">
       <button class="btn-save" id="saveBtn" type="button">Lagre endringer</button>
       <button class="btn-cancel" id="cancelBtn" type="button">Avbryt</button>
     </div>
   </main>
   <script src="../config.js"></script>
-  <script src="faktura-rediger.js"></script>
+  <script src="faktura-rediger.js?v=20260919-discount1"></script>
 </body>
 </html>
