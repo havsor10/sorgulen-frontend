@@ -2,3 +2,14 @@
 #ongoingSection:not(.hidden) {
   display: block !important;
 }
+
+#ongoingSection{margin-top:18px}
+#ongoingProjects{display:grid;gap:12px}
+.home-active-project{display:grid!important;gap:12px;align-items:stretch}
+.home-active-project-main{display:block;color:inherit!important;text-decoration:none!important;min-width:0}
+.home-active-project-main h3{margin:0 0 5px}
+.home-active-project-main p{margin:0}
+.home-active-project-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:stretch}
+.home-active-project-actions .primary-action,.home-active-project-actions .secondary-action{min-height:50px;display:grid;place-items:center;margin:0;text-decoration:none;font-weight:800}
+.home-active-project-actions .home-active-open{padding-inline:18px}
+@media(max-width:430px){.home-active-project-actions{grid-template-columns:minmax(0,1fr) auto}}
