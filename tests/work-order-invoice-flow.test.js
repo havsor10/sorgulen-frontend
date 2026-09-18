@@ -11,13 +11,13 @@ const invoicePicker = fs.readFileSync(path.join(root, "admin/invoice-work-order-
 const invoiceJs = fs.readFileSync(path.join(root, "admin/faktura-ny.js"), "utf8");
 
 test("oppdrag bruker samlet feltmotor for ferdig oppdrag", () => {
-  assert.match(oppdragHtml, /20260918-unified1/);
+  assert.match(oppdragHtml, /field-ui-20260918-workflow1/);
   assert.doesNotMatch(oppdragHtml, /completed-work-order-flow\.js/);
 });
 
 test("ferdig ufakturert oppdrag forblir redigerbart og faktureres direkte på id", () => {
-  assert.match(field, /order\.status !== "completed"/);
-  assert.match(field, /else if \(order\.invoiceId\)|if \(order\.invoiceId\)/);
+  assert.match(field, /order\.workflow\?\.canAddRegistrations/);
+  assert.match(field, /workflow\.canOpenInvoice \|\| order\.invoiceId/);
   assert.match(field, /faktura-ny\.html\?workOrderId=/);
   assert.match(field, /Opprett faktura/);
   assert.match(field, /data-field-add-time/);
