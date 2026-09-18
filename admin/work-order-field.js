@@ -12,7 +12,7 @@
   let currentOrder = null;
   let currentCompletionCheck = {};
   let currentControls = "";
-  let currentInvoiceAction = "";
+  let lastOpenedOrderId = new URLSearchParams(location.search).get("open") || "";
 
   const statusNames = { planned: "Planlagt", active: "Aktiv", paused: "Pauset", stopped: "Mellom økter", completed: "Ferdigstilt", cancelled: "Avbrutt" };
   const categoryNames = { work: "Arbeid", purchase: "Innkjøp", transport: "Transport" };
@@ -217,7 +217,13 @@
           <div><span>Faktura</span><strong>${entry.billable === false ? "Intern / ikke fakturerbar" : "Fakturerbar"}</strong></div>
         </div>
         <div class="field-description${missing ? " warn" : ""}">${missing ? "Denne økten mangler en beskrivelse. Legg inn hva du gjorde mens du fortsatt husker det." : esc(entry.comment)}</div>
-        ${open ? '<button class="field-edit-session" type="button" disabled>Pause eller stopp økten før du redigerer</button>' : `<button class="field-edit-session" type="button" data-field-edit-session="${esc(entry.entryId)}">${missing ? "Legg inn hva eg gjorde" : "Rediger denne økten"}</button>`}
+        ${open
+          ? '<button class="field-edit-session" type="button" disabled>Pause eller stopp økten før du redigerer</button>'
+          : order.invoiceId
+            ? '<p class="field-locked-note">Økten er låst fordi oppdraget er koblet til faktura.</p>'
+            : order.status === "cancelled"
+              ? '<p class="field-locked-note">Gjenåpne oppdraget før du endrer registreringer.</p>'
+              : `<div class="field-entry-actions"><button class="field-edit-session" type="button" data-field-edit-session="${esc(entry.entryId)}">${missing ? "Legg inn hva eg gjorde" : "Rediger denne økten"}</button><button class="field-delete-entry" type="button" data-field-delete-registration="time" data-entry-id="${esc(entry.entryId)}" data-entry-label="${esc(entry.comment || "arbeidsøkten")}">Slett økt</button></div>`}
       </div>
     </details>`;
   }
@@ -265,11 +271,15 @@
     const expenses = order.additionalCosts || [];
     const materials = order.materials || [];
     const notes = order.projectNotes || [];
+    const editable = !order.invoiceId && order.status !== "cancelled";
+    const actions = (kind, entryId, label) => editable
+      ? `<div class="field-register-actions"><button type="button" data-field-registration-edit="${esc(kind)}" data-entry-id="${esc(entryId)}">Rediger</button><button type="button" class="field-delete-entry" data-field-delete-registration="${esc(kind)}" data-entry-id="${esc(entryId)}" data-entry-label="${esc(label)}">Slett</button></div>`
+      : "";
     const rows = (items, mapper, empty) => items.length ? `<div class="field-register-list">${items.map(mapper).join("")}</div>` : `<p class="muted">${esc(empty)}</p>`;
     return `<div class="field-registration-groups">
-      <section class="field-register-group"><h4>Utgifter · ${expenses.length}</h4>${rows(expenses, (x) => `<div class="field-register-row"><div><strong>${esc(x.item)}</strong><span>${esc(dateTime(x.occurredAt))}${x.supplier ? ` · ${esc(x.supplier)}` : ""}</span></div><span>${esc(money(x.amount))}</span></div>`, "Ingen utgifter")}</section>
-      <section class="field-register-group"><h4>Materialer · ${materials.length}</h4>${rows(materials, (x) => `<div class="field-register-row"><div><strong>${esc(x.item)}</strong><span>${esc(x.quantity)} ${esc(x.unit || "stk")}${x.comment ? ` · ${esc(x.comment)}` : ""}</span></div><span>${x.unitPrice == null ? "Pris mangler" : esc(money(Number(x.quantity) * Number(x.unitPrice)))}</span></div>`, "Ingen materialer")}</section>
-      <section class="field-register-group"><h4>Notater · ${notes.length}</h4>${rows(notes, (x) => `<div class="field-register-row"><div><strong>${esc(x.text)}</strong><span>${esc(dateTime(x.createdAt))}</span></div><span></span></div>`, "Ingen løpende notater")}</section>
+      <section class="field-register-group"><h4>Utgifter · ${expenses.length}</h4>${rows(expenses, (x) => `<div class="field-register-row"><div><strong>${esc(x.item)}</strong><span>${esc(dateTime(x.occurredAt))}${x.supplier ? ` · ${esc(x.supplier)}` : ""}</span></div><span>${esc(money(x.amount))}</span>${actions("expense", x.entryId, x.item || "utgiften")}</div>`, "Ingen utgifter")}</section>
+      <section class="field-register-group"><h4>Materialer · ${materials.length}</h4>${rows(materials, (x) => `<div class="field-register-row"><div><strong>${esc(x.item)}</strong><span>${esc(x.quantity)} ${esc(x.unit || "stk")}${x.comment ? ` · ${esc(x.comment)}` : ""}</span></div><span>${x.unitPrice == null ? "Pris mangler" : esc(money(Number(x.quantity) * Number(x.unitPrice)))}</span>${actions("material", x.entryId, x.item || "materialet")}</div>`, "Ingen materialer")}</section>
+      <section class="field-register-group"><h4>Notater · ${notes.length}</h4>${rows(notes, (x) => `<div class="field-register-row"><div><strong>${esc(x.text)}</strong><span>${esc(dateTime(x.createdAt))}</span></div><span></span>${actions("note", x.entryId, "notatet")}</div>`, "Ingen løpende notater")}</section>
     </div>`;
   }
 
@@ -294,7 +304,7 @@
   }
 
   function addMenuMarkup(order) {
-    if (["completed", "cancelled"].includes(order.status)) return "";
+    if (order.status === "cancelled" || order.invoiceId) return "";
     return `<div class="field-action-row">
       <button type="button" class="field-add-main" data-field-add-toggle aria-expanded="false">+ Legg til registrering</button>
       ${order.customerId ? `<a class="field-secondary-action" href="kunde.html?id=${encodeURIComponent(order.customerId)}">Kundeinfo</a>` : ""}
@@ -309,6 +319,17 @@
         </div>
       </section>
     </div>`;
+  }
+
+  function workflowMarkup(order) {
+    if (order.status === "cancelled") {
+      return `<section class="field-status-workflow is-cancelled"><div><strong>Oppdraget er avbrutt</strong><span>Registreringene er bevart. Gjenåpne før du korrigerer, ferdigstiller eller fakturerer.</span></div><button type="button" data-field-recover-order>Gjenåpne for korrigering</button></section>`;
+    }
+    if (order.status !== "completed") return "";
+    if (order.invoiceId) {
+      return `<section class="field-status-workflow is-invoiced"><div><strong>Oppdraget er koblet til faktura</strong><span>Registreringene er låst mot fakturagrunnlaget.</span></div><a href="faktura-detalj.html?id=${encodeURIComponent(order.invoiceId)}">Åpne faktura</a></section>`;
+    }
+    return `<section class="field-status-workflow is-completed"><div><strong>Ferdigstilt – klar for kontroll og faktura</strong><span>Du kan fortsatt korrigere tid, utgifter, materialer og notater før fakturaen opprettes.</span></div><a href="faktura-ny.html?workOrderId=${encodeURIComponent(order._id)}">Opprett faktura</a></section>`;
   }
 
   function closeAddMenu() {
@@ -347,6 +368,7 @@
           <div class="field-metric"><span>Fakturagrunnlag</span><strong>${issues.count ? `${issues.count} mangler` : "Klar ✓"}</strong><small>${issues.count ? "Trykk og ordne direkte" : "Alt viktig er registrert"}</small></div>
         </div>
         <button type="button" class="field-readiness${issues.count ? "" : " ready"}" data-field-readiness-jump><span class="field-readiness-icon">${issues.count ? "!" : "✓"}</span><span class="field-readiness-copy"><strong>${issues.count ? "Fakturagrunnlaget trenger kontroll" : "Fakturagrunnlaget ser bra ut"}</strong><span>${issues.count ? `${issues.count} ting kan ordnes herfra` : "Ingen manglende opplysninger funnet"}</span></span><span class="field-readiness-tail">›</span></button>
+        ${workflowMarkup(order)}
         ${addMenuMarkup(order)}
       </section>
 
@@ -360,28 +382,36 @@
 
       <details class="field-collapse field-notes"><summary>Prosjektbeskrivelse <span>${order.notes ? "Registrert" : "Tom"}</span></summary><div class="field-collapse-body"><textarea id="detailNotes" maxlength="5000" placeholder="Avtaler, omfang eller annen viktig prosjektinfo">${esc(order.notes || "")}</textarea><button id="saveDetailNotes" type="button" class="secondary-btn">Lagre prosjektbeskrivelse</button></div></details>
 
-      ${(currentControls || currentInvoiceAction) ? `<div class="field-work-controls">${currentControls}${currentInvoiceAction}</div>` : ""}
+      ${currentControls && !["completed", "cancelled"].includes(order.status) ? `<div class="field-work-controls">${currentControls}</div>` : ""}
     </div>`;
   }
 
   function orderIdFromLegacy() {
-    return detail.querySelector("[data-work-action][data-id]")?.dataset.id || detail.querySelector("[data-entry][data-id]")?.dataset.id || "";
+    return detail.querySelector("[data-work-action][data-id]")?.dataset.id
+      || detail.querySelector("[data-entry][data-id]")?.dataset.id
+      || lastOpenedOrderId
+      || "";
   }
 
   function captureLegacyActions() {
     const controlParent = [...detail.querySelectorAll(".detail-controls")].find((node) => node.querySelector("[data-work-action]"));
     currentControls = controlParent ? [...controlParent.children].map((x) => x.outerHTML).join("") : "";
-    const invoiceLink = [...detail.querySelectorAll('a[href*="faktura-"]')].find((x) => /faktura-(ny|detalj)\.html/.test(x.getAttribute("href") || ""));
-    currentInvoiceAction = invoiceLink ? invoiceLink.outerHTML : "";
   }
 
   async function refreshWorkspace(orderId = currentOrder?._id) {
     if (!orderId) return;
-    const [orderData, checkData] = await Promise.all([
-      api(`/admin/work-orders/${encodeURIComponent(orderId)}`),
-      api(`/admin/work-orders/${encodeURIComponent(orderId)}/completion-check`),
-    ]);
-    render(orderData.workOrder, checkData.completionCheck || {});
+    const orderData = await api(`/admin/work-orders/${encodeURIComponent(orderId)}`);
+    const order = orderData.workOrder;
+    let completionCheck = {};
+    if (order?.status !== "cancelled") {
+      try {
+        const checkData = await api(`/admin/work-orders/${encodeURIComponent(orderId)}/completion-check`);
+        completionCheck = checkData.completionCheck || {};
+      } catch (error) {
+        console.warn("Kunne ikke hente fakturakontroll:", error.message);
+      }
+    }
+    render(order, completionCheck);
   }
 
   async function enhance() {
@@ -415,7 +445,79 @@
     }
   }
 
+  async function openRegistration(kind, entryId) {
+    if (!currentOrder || !kind || !entryId) return;
+    if (!window.SorgulenOperations?.openRegistration) {
+      alert("Redigering er ikke klar ennå. Oppdater siden og prøv igjen.");
+      return;
+    }
+    try {
+      closeAddMenu();
+      await window.SorgulenOperations.openRegistration({ orderId: currentOrder._id, kind, entryId });
+    } catch (error) {
+      alert(error?.message || "Kunne ikke åpne registreringen.");
+    }
+  }
+
+  function registrationEndpoint(kind) {
+    return ({ time: "time", expense: "expenses", material: "materials", note: "notes" })[kind] || "";
+  }
+
+  async function deleteRegistration(kind, entryId, label) {
+    if (!currentOrder || currentOrder.invoiceId || currentOrder.status === "cancelled") return;
+    const endpoint = registrationEndpoint(kind);
+    if (!endpoint || !entryId) return;
+    if (!confirm(`Slette ${label || "registreringen"}? Denne endringen lagres med en gang.`)) return;
+    try {
+      await api(`/admin/operations/work-orders/${encodeURIComponent(currentOrder._id)}/${endpoint}/${encodeURIComponent(entryId)}`, { method: "DELETE" });
+      await refreshWorkspace(currentOrder._id);
+      await window.SorgulenAdminShell?.refreshBadges?.();
+    } catch (error) {
+      alert(error?.message || "Kunne ikke slette registreringen.");
+    }
+  }
+
   document.addEventListener("click", (event) => {
+    const opener = event.target.closest(".open-job-detail[data-id]");
+    if (opener?.dataset.id) lastOpenedOrderId = opener.dataset.id;
+  }, true);
+
+  document.addEventListener("click", async (event) => {
+    const recover = event.target.closest("[data-field-recover-order]");
+    if (recover && currentOrder?.status === "cancelled") {
+      event.preventDefault();
+      recover.disabled = true;
+      recover.textContent = "Gjenåpner…";
+      try {
+        await api(`/admin/work-orders/${encodeURIComponent(currentOrder._id)}/recover`, { method: "POST", body: JSON.stringify({}) });
+        lastOpenedOrderId = currentOrder._id;
+        await refreshWorkspace(currentOrder._id);
+      } catch (error) {
+        alert(error?.message || "Kunne ikke gjenåpne oppdraget.");
+        recover.disabled = false;
+        recover.textContent = "Gjenåpne for korrigering";
+      }
+      return;
+    }
+
+    const registrationEdit = event.target.closest("[data-field-registration-edit][data-entry-id]");
+    if (registrationEdit) {
+      event.preventDefault();
+      await openRegistration(registrationEdit.dataset.fieldRegistrationEdit, registrationEdit.dataset.entryId);
+      return;
+    }
+
+    const registrationDelete = event.target.closest("[data-field-delete-registration][data-entry-id]");
+    if (registrationDelete) {
+      event.preventDefault();
+      await deleteRegistration(
+        registrationDelete.dataset.fieldDeleteRegistration,
+        registrationDelete.dataset.entryId,
+        registrationDelete.dataset.entryLabel
+      );
+      return;
+    }
+
     const toggle = event.target.closest("[data-field-add-toggle]");
     if (toggle) {
       if (detail.querySelector("[data-field-add-menu]")?.hasAttribute("hidden")) openAddMenu();

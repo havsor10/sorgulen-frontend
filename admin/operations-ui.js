@@ -313,9 +313,48 @@
       } catch (error) { showModal({ title: "Kunne ikke hente registreringene", body: `<p class="operation-error">${esc(error.message)}</p>` }); }
     }
 
+    async function openRegistration({ orderId, kind, entryId }) {
+      if (!orderId || !kind || !entryId) throw new Error("Registreringen kunne ikke identifiseres.");
+      const order = await getOrder(orderId);
+      state.currentOrder = order;
+      state.currentOrderId = orderId;
+      if (kind === "time") {
+        const item = (order.workIntervals || []).find((entry) => entry.entryId === entryId);
+        if (!item) throw new Error("Tidsregistreringen finnes ikke lenger.");
+        return openManualTime({ orderId, entry: item, rate: order.hourlyRate });
+      }
+      if (kind === "expense") {
+        const item = (order.additionalCosts || []).find((entry) => entry.entryId === entryId);
+        if (!item) throw new Error("Utgiften finnes ikke lenger.");
+        showModal({ title: "Rediger utgift", body: expenseFormMarkup(orderId, item) });
+        bindGenericEdit("expense");
+        return;
+      }
+      if (kind === "material") {
+        const item = (order.materials || []).find((entry) => entry.entryId === entryId);
+        if (!item) throw new Error("Materialet finnes ikke lenger.");
+        showModal({ title: "Rediger materiale", body: materialFormMarkup(orderId, item) });
+        bindGenericEdit("material");
+        return;
+      }
+      if (kind === "note") {
+        const item = (order.projectNotes || []).find((entry) => entry.entryId === entryId);
+        if (!item) throw new Error("Notatet finnes ikke lenger.");
+        showModal({ title: "Rediger notat", body: noteFormMarkup(orderId, item) });
+        bindGenericEdit("note");
+        return;
+      }
+      throw new Error("Ukjent registreringstype.");
+    }
+
     function enhanceDetailModal() {
       const content = document.getElementById("detailModalContent");
-      if (!content || !state.currentOrderId || content.querySelector("[data-operations-manager]")) return;
+      if (!content || !state.currentOrderId) return;
+      if (content.querySelector("[data-field-workspace]")) {
+        content.querySelectorAll(".operations-edit-button").forEach((node) => node.remove());
+        return;
+      }
+      if (content.querySelector("[data-operations-manager]")) return;
       const button = document.createElement("button");
       button.type = "button";
       button.className = "secondary-btn operations-edit-button";
@@ -386,7 +425,7 @@
     enhanceHomeFocus();
     setTimeout(enhanceInvoiceDetail, 300);
 
-    window.SorgulenOperations = { api, openManualTime, openManager, refreshBadges: () => window.SorgulenAdminShell?.refreshBadges?.() };
+    window.SorgulenOperations = { api, openManualTime, openManager, openRegistration, refreshBadges: () => window.SorgulenAdminShell?.refreshBadges?.() };
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true });
