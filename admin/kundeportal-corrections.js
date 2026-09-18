@@ -3,7 +3,6 @@
 
   const API = (window.CONFIG && window.CONFIG.API_BASE_URL) || "https://sorgulen-backend-2.onrender.com/api";
   const KEY = "sorgulen_admin_key";
-  const LOCKED = new Set(["ordered", "waiting_delivery", "ready_pickup", "purchased"]);
   const editor = document.getElementById("portalEditor");
   if (!editor) return;
 
@@ -52,7 +51,7 @@
       <div id="procurementCorrectionModal" class="pc-modal hidden" role="dialog" aria-modal="true" aria-labelledby="pcTitle">
         <div class="pc-dialog">
           <div class="pc-head">
-            <div><p>Kundeinnkjøp</p><h2 id="pcTitle">Korriger / erstatt</h2></div>
+            <div><p>Kundeinnkjøp</p><h2 id="pcTitle">Rediger innkjøp</h2></div>
             <button type="button" class="pc-close" aria-label="Lukk">×</button>
           </div>
           <form id="pcForm" class="pc-body">
@@ -66,7 +65,7 @@
             <div class="pc-items-head"><strong>Produkter, mengde og pris</strong><button type="button" class="pc-add-line">+ Produktlinje</button></div>
             <div id="pcItems" class="pc-items"></div>
             <div id="pcStatus" class="pc-status" role="status" aria-live="polite"></div>
-            <div class="pc-actions"><button type="button" class="pc-cancel">Avbryt</button><button id="pcSave" type="submit" class="pc-save">Lagre ny versjon og krev ny godkjenning</button></div>
+            <div class="pc-actions"><button type="button" class="pc-cancel">Avbryt</button><button id="pcSave" type="submit" class="pc-save">Lagre endring og be om ny godkjenning</button></div>
           </form>
         </div>
       </div>`);
@@ -142,7 +141,7 @@
       status.textContent = error.message || "Kunne ikke lagre korrigeringen.";
     } finally {
       save.disabled = false;
-      save.textContent = "Lagre ny versjon og krev ny godkjenning";
+      save.textContent = "Lagre endring og be om ny godkjenning";
     }
   }
 
@@ -173,45 +172,21 @@
     } catch {
       return;
     }
-    const reversed = [...(currentPortal?.procurements || [])].reverse();
-    const cards = [...editor.querySelectorAll(".procurement-admin-card")];
-    cards.forEach((card, index) => {
-      const procurement = reversed[index];
+
+    const visible = (currentPortal?.procurements || []).filter((procurement) => procurement.status !== "cancelled");
+    const byId = new Map(visible.map((procurement) => [procurement.entryId, procurement]));
+
+    editor.querySelectorAll(".procurement-admin-card[data-procurement-card-id]").forEach((card) => {
+      const procurement = byId.get(card.dataset.procurementCardId);
       if (!procurement) return;
+
       const historyCount = procurement.correctionHistory?.length || 0;
       const signature = `${procurement.entryId}:${procurement.status}:${procurement.revision}:${historyCount}`;
       if (card.dataset.procurementCorrectionSignature === signature) return;
       card.dataset.procurementCorrectionSignature = signature;
       card.dataset.procurementCorrectionId = procurement.entryId;
 
-      card.querySelectorAll("[data-cancel-procurement]").forEach((button) => {
-        button.textContent = "Fjern fra kundesiden";
-        button.title = "Skjuler innkjøpet for kunden, men beholder historikken i admin.";
-      });
-
-      card.querySelector(".procurement-correction-actions")?.remove();
       card.querySelector(".procurement-correction-note")?.remove();
-      if (!LOCKED.has(procurement.status)) return;
-
-      const actions = document.createElement("div");
-      actions.className = "procurement-correction-actions";
-      const correct = document.createElement("button");
-      correct.type = "button";
-      correct.className = "secondary-btn";
-      correct.textContent = "Korriger / erstatt";
-      correct.dataset.correctProcurement = procurement.entryId;
-      actions.appendChild(correct);
-
-      if (procurement.status === "purchased") {
-        const remove = document.createElement("button");
-        remove.type = "button";
-        remove.className = "secondary-btn";
-        remove.textContent = "Fjern fra kundesiden";
-        remove.dataset.removeLockedProcurement = procurement.entryId;
-        actions.appendChild(remove);
-      }
-      card.appendChild(actions);
-
       if (historyCount) {
         const note = document.createElement("p");
         note.className = "procurement-correction-note";
@@ -235,11 +210,12 @@
       if (item) openCorrection(item);
       return;
     }
-    const remove = event.target.closest("[data-remove-locked-procurement]");
+
+    const remove = event.target.closest("[data-remove-procurement]");
     if (remove) {
       event.preventDefault();
       event.stopPropagation();
-      const item = (currentPortal?.procurements || []).find((entry) => entry.entryId === remove.dataset.removeLockedProcurement);
+      const item = (currentPortal?.procurements || []).find((entry) => entry.entryId === remove.dataset.removeProcurement);
       if (item) removeProcurement(item);
     }
   }, true);

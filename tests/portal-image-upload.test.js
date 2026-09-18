@@ -22,7 +22,7 @@ test("kildegrensen er større enn direkte backend-fallback slik at store telefon
 test("kundeportaladmin laster bildeklargjøring før hovedscriptet", () => {
   const html = fs.readFileSync(path.join(__dirname, "..", "admin", "kundeportal.html"), "utf8");
   const helperIndex = html.indexOf('src="portal-image-upload.js"');
-  const portalIndex = html.indexOf('src="kundeportal.js"');
+  const portalIndex = html.indexOf('src="kundeportal.js');
   assert.ok(helperIndex >= 0);
   assert.ok(portalIndex > helperIndex);
 });
