@@ -32,9 +32,9 @@ test("locked purchases get correction and removal controls", () => {
   const html = read("admin/kundeportal.html");
   const js = read("admin/kundeportal-corrections.js");
   assert.match(html, /kundeportal-corrections\.js/);
-  assert.match(js, /Korriger \/ erstatt/);
+  assert.match(js, /Rediger innkjøp/);
   assert.match(js, /\/correct/);
   assert.match(js, /\/remove/);
-  assert.match(js, /krever ny godkjenning|krev ny godkjenning/i);
+  assert.match(js, /ny godkjenning/i);
   assert.match(js, /Historikken slettes ikke/);
 });
