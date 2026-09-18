@@ -3,7 +3,6 @@
 
   const API = (window.CONFIG && window.CONFIG.API_BASE_URL) || "https://sorgulen-backend-2.onrender.com/api";
   const KEY = "sorgulen_admin_key";
-  const LOCKED = new Set(["ordered", "waiting_delivery", "ready_pickup", "purchased"]);
   const editor = document.getElementById("portalEditor");
   if (!editor) return;
 
@@ -52,7 +51,7 @@
       <div id="procurementCorrectionModal" class="pc-modal hidden" role="dialog" aria-modal="true" aria-labelledby="pcTitle">
         <div class="pc-dialog">
           <div class="pc-head">
-            <div><p>Kundeinnkjøp</p><h2 id="pcTitle">Korriger / erstatt</h2></div>
+            <div><p>Kundeinnkjøp</p><h2 id="pcTitle">Rediger innkjøp</h2></div>
             <button type="button" class="pc-close" aria-label="Lukk">×</button>
           </div>
           <form id="pcForm" class="pc-body">
@@ -66,7 +65,7 @@
             <div class="pc-items-head"><strong>Produkter, mengde og pris</strong><button type="button" class="pc-add-line">+ Produktlinje</button></div>
             <div id="pcItems" class="pc-items"></div>
             <div id="pcStatus" class="pc-status" role="status" aria-live="polite"></div>
-            <div class="pc-actions"><button type="button" class="pc-cancel">Avbryt</button><button id="pcSave" type="submit" class="pc-save">Lagre ny versjon og krev ny godkjenning</button></div>
+            <div class="pc-actions"><button type="button" class="pc-cancel">Avbryt</button><button id="pcSave" type="submit" class="pc-save">Lagre endring og be om ny godkjenning</button></div>
           </form>
         </div>
       </div>`);
@@ -142,7 +141,7 @@
       status.textContent = error.message || "Kunne ikke lagre korrigeringen.";
     } finally {
       save.disabled = false;
-      save.textContent = "Lagre ny versjon og krev ny godkjenning";
+      save.textContent = "Lagre endring og be om ny godkjenning";
     }
   }
 
