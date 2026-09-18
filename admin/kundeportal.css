@@ -316,3 +316,17 @@
   .procurement-save-actions { justify-content: stretch; }
   .procurement-save-actions button { width: 100%; }
 }
+
+.procurement-card-actions {
+  margin-top: 12px;
+}
+
+.procurement-card-actions .procurement-remove-btn {
+  border-color: #6b3a40;
+  background: #2a171a;
+  color: #ffd8dc;
+}
+
+.procurement-card-actions .procurement-remove-btn:hover {
+  background: #3a1d22;
+}
