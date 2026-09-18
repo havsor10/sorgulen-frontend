@@ -8,7 +8,7 @@ const html = fs.readFileSync(path.join(root, "admin/faktura-detalj.html"), "utf8
 const ui = fs.readFileSync(path.join(root, "admin/faktura-detalj.js"), "utf8");
 
 test("invoice detail loads fresh override-aware controller", () => {
-  assert.match(html, /faktura-detalj\.js\?v=20260918-unified1/);
+  assert.match(html, /faktura-detalj\.js\?v=20260919-discount1/);
 });
 
 test("warnings can be explicitly overridden but blockers cannot", () => {
