@@ -11,7 +11,6 @@
 /* Feltvisning v2: ryddig handlingsmeny og direkte feilretting */
 .operation-modal{z-index:12050!important}
 body.field-add-open{overflow:hidden}
-body.field-add-open .sai-launcher{visibility:hidden!important;pointer-events:none!important}
 .field-action-row{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px}
 .field-add-main{width:100%}
 .field-add-backdrop{position:fixed;inset:0;z-index:10040;background:rgba(0,0,0,.60);backdrop-filter:blur(2px)}
@@ -29,3 +28,17 @@ body.field-add-open .sai-launcher{visibility:hidden!important;pointer-events:non
 .field-inline-task{display:grid;gap:9px;padding:12px;border-top:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.16)}.field-inline-task[hidden]{display:none!important}.field-inline-task label{display:grid;gap:6px;color:#dce6f0;font-size:12px;font-weight:800}.field-inline-task input{width:100%;box-sizing:border-box;min-height:46px;padding:10px 12px;border:1px solid #4a5b70;border-radius:10px;background:#0b1220;color:#fff;font-size:16px}.field-inline-task>div{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field-inline-task button{width:100%;min-height:44px}.field-inline-error{min-height:16px;margin:0;color:#ffc4c8;font-size:12px}
 @media(max-width:720px){.field-action-row{grid-template-columns:1fr}.field-secondary-action{width:100%;box-sizing:border-box;text-align:center}.field-add-menu{bottom:calc(10px + env(safe-area-inset-bottom))!important;width:calc(100vw - 20px);max-height:78dvh;border-radius:20px!important;padding:13px!important}.field-add-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.field-add-grid>.field-add-option,.field-add-grid>[data-inventory-project-open]{min-height:96px!important;padding:11px!important}.field-issue-row{align-items:stretch;flex-direction:column}.field-issue-action{width:100%}.field-inline-task>div{grid-template-columns:1fr 1fr}}
 @media(max-width:380px){.field-add-grid{grid-template-columns:1fr}.field-add-grid>.field-add-option,.field-add-grid>[data-inventory-project-open]{min-height:78px!important}}
+
+/* Samlet oppdragsflyt: direkte redigering, sletting og statussteg */
+.field-status-workflow{display:grid;gap:10px;margin-top:12px;padding:13px 14px;border:1px solid #35506f;border-radius:14px;background:#0d1929}
+.field-status-workflow>div{display:grid;gap:3px}.field-status-workflow strong{font-size:14px;color:#f2f6fb}.field-status-workflow span{color:#9fb0c5;font-size:12px;line-height:1.4}
+.field-status-workflow>a,.field-status-workflow>button{display:flex;align-items:center;justify-content:center;min-height:46px;padding:9px 12px;border:0;border-radius:11px;background:#e9eef5;color:#101722!important;text-decoration:none!important;font:inherit;font-weight:850;text-align:center;cursor:pointer}
+.field-status-workflow.is-cancelled{border-color:#8e4147;background:#251619}.field-status-workflow.is-cancelled span{color:#d0a4aa}
+.field-status-workflow.is-invoiced{border-color:#3d5b4d;background:#102019}.field-status-workflow.is-invoiced span{color:#9fc7b2}
+.field-entry-actions,.field-register-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.field-entry-actions button,.field-register-actions button{min-height:38px;padding:0 11px;border:1px solid #3a4d62;border-radius:9px;background:#172536;color:#e8eef5;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
+.field-entry-actions .field-delete-entry,.field-register-actions .field-delete-entry{border-color:#704048;background:#301d21;color:#ffd8dc}
+.field-register-row{grid-template-columns:minmax(0,1fr) auto}
+.field-register-actions{grid-column:1/-1;margin-top:2px}
+.field-locked-note{margin:9px 0 0;color:#91a1b4;font-size:12px}
+@media(max-width:720px){.field-register-row{grid-template-columns:minmax(0,1fr) auto}.field-entry-actions{display:grid;grid-template-columns:1fr auto}.field-status-workflow{padding:12px}}
