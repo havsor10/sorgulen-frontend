@@ -78,22 +78,26 @@
   }
 
   function actionButtons(inv) {
-    const buttons = [`<button class="btn-preview" data-action="preview">📄 Forhåndsvis PDF</button>`];
+    const previewLabel = inv.status === "draft" ? "📄 Forhåndsvis PDF" : "📄 Vis ferdig faktura";
+    const buttons = [`<button class="btn-preview" data-action="preview">${previewLabel}</button>`];
     if (inv.status === "draft") {
       if (!inv.invoiceNumber) buttons.push(`<a class="btn-edit" href="faktura-rediger.html?id=${encodeURIComponent(inv._id)}">✏️ Rediger utkast</a>`);
       buttons.push(`<button class="btn-send" data-action="issue">${inv.isCreditNote ? "Utsted kreditnota" : "Utsted faktura"}</button>`);
       if (!inv.invoiceNumber) buttons.push(`<button class="btn-delete" data-action="delete">🗑 Slett utkast</button>`);
     }
     if (inv.status === "issued") {
-      if (inv.customerEmail) buttons.push(`<button class="btn-send" data-action="send">📧 Send til kunde</button>`);
-      if (!inv.isCreditNote) buttons.push(`<button class="btn-delete" data-action="credit" style="background:#8a5a1f;">↩️ Krediter</button>`);
+      buttons.push('<button class="btn-send" data-action="share">📱 Del / send på melding</button>');
+      buttons.push('<button class="btn-edit" data-action="show">👁 Vis til kunden</button>');
+      if (inv.customerEmail) buttons.push('<button class="btn-send" data-action="send">📧 Send på e-post</button>');
+      buttons.push('<button class="btn-edit" data-action="mark-message">✓ Marker levert på melding</button>');
+      if (!inv.isCreditNote) buttons.push('<button class="btn-delete" data-action="credit" style="background:#8a5a1f;">↩️ Krediter</button>');
     }
     if (inv.status === "sent") {
-      if (!inv.isCreditNote) buttons.push(`<button class="btn-paid" data-action="paid">💰 Marker betalt</button>`);
-      if (!inv.isCreditNote) buttons.push(`<button class="btn-delete" data-action="credit" style="background:#8a5a1f;">↩️ Krediter</button>`);
+      if (!inv.isCreditNote) buttons.push('<button class="btn-paid" data-action="paid">💰 Marker betalt</button>');
+      if (!inv.isCreditNote) buttons.push('<button class="btn-delete" data-action="credit" style="background:#8a5a1f;">↩️ Krediter</button>');
     }
     if (inv.status === "paid" && !inv.isCreditNote) {
-      buttons.push(`<button class="btn-delete" data-action="credit" style="background:#8a5a1f;">↩️ Krediter</button>`);
+      buttons.push('<button class="btn-delete" data-action="credit" style="background:#8a5a1f;">↩️ Krediter</button>');
     }
     return buttons.join("");
   }
@@ -241,22 +245,98 @@
     }
   }
 
-  async function preview(inv) {
-    setMessage("Lager PDF…");
-    const res = await fetch(`${API_BASE}/invoices/${inv._id}/preview`, { headers: headers() });
+  async function getPdfFile(inv) {
+    const res = await fetch(`${API_BASE}/invoices/${inv._id}/preview`, { cache: "no-store", headers: headers() });
     if (!res.ok) {
       const text = await res.text().catch(() => "");
       throw new Error(text || "Kunne ikke lage PDF");
     }
-    const url = URL.createObjectURL(await res.blob());
+    const blob = await res.blob();
+    const filename = `${inv.isCreditNote ? "kreditnota" : "faktura"}-${inv.invoiceNumber || "utkast"}.pdf`;
+    return { blob, file: new File([blob], filename, { type: "application/pdf" }) };
+  }
+
+  async function preview(inv) {
+    setMessage(inv.status === "draft" ? "Lager PDF…" : "Åpner ferdig faktura…");
+    const { blob } = await getPdfFile(inv);
+    const url = URL.createObjectURL(blob);
     window.open(url, "_blank", "noopener");
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    setTimeout(() => URL.revokeObjectURL(url), 120000);
     setMessage("");
+  }
+
+  async function markDelivered(inv, method) {
+    const res = await fetch(`${API_BASE}/invoices/${inv._id}/delivery`, {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify({ method }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Kunne ikke registrere leveringen");
+    setMessage("Fakturaen er registrert som levert. ✓", "success");
+    return load();
+  }
+
+  async function shareInvoice(inv, element) {
+    if (!inv.invoiceNumber) throw new Error("Utsted fakturaen før den deles med kunden.");
+    if (element) element.disabled = true;
+    try {
+      setMessage("Lager ferdig PDF for deling…");
+      const { blob, file } = await getPdfFile(inv);
+      const text = `Hei! Her er faktura ${inv.invoiceNumber} fra Sørgulen Industriservice. Beløp ${money(inv.amount)}${inv.dueDate ? `, forfall ${fmtDate(inv.dueDate)}` : ""}.`;
+      const shareData = { title: `Faktura ${inv.invoiceNumber}`, text, files: [file] };
+      const canShareFile = typeof navigator.share === "function" && (!navigator.canShare || navigator.canShare(shareData));
+
+      if (canShareFile) {
+        try {
+          await navigator.share(shareData);
+        } catch (error) {
+          if (error?.name === "AbortError") {
+            setMessage("");
+            return;
+          }
+          throw error;
+        }
+        setMessage("");
+        if (confirm("Ble fakturaen sendt/levert til kunden?")) {
+          await markDelivered(inv, "message");
+        } else {
+          setMessage("PDF-en ble delt, men fakturaen er ikke markert som levert.");
+        }
+        return;
+      }
+
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener");
+      setTimeout(() => URL.revokeObjectURL(url), 120000);
+      setMessage("PDF-en er åpnet. Del den via Meldinger og trykk «Marker levert på melding» etterpå.");
+    } finally {
+      if (element?.isConnected) element.disabled = false;
+    }
+  }
+
+  async function showInvoice(inv, element) {
+    if (element) element.disabled = true;
+    try {
+      await preview(inv);
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      if (confirm("Har kunden fått se eller fått overlevert fakturaen?")) {
+        await markDelivered(inv, "shown");
+      }
+    } finally {
+      if (element?.isConnected) element.disabled = false;
+    }
   }
 
   async function handleAction(action, inv, element) {
     try {
       if (action === "preview") return await preview(inv);
+      if (action === "share") return await shareInvoice(inv, element);
+      if (action === "show") return await showInvoice(inv, element);
+      if (action === "mark-message") {
+        if (!confirm("Er fakturaen faktisk sendt/levert til kunden på melding?")) return;
+        return await markDelivered(inv, "message");
+      }
 
       if (action === "issue") {
         const validationRes = await fetch(`${API_BASE}/invoices/${inv._id}/issue-validation`, { headers: headers() });
