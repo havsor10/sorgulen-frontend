@@ -23,6 +23,18 @@
       const get = (type) => parts.find((part) => part.type === type)?.value || "";
       return `${get("year")}-${get("month")}-${get("day")}`;
     };
+    const osloClock = (value = new Date()) => {
+      const date = value instanceof Date ? value : new Date(value);
+      if (Number.isNaN(date.getTime())) return "";
+      const parts = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Europe/Oslo",
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+      }).formatToParts(date);
+      const get = (type) => parts.find((part) => part.type === type)?.value || "";
+      return `${get("hour")}:${get("minute")}`;
+    };
     const intervalSeconds = (entry) => {
       const explicit = Number(entry?.durationSeconds);
       if (entry?.source === "manual" && explicit > 0) return explicit;
@@ -92,10 +104,12 @@
       const hours = Math.floor(seconds / 3600);
       const minutes = Math.floor((seconds % 3600) / 60);
       const workDate = entry?.workDate || dateValue(entry?.startedAt) || today();
+      const startTime = entry?.startedAt ? osloClock(entry.startedAt) : osloClock();
       const selectedRate = Number(entry?.hourlyRateSnapshot ?? rate ?? 850) || 850;
       return `<form id="operationTimeForm" data-order-id="${esc(orderId)}" data-customer-id="${esc(customerId)}" data-entry-id="${esc(entry?.entryId || "")}">
         <div class="operation-grid">
           <div class="operation-field"><label for="opWorkDate">Dato</label><input id="opWorkDate" name="workDate" type="date" value="${esc(workDate)}" required></div>
+          <div class="operation-field"><label for="opStartTime">Starttid</label><input id="opStartTime" name="startTime" type="time" value="${esc(startTime)}" ${entry?.source === "timer" ? "disabled" : ""} required></div>
           <div class="operation-field"><label for="opCategory">Type</label><select id="opCategory" name="category"><option value="work" ${entry?.category === "work" || !entry ? "selected" : ""}>Arbeid</option><option value="purchase" ${entry?.category === "purchase" ? "selected" : ""}>Innkjøp</option><option value="transport" ${entry?.category === "transport" ? "selected" : ""}>Transport</option></select></div>
           <div class="operation-field wide"><label for="opDescription">Hva gjorde du?</label><input id="opDescription" name="description" maxlength="1000" value="${esc(entry?.comment || "")}" placeholder="For eksempel hentet og monterte deler" required></div>
           <div class="operation-field wide"><span class="operation-label">Varighet</span><div class="operation-duration"><label class="operation-field">Timer<input id="opHours" name="hours" type="number" inputmode="numeric" min="0" max="168" step="1" value="${hours}"></label><label class="operation-field">Minutter<input id="opMinutes" name="minutes" type="number" inputmode="numeric" min="0" max="59" step="1" value="${minutes || (!entry ? 20 : 0)}"></label></div></div>
@@ -130,6 +144,7 @@
         if (!(durationMinutes > 0)) { error.textContent = "Varighet må være minst 1 minutt."; return; }
         const payload = {
           workDate: form.elements.workDate.value,
+          startTime: form.elements.startTime.value,
           description: form.elements.description.value.trim(),
           durationMinutes,
           category: form.elements.category.value,
@@ -139,13 +154,15 @@
         };
         save.disabled = true;
         try {
+          let result;
           if (entry?.entryId) {
-            await api(`/admin/operations/work-orders/${encodeURIComponent(orderId)}/time/${encodeURIComponent(entry.entryId)}`, { method: "PATCH", body: JSON.stringify(payload) });
+            result = await api(`/admin/operations/work-orders/${encodeURIComponent(orderId)}/time/${encodeURIComponent(entry.entryId)}`, { method: "PATCH", body: JSON.stringify(payload) });
           } else if (customerId) {
-            await api(`/admin/operations/customers/${encodeURIComponent(customerId)}/time`, { method: "POST", body: JSON.stringify(payload) });
+            result = await api(`/admin/operations/customers/${encodeURIComponent(customerId)}/time`, { method: "POST", body: JSON.stringify(payload) });
           } else {
-            await api(`/admin/operations/work-orders/${encodeURIComponent(orderId)}/time`, { method: "POST", body: JSON.stringify(payload) });
+            result = await api(`/admin/operations/work-orders/${encodeURIComponent(orderId)}/time`, { method: "POST", body: JSON.stringify(payload) });
           }
+          if (result?.overlapWarning) alert(result.overlapWarning);
           closeModal();
           await window.SorgulenAdminShell?.refreshBadges?.();
           location.reload();

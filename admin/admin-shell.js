@@ -17,7 +17,7 @@
   if (page === "jobs") ensureAsset("link", { rel: "stylesheet", href: "ai-guide.css?v=20260917-project1" });
   ensureAsset("link", { rel: "manifest", href: "manifest.webmanifest" });
   ensureAsset("link", { rel: "apple-touch-icon", href: "../assets/logo.png" });
-  if (!["home", "inventory", "snow", "jobs"].includes(page)) ensureAsset("script", { src: "operations-ui.js?v=20260904-snow1" });
+  if (!["home", "inventory", "snow", "jobs"].includes(page)) ensureAsset("script", { src: "operations-ui.js?v=20260918-workflow1" });
   if (page === "jobs") ensureAsset("script", { src: "inventory-material-edit.js?v=20260904-snow1" });
 
   const navItems = [

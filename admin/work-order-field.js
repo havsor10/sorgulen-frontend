@@ -271,7 +271,9 @@
     const expenses = order.additionalCosts || [];
     const materials = order.materials || [];
     const notes = order.projectNotes || [];
-    const editable = !order.invoiceId && order.status !== "cancelled";
+    const editable = typeof order.workflow?.canEditRegistrations === "boolean"
+      ? order.workflow.canEditRegistrations
+      : !order.invoiceId && order.status !== "cancelled";
     const actions = (kind, entryId, label) => editable
       ? `<div class="field-register-actions"><button type="button" data-field-registration-edit="${esc(kind)}" data-entry-id="${esc(entryId)}">Rediger</button><button type="button" class="field-delete-entry" data-field-delete-registration="${esc(kind)}" data-entry-id="${esc(entryId)}" data-entry-label="${esc(label)}">Slett</button></div>`
       : "";
@@ -304,7 +306,10 @@
   }
 
   function addMenuMarkup(order) {
-    if (order.status === "cancelled" || order.invoiceId) return "";
+    const canAdd = typeof order.workflow?.canAddRegistrations === "boolean"
+      ? order.workflow.canAddRegistrations
+      : order.status !== "cancelled" && !order.invoiceId;
+    if (!canAdd) return "";
     return `<div class="field-action-row">
       <button type="button" class="field-add-main" data-field-add-toggle aria-expanded="false">+ Legg til registrering</button>
       ${order.customerId ? `<a class="field-secondary-action" href="kunde.html?id=${encodeURIComponent(order.customerId)}">Kundeinfo</a>` : ""}
@@ -322,13 +327,16 @@
   }
 
   function workflowMarkup(order) {
-    if (order.status === "cancelled") {
+    const workflow = order.workflow || {};
+    const status = workflow.status || order.status;
+    if (status === "cancelled") {
       return `<section class="field-status-workflow is-cancelled"><div><strong>Oppdraget er avbrutt</strong><span>Registreringene er bevart. Gjenåpne før du korrigerer, ferdigstiller eller fakturerer.</span></div><button type="button" data-field-recover-order>Gjenåpne for korrigering</button></section>`;
     }
-    if (order.status !== "completed") return "";
-    if (order.invoiceId) {
+    if (status !== "completed") return "";
+    if (workflow.canOpenInvoice || order.invoiceId) {
       return `<section class="field-status-workflow is-invoiced"><div><strong>Oppdraget er koblet til faktura</strong><span>Registreringene er låst mot fakturagrunnlaget.</span></div><a href="faktura-detalj.html?id=${encodeURIComponent(order.invoiceId)}">Åpne faktura</a></section>`;
     }
+    if (workflow.canCreateInvoice === false) return "";
     return `<section class="field-status-workflow is-completed"><div><strong>Ferdigstilt – klar for kontroll og faktura</strong><span>Du kan fortsatt korrigere tid, utgifter, materialer og notater før fakturaen opprettes.</span></div><a href="faktura-ny.html?workOrderId=${encodeURIComponent(order._id)}">Opprett faktura</a></section>`;
   }
 
@@ -354,6 +362,7 @@
     currentOrder = order;
     currentCompletionCheck = completionCheck || {};
     const customer = order.customerSnapshot || {};
+    const displayStatus = order.workflow?.status || order.status;
     const issues = invoiceIssues(order, completionCheck);
     const missingPrice = (order.materials || []).some((x) => x.billable !== false && x.unitPrice == null);
     const contact = [customer.phone, customer.email, customer.address].filter(Boolean).join(" · ") || "Ingen kontaktinformasjon registrert";
@@ -361,7 +370,7 @@
 
     detail.innerHTML = `<div class="field-workspace" data-field-workspace data-order-id="${esc(order._id)}">
       <section class="field-hero">
-        <div class="field-hero-top"><div class="field-identity"><p class="field-kicker">Kundeoppdrag</p><h2>${esc(customer.name || "Ukjent kunde")}</h2><p class="field-service">${esc(order.serviceName)}</p></div><span class="field-status ${esc(order.status)}">${esc(statusNames[order.status] || order.status)}</span></div>
+        <div class="field-hero-top"><div class="field-identity"><p class="field-kicker">Kundeoppdrag</p><h2>${esc(customer.name || "Ukjent kunde")}</h2><p class="field-service">${esc(order.serviceName)}</p></div><span class="field-status ${esc(displayStatus)}">${esc(statusNames[displayStatus] || displayStatus)}</span></div>
         <div class="field-metrics">
           <div class="field-metric"><span>Arbeidstid</span><strong data-field-total-time>${esc(durationText(totalSeconds(order)))}</strong><small>Alle registrerte økter</small></div>
           <div class="field-metric"><span>Pris hittil</span><strong data-field-total-price>${esc(money(projectedTotal(order)))}</strong><small>${missingPrice ? "Foreløpig – materiale mangler pris" : "Fakturerbart registrert"}</small></div>
@@ -382,7 +391,7 @@
 
       <details class="field-collapse field-notes"><summary>Prosjektbeskrivelse <span>${order.notes ? "Registrert" : "Tom"}</span></summary><div class="field-collapse-body"><textarea id="detailNotes" maxlength="5000" placeholder="Avtaler, omfang eller annen viktig prosjektinfo">${esc(order.notes || "")}</textarea><button id="saveDetailNotes" type="button" class="secondary-btn">Lagre prosjektbeskrivelse</button></div></details>
 
-      ${currentControls && !["completed", "cancelled"].includes(order.status) ? `<div class="field-work-controls">${currentControls}</div>` : ""}
+      ${currentControls && !["completed", "cancelled"].includes(displayStatus) ? `<div class="field-work-controls">${currentControls}</div>` : ""}
     </div>`;
   }
 
