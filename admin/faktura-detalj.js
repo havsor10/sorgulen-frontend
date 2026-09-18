@@ -77,11 +77,31 @@
     return { blockers, warnings };
   }
 
+  function discountMarkup(inv) {
+    const type = inv.discountType || "none";
+    const amount = Math.abs(Number(inv.discountAmount || 0));
+    if (type === "none" || !(amount > 0)) return "";
+    const gross = Number(inv.grossSubtotal ?? (Number(inv.subtotal || 0) + Number(inv.discountAmount || 0)));
+    const saving = Math.abs(Number(inv.customerSavings || inv.discountAmount || 0));
+    const label = inv.discountLabel || "Kunderabatt";
+    const suffix = type === "percent" ? ` (${escapeHtml(inv.discountValue)} %)` : "";
+    return `
+      <div class="fd-discount">
+        <strong>🎁 Kunden har fått rabatt</strong>
+        <span>Sum før rabatt: ${money(gross)}</span>
+        <span>${escapeHtml(label)}${suffix}: <b>−${money(amount)}</b></span>
+        <strong>Du sparer: ${money(saving)}</strong>
+      </div>`;
+  }
+
   function actionButtons(inv) {
     const previewLabel = inv.status === "draft" ? "📄 Forhåndsvis PDF" : "📄 Vis ferdig faktura";
     const buttons = [`<button class="btn-preview" data-action="preview">${previewLabel}</button>`];
     if (inv.status === "draft") {
-      if (!inv.invoiceNumber) buttons.push(`<a class="btn-edit" href="faktura-rediger.html?id=${encodeURIComponent(inv._id)}">✏️ Rediger utkast</a>`);
+      if (!inv.invoiceNumber) {
+        buttons.push(`<a class="btn-edit" href="faktura-rediger.html?id=${encodeURIComponent(inv._id)}">✏️ Rediger utkast</a>`);
+        if (!inv.isCreditNote) buttons.push(`<a class="btn-discount" href="faktura-rediger.html?id=${encodeURIComponent(inv._id)}#discount">🎁 ${inv.discountType && inv.discountType !== "none" ? "Endre rabatt" : "Gi rabatt"}</a>`);
+      }
       buttons.push(`<button class="btn-send" data-action="issue">${inv.isCreditNote ? "Utsted kreditnota" : "Utsted faktura"}</button>`);
       if (!inv.invoiceNumber) buttons.push(`<button class="btn-delete" data-action="delete">🗑 Slett utkast</button>`);
     }
@@ -174,8 +194,9 @@
         <div class="fd-section">
           <div class="fd-label">Fakturalinjer</div>
           <table class="fd-lines"><tbody>${linesRows}</tbody></table>
-          ${inv.vatRegisteredSnapshot ? `<div class="fd-total" style="font-size:14px;color:#aab3bf">Delsum: ${money(inv.subtotal)} · MVA ${escapeHtml(inv.taxRate)} %: ${money(inv.taxAmount)}</div>` : `<p class="fd-info">Merverdiavgift er ikke beregnet.</p>`}
-          <div class="fd-total">${inv.isCreditNote ? "Kreditert" : "Total"}: ${money(inv.amount)}</div>
+          ${discountMarkup(inv)}
+          ${inv.vatRegisteredSnapshot ? `<div class="fd-total" style="font-size:14px;color:#aab3bf">Delsum etter rabatt: ${money(inv.subtotal)} · MVA ${escapeHtml(inv.taxRate)} %: ${money(inv.taxAmount)}</div>` : `<p class="fd-info">Merverdiavgift er ikke beregnet.</p>`}
+          <div class="fd-total">${inv.isCreditNote ? "Kreditert" : "Å betale"}: ${money(inv.amount)}</div>
         </div>
 
         <div class="fd-section">
