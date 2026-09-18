@@ -44,7 +44,7 @@ test("fakturavarsler har direkte rettehandlinger", () => {
 });
 
 test("legg til-meny fungerer også etter ferdigstilling fram til faktura finnes", () => {
-  assert.match(js, /order\.status === "cancelled" \|\| order\.invoiceId/);
+  assert.match(js, /order\.workflow\?\.canAddRegistrations/);
   assert.match(js, /data-field-add-toggle/);
   assert.match(js, /data-field-add-time/);
   assert.match(js, /data-entry="expense"/);
