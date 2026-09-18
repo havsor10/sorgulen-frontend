@@ -45,6 +45,30 @@
     return document.querySelector(".portal-project-button.active[data-project-id]")?.dataset.projectId || "";
   }
 
+  function setPortalStatus(message, type = "") {
+    const box = document.getElementById("portalStatus");
+    if (!box) return;
+    box.textContent = message || "";
+    box.className = `portal-status-message${type ? ` ${type}` : ""}`;
+  }
+
+  async function resolveProcurement(entryId) {
+    const workOrderId = selectedWorkOrderId() || currentWorkOrderId;
+    if (!workOrderId) throw new Error("Fant ikke oppdraget. Last siden på nytt og prøv igjen.");
+    currentWorkOrderId = workOrderId;
+
+    let item = (currentPortal?.procurements || []).find((entry) => entry.entryId === entryId);
+    if (item) return item;
+
+    setPortalStatus("Henter innkjøpet…");
+    const data = await api(`/admin/customer-portal/${encodeURIComponent(workOrderId)}`);
+    currentPortal = data.portal || null;
+    item = (currentPortal?.procurements || []).find((entry) => entry.entryId === entryId);
+    if (!item) throw new Error("Innkjøpet finnes ikke lenger. Oppdater siden.");
+    setPortalStatus("");
+    return item;
+  }
+
   function ensureModal() {
     if (document.getElementById("procurementCorrectionModal")) return;
     document.body.insertAdjacentHTML("beforeend", `
@@ -201,13 +225,20 @@
     refreshTimer = setTimeout(enhance, 120);
   }
 
-  editor.addEventListener("click", (event) => {
+  editor.addEventListener("click", async (event) => {
     const correct = event.target.closest("[data-correct-procurement]");
     if (correct) {
       event.preventDefault();
       event.stopPropagation();
-      const item = (currentPortal?.procurements || []).find((entry) => entry.entryId === correct.dataset.correctProcurement);
-      if (item) openCorrection(item);
+      correct.disabled = true;
+      try {
+        const item = await resolveProcurement(correct.dataset.correctProcurement);
+        openCorrection(item);
+      } catch (error) {
+        setPortalStatus(error.message || "Kunne ikke åpne innkjøpet.", "error");
+      } finally {
+        if (correct.isConnected) correct.disabled = false;
+      }
       return;
     }
 
@@ -215,8 +246,15 @@
     if (remove) {
       event.preventDefault();
       event.stopPropagation();
-      const item = (currentPortal?.procurements || []).find((entry) => entry.entryId === remove.dataset.removeProcurement);
-      if (item) removeProcurement(item);
+      remove.disabled = true;
+      try {
+        const item = await resolveProcurement(remove.dataset.removeProcurement);
+        await removeProcurement(item);
+      } catch (error) {
+        setPortalStatus(error.message || "Kunne ikke åpne innkjøpet.", "error");
+      } finally {
+        if (remove.isConnected) remove.disabled = false;
+      }
     }
   }, true);
 
