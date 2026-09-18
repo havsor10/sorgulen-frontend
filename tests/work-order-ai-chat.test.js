@@ -30,10 +30,11 @@ test("hvert oppdrag får separat AI-historikk og eksplisitt workOrderId-kontekst
   assert.match(ai, /\.field-hero/);
 });
 
-test("global AI-radar er avviklet og bildeimporten på oppdrag beholdes", () => {
-  const advisor = read("admin/ai-advisor-wow.js");
+test("gamle globale AI-filer er fjernet og bildeimporten på oppdrag beholdes", () => {
+  assert.equal(fs.existsSync(path.join(root, "admin/ai-advisor-wow.js")), false);
+  assert.equal(fs.existsSync(path.join(root, "admin/ai-advisor-wow.css")), false);
+  assert.equal(fs.existsSync(path.join(root, "admin/ai-guide-image.css")), false);
   const projectAi = read("admin/ai-guide.js");
-  assert.doesNotMatch(advisor, /Driftsradar|sorgulenAiPanel|sorgulenAiLauncher/);
   assert.match(projectAi, /data-work-ai-open/);
   assert.match(projectAi, /Bilde \/ skjermbilde/);
 });
