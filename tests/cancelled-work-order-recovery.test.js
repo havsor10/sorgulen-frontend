@@ -5,31 +5,30 @@ const path = require("node:path");
 
 const root = path.resolve(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "admin/oppdrag.html"), "utf8");
-const flow = fs.readFileSync(path.join(root, "admin/completed-work-order-flow.js"), "utf8");
 const field = fs.readFileSync(path.join(root, "admin/work-order-field.js"), "utf8");
 
- test("oppdrag loads fresh closed-work-order recovery assets", () => {
-  assert.match(html, /field-ui-20260915-flow2/);
-  assert.match(html, /completed-work-order-flow\.js\?v=20260915-flow2/);
+test("oppdrag bruker den samlede feltvisningen for lukkede oppdrag", () => {
+  assert.match(html, /field-ui-20260918-unified1/);
+  assert.match(html, /work-order-field\.js\?v=20260918-unified1/);
+  assert.doesNotMatch(html, /completed-work-order-flow\.js/);
 });
 
-test("cancelled history cards preserve their work-order id for the field workspace", () => {
-  assert.match(flow, /\.open-job-detail\[data-id\]/);
-  assert.match(flow, /lastOpenedOrderId/);
-  assert.match(flow, /data-field-closed-order-id/);
-  assert.match(flow, /marker\.dataset\.entry = "closed-work-order"/);
-  assert.match(field, /\[data-entry\]\[data-id\]/);
+test("cancelled history cards beholder oppdrags-ID uten eget kompatibilitetslag", () => {
+  assert.match(field, /\.open-job-detail\[data-id\]/);
+  assert.match(field, /lastOpenedOrderId/);
+  assert.match(field, /detail\.querySelector\("\[data-entry\]\[data-id\]"\)/);
 });
 
-test("cancelled jobs can be explicitly recovered before editing and invoicing", () => {
-  assert.match(flow, /Oppdraget er avbrutt/);
-  assert.match(flow, /Gjenåpne for korrigering/);
-  assert.match(flow, /\/admin\/work-orders\/\$\{encodeURIComponent\(lastOrderId\)\}\/recover/);
-  assert.match(flow, /method: "POST"/);
-  assert.match(flow, /oppdrag\.html\?open=\$\{encodeURIComponent\(lastOrderId\)\}&recovered=1/);
+test("avbrutte oppdrag kan gjenåpnes før redigering og fakturering", () => {
+  assert.match(field, /Oppdraget er avbrutt/);
+  assert.match(field, /Gjenåpne for korrigering/);
+  assert.match(field, /\/admin\/work-orders\/\$\{encodeURIComponent\(currentOrder\._id\)\}\/recover/);
+  assert.match(field, /method: "POST"/);
+  assert.match(field, /refreshWorkspace\(currentOrder\._id\)/);
 });
 
-test("recovery does not silently delete the suspicious time entry", () => {
-  assert.doesNotMatch(flow, /\/time\/.*DELETE/);
-  assert.doesNotMatch(flow, /auto.*delete/i);
+test("gjenåpning sletter ikke registreringer automatisk", () => {
+  const recoverBlock = field.slice(field.indexOf("data-field-recover-order"), field.indexOf("data-field-registration-edit"));
+  assert.doesNotMatch(recoverBlock, /DELETE/);
+  assert.doesNotMatch(recoverBlock, /auto.*delete/i);
 });
