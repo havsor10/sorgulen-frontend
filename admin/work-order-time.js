@@ -24,6 +24,25 @@
     return (workOrder.workIntervals || []).reduce((sum, interval) => sum + intervalSeconds(interval, now), 0);
   }
 
+  function calculateCurrentSessionSeconds(workOrder, now = Date.now()) {
+    if (!workOrder || !["active", "paused"].includes(workOrder.status)) return 0;
+
+    const lastStoppedAt = (workOrder.events || [])
+      .filter((event) => event?.type === "stopped" && event?.at)
+      .reduce((latest, event) => {
+        const at = new Date(event.at).getTime();
+        return Number.isFinite(at) ? Math.max(latest, at) : latest;
+      }, Number.NEGATIVE_INFINITY);
+
+    return (workOrder.workIntervals || [])
+      .filter((interval) => interval?.source !== "manual")
+      .filter((interval) => {
+        const startedAt = new Date(interval?.startedAt).getTime();
+        return Number.isFinite(startedAt) && startedAt > lastStoppedAt;
+      })
+      .reduce((sum, interval) => sum + intervalSeconds(interval, now), 0);
+  }
+
   function calculateEstimatedAmount(workOrder, seconds = calculateWorkSeconds(workOrder)) {
     if (workOrder?.status === "completed" && workOrder.calculatedAmount != null) {
       return Number(workOrder.calculatedAmount);
@@ -32,5 +51,5 @@
     return Math.round((((Number(seconds) * rate) / 3600) + Number.EPSILON) * 100) / 100;
   }
 
-  return { intervalSeconds, calculateWorkSeconds, calculateEstimatedAmount };
+  return { intervalSeconds, calculateWorkSeconds, calculateCurrentSessionSeconds, calculateEstimatedAmount };
 });
