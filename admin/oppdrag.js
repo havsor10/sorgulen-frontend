@@ -607,7 +607,7 @@
       };
       setMessage(successText[action] || "Oppdatert.", "success");
     } catch (err) {
-      if (err.data?.workOrder && OPEN_STATUSES.has(err.data.effectiveStatus(workOrder))) {
+      if (err.data?.workOrder && OPEN_STATUSES.has(effectiveStatus(err.data.workOrder))) {
         openWorkOrder = err.data.workOrder;
       }
       setMessage(err.message || "Handlingen kunne ikke lagres.", "error");
