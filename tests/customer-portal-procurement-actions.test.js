@@ -35,10 +35,18 @@ test("Fjern bruker arkiveringsruten og ikke fysisk frontend-sletting", () => {
   assert.match(corrections, /Historikken slettes ikke/);
 });
 
+test("Rediger og Fjern henter innkjøpet på nytt dersom lokal portalstate ikke er klar", () => {
+  assert.match(corrections, /async function resolveProcurement/);
+  assert.match(corrections, /Henter innkjøpet/);
+  assert.match(corrections, /await resolveProcurement\(correct\.dataset\.correctProcurement\)/);
+  assert.match(corrections, /await resolveProcurement\(remove\.dataset\.removeProcurement\)/);
+  assert.match(corrections, /currentPortal = data\.portal \|\| null/);
+});
+
 test("mobil/nettleser får fersk innkjøpskode", () => {
   assert.match(html, /kundeportal\.css\?v=20260918-purchase1/);
   assert.match(html, /kundeportal\.js\?v=20260918-purchase1/);
-  assert.match(html, /kundeportal-corrections\.js\?v=20260918-purchase1/);
+  assert.match(html, /kundeportal-corrections\.js\?v=20260918-purchase2/);
   assert.match(css, /procurement-card-actions/);
   assert.match(css, /procurement-remove-btn/);
 });
