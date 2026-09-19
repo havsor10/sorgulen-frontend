@@ -199,9 +199,14 @@
     const seconds = intervalSeconds(entry);
     const missing = !String(entry.comment || "").trim();
     const open = !entry.endedAt;
+    const zeroDuration = !open && seconds === 0;
     const rate = Number(entry.hourlyRateSnapshot ?? order.hourlyRate ?? 0);
-    const titleText = missing ? "Mangler beskrivelse – hva gjorde du?" : entry.comment;
-    return `<details class="field-session${missing ? " missing-description" : ""}">
+    const titleText = zeroDuration
+      ? "0 min – ugyldig økt?"
+      : missing
+        ? "Mangler beskrivelse – hva gjorde du?"
+        : entry.comment;
+    return `<details class="field-session${missing ? " missing-description" : ""}${zeroDuration ? " zero-duration" : ""}" ${zeroDuration ? "open" : ""}>
       <summary>
         <span class="field-session-time">${esc(clock(entry.startedAt))}–${open ? "pågår" : esc(clock(entry.endedAt))}</span>
         <span class="field-session-main"><strong>${esc(titleText)}</strong><span>${esc(categoryNames[entry.category] || "Arbeid")} · ${entry.source === "manual" ? "Manuell" : "Takstameter"}</span></span>
@@ -216,14 +221,14 @@
           <div><span>Type</span><strong>${esc(categoryNames[entry.category] || "Arbeid")}</strong></div>
           <div><span>Faktura</span><strong>${entry.billable === false ? "Intern / ikke fakturerbar" : "Fakturerbar"}</strong></div>
         </div>
-        <div class="field-description${missing ? " warn" : ""}">${missing ? "Denne økten mangler en beskrivelse. Legg inn hva du gjorde mens du fortsatt husker det." : esc(entry.comment)}</div>
+        <div class="field-description${missing || zeroDuration ? " warn" : ""}">${zeroDuration ? "Denne økten har 0 minutter registrert. Hvis den ikke er reell, slett den her." : missing ? "Denne økten mangler en beskrivelse. Legg inn hva du gjorde mens du fortsatt husker det." : esc(entry.comment)}</div>
         ${open
           ? '<button class="field-edit-session" type="button" disabled>Pause eller stopp økten før du redigerer</button>'
           : order.invoiceId
             ? '<p class="field-locked-note">Økten er låst fordi oppdraget er koblet til faktura.</p>'
             : order.status === "cancelled"
               ? '<p class="field-locked-note">Gjenåpne oppdraget før du endrer registreringer.</p>'
-              : `<div class="field-entry-actions"><button class="field-edit-session" type="button" data-field-edit-session="${esc(entry.entryId)}">${missing ? "Legg inn hva eg gjorde" : "Rediger denne økten"}</button><button class="field-delete-entry" type="button" data-field-delete-registration="time" data-entry-id="${esc(entry.entryId)}" data-entry-label="${esc(entry.comment || "arbeidsøkten")}">Slett økt</button></div>`}
+              : `<div class="field-entry-actions"><button class="field-edit-session" type="button" data-field-edit-session="${esc(entry.entryId)}">${zeroDuration ? "Rediger" : missing ? "Legg inn hva eg gjorde" : "Rediger denne økten"}</button><button class="field-delete-entry${zeroDuration ? " zero-delete" : ""}" type="button" data-field-delete-registration="time" data-entry-id="${esc(entry.entryId)}" data-entry-label="${esc(zeroDuration ? "0-min økten" : entry.comment || "arbeidsøkten")}">${zeroDuration ? "Slett 0-min økt" : "Slett økt"}</button></div>`}
       </div>
     </details>`;
   }
@@ -236,16 +241,11 @@
       days.get(key).push(entry);
     }
     const pauses = pausePairs(order);
-    for (const pause of pauses) {
-      const key = osloDateKey(pause.startedAt);
-      if (!days.has(key)) days.set(key, []);
-    }
-    for (const item of order.additionalCosts || []) { const key = osloDateKey(item.occurredAt); if (key && !days.has(key)) days.set(key, []); }
-    for (const item of order.materials || []) { const key = osloDateKey(item.createdAt); if (key && !days.has(key)) days.set(key, []); }
-    for (const item of order.projectNotes || []) { const key = osloDateKey(item.createdAt); if (key && !days.has(key)) days.set(key, []); }
 
+    // Arbeidsloggen skal bare vise faktiske arbeidsøkter.
+    // Utgifter, materialer og notater har egen seksjon og skal ikke lage falske 0-min arbeidsdager.
     const keys = [...days.keys()].filter(Boolean).sort().reverse();
-    if (!keys.length) return '<div class="empty-state">Ingen arbeid eller registreringer på oppdraget ennå.</div>';
+    if (!keys.length) return '<div class="empty-state">Ingen arbeidsøkter registrert på oppdraget ennå.</div>';
     return keys.map((key, index) => {
       const entries = days.get(key).sort((a, b) => new Date(a.startedAt) - new Date(b.startedAt));
       const daySeconds = entries.reduce((sum, entry) => sum + intervalSeconds(entry), 0);
@@ -255,7 +255,7 @@
       const related = relatedByDay(order, key);
       return `<details class="field-day" ${index === 0 ? "open" : ""}>
         <summary>
-          <span class="field-day-title"><strong>${esc(dayLabel(key))}</strong><span>${entries.length ? `${esc(clock(first))}–${last ? esc(clock(last)) : "pågår"} · ${entries.length} økt${entries.length === 1 ? "" : "er"}` : "Registreringer uten arbeidsøkt"}</span></span>
+          <span class="field-day-title"><strong>${esc(dayLabel(key))}</strong><span>${esc(clock(first))}–${last ? esc(clock(last)) : "pågår"} · ${entries.length} økt${entries.length === 1 ? "" : "er"}</span></span>
           <span class="field-day-total"><strong>${esc(durationText(daySeconds))}</strong><span>registrert tid</span></span>
         </summary>
         <div class="field-day-body">
