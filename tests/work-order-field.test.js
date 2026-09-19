@@ -13,8 +13,8 @@ const operations = fs.readFileSync(path.join(root, "admin/operations-ui.js"), "u
 test("oppdrag laster én operations-motor før den dedikerte feltvisningen", () => {
   assert.match(html, /operations\.css/);
   assert.match(html, /operations-ui\.js\?v=20260918-workflow1/);
-  assert.match(html, /work-order-field\.css\?v=20260918-unified1/);
-  assert.match(html, /work-order-field\.js\?v=20260918-workflow1/);
+  assert.match(html, /work-order-field\.css\?v=20260919-zero1/);
+  assert.match(html, /work-order-field\.js\?v=20260919-zero1/);
   assert.doesNotMatch(html, /work-order-field-compat\.js/);
   assert.doesNotMatch(html, /work-order-description-edit\.js/);
   assert.doesNotMatch(html, /completed-work-order-flow\.js/);
