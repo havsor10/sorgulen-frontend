@@ -42,3 +42,9 @@ body.field-add-open{overflow:hidden}
 .field-register-actions{grid-column:1/-1;margin-top:2px}
 .field-locked-note{margin:9px 0 0;color:#91a1b4;font-size:12px}
 @media(max-width:720px){.field-register-row{grid-template-columns:minmax(0,1fr) auto}.field-entry-actions{display:grid;grid-template-columns:1fr auto}.field-status-workflow{padding:12px}}
+
+.field-session.zero-duration{border-color:#87444b;background:#1b1115}
+.field-session.zero-duration>summary{background:#24151a}
+.field-session.zero-duration .field-session-main strong{color:#ffc7cd}
+.field-session.zero-duration .field-session-duration{color:#ffb9c1}
+.field-entry-actions .field-delete-entry.zero-delete{min-height:44px;background:#4a2027;border-color:#a4515c;color:#fff;font-weight:900}
