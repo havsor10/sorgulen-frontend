@@ -1,0 +1,63 @@
+/* Admin 2.0 – roligere mobilflyt. Lastes bare via admin-shell. */
+@media(max-width:720px){
+  body.admin2-simple-nav .admin-mobile-nav{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+
+.admin2-booking-context{
+  display:grid;
+  gap:5px;
+  margin:14px 0 18px;
+  padding:14px 15px;
+  border:1px solid var(--admin-border);
+  border-radius:12px;
+  background:var(--admin-panel);
+}
+.admin2-booking-context strong{font-size:16px}
+.admin2-booking-context p{margin:0;color:var(--admin-muted);line-height:1.45}
+.admin2-booking-context.is-success{border-color:#285b49;background:var(--admin-success-soft)}
+.admin2-booking-context.is-info{border-color:#29445f;background:var(--admin-info-soft)}
+.admin2-primary-link{background:var(--admin-action)!important;color:#11151a!important;border-color:var(--admin-action)!important}
+
+.admin2-next-step{
+  margin:14px 0 8px;
+  color:var(--admin-text-soft);
+  font-size:14px;
+  font-weight:700;
+  line-height:1.4;
+}
+.field-work-controls.admin2-primary-controls{
+  margin:0 0 16px!important;
+  padding:0!important;
+  display:grid!important;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:9px;
+  border:0!important;
+  background:transparent!important;
+}
+.field-work-controls.admin2-primary-controls>*{min-height:52px!important}
+
+.admin2-status-planned .field-metrics.admin2-planned-metrics .field-metric:nth-child(3),
+.admin2-status-active .field-metrics.admin2-working-metrics .field-metric:nth-child(3),
+.admin2-status-paused .field-metrics.admin2-working-metrics .field-metric:nth-child(3){display:none}
+
+.admin2-status-planned .field-metrics.admin2-planned-metrics{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+}
+.admin2-status-active .field-metrics.admin2-working-metrics,
+.admin2-status-paused .field-metrics.admin2-working-metrics{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+}
+
+.field-readiness.admin2-later,
+#fieldReadiness.admin2-later{display:none!important}
+
+.admin2-open-work-order{white-space:nowrap}
+
+@media(max-width:560px){
+  .field-work-controls.admin2-primary-controls{grid-template-columns:1fr 1fr}
+  .field-work-controls.admin2-primary-controls>*:only-child{grid-column:1/-1}
+  .admin2-status-planned .field-metrics.admin2-planned-metrics,
+  .admin2-status-active .field-metrics.admin2-working-metrics,
+  .admin2-status-paused .field-metrics.admin2-working-metrics{grid-template-columns:1fr 1fr!important}
+  .admin2-booking-context{padding:13px}
+}
