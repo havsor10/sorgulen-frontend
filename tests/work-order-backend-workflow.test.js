@@ -31,6 +31,6 @@ test("legacy planlagt med manuell tid kan vises som mellom økter og ferdigstill
 
 test("workflow-cache er bustet på Oppdrag", () => {
   assert.match(html, /operations-ui\.js\?v=20260918-workflow1/);
-  assert.match(html, /work-order-field\.js\?v=20260918-workflow1/);
-  assert.match(html, /field-ui-20260918-workflow1/);
+  assert.match(html, /work-order-field\.js\?v=20260919-zero1/);
+  assert.match(html, /field-ui-20260919-zero1/);
 });
