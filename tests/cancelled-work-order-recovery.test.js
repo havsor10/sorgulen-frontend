@@ -8,8 +8,8 @@ const html = fs.readFileSync(path.join(root, "admin/oppdrag.html"), "utf8");
 const field = fs.readFileSync(path.join(root, "admin/work-order-field.js"), "utf8");
 
 test("oppdrag bruker den samlede feltvisningen for lukkede oppdrag", () => {
-  assert.match(html, /field-ui-20260918-workflow1/);
-  assert.match(html, /work-order-field\.js\?v=20260918-workflow1/);
+  assert.match(html, /field-ui-20260919-zero1/);
+  assert.match(html, /work-order-field\.js\?v=20260919-zero1/);
   assert.doesNotMatch(html, /completed-work-order-flow\.js/);
 });
 
