@@ -11,7 +11,7 @@ const invoicePicker = fs.readFileSync(path.join(root, "admin/invoice-work-order-
 const invoiceJs = fs.readFileSync(path.join(root, "admin/faktura-ny.js"), "utf8");
 
 test("oppdrag bruker samlet feltmotor for ferdig oppdrag", () => {
-  assert.match(oppdragHtml, /field-ui-20260918-workflow1/);
+  assert.match(oppdragHtml, /field-ui-20260919-zero1/);
   assert.doesNotMatch(oppdragHtml, /completed-work-order-flow\.js/);
 });
 
