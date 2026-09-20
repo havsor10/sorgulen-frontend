@@ -117,63 +117,34 @@
     const overview = project.customerOverview || {};
     const invoices = Array.isArray(overview.invoices) ? overview.invoices : [];
     const jobs = Array.isArray(overview.jobs) ? overview.jobs : [];
-    const latestInvoice = overview.latestInvoice || invoices[0] || null;
 
-    const stateCard = document.getElementById("overviewStateCard");
-    const stateTitle = document.getElementById("overviewStateTitle");
-    const stateText = document.getElementById("overviewStateText");
-    stateCard?.classList.remove("needs-action", "overdue");
+    const currentInvoice = invoices.find((invoice) => invoice.status === "overdue")
+      || invoices.find((invoice) => invoice.status === "unpaid")
+      || null;
 
-    if (Number(overview.overdueInvoiceCount || 0) > 0) {
-      stateCard?.classList.add("overdue");
-      stateTitle.textContent = overview.overdueInvoiceCount === 1 ? "En faktura har passert forfall" : "Fakturaer har passert forfall";
-      stateText.textContent = "Åpne fakturaen nedenfor for å se beløp og betalingsinformasjon.";
-    } else if (project.statusAttention === "approval") {
-      stateCard?.classList.add("needs-action");
-      stateTitle.textContent = "Jeg trenger en godkjenning fra deg";
-      stateText.textContent = "Se informasjonen lenger ned på siden og godkjenn når det ser riktig ut.";
-    } else if (Number(overview.unpaidInvoiceCount || 0) > 0) {
-      stateCard?.classList.add("needs-action");
-      stateTitle.textContent = overview.unpaidInvoiceCount === 1 ? "Du har 1 faktura som ikke er betalt" : `Du har ${overview.unpaidInvoiceCount} fakturaer som ikke er betalt`;
-      stateText.textContent = latestInvoice?.dueDate
-        ? `Nærmeste forfallsdato er ${formatDate(latestInvoice.dueDate, false)}.`
-        : "Du finner fakturaen nedenfor.";
+    const currentInvoiceCard = document.getElementById("currentInvoiceCard");
+    if (currentInvoice) {
+      const title = document.getElementById("currentInvoiceTitle");
+      const meta = document.getElementById("currentInvoiceMeta");
+      const amount = document.getElementById("currentInvoiceAmount");
+      const status = document.getElementById("currentInvoiceStatus");
+      const open = document.getElementById("currentInvoiceOpen");
+
+      title.textContent = currentInvoice.invoiceNumber
+        ? `Faktura ${currentInvoice.invoiceNumber}`
+        : "Faktura";
+      amount.textContent = formatCurrency(currentInvoice.amount);
+      meta.textContent = currentInvoice.dueDate
+        ? `Forfall ${formatDate(currentInvoice.dueDate, false)}`
+        : "Denne fakturaen venter på betaling.";
+      status.textContent = invoiceStatusText(currentInvoice.status);
+      status.className = `customer-history-status ${currentInvoice.status || "unpaid"}`;
+      open.dataset.openInvoice = currentInvoice.id;
+      currentInvoiceCard.classList.toggle("overdue", currentInvoice.status === "overdue");
+      currentInvoiceCard.classList.remove("hidden");
     } else {
-      stateTitle.textContent = "Alt er i orden!";
-      stateText.textContent = project.statusAttention === "material"
-        ? "Du trenger ikke gjøre noe akkurat nå. Jeg oppdaterer siden når innkjøpet er klart."
-        : "Du trenger ikke gjøre noe akkurat nå.";
-    }
-
-    const projectImageWrap = document.getElementById("overviewProjectImageWrap");
-    const projectImage = document.getElementById("overviewProjectImage");
-    const firstImage = (project.images || []).find((image) => /^https:\/\//i.test(image?.url || ""));
-    if (firstImage && projectImageWrap && projectImage) {
-      projectImage.src = firstImage.url;
-      projectImage.alt = firstImage.caption || `Bilde fra ${project.serviceName || "prosjektet"}`;
-      projectImageWrap.classList.remove("hidden");
-    } else {
-      projectImageWrap?.classList.add("hidden");
-      if (projectImage) {
-        projectImage.removeAttribute("src");
-        projectImage.alt = "";
-      }
-    }
-
-    const overviewInvoiceCard = document.getElementById("overviewInvoiceCard");
-    if (latestInvoice) {
-      document.getElementById("overviewInvoiceAmount").textContent = formatCurrency(latestInvoice.amount);
-      document.getElementById("overviewInvoiceMeta").textContent = latestInvoice.invoiceNumber
-        ? `Faktura ${latestInvoice.invoiceNumber} · ${formatDate(latestInvoice.issuedAt || latestInvoice.dueDate, false)}`
-        : formatDate(latestInvoice.issuedAt || latestInvoice.dueDate, false);
-      const status = document.getElementById("overviewInvoiceStatus");
-      status.textContent = invoiceStatusText(latestInvoice.status);
-      status.className = `overview-status-pill ${latestInvoice.status || ""}`;
-      const openButton = document.getElementById("overviewInvoiceOpen");
-      openButton.dataset.openInvoice = latestInvoice.id;
-      overviewInvoiceCard.classList.remove("hidden");
-    } else {
-      overviewInvoiceCard?.classList.add("hidden");
+      currentInvoiceCard?.classList.add("hidden");
+      currentInvoiceCard?.classList.remove("overdue");
     }
 
     const invoiceHistoryCard = document.getElementById("invoiceHistoryCard");
@@ -183,9 +154,12 @@
       invoices.forEach((invoice) => {
         const row = document.createElement("div");
         row.className = "customer-history-row";
+
         const main = document.createElement("div");
         const title = document.createElement("strong");
-        title.textContent = invoice.invoiceNumber ? `${invoice.isCreditNote ? "Kreditnota" : "Faktura"} ${invoice.invoiceNumber}` : (invoice.isCreditNote ? "Kreditnota" : "Faktura");
+        title.textContent = invoice.invoiceNumber
+          ? `${invoice.isCreditNote ? "Kreditnota" : "Faktura"} ${invoice.invoiceNumber}`
+          : (invoice.isCreditNote ? "Kreditnota" : "Faktura");
         const date = document.createElement("span");
         date.textContent = invoice.status === "paid" && invoice.paidAt
           ? `Betalt ${formatDate(invoice.paidAt, false)}`
@@ -199,15 +173,15 @@
         const amount = document.createElement("span");
         amount.className = "customer-history-amount";
         amount.textContent = formatCurrency(invoice.amount);
-        const status = document.createElement("span");
-        status.className = `customer-history-status ${invoice.status || ""}`;
-        status.textContent = invoiceStatusText(invoice.status);
+        const invoiceStatus = document.createElement("span");
+        invoiceStatus.className = `customer-history-status ${invoice.status || ""}`;
+        invoiceStatus.textContent = invoiceStatusText(invoice.status);
         const button = document.createElement("button");
         button.type = "button";
         button.className = "invoice-open-button";
         button.dataset.openInvoice = invoice.id;
         button.textContent = "Åpne faktura";
-        side.append(amount, status, button);
+        side.append(amount, invoiceStatus, button);
         row.append(main, side);
         invoiceHistoryList.appendChild(row);
       });
@@ -219,22 +193,25 @@
     const jobHistoryCard = document.getElementById("jobHistoryCard");
     const jobHistoryList = document.getElementById("jobHistoryList");
     jobHistoryList.replaceChildren();
-    if (jobs.length > 1 || (jobs.length === 1 && jobs[0].id !== project.id)) {
-      jobs.forEach((job) => {
+    const previousJobs = jobs.filter((job) => !project.id || job.id !== project.id);
+    if (previousJobs.length) {
+      previousJobs.forEach((job) => {
         const row = document.createElement("div");
         row.className = "customer-history-row";
+
         const main = document.createElement("div");
         const title = document.createElement("strong");
         title.textContent = job.serviceName || "Oppdrag";
         const date = document.createElement("span");
         date.textContent = job.jobDate ? formatDate(job.jobDate, false) : "";
         main.append(title, date);
+
         const side = document.createElement("div");
         side.className = "customer-history-row-side";
-        const status = document.createElement("span");
-        status.className = "customer-history-status";
-        status.textContent = jobStatusText(job.status);
-        side.appendChild(status);
+        const jobStatus = document.createElement("span");
+        jobStatus.className = "customer-history-status";
+        jobStatus.textContent = jobStatusText(job.status);
+        side.appendChild(jobStatus);
         row.append(main, side);
         jobHistoryList.appendChild(row);
       });
@@ -242,6 +219,9 @@
     } else {
       jobHistoryCard.classList.add("hidden");
     }
+
+    const historySection = document.getElementById("historySection");
+    historySection?.classList.toggle("hidden", invoices.length === 0 && previousJobs.length === 0);
   }
 
   async function openInvoicePdf(invoiceId) {
@@ -403,15 +383,15 @@
     const nextSubtext = document.getElementById("nextWorkSubtext");
     if (["completed", "cancelled"].includes(project.status)) {
       nextText.textContent = project.status === "completed" ? "Arbeidet er ferdig" : "Oppdraget er avsluttet";
-      nextSubtext.textContent = "Det er ikke planlagt flere besøk på dette oppdraget.";
+      nextSubtext.textContent = "Det er ikke planlagt flere arbeidsdager på dette oppdraget.";
     } else if (project.nextWork?.start) {
       nextText.textContent = formatDateRange(project.nextWork.start, project.nextWork.end);
       nextSubtext.textContent = project.nextWork.mode === "planned"
-        ? `Planlagt besøk · ${project.serviceName || "prosjektet ditt"}`
-        : `Forventet besøk · ${project.serviceName || "prosjektet ditt"}`;
+        ? "Denne arbeidsperioden er planlagt. Siden oppdateres dersom planen endrer seg."
+        : "Dette er forventet tidspunkt og kan endres. Siden oppdateres dersom planen endrer seg.";
     } else {
       nextText.textContent = "Ikke satt ennå";
-      nextSubtext.textContent = project.nextWorkMessage || "Jeg oppdaterer datoen her når den er avklart.";
+      nextSubtext.textContent = project.nextWorkMessage || "Prosjektet er fortsatt aktivt. Siden oppdateres så snart neste arbeidsdag er satt.";
     }
 
     renderCustomerOverview(project);
@@ -475,7 +455,8 @@
 
   function demoProject() {
     return {
-      customerName: "Eksempelkunde",
+      id: "demo-current",
+      customerName: "Kjartan Hansen",
       serviceName: "Spyling og rengjøring av uteområde",
       status: "stopped",
       statusText: "Venter på din godkjenning",
@@ -513,31 +494,44 @@
       ],
       images: [],
       customerOverview: {
-        unpaidInvoiceCount: 0,
+        unpaidInvoiceCount: 1,
         overdueInvoiceCount: 0,
         latestInvoice: {
-          id: "demo-invoice",
-          invoiceNumber: 1024,
-          amount: 4250,
-          status: "paid",
-          issuedAt: "2026-09-12T10:00:00.000Z",
-          dueDate: "2026-09-26T10:00:00.000Z",
-          paidAt: "2026-09-12T12:00:00.000Z",
+          id: "demo-invoice-current",
+          invoiceNumber: 1027,
+          amount: 2800,
+          status: "unpaid",
+          issuedAt: "2026-09-18T10:00:00.000Z",
+          dueDate: "2026-09-28T10:00:00.000Z",
+          paidAt: null,
           isCreditNote: false,
         },
-        invoices: [{
-          id: "demo-invoice",
-          invoiceNumber: 1024,
-          amount: 4250,
-          status: "paid",
-          issuedAt: "2026-09-12T10:00:00.000Z",
-          dueDate: "2026-09-26T10:00:00.000Z",
-          paidAt: "2026-09-12T12:00:00.000Z",
-          isCreditNote: false,
-        }],
+        invoices: [
+          {
+            id: "demo-invoice-current",
+            invoiceNumber: 1027,
+            amount: 2800,
+            status: "unpaid",
+            issuedAt: "2026-09-18T10:00:00.000Z",
+            dueDate: "2026-09-28T10:00:00.000Z",
+            paidAt: null,
+            isCreditNote: false,
+          },
+          {
+            id: "demo-invoice-old",
+            invoiceNumber: 1024,
+            amount: 4250,
+            status: "paid",
+            issuedAt: "2026-08-12T10:00:00.000Z",
+            dueDate: "2026-08-26T10:00:00.000Z",
+            paidAt: "2026-08-20T12:00:00.000Z",
+            isCreditNote: false,
+          },
+        ],
         jobs: [
           { id: "demo-current", serviceName: "Spyling og rengjøring av uteområde", jobDate: "2026-09-13", status: "stopped" },
           { id: "demo-old", serviceName: "Rengjøring av terrasse", jobDate: "2026-08-12", status: "completed" },
+          { id: "demo-older", serviceName: "Vedlikehold uteområde", jobDate: "2026-05-03", status: "completed" },
         ],
       },
       updatedAt: new Date().toISOString(),
