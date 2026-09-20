@@ -118,6 +118,61 @@
     const invoices = Array.isArray(overview.invoices) ? overview.invoices : [];
     const jobs = Array.isArray(overview.jobs) ? overview.jobs : [];
 
+    const notice = document.getElementById("customerActionNotice");
+    const noticeIcon = document.getElementById("customerActionIcon");
+    const noticeTitle = document.getElementById("customerActionTitle");
+    const noticeText = document.getElementById("customerActionText");
+    const noticeLink = document.getElementById("customerActionLink");
+
+    const overdueCount = invoices.filter((invoice) => invoice.status === "overdue").length;
+    const unpaidCount = invoices.filter((invoice) => invoice.status === "unpaid").length;
+    const needsApproval = project.statusAttention === "approval";
+    const actionCount = (needsApproval ? 1 : 0) + overdueCount + unpaidCount;
+
+    notice?.classList.remove("is-ok", "needs-action", "is-urgent");
+    noticeLink?.classList.add("hidden");
+
+    if (overdueCount > 0) {
+      notice?.classList.add("is-urgent");
+      noticeIcon.textContent = "!";
+      noticeTitle.textContent = actionCount > 1
+        ? `Du har ${actionCount} ting som må ordnes`
+        : "En faktura har passert forfall";
+      noticeText.textContent = needsApproval
+        ? "Du har også noe som må godkjennes på prosjektet."
+        : "Åpne fakturaen nedenfor for å se betalingsinformasjonen.";
+      noticeLink.textContent = "Se faktura";
+      noticeLink.href = "#currentInvoiceCard";
+      noticeLink.classList.remove("hidden");
+    } else if (actionCount > 0) {
+      notice?.classList.add("needs-action");
+      noticeIcon.textContent = "!";
+      if (needsApproval && unpaidCount > 0) {
+        noticeTitle.textContent = `Du har ${actionCount} ting som trenger oppmerksomhet`;
+        noticeText.textContent = "Du må godkjenne noe på prosjektet, og du har en faktura som venter på betaling.";
+        noticeLink.textContent = "Se hva du må gjøre";
+        noticeLink.href = "#procurementContainer";
+      } else if (needsApproval) {
+        noticeTitle.textContent = "Du har noe som må godkjennes";
+        noticeText.textContent = "Se godkjenningen nedenfor og svar når det passer.";
+        noticeLink.textContent = "Se godkjenningen";
+        noticeLink.href = "#procurementContainer";
+      } else {
+        noticeTitle.textContent = unpaidCount === 1
+          ? "Du har en faktura som venter på betaling"
+          : `Du har ${unpaidCount} fakturaer som venter på betaling`;
+        noticeText.textContent = "Åpne fakturaen nedenfor for å se beløp og forfallsdato.";
+        noticeLink.textContent = "Se faktura";
+        noticeLink.href = "#currentInvoiceCard";
+      }
+      noticeLink.classList.remove("hidden");
+    } else {
+      notice?.classList.add("is-ok");
+      noticeIcon.textContent = "✓";
+      noticeTitle.textContent = "Alt er greit";
+      noticeText.textContent = "Du trenger ikke gjøre noe akkurat nå.";
+    }
+
     const currentInvoice = invoices.find((invoice) => invoice.status === "overdue")
       || invoices.find((invoice) => invoice.status === "unpaid")
       || null;
