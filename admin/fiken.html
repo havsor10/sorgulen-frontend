@@ -41,6 +41,52 @@
       <p class="fiken-security-note">API-nøkkelen ligger kun på Render-serveren og sendes aldri til nettleseren.</p>
     </section>
 
+
+    <section class="fiken-card bank-card">
+      <div class="fiken-card-head">
+        <div>
+          <p class="admin-eyebrow">Bankfeed</p>
+          <h2 id="bankTitle">SpareBank 1</h2>
+          <p id="bankText">Henter bedriftskonto og transaksjoner via Open Banking.</p>
+        </div>
+        <span id="bankBadge" class="fiken-badge">…</span>
+      </div>
+
+      <div class="bank-stats">
+        <div><span>Saldo</span><strong id="bankBalance">–</strong></div>
+        <div><span>Inn denne måneden</span><strong id="bankIncome">–</strong></div>
+        <div><span>Ut denne måneden</span><strong id="bankExpense">–</strong></div>
+        <div><span>Netto</span><strong id="bankNet">–</strong></div>
+      </div>
+
+      <div class="bank-meta">
+        <span id="bankAccountText">Konto: –</span>
+        <span id="bankSyncText">Sist synkronisert: –</span>
+      </div>
+
+      <div id="bankWarning" class="bank-warning" hidden></div>
+
+      <div class="fiken-actions">
+        <button id="bankSyncBtn" class="secondary-btn" type="button">Synk bank nå</button>
+      </div>
+
+      <div class="bank-safety">
+        <strong id="bankMatchMode">Betalingsmatching: testmodus</strong>
+        <span>Bankdata leses automatisk. Fakturaer blir ikke satt til betalt automatisk før matching er kontrollert med ekte data.</span>
+      </div>
+
+      <div class="bank-transactions-head">
+        <div>
+          <p class="admin-eyebrow">Siste bevegelser</p>
+          <h3>Bedriftskonto</h3>
+        </div>
+        <span id="bankCandidateCount" class="bank-candidate-count"></span>
+      </div>
+      <div id="bankTransactions" class="bank-transactions">
+        <p class="bank-empty">Henter transaksjoner…</p>
+      </div>
+    </section>
+
     <section id="setupCard" class="fiken-card">
       <div class="fiken-card-head">
         <div>
@@ -116,7 +162,7 @@
         <div><strong>1</strong><span>Lag faktura i admin</span></div>
         <div><strong>2</strong><span>Utsted → registreres i Fiken</span></div>
         <div><strong>3</strong><span>Send til kunden</span></div>
-        <div><strong>4</strong><span>Betaling i Fiken → admin oppdateres</span></div>
+        <div><strong>4</strong><span>Bankbetaling → admin matcher → Fiken oppdateres</span></div>
       </div>
     </section>
   </main>
