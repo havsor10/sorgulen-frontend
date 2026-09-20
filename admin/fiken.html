@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Fiken | Sørgulen Admin</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin-shell.css">
+  <link rel="stylesheet" href="admin-pages.css">
+  <link rel="stylesheet" href="fiken.css">
+</head>
+<body>
+  <div id="adminShell" data-page="fiken"></div>
+  <script src="admin-shell.js"></script>
+
+  <main class="admin-main fiken-wrap">
+    <header class="admin-page-header">
+      <div>
+        <p class="admin-eyebrow">Regnskap</p>
+        <h1>Fiken</h1>
+        <p>Fakturaer og betalinger fra admin skal kunne føres direkte i Fiken.</p>
+      </div>
+      <button id="refreshBtn" class="secondary-btn" type="button">Oppdater</button>
+    </header>
+
+    <div id="statusMessage" class="status-message"></div>
+
+    <section class="fiken-card fiken-connection-card">
+      <div class="fiken-card-head">
+        <div>
+          <p class="admin-eyebrow">Tilkobling</p>
+          <h2 id="connectionTitle">Kontrollerer Fiken…</h2>
+          <p id="connectionText">Henter status fra serveren.</p>
+        </div>
+        <span id="connectionBadge" class="fiken-badge">…</span>
+      </div>
+      <div class="fiken-actions">
+        <button id="testBtn" class="primary-btn" type="button">Test tilkobling</button>
+        <button id="syncBtn" class="secondary-btn" type="button">Synk betalinger</button>
+      </div>
+      <p class="fiken-security-note">API-nøkkelen ligger kun på Render-serveren og sendes aldri til nettleseren.</p>
+    </section>
+
+    <section id="setupCard" class="fiken-card">
+      <div class="fiken-card-head">
+        <div>
+          <p class="admin-eyebrow">Oppsett</p>
+          <h2>Regnskapskobling</h2>
+          <p>Foretak, bankkonto og inntektskonto må stemme før integrasjonen kan aktiveres.</p>
+        </div>
+      </div>
+
+      <form id="settingsForm" class="fiken-form">
+        <label>
+          <span>Fiken-foretak</span>
+          <select id="companySelect" name="companySlug">
+            <option value="">Test tilkoblingen først</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Bankkonto for innbetalinger</span>
+          <select id="bankSelect" name="bankAccountCode">
+            <option value="">Velg bankkonto</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Inntektskonto for salg</span>
+          <select id="incomeSelect" name="incomeAccount">
+            <option value="">Velg inntektskonto</option>
+          </select>
+          <small>Velg kontoen du bruker for denne typen salgsinntekt i Fiken. Vi gjetter ikke denne automatisk.</small>
+        </label>
+
+        <div class="fiken-toggles">
+          <label class="fiken-toggle">
+            <input id="autoRegister" type="checkbox">
+            <span><strong>Registrer nye fakturaer automatisk</strong><small>Når en faktura utstedes i admin, registreres den i Fiken før den sendes.</small></span>
+          </label>
+          <label class="fiken-toggle">
+            <input id="autoPayments" type="checkbox">
+            <span><strong>Synk betalinger automatisk</strong><small>Admin kontrollerer Fiken jevnlig og oppdaterer betalt-status.</small></span>
+          </label>
+          <label class="fiken-toggle fiken-enable-toggle">
+            <input id="enabled" type="checkbox">
+            <span><strong>Fiken-integrasjon aktiv</strong><small>Når denne er aktiv, blokkeres sending dersom Fiken-registrering feiler.</small></span>
+          </label>
+        </div>
+
+        <button class="primary-btn" type="submit">Lagre Fiken-oppsett</button>
+      </form>
+    </section>
+
+    <section class="fiken-card">
+      <div class="fiken-card-head">
+        <div>
+          <p class="admin-eyebrow">Kontroll</p>
+          <h2>Regnskapsstatus</h2>
+          <p>Dette viser koblingen mellom fakturaene i admin og Fiken.</p>
+        </div>
+      </div>
+      <div class="fiken-stats">
+        <div><span>Koblet til Fiken</span><strong id="linkedCount">–</strong></div>
+        <div><span>Ikke ferdig koblet</span><strong id="pendingCount">–</strong></div>
+        <div><span>Synkfeil</span><strong id="errorCount">–</strong></div>
+        <div><span>Utestående</span><strong id="unsettledCount">–</strong></div>
+      </div>
+      <div id="lastSyncText" class="fiken-last-sync"></div>
+    </section>
+
+    <section class="fiken-card fiken-flow-card">
+      <p class="admin-eyebrow">Slik fungerer det</p>
+      <h2>Én arbeidsflyt</h2>
+      <div class="fiken-flow">
+        <div><strong>1</strong><span>Lag faktura i admin</span></div>
+        <div><strong>2</strong><span>Utsted → registreres i Fiken</span></div>
+        <div><strong>3</strong><span>Send til kunden</span></div>
+        <div><strong>4</strong><span>Betaling i Fiken → admin oppdateres</span></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="../config.js"></script>
+  <script src="fiken.js"></script>
+</body>
+</html>
