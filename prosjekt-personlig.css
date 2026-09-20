@@ -1,4 +1,4 @@
-/* Personlig, rolig og fullt responsiv kundeportal. */
+/* Kundeportal: aktivt oppdrag først, historikk nederst. */
 
 html,
 body {
@@ -12,7 +12,8 @@ body {
 
 .portal-shell {
   width: min(100% - 24px, 920px);
-  padding: clamp(16px, 3vw, 34px) 0 clamp(38px, 6vw, 72px);
+  margin: 0 auto;
+  padding: clamp(16px, 3vw, 34px) 0 clamp(40px, 6vw, 76px);
 }
 
 .portal-card {
@@ -21,21 +22,43 @@ body {
   padding: clamp(18px, 3vw, 28px);
 }
 
+/* Firmatopp */
 .portal-brand {
-  padding: 4px 4px 18px;
+  display: grid;
+  place-items: center;
+  gap: 3px;
+  min-height: 108px;
+  margin: 0 0 18px;
+  padding: 13px 20px 11px;
+  border-radius: 20px;
+  background: #071018;
+  color: #fff;
+  overflow: hidden;
 }
 
-.portal-brand strong {
-  font-size: clamp(1.02rem, 2vw, 1.14rem);
+.portal-brand-logo {
+  display: block;
+  width: min(100%, 390px);
+  max-height: 70px;
+  object-fit: contain;
 }
 
+.portal-brand span {
+  margin: 0;
+  color: #d7e0e6;
+  font-size: .84rem;
+  font-weight: 650;
+}
+
+/* Aktivt oppdrag */
 .welcome-card {
   background: linear-gradient(145deg, #ffffff 0%, #f7faf8 100%);
   border-color: #d8e4dd;
 }
 
 .welcome-eyebrow,
-.personal-kicker {
+.personal-kicker,
+.current-invoice-kicker {
   margin: 0 0 7px;
   color: #397052;
   font-size: .82rem;
@@ -74,7 +97,7 @@ body {
 
 .project-summary strong {
   color: var(--ink);
-  font-size: 1.02rem;
+  font-size: 1.04rem;
 }
 
 .customer-source {
@@ -175,6 +198,109 @@ body {
   word-break: break-word;
 }
 
+/* Kun fakturaer som krever handling får plass i dagens del. */
+.current-invoice-card {
+  border: 2px solid #d8b15b;
+  background: #fffaf0;
+}
+
+.current-invoice-card.overdue {
+  border-color: #d99b98;
+  background: #fff4f3;
+}
+
+.current-invoice-kicker {
+  color: #7b590a;
+}
+
+.current-invoice-card.overdue .current-invoice-kicker {
+  color: #8e302d;
+}
+
+.current-invoice-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
+}
+
+.current-invoice-head h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.current-invoice-head p {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+
+.current-invoice-head > strong {
+  color: var(--ink);
+  font-size: clamp(1.35rem, 5vw, 1.75rem);
+  white-space: nowrap;
+}
+
+.current-invoice-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.customer-history-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 31px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #dcf5e4;
+  color: #11663b;
+  font-size: .8rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.customer-history-status.unpaid {
+  background: #fff0c9;
+  color: #775100;
+}
+
+.customer-history-status.overdue {
+  background: #fde2e0;
+  color: #922d29;
+}
+
+.customer-history-status.credited {
+  background: #edf0f2;
+  color: #4c5861;
+}
+
+.invoice-open-button {
+  min-height: 46px;
+  border: 1px solid #cfd8dd;
+  border-radius: 11px;
+  padding: 10px 14px;
+  background: #fff;
+  color: #14212b;
+  font: inherit;
+  font-size: .9rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.primary-invoice-button {
+  flex: 1;
+  border-color: #7c5b12;
+  background: #76560f;
+  color: #fff;
+}
+
+.current-invoice-card.overdue .primary-invoice-button {
+  border-color: #8d302d;
+  background: #8d302d;
+}
+
+/* Kontakt hører fortsatt til aktivt oppdrag. */
 .contact-card {
   background: #172d24;
   border-color: #172d24;
@@ -205,7 +331,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 52px;
+  min-height: 54px;
   padding: 12px 16px;
   border-radius: 12px;
   font-weight: 800;
@@ -225,7 +351,7 @@ body {
 }
 
 .portal-update-block {
-  padding: 2px 4px 0;
+  padding: 2px 4px 4px;
   text-align: center;
 }
 
@@ -242,340 +368,45 @@ body {
   line-height: 1.4;
 }
 
-@media (max-width: 560px) {
-  .portal-shell {
-    width: min(100% - 18px, 920px);
-    padding-top: 10px;
-  }
-
-  .portal-card {
-    border-radius: 16px;
-    margin-bottom: 12px;
-  }
-
-  .fact-grid,
-  .photo-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .work-day-list li {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 8px;
-  }
-
-  .work-day-list span {
-    text-align: right;
-  }
+/* Alt under dette punktet er historikk og ikke nødvendig for dagens oppdrag. */
+.history-section {
+  margin-top: clamp(34px, 7vw, 58px);
 }
 
-@media (min-width: 700px) {
-  .contact-actions {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .photo-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1000px) {
-  .portal-shell {
-    width: min(100% - 56px, 920px);
-  }
-
-  .portal-card {
-    box-shadow: 0 10px 32px rgba(15, 23, 42, .06);
-  }
-}
-
-
-/* Kundeportal 2026: enkel hovedoversikt med store, tydelige flater. */
-.portal-brand {
-  display: grid;
-  place-items: center;
-  gap: 2px;
-  min-height: 112px;
-  margin-bottom: 16px;
-  padding: 14px 20px 12px;
-  border-radius: 20px;
-  background: #071018;
-  color: #fff;
-  overflow: hidden;
-}
-
-.portal-brand-logo {
-  display: block;
-  width: min(100%, 390px);
-  max-height: 72px;
-  object-fit: contain;
-}
-
-.portal-brand span {
-  margin: 0;
-  color: #d7e0e6;
-  font-size: .84rem;
-  font-weight: 650;
-  letter-spacing: .01em;
-}
-
-.portal-overview {
-  display: grid;
+.history-divider {
+  display: flex;
+  align-items: center;
   gap: 12px;
-  margin-bottom: 18px;
-}
-
-.overview-intro {
-  padding: 2px 4px 6px;
-}
-
-.overview-intro h1 {
-  margin: 0;
-  color: var(--ink);
-  font-size: clamp(1.65rem, 5.8vw, 2.2rem);
-  line-height: 1.08;
-  letter-spacing: -.025em;
-}
-
-.overview-intro p {
-  margin: 6px 0 0;
-  color: var(--muted);
-  font-size: 1rem;
-}
-
-.portal-overview .portal-card {
-  margin-bottom: 0;
-}
-
-.overview-state-card {
-  display: grid;
-  grid-template-columns: 52px minmax(0, 1fr);
-  gap: 15px;
-  align-items: center;
-  border: 1.5px solid #9dd8b5;
-  background: #ecf9f0;
-  box-shadow: none;
-}
-
-.overview-state-card.needs-action {
-  border-color: #e1bd69;
-  background: #fff9e9;
-}
-
-.overview-state-card.overdue {
-  border-color: #e5aaa7;
-  background: #fff3f2;
-}
-
-.overview-state-icon {
-  width: 46px;
-  height: 46px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: #16834c;
-  color: #fff;
-  font-size: 1.5rem;
-  font-weight: 900;
-}
-
-.overview-state-card.needs-action .overview-state-icon {
-  background: #9a6800;
-}
-
-.overview-state-card.overdue .overview-state-icon {
-  background: #9b2c2c;
-}
-
-.overview-state-card h2 {
-  margin: 0 0 2px;
-  color: #11663b;
-  font-size: clamp(1.2rem, 4.5vw, 1.55rem);
-}
-
-.overview-state-card.needs-action h2 { color: #755000; }
-.overview-state-card.overdue h2 { color: #842727; }
-
-.overview-state-card p {
-  margin: 0;
-  color: #335646;
-  font-size: .96rem;
-}
-
-.overview-info-card {
-  display: grid;
-  grid-template-columns: 48px minmax(0, 1fr);
-  gap: 14px;
-  align-items: center;
-  box-shadow: none;
-}
-
-.overview-card-icon {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border-radius: 12px;
-  background: #eef5fb;
-  color: #0d64a5;
-  font-size: 1.35rem;
-  font-weight: 900;
-}
-
-.overview-label {
-  display: block;
-  margin-bottom: 2px;
-  color: var(--muted);
-  font-size: .86rem;
-  font-weight: 750;
-}
-
-.overview-info-card strong,
-.overview-project-copy > strong {
-  display: block;
-  color: var(--ink);
-  font-size: clamp(1.08rem, 4vw, 1.35rem);
-  line-height: 1.2;
-}
-
-.overview-info-card p,
-.overview-project-copy p {
-  margin: 4px 0 0;
-  color: var(--muted);
-  font-size: .92rem;
-}
-
-.overview-project-card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 14px;
-  box-shadow: none;
-}
-
-.overview-project-image-wrap {
-  overflow: hidden;
-  border-radius: 14px;
-  border: 1px solid var(--line);
-  background: var(--soft);
-}
-
-.overview-project-image-wrap img {
-  display: block;
-  width: 100%;
-  aspect-ratio: 16 / 7;
-  object-fit: cover;
-}
-
-.overview-status-help {
-  line-height: 1.45;
-}
-
-.overview-secondary-action {
-  min-height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px solid #d6dde2;
-  border-radius: 12px;
-  background: #f7f9fa;
-  color: #16232d;
-  font-weight: 800;
-  text-decoration: none;
-  text-align: center;
-}
-
-.overview-secondary-action:focus-visible,
-.overview-call-button:focus-visible,
-.invoice-open-button:focus-visible {
-  outline: 3px solid #1a73b7;
-  outline-offset: 3px;
-}
-
-.overview-invoice-card {
-  grid-template-columns: 48px minmax(0, 1fr) auto;
-}
-
-.overview-invoice-card .overview-secondary-action {
-  grid-column: 1 / -1;
-}
-
-.overview-invoice-copy strong {
-  font-size: clamp(1.35rem, 6vw, 1.75rem);
-}
-
-.overview-status-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 34px;
-  padding: 6px 11px;
-  border-radius: 999px;
-  background: #dcf5e4;
-  color: #11663b;
-  font-size: .86rem;
+  margin: 0 2px 18px;
+  color: #78818a;
+  font-size: .78rem;
   font-weight: 850;
-  white-space: nowrap;
+  letter-spacing: .09em;
+  text-transform: uppercase;
 }
 
-.overview-status-pill.unpaid {
-  background: #fff0c9;
-  color: #775100;
+.history-divider::before,
+.history-divider::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: #d4dade;
 }
 
-.overview-status-pill.overdue {
-  background: #fde2e0;
-  color: #922d29;
+.history-intro {
+  margin: 0 4px 18px;
 }
 
-.overview-status-pill.credited {
-  background: #edf0f2;
-  color: #4c5861;
+.history-intro h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(1.35rem, 4vw, 1.75rem);
 }
 
-.overview-button {
-  font: inherit;
-  cursor: pointer;
-}
-
-.overview-call-button {
-  min-height: 72px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 13px;
-  padding: 13px 20px;
-  border-radius: 15px;
-  background: #138447;
-  color: #fff;
-  text-decoration: none;
-  box-shadow: 0 8px 22px rgba(19, 132, 71, .18);
-}
-
-.overview-call-icon {
-  font-size: 1.55rem;
-  line-height: 1;
-}
-
-.overview-call-button span:last-child {
-  display: grid;
-  text-align: left;
-}
-
-.overview-call-button strong {
-  font-size: 1.16rem;
-  line-height: 1.15;
-}
-
-.overview-call-button small {
-  margin-top: 2px;
-  color: #e6f4eb;
-  font-size: .91rem;
-}
-
-.project-details-anchor {
-  scroll-margin-top: 16px;
+.history-intro p {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: .96rem;
 }
 
 .customer-history-card {
@@ -626,61 +457,11 @@ body {
   font-weight: 850;
 }
 
-.customer-history-status {
-  display: inline-flex !important;
-  align-items: center;
-  min-height: 31px;
-  padding: 5px 9px;
-  border-radius: 999px;
-  background: #dcf5e4;
-  color: #11663b !important;
-  font-size: .78rem !important;
-  font-weight: 850;
-}
-
-.customer-history-status.unpaid {
-  background: #fff0c9;
-  color: #775100 !important;
-}
-
-.customer-history-status.overdue {
-  background: #fde2e0;
-  color: #922d29 !important;
-}
-
-.customer-history-status.credited {
-  background: #edf0f2;
-  color: #4c5861 !important;
-}
-
-.invoice-open-button {
-  min-height: 44px;
-  border: 1px solid #cfd8dd;
-  border-radius: 10px;
-  padding: 9px 13px;
-  background: #fff;
-  color: #14212b;
-  font: inherit;
-  font-size: .88rem;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-@media (min-width: 760px) {
-  .portal-overview {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .overview-intro,
-  .overview-state-card,
-  .overview-call-button {
-    grid-column: 1 / -1;
-  }
-
-  .overview-project-card,
-  .overview-invoice-card {
-    min-height: 100%;
-  }
+.invoice-open-button:focus-visible,
+.contact-primary:focus-visible,
+.contact-secondary:focus-visible {
+  outline: 3px solid #1a73b7;
+  outline-offset: 3px;
 }
 
 @media (max-width: 560px) {
@@ -694,19 +475,15 @@ body {
   }
 
   .portal-brand {
-    min-height: 104px;
+    min-height: 102px;
     margin: 0 0 14px;
     border-radius: 0 0 19px 19px;
-    padding: 12px 18px 10px;
+    padding: 11px 18px 9px;
   }
 
   .portal-brand-logo {
     width: min(92vw, 345px);
-    max-height: 66px;
-  }
-
-  .portal-brand span {
-    font-size: .82rem;
+    max-height: 65px;
   }
 
   #loadingCard,
@@ -717,37 +494,43 @@ body {
     margin-right: auto;
   }
 
-  .overview-intro {
-    padding-left: 4px;
-    padding-right: 4px;
+  .portal-card {
+    border-radius: 16px;
+    margin-bottom: 12px;
   }
 
-  .overview-state-card {
-    grid-template-columns: 46px minmax(0, 1fr);
-    padding: 17px 16px;
+  .fact-grid,
+  .photo-grid {
+    grid-template-columns: 1fr;
   }
 
-  .overview-state-icon {
-    width: 42px;
-    height: 42px;
+  .work-day-list li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
   }
 
-  .overview-info-card {
-    grid-template-columns: 44px minmax(0, 1fr);
-    padding: 17px 16px;
+  .work-day-list span {
+    text-align: right;
   }
 
-  .overview-card-icon {
-    width: 40px;
-    height: 40px;
+  .current-invoice-head {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 
-  .overview-invoice-card {
-    grid-template-columns: 44px minmax(0, 1fr) auto;
+  .current-invoice-actions {
+    display: grid;
+    grid-template-columns: 1fr;
   }
 
-  .overview-project-card {
-    padding: 16px;
+  .current-invoice-actions .customer-history-status {
+    justify-self: start;
+  }
+
+  .primary-invoice-button,
+  .invoice-open-button {
+    width: 100%;
   }
 
   .customer-history-row {
@@ -757,8 +540,24 @@ body {
   .customer-history-row-side {
     justify-items: start;
   }
+}
 
-  .invoice-open-button {
-    width: 100%;
+@media (min-width: 700px) {
+  .contact-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .photo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1000px) {
+  .portal-shell {
+    width: min(100% - 56px, 920px);
+  }
+
+  .portal-card {
+    box-shadow: 0 10px 32px rgba(15, 23, 42, .06);
   }
 }
