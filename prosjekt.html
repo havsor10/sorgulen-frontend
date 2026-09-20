@@ -27,62 +27,33 @@
     </section>
 
     <div id="projectContent" class="hidden">
-      <section class="portal-overview" aria-label="Din oversikt">
-        <div class="overview-intro">
-          <h1 id="personalGreeting">Hei!</h1>
-          <p id="welcomeMessage">Her får du en enkel oversikt over det viktigste akkurat nå.</p>
+      <section class="portal-card welcome-card">
+        <p class="welcome-eyebrow">Din oppfølging</p>
+        <h1 id="personalGreeting">Hei!</h1>
+        <p id="welcomeMessage" class="welcome-message">Her kan du følge prosjektet ditt. Jeg oppdaterer siden underveis, så du enkelt kan se hva som skjer videre.</p>
+        <div class="project-summary">
+          <span>Prosjektet ditt</span>
+          <strong id="projectName">Prosjekt</strong>
         </div>
-
-        <section id="overviewStateCard" class="portal-card overview-state-card" aria-live="polite">
-          <div class="overview-state-icon" aria-hidden="true">✓</div>
-          <div>
-            <h2 id="overviewStateTitle">Alt er i orden!</h2>
-            <p id="overviewStateText">Du trenger ikke gjøre noe akkurat nå.</p>
-          </div>
-        </section>
-
-        <section id="nextWorkCard" class="portal-card overview-info-card overview-next-card">
-          <div class="overview-card-icon" aria-hidden="true">▣</div>
-          <div>
-            <span class="overview-label">Neste besøk</span>
-            <strong id="nextWorkText">Ikke satt ennå</strong>
-            <p id="nextWorkSubtext"></p>
-          </div>
-        </section>
-
-        <section class="portal-card overview-project-card">
-          <div id="overviewProjectImageWrap" class="overview-project-image-wrap hidden">
-            <img id="overviewProjectImage" src="" alt="">
-          </div>
-          <div class="overview-project-copy">
-            <span class="overview-label">Aktivt prosjekt</span>
-            <strong id="projectName">Prosjekt</strong>
-            <p id="statusText">Prosjektet er aktivt</p>
-            <p id="statusHelp" class="overview-status-help"></p>
-          </div>
-          <a class="overview-secondary-action" href="#projectDetails">Se prosjektet</a>
-        </section>
-
-        <section id="overviewInvoiceCard" class="portal-card overview-info-card overview-invoice-card hidden">
-          <div class="overview-card-icon" aria-hidden="true">▤</div>
-          <div class="overview-invoice-copy">
-            <span class="overview-label">Siste faktura</span>
-            <strong id="overviewInvoiceAmount"></strong>
-            <p id="overviewInvoiceMeta"></p>
-          </div>
-          <span id="overviewInvoiceStatus" class="overview-status-pill"></span>
-          <button id="overviewInvoiceOpen" class="overview-secondary-action overview-button" type="button">Se faktura</button>
-        </section>
-
-        <a class="overview-call-button" href="tel:+4740730187" aria-label="Ring Sørgulen Industriservice på 407 30 187">
-          <span class="overview-call-icon" aria-hidden="true">☎</span>
-          <span><strong>Ring oss</strong><small>407 30 187</small></span>
-        </a>
-
         <p id="customerName" class="customer-source" aria-hidden="true"></p>
       </section>
 
-      <div id="projectDetails" class="project-details-anchor" aria-hidden="true"></div>
+      <section id="nextWorkCard" class="portal-card next-card">
+        <p class="next-kicker">Neste gang jeg forventer å være hos deg</p>
+        <h1 id="nextWorkText">Ikke satt ennå</h1>
+        <p id="nextWorkSubtext" class="next-note"></p>
+      </section>
+
+      <section class="portal-card status-card">
+        <h2>Slik ligger vi an nå</h2>
+        <div class="status-line">
+          <span class="status-dot" aria-hidden="true"></span>
+          <div>
+            <strong id="statusText">Prosjektet er aktivt</strong>
+            <p id="statusHelp"></p>
+          </div>
+        </div>
+      </section>
 
       <div id="procurementContainer" class="hidden"></div>
 
@@ -127,16 +98,19 @@
         <div id="photoGrid" class="photo-grid"></div>
       </section>
 
-      <section id="invoiceHistoryCard" class="portal-card customer-history-card hidden">
-        <h2>Fakturaer</h2>
-        <p class="section-explanation">Her ser du fakturaene som er sendt til deg og om de er betalt.</p>
-        <div id="invoiceHistoryList" class="customer-history-list"></div>
-      </section>
-
-      <section id="jobHistoryCard" class="portal-card customer-history-card hidden">
-        <h2>Arbeid jeg har gjort hos deg</h2>
-        <p class="section-explanation">Her får du en enkel oversikt over tidligere og pågående oppdrag.</p>
-        <div id="jobHistoryList" class="customer-history-list"></div>
+      <section id="currentInvoiceCard" class="portal-card current-invoice-card hidden" aria-live="polite">
+        <p class="current-invoice-kicker">Faktura som må ordnes</p>
+        <div class="current-invoice-head">
+          <div>
+            <h2 id="currentInvoiceTitle">Faktura</h2>
+            <p id="currentInvoiceMeta"></p>
+          </div>
+          <strong id="currentInvoiceAmount"></strong>
+        </div>
+        <div class="current-invoice-actions">
+          <span id="currentInvoiceStatus" class="customer-history-status unpaid"></span>
+          <button id="currentInvoiceOpen" class="invoice-open-button primary-invoice-button" type="button">Åpne faktura</button>
+        </div>
       </section>
 
       <section class="portal-card contact-card">
@@ -144,15 +118,36 @@
         <h2>Du kan selvfølgelig ta kontakt</h2>
         <p>Hvis noe ikke blir besvart her, er det bare å kontakte meg. Målet med siden er at du skal føle deg oppdatert og vite hva som skjer videre.</p>
         <div class="contact-actions">
-          <a class="contact-primary" href="mailto:sor.industri@gmail.com">Send e-post til Håvard</a>
-          <a class="contact-secondary" href="kontakt.html">Se kontaktinformasjon</a>
+          <a class="contact-primary" href="tel:+4740730187">Ring Håvard · 407 30 187</a>
+          <a class="contact-secondary" href="mailto:sor.industri@gmail.com">Send e-post</a>
         </div>
       </section>
 
       <div class="portal-update-block">
         <p id="updatedText" class="portal-updated"></p>
-        <p class="portal-updated-help">Dette viser når informasjonen på denne siden sist ble oppdatert, ikke når arbeidet ble utført.</p>
+        <p class="portal-updated-help">Dette viser når informasjonen på siden sist ble oppdatert.</p>
       </div>
+
+      <section id="historySection" class="history-section hidden" aria-labelledby="historyTitle">
+        <div class="history-divider">
+          <span>Tidligere</span>
+        </div>
+        <div class="history-intro">
+          <h2 id="historyTitle">Tidligere arbeid og fakturaer</h2>
+          <p>Her kan du se tilbake på tidligere oppdrag og fakturaer hvis du ønsker det.</p>
+        </div>
+
+        <section id="jobHistoryCard" class="portal-card customer-history-card hidden">
+          <h2>Tidligere arbeid hos deg</h2>
+          <div id="jobHistoryList" class="customer-history-list"></div>
+        </section>
+
+        <section id="invoiceHistoryCard" class="portal-card customer-history-card hidden">
+          <h2>Fakturaer</h2>
+          <p class="section-explanation">Her ser du fakturaene som er sendt til deg og om de er betalt.</p>
+          <div id="invoiceHistoryList" class="customer-history-list"></div>
+        </section>
+      </section>
     </div>
   </main>
 
