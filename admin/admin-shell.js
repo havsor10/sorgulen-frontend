@@ -17,25 +17,25 @@
   if (page === "jobs") ensureAsset("link", { rel: "stylesheet", href: "ai-guide.css?v=20260917-project1" });
   ensureAsset("link", { rel: "manifest", href: "manifest.webmanifest" });
   ensureAsset("link", { rel: "apple-touch-icon", href: "../assets/logo.png" });
-  if (!["home", "inventory", "snow", "jobs"].includes(page)) ensureAsset("script", { src: "operations-ui.js?v=20260918-workflow1" });
+  if (!["home", "overview", "inventory", "snow", "jobs"].includes(page)) ensureAsset("script", { src: "operations-ui.js?v=20260918-workflow1" });
   if (page === "jobs") ensureAsset("script", { src: "inventory-material-edit.js?v=20260904-snow1" });
 
   const navItems = [
     { key: "home", href: "hjem.html", label: "Hjem" },
-    { key: "autopilot", href: "autopilot.html", label: "Autopilot" },
+    { key: "overview", href: "oversikt.html", label: "Oversikt" },
     { key: "jobs", href: "oppdrag.html", label: "Oppdrag" },
     { key: "bookings", href: "admin-dashboard.html", label: "Bookinger" },
     { key: "requests", href: "foresporsler.html", label: "Forespørsler" },
     { key: "customers", href: "kunder.html", label: "Kunder" },
     { key: "invoices", href: "fakturaer.html", label: "Fakturaer" },
   ];
-  const mobileItems = navItems.filter((item) => ["home", "autopilot", "jobs", "invoices"].includes(item.key));
+  const mobileItems = navItems.filter((item) => ["home", "overview", "jobs", "invoices"].includes(item.key));
   const activeClass = (key) => key === page ? " is-active" : "";
   const activeAttr = (key) => key === page ? ' aria-current="page"' : "";
   const badge = (key) => `<span class="admin-nav-badge" data-admin-badge="${key}" hidden></span>`;
 
   function mobileIcon(key) {
-    return ({ home: "⌂", autopilot: "✦", jobs: "◷", customers: "◎", invoices: "▤" })[key] || "•";
+    return ({ home: "⌂", overview: "◈", jobs: "◷", customers: "◎", invoices: "▤" })[key] || "•";
   }
 
   document.body.classList.add("admin-app");
@@ -55,6 +55,7 @@
           <a class="admin-quiet-action${activeClass("portal")}" href="kundeportal.html"${activeAttr("portal")}><span>Kundeportal</span></a>
           <a class="admin-quiet-action${activeClass("snow")}" href="broyting.html"${activeAttr("snow")}><span>Brøyting</span>${badge("snow")}</a>
           <a class="admin-quiet-action${activeClass("inventory")}" href="lager.html"${activeAttr("inventory")}><span>Lager</span>${badge("inventory")}</a>
+          <a class="admin-quiet-action${activeClass("autopilot")}" href="autopilot.html"${activeAttr("autopilot")}><span>Autopilot</span>${badge("autopilot")}</a>
           <a class="admin-quiet-action${activeClass("notifications")}" href="varslinger.html"${activeAttr("notifications")}>Varslinger</a>
           <a class="admin-quiet-action" href="statistikk.html">Statistikk</a>
           <a class="admin-quiet-action" id="logoutBtn" href="login.html">Logg ut</a>
@@ -63,7 +64,7 @@
     </header>
     <nav class="admin-mobile-nav" aria-label="Mobilnavigasjon">
       ${mobileItems.map((item) => `<a class="admin-mobile-link${activeClass(item.key)}" href="${item.href}"${activeAttr(item.key)}><span class="admin-mobile-icon" aria-hidden="true">${mobileIcon(item.key)}</span><span class="admin-mobile-label">${item.label}</span>${badge(item.key)}</a>`).join("")}
-      <button class="admin-mobile-link${["bookings", "requests", "inventory", "snow", "notifications", "portal", "more"].includes(page) ? " is-active" : ""}" id="adminMoreButton" type="button" aria-expanded="false" aria-controls="adminMoreMenu">
+      <button class="admin-mobile-link${["bookings", "requests", "inventory", "snow", "autopilot", "notifications", "portal", "more"].includes(page) ? " is-active" : ""}" id="adminMoreButton" type="button" aria-expanded="false" aria-controls="adminMoreMenu">
         <span class="admin-mobile-icon" aria-hidden="true">•••</span><span class="admin-mobile-label">Mer</span>${badge("more")}
       </button>
     </nav>
@@ -71,6 +72,7 @@
     <aside class="admin-more-menu" id="adminMoreMenu" aria-label="Flere adminvalg" aria-hidden="true">
       <div class="admin-more-head"><strong>Mer</strong><button id="adminMoreClose" class="admin-icon-button" type="button" aria-label="Lukk meny">×</button></div>
       <a class="admin-more-link${activeClass("portal")}" href="kundeportal.html"${activeAttr("portal")}><span>Kundeportal</span><span aria-hidden="true">›</span></a>
+      <a class="admin-more-link${activeClass("autopilot")}" href="autopilot.html"${activeAttr("autopilot")}><span>Autopilot</span><span class="admin-more-tail">${badge("autopilot")}<span aria-hidden="true">›</span></span></a>
       <a class="admin-more-link${activeClass("snow")}" href="broyting.html"${activeAttr("snow")}><span>Brøyting</span><span class="admin-more-tail">${badge("snow")}<span aria-hidden="true">›</span></span></a>
       <a class="admin-more-link${activeClass("bookings")}" href="admin-dashboard.html"${activeAttr("bookings")}><span>Bookinger</span><span class="admin-more-tail">${badge("bookings")}<span aria-hidden="true">›</span></span></a>
       <a class="admin-more-link${activeClass("requests")}" href="foresporsler.html"${activeAttr("requests")}><span>Forespørsler</span><span class="admin-more-tail">${badge("requests")}<span aria-hidden="true">›</span></span></a>
@@ -133,8 +135,10 @@
     showBadge("inventory", inventoryCount);
     showBadge("snow", snowCount);
     showBadge("autopilot", autopilotCount);
+    const operationAttention = Object.entries(operations?.badges || {}).filter(([key]) => key !== "more").reduce((sum, [, value]) => sum + Math.max(0, Number(value) || 0), 0);
+    showBadge("overview", operationAttention + autopilotCount + inventoryCount + snowCount);
     const existingMore = Math.max(0, Number(operations?.badges?.more) || 0);
-    showBadge("more", existingMore + inventoryCount + snowCount);
+    showBadge("more", existingMore + inventoryCount + snowCount + autopilotCount);
   }
 
   moreButton.addEventListener("click", () => setMenu(!moreMenu.classList.contains("is-open")));
