@@ -130,7 +130,7 @@
       stateText.textContent = "Åpne fakturaen nedenfor for å se beløp og betalingsinformasjon.";
     } else if (project.statusAttention === "approval") {
       stateCard?.classList.add("needs-action");
-      stateTitle.textContent = "Eg trenger en godkjenning fra deg";
+      stateTitle.textContent = "Jeg trenger en godkjenning fra deg";
       stateText.textContent = "Se informasjonen lenger ned på siden og godkjenn når det ser riktig ut.";
     } else if (Number(overview.unpaidInvoiceCount || 0) > 0) {
       stateCard?.classList.add("needs-action");
@@ -141,7 +141,7 @@
     } else {
       stateTitle.textContent = "Alt er i orden!";
       stateText.textContent = project.statusAttention === "material"
-        ? "Du trenger ikke gjøre noe akkurat nå. Eg oppdaterer siden når innkjøpet er klart."
+        ? "Du trenger ikke gjøre noe akkurat nå. Jeg oppdaterer siden når innkjøpet er klart."
         : "Du trenger ikke gjøre noe akkurat nå.";
     }
 
@@ -403,15 +403,15 @@
     const nextSubtext = document.getElementById("nextWorkSubtext");
     if (["completed", "cancelled"].includes(project.status)) {
       nextText.textContent = project.status === "completed" ? "Arbeidet er ferdig" : "Oppdraget er avsluttet";
-      nextSubtext.textContent = "Det er ikke planlagt flere arbeidsdager på dette oppdraget.";
+      nextSubtext.textContent = "Det er ikke planlagt flere besøk på dette oppdraget.";
     } else if (project.nextWork?.start) {
       nextText.textContent = formatDateRange(project.nextWork.start, project.nextWork.end);
       nextSubtext.textContent = project.nextWork.mode === "planned"
-        ? "Denne arbeidsperioden er planlagt. Siden oppdateres dersom planen endrer seg."
-        : "Dette er forventet tidspunkt og kan endres. Siden oppdateres dersom planen endrer seg.";
+        ? `Planlagt besøk · ${project.serviceName || "prosjektet ditt"}`
+        : `Forventet besøk · ${project.serviceName || "prosjektet ditt"}`;
     } else {
       nextText.textContent = "Ikke satt ennå";
-      nextSubtext.textContent = project.nextWorkMessage || "Prosjektet er fortsatt aktivt. Siden oppdateres så snart neste arbeidsdag er satt.";
+      nextSubtext.textContent = project.nextWorkMessage || "Jeg oppdaterer datoen her når den er avklart.";
     }
 
     renderCustomerOverview(project);
