@@ -45,6 +45,89 @@ body {
   object-position: left center;
 }
 
+/* Kort statusvarsel: én enkel beskjed om kunden må gjøre noe. */
+.customer-action-notice {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  margin: 0 0 12px;
+  padding: 14px 16px;
+  border: 1px solid #abd8bb;
+  border-radius: 14px;
+  background: #edf8f1;
+}
+
+.customer-action-notice.needs-action {
+  border-color: #e2c675;
+  background: #fff9e8;
+}
+
+.customer-action-notice.is-urgent {
+  border-color: #dfa8a5;
+  background: #fff2f1;
+}
+
+.customer-action-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #17834c;
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 900;
+}
+
+.customer-action-notice.needs-action .customer-action-icon {
+  background: #956700;
+}
+
+.customer-action-notice.is-urgent .customer-action-icon {
+  background: #9b302d;
+}
+
+.customer-action-copy strong {
+  display: block;
+  margin: 0;
+  color: #173a27;
+  font-size: 1.03rem;
+}
+
+.customer-action-notice.needs-action .customer-action-copy strong {
+  color: #6e4b00;
+}
+
+.customer-action-notice.is-urgent .customer-action-copy strong {
+  color: #842b28;
+}
+
+.customer-action-copy p {
+  margin: 3px 0 0;
+  color: #526159;
+  font-size: .91rem;
+  line-height: 1.4;
+}
+
+.customer-action-link {
+  display: inline-flex;
+  margin-top: 8px;
+  color: #173f2a;
+  font-size: .91rem;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.customer-action-notice.needs-action .customer-action-link {
+  color: #684700;
+}
+
+.customer-action-notice.is-urgent .customer-action-link {
+  color: #842b28;
+}
+
 /* Aktivt oppdrag */
 .welcome-card {
   background: linear-gradient(145deg, #ffffff 0%, #f7faf8 100%);
