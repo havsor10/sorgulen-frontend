@@ -23,3 +23,12 @@ test("Fiken-siden har eksplisitt valg av bank- og inntektskonto", () => {
   assert.match(html, /id="incomeSelect"/);
   assert.match(html, /Vi gjetter ikke denne automatisk/);
 });
+
+test("Fiken-siden viser Open Banking uten å eksponere credentials", () => {
+  assert.match(html, /id="bankBalance"/);
+  assert.match(html, /id="bankTransactions"/);
+  assert.match(js, /\/admin\/open-banking\/status/);
+  assert.match(js, /\/admin\/open-banking\/sync/);
+  assert.doesNotMatch(js, /credentials\.json\s*=/i);
+  assert.doesNotMatch(html, /privateKey/i);
+});
