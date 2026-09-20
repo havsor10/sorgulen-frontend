@@ -53,6 +53,7 @@
         </nav>
         <div class="admin-header-actions">
           <a class="admin-quiet-action${activeClass("portal")}" href="kundeportal.html"${activeAttr("portal")}><span>Kundeportal</span></a>
+          <a class="admin-quiet-action${activeClass("fiken")}" href="fiken.html"${activeAttr("fiken")}><span>Fiken</span></a>
           <a class="admin-quiet-action${activeClass("snow")}" href="broyting.html"${activeAttr("snow")}><span>Brøyting</span>${badge("snow")}</a>
           <a class="admin-quiet-action${activeClass("inventory")}" href="lager.html"${activeAttr("inventory")}><span>Lager</span>${badge("inventory")}</a>
           <a class="admin-quiet-action${activeClass("autopilot")}" href="autopilot.html"${activeAttr("autopilot")}><span>Autopilot</span>${badge("autopilot")}</a>
@@ -64,7 +65,7 @@
     </header>
     <nav class="admin-mobile-nav" aria-label="Mobilnavigasjon">
       ${mobileItems.map((item) => `<a class="admin-mobile-link${activeClass(item.key)}" href="${item.href}"${activeAttr(item.key)}><span class="admin-mobile-icon" aria-hidden="true">${mobileIcon(item.key)}</span><span class="admin-mobile-label">${item.label}</span>${badge(item.key)}</a>`).join("")}
-      <button class="admin-mobile-link${["bookings", "requests", "inventory", "snow", "autopilot", "notifications", "portal", "more"].includes(page) ? " is-active" : ""}" id="adminMoreButton" type="button" aria-expanded="false" aria-controls="adminMoreMenu">
+      <button class="admin-mobile-link${["bookings", "requests", "inventory", "snow", "autopilot", "notifications", "portal", "fiken", "more"].includes(page) ? " is-active" : ""}" id="adminMoreButton" type="button" aria-expanded="false" aria-controls="adminMoreMenu">
         <span class="admin-mobile-icon" aria-hidden="true">•••</span><span class="admin-mobile-label">Mer</span>${badge("more")}
       </button>
     </nav>
@@ -72,6 +73,7 @@
     <aside class="admin-more-menu" id="adminMoreMenu" aria-label="Flere adminvalg" aria-hidden="true">
       <div class="admin-more-head"><strong>Mer</strong><button id="adminMoreClose" class="admin-icon-button" type="button" aria-label="Lukk meny">×</button></div>
       <a class="admin-more-link${activeClass("portal")}" href="kundeportal.html"${activeAttr("portal")}><span>Kundeportal</span><span aria-hidden="true">›</span></a>
+      <a class="admin-more-link${activeClass("fiken")}" href="fiken.html"${activeAttr("fiken")}><span>Fiken / regnskap</span><span aria-hidden="true">›</span></a>
       <a class="admin-more-link${activeClass("autopilot")}" href="autopilot.html"${activeAttr("autopilot")}><span>Autopilot</span><span class="admin-more-tail">${badge("autopilot")}<span aria-hidden="true">›</span></span></a>
       <a class="admin-more-link${activeClass("snow")}" href="broyting.html"${activeAttr("snow")}><span>Brøyting</span><span class="admin-more-tail">${badge("snow")}<span aria-hidden="true">›</span></span></a>
       <a class="admin-more-link${activeClass("bookings")}" href="admin-dashboard.html"${activeAttr("bookings")}><span>Bookinger</span><span class="admin-more-tail">${badge("bookings")}<span aria-hidden="true">›</span></span></a>
