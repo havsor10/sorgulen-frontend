@@ -60,13 +60,16 @@
     const paid = invoices.filter((i) => i.status === "paid" && !i.isCreditNote).length;
     const outstanding = invoices
       .filter((i) => ["issued", "sent"].includes(i.status) && !i.isCreditNote)
-      .reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
+      .reduce((sum, i) => {
+        const fikenOre = i.fiken?.outstandingBalanceOre;
+        return sum + (fikenOre != null ? Number(fikenOre) / 100 : (Number(i.amount) || 0));
+      }, 0);
 
     summary.innerHTML = `
       <div class="inv-stat"><div class="num">${total}</div><div class="lbl">Dokumenter totalt</div></div>
       <div class="inv-stat"><div class="num">${drafts}</div><div class="lbl">Utkast</div></div>
       <div class="inv-stat"><div class="num">${issued}</div><div class="lbl">Utstedt, ikke sendt</div></div>
-      <div class="inv-stat"><div class="num">${unpaid}</div><div class="lbl">Sendt, ikke betalt</div></div>
+      <div class="inv-stat"><div class="num">${unpaid}</div><div class="lbl">Sendt, betaling ikke registrert</div></div>
       <div class="inv-stat"><div class="num">${fmtMoney(outstanding)} kr</div><div class="lbl">Utestående</div></div>
       <div class="inv-stat"><div class="num">${paid}</div><div class="lbl">Betalt</div></div>
     `;
@@ -85,6 +88,15 @@
         ? (inv.isCreditNote ? `Kreditnota ${escapeHtml(inv.invoiceNumber)}` : escapeHtml(inv.invoiceNumber))
         : "<span style='color:#888;'>(utkast)</span>";
       const ref = inv.sourceRef ? `#${escapeHtml(inv.sourceRef)}` : (inv.sourceType === "manual" ? "Manuell" : "–");
+      const fikenState = inv.status === "draft"
+        ? "–"
+        : inv.fiken?.syncStatus === "synced" && inv.fiken?.saleId
+          ? "✓ Fiken"
+          : inv.fiken?.syncStatus === "error"
+            ? "⚠ Fiken-feil"
+            : inv.fiken?.syncStatus === "manual_required"
+              ? "Kontroller Fiken"
+              : "Ikke koblet";
       return `
         <tr class="inv-row-link" data-id="${escapeHtml(inv._id)}">
           <td class="inv-num">${num}</td>
@@ -93,6 +105,7 @@
           <td>${fmtDate(inv.issuedAt || inv.createdAt)}</td>
           <td class="inv-amount">${fmtMoney(inv.amount)} kr</td>
           <td><span class="inv-badge badge-${escapeHtml(inv.status)}">${escapeHtml(statusLabels[inv.status] || inv.status)}</span></td>
+          <td>${escapeHtml(fikenState)}</td>
         </tr>`;
     }).join("");
 
@@ -100,7 +113,7 @@
       <table class="inv-table">
         <thead>
           <tr>
-            <th>Fakturanr.</th><th>Kunde</th><th>Ref.</th><th>Dato</th><th>Beløp</th><th>Status</th>
+            <th>Fakturanr.</th><th>Kunde</th><th>Ref.</th><th>Dato</th><th>Beløp</th><th>Status</th><th>Fiken</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>

@@ -77,6 +77,55 @@
     return { blockers, warnings };
   }
 
+  function requestPaymentDetails(inv) {
+    const dialog = document.getElementById("paymentDialog");
+    const form = document.getElementById("paymentForm");
+    const dateInput = document.getElementById("paymentDate");
+    const amountInput = document.getElementById("paymentAmount");
+    const cancel = document.getElementById("paymentCancel");
+    const help = document.getElementById("paymentHelp");
+    if (!dialog || !form || !dateInput || !amountInput || !cancel) {
+      throw new Error("Betalingsvinduet kunne ikke åpnes.");
+    }
+
+    const today = new Date().toLocaleDateString("sv-SE");
+    const outstanding = inv.fiken?.outstandingBalanceOre != null
+      ? Number(inv.fiken.outstandingBalanceOre) / 100
+      : Number(inv.amount || 0);
+    dateInput.value = today;
+    amountInput.value = String(outstanding > 0 ? outstanding : Number(inv.amount || 0));
+    help.textContent = inv.fiken?.saleId
+      ? "Beløpet registreres i Fiken på valgt dato og synkroniseres tilbake til admin."
+      : "Hvis Fiken er aktivert, registreres fakturaen i Fiken før betalingen føres.";
+
+    return new Promise((resolve) => {
+      let settled = false;
+      const finish = (value) => {
+        if (settled) return;
+        settled = true;
+        form.removeEventListener("submit", onSubmit);
+        cancel.removeEventListener("click", onCancel);
+        dialog.removeEventListener("cancel", onCancel);
+        if (dialog.open) dialog.close();
+        resolve(value);
+      };
+      const onCancel = (event) => {
+        event?.preventDefault?.();
+        finish(null);
+      };
+      const onSubmit = (event) => {
+        event.preventDefault();
+        const amount = Number(String(amountInput.value).replace(",", "."));
+        if (!dateInput.value || !(amount > 0)) return;
+        finish({ date: dateInput.value, amount });
+      };
+      form.addEventListener("submit", onSubmit);
+      cancel.addEventListener("click", onCancel);
+      dialog.addEventListener("cancel", onCancel);
+      dialog.showModal();
+    });
+  }
+
   function discountMarkup(inv) {
     const type = inv.discountType || "none";
     const amount = Math.abs(Number(inv.discountAmount || 0));
@@ -91,6 +140,41 @@
         <span>Sum før rabatt: ${money(gross)}</span>
         <span>${escapeHtml(label)}${suffix}: <b>−${money(amount)}</b></span>
         <strong>Du sparer: ${money(saving)}</strong>
+      </div>`;
+  }
+
+  function fikenMarkup(inv) {
+    if (inv.status === "draft") return "";
+    const fiken = inv.fiken || {};
+    const state = fiken.syncStatus || "not_configured";
+    let tone = "fd-info";
+    let title = "Ikke registrert i Fiken";
+    let detail = "Bruk «Synk Fiken» når integrasjonen er koblet til.";
+
+    if (state === "synced" && fiken.saleId) {
+      tone = "fd-success";
+      title = "✓ Registrert i Fiken";
+      const paid = Number(fiken.totalPaidOre || 0) / 100;
+      const outstanding = fiken.outstandingBalanceOre == null ? null : Number(fiken.outstandingBalanceOre) / 100;
+      detail = `Salg-ID ${escapeHtml(fiken.saleId)}${paid > 0 ? ` · registrert betalt ${money(paid)}` : ""}${outstanding != null ? ` · utestående ${money(outstanding)}` : ""}.`;
+    } else if (state === "error") {
+      tone = "fd-warn";
+      title = "Fiken trenger oppmerksomhet";
+      detail = fiken.lastError || "Synkronisering med Fiken feilet.";
+    } else if (state === "pending") {
+      title = "Fiken-registrering pågår";
+      detail = "Fakturaen venter på bekreftet registrering i Fiken.";
+    } else if (state === "manual_required") {
+      tone = "fd-warn";
+      title = "Må kontrolleres i Fiken";
+      detail = fiken.lastError || "Denne dokumenttypen krever manuell kontroll i Fiken.";
+    }
+
+    return `
+      <div class="fd-section">
+        <div class="fd-label">Fiken / regnskap</div>
+        <div class="${tone}"><strong>${escapeHtml(title)}</strong><br>${escapeHtml(detail)}</div>
+        ${!inv.isCreditNote ? '<button class="btn-edit" type="button" data-action="fiken-sync" style="margin-top:10px">Synk Fiken</button>' : ""}
       </div>`;
   }
 
@@ -211,6 +295,7 @@
           </div>
         </div>
 
+        ${fikenMarkup(inv)}
         <div class="fd-section fd-actions">${actionButtons(inv)}</div>
         ${emailComposer(inv)}
         ${inv.creditNoteId ? `<div class="fd-section"><a class="btn-edit" href="faktura-detalj.html?id=${encodeURIComponent(inv.creditNoteId)}">Åpne tilhørende kreditnota</a></div>` : ""}
@@ -382,7 +467,11 @@
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || "Kunne ikke utstede");
-        setMessage(`${inv.isCreditNote ? "Kreditnota" : "Faktura"} ${data.invoice.invoiceNumber} er utstedt og låst. ✓`, "success");
+        if (data.fikenWarning) {
+          setMessage(`${inv.isCreditNote ? "Kreditnota" : "Faktura"} ${data.invoice.invoiceNumber} er utstedt, men Fiken trenger oppmerksomhet: ${data.fikenWarning}`, "error");
+        } else {
+          setMessage(`${inv.isCreditNote ? "Kreditnota" : "Faktura"} ${data.invoice.invoiceNumber} er utstedt og ${data.accountingReady === false ? "venter på Fiken" : "klar"}. ✓`, "success");
+        }
         return load();
       }
 
@@ -420,12 +509,34 @@
         return load();
       }
 
-      if (action === "paid") {
-        if (!confirm(`Markere faktura ${inv.invoiceNumber} som betalt?`)) return;
-        const res = await fetch(`${API_BASE}/invoices/${inv._id}/paid`, { method: "POST", headers: headers() });
+      if (action === "fiken-sync") {
+        if (element) element.disabled = true;
+        setMessage("Synkroniserer fakturaen med Fiken…");
+        const res = await fetch(`${API_BASE}/admin/fiken/invoices/${inv._id}/sync`, {
+          method: "POST",
+          headers: headers(),
+          body: "{}",
+        });
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || "Kunne ikke markere betalt");
-        setMessage("Faktura markert som betalt. ✓", "success");
+        if (!res.ok) throw new Error(data.error || "Fiken-synk feilet");
+        setMessage("Fiken er synkronisert. ✓", "success");
+        return load();
+      }
+
+      if (action === "paid") {
+        const payment = await requestPaymentDetails(inv);
+        if (!payment) return;
+        const operationId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+        const res = await fetch(`${API_BASE}/invoices/${inv._id}/paid`, {
+          method: "POST",
+          headers: headers(),
+          body: JSON.stringify({ date: payment.date, amount: payment.amount, operationId }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Kunne ikke registrere betalingen");
+        setMessage(data.source === "fiken"
+          ? (data.invoice?.status === "paid" ? "Betalingen er registrert i Fiken og fakturaen er betalt. ✓" : "Betalingen er registrert i Fiken. Det står fortsatt et restbeløp.")
+          : "Faktura markert som betalt. ✓", "success");
         return load();
       }
 
