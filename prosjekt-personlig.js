@@ -32,8 +32,8 @@
     if (welcomeMessage) {
       const completed = /ferdig|avsluttet/i.test(String(document.getElementById("statusText")?.textContent || ""));
       const message = completed
-        ? "Her ser du oppsummeringen, tidligere arbeid og fakturaene dine."
-        : "Her ser du det viktigste om jobben, neste besøk og fakturaene dine.";
+        ? `Takk for oppdraget. Her finner du oppsummeringen av prosjektet «${service}» og informasjonen som er registrert underveis.`
+        : `Her kan du følge prosjektet «${service}». Jeg oppdaterer siden underveis, så du enkelt kan se hva som er gjort og hva som skjer videre.`;
       replaceIfDifferent(welcomeMessage, message);
     }
 
@@ -54,8 +54,15 @@
 
     if (nextWorkSubtext) {
       const current = nextWorkSubtext.textContent.trim();
-      if (nextWorkText?.textContent.trim() === "Ikke satt ennå" && !current) {
-        replaceIfDifferent(nextWorkSubtext, "Jeg oppdaterer datoen her når den er avklart.");
+      if (nextWorkText?.textContent.trim() === "Ikke satt ennå") {
+        replaceIfDifferent(
+          nextWorkSubtext,
+          "Jeg har ikke satt neste arbeidsdag ennå. Prosjektet er fortsatt aktivt, og jeg oppdaterer datoen her så snart den er avklart."
+        );
+      } else if (current === "Denne arbeidsperioden er planlagt. Siden oppdateres dersom planen endrer seg.") {
+        replaceIfDifferent(nextWorkSubtext, "Dette er perioden jeg har planlagt å komme tilbake. Jeg oppdaterer siden dersom planen endrer seg.");
+      } else if (current === "Dette er forventet tidspunkt og kan endres. Siden oppdateres dersom planen endrer seg.") {
+        replaceIfDifferent(nextWorkSubtext, "Dette er når jeg forventer å kunne komme tilbake. Hvis planen endrer seg, oppdaterer jeg det her.");
       }
     }
 
