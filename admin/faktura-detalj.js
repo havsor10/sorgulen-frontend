@@ -77,6 +77,55 @@
     return { blockers, warnings };
   }
 
+  function requestPaymentDetails(inv) {
+    const dialog = document.getElementById("paymentDialog");
+    const form = document.getElementById("paymentForm");
+    const dateInput = document.getElementById("paymentDate");
+    const amountInput = document.getElementById("paymentAmount");
+    const cancel = document.getElementById("paymentCancel");
+    const help = document.getElementById("paymentHelp");
+    if (!dialog || !form || !dateInput || !amountInput || !cancel) {
+      throw new Error("Betalingsvinduet kunne ikke åpnes.");
+    }
+
+    const today = new Date().toLocaleDateString("sv-SE");
+    const outstanding = inv.fiken?.outstandingBalanceOre != null
+      ? Number(inv.fiken.outstandingBalanceOre) / 100
+      : Number(inv.amount || 0);
+    dateInput.value = today;
+    amountInput.value = String(outstanding > 0 ? outstanding : Number(inv.amount || 0));
+    help.textContent = inv.fiken?.saleId
+      ? "Beløpet registreres i Fiken på valgt dato og synkroniseres tilbake til admin."
+      : "Hvis Fiken er aktivert, registreres fakturaen i Fiken før betalingen føres.";
+
+    return new Promise((resolve) => {
+      let settled = false;
+      const finish = (value) => {
+        if (settled) return;
+        settled = true;
+        form.removeEventListener("submit", onSubmit);
+        cancel.removeEventListener("click", onCancel);
+        dialog.removeEventListener("cancel", onCancel);
+        if (dialog.open) dialog.close();
+        resolve(value);
+      };
+      const onCancel = (event) => {
+        event?.preventDefault?.();
+        finish(null);
+      };
+      const onSubmit = (event) => {
+        event.preventDefault();
+        const amount = Number(String(amountInput.value).replace(",", "."));
+        if (!dateInput.value || !(amount > 0)) return;
+        finish({ date: dateInput.value, amount });
+      };
+      form.addEventListener("submit", onSubmit);
+      cancel.addEventListener("click", onCancel);
+      dialog.addEventListener("cancel", onCancel);
+      dialog.showModal();
+    });
+  }
+
   function discountMarkup(inv) {
     const type = inv.discountType || "none";
     const amount = Math.abs(Number(inv.discountAmount || 0));
@@ -475,25 +524,13 @@
       }
 
       if (action === "paid") {
-        const today = new Date().toLocaleDateString("sv-SE");
-        const paymentDate = prompt("Dato betalingen kom inn (ÅÅÅÅ-MM-DD):", today);
-        if (paymentDate === null) return;
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(paymentDate.trim())) throw new Error("Bruk datoformat ÅÅÅÅ-MM-DD.");
-
-        const outstanding = inv.fiken?.outstandingBalanceOre != null
-          ? Number(inv.fiken.outstandingBalanceOre) / 100
-          : Number(inv.amount || 0);
-        const amountText = prompt("Beløp som er kommet inn:", String(outstanding > 0 ? outstanding : Number(inv.amount || 0)));
-        if (amountText === null) return;
-        const paymentAmount = Number(String(amountText).replace(",", "."));
-        if (!(paymentAmount > 0)) throw new Error("Skriv inn et gyldig betalingsbeløp.");
-
-        if (!confirm(`Registrere ${money(paymentAmount)} mottatt ${paymentDate} på faktura ${inv.invoiceNumber}?`)) return;
+        const payment = await requestPaymentDetails(inv);
+        if (!payment) return;
         const operationId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
         const res = await fetch(`${API_BASE}/invoices/${inv._id}/paid`, {
           method: "POST",
           headers: headers(),
-          body: JSON.stringify({ date: paymentDate.trim(), amount: paymentAmount, operationId }),
+          body: JSON.stringify({ date: payment.date, amount: payment.amount, operationId }),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || "Kunne ikke registrere betalingen");
