@@ -40,3 +40,12 @@ test("faktura åpnes med portalnøkkel i POST og ikke i URL", () => {
   assert.match(js, /access\/invoices\/\$\{encodeURIComponent\(invoiceId\)\}\/pdf/);
   assert.match(js, /body: JSON\.stringify\(\{ token: accessToken \}\)/);
 });
+
+test("øverst vises enkel beskjed om kunden må gjøre noe", () => {
+  assert.match(html, /id="customerActionNotice"/);
+  assert.match(html, /id="customerActionTitle"/);
+  assert.match(js, /project\.statusAttention === "approval"/);
+  assert.match(js, /invoice\.status === "overdue"/);
+  assert.match(js, /invoice\.status === "unpaid"/);
+  assert.match(js, /Alt er greit/);
+});
