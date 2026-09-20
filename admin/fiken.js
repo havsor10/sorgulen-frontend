@@ -3,6 +3,7 @@
   const KEY = "sorgulen_admin_key";
   let current = null;
   let discovery = null;
+  let bankCurrent = null;
 
   const el = (id) => document.getElementById(id);
   const statusMessage = el("statusMessage");
@@ -23,7 +24,7 @@
       location.href = "login.html";
       throw new Error("Logg inn på nytt");
     }
-    if (!response.ok) throw Object.assign(new Error(data?.error || "Fiken-kallet feilet"), { data, status: response.status });
+    if (!response.ok) throw Object.assign(new Error(data?.error || "Kallet feilet"), { data, status: response.status });
     return data;
   }
 
@@ -137,6 +138,129 @@
     );
   }
 
+
+  function fmtMinor(value, signed = false) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return "–";
+    const amount = n / 100;
+    const prefix = signed && amount > 0 ? "+" : "";
+    return `${prefix}${new Intl.NumberFormat("nb-NO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount)} kr`;
+  }
+
+  function maskIban(value) {
+    const text = String(value || "").replace(/\s+/g, "");
+    if (!text) return "–";
+    return text.length > 4 ? `•••• ${text.slice(-4)}` : text;
+  }
+
+  function bankTransactionLabel(tx) {
+    return tx.counterpartyName || tx.remittanceInformation || tx.note || "Banktransaksjon";
+  }
+
+  function renderBankTransactions(items = []) {
+    const root = el("bankTransactions");
+    root.replaceChildren();
+    if (!items.length) {
+      const empty = document.createElement("p");
+      empty.className = "bank-empty";
+      empty.textContent = "Ingen banktransaksjoner importert ennå.";
+      root.appendChild(empty);
+      return;
+    }
+
+    for (const tx of items.slice(0, 12)) {
+      const row = document.createElement("div");
+      row.className = `bank-transaction ${tx.direction === "credit" ? "is-credit" : "is-debit"}`;
+
+      const main = document.createElement("div");
+      main.className = "bank-transaction-main";
+      const title = document.createElement("strong");
+      title.textContent = bankTransactionLabel(tx);
+      const meta = document.createElement("span");
+      const parts = [tx.bookingDate || tx.valueDate || "", tx.remittanceInformation || tx.referenceNumber || ""].filter(Boolean);
+      meta.textContent = parts.join(" · ");
+      main.append(title, meta);
+
+      const side = document.createElement("div");
+      side.className = "bank-transaction-side";
+      const amount = document.createElement("strong");
+      amount.textContent = fmtMinor(tx.amountMinor, true);
+      const state = document.createElement("span");
+      state.textContent = tx.matchStatus === "candidate"
+        ? "Mulig fakturabetaling"
+        : tx.matchStatus === "auto_matched" || tx.matchStatus === "manual_matched"
+          ? "Matchet"
+          : tx.direction === "credit" ? "Inn" : "Ut";
+      side.append(amount, state);
+      row.append(main, side);
+      root.appendChild(row);
+    }
+  }
+
+  function renderBank(data) {
+    bankCurrent = data;
+    const settings = data.settings || {};
+    const connected = Boolean(settings.credentialsConfigured && settings.accountId);
+    const warning = settings.lastError || "";
+    const healthy = connected && !warning;
+
+    el("bankBadge").className = `fiken-badge ${healthy ? "ok" : connected ? "warn" : "error"}`;
+    el("bankBadge").textContent = healthy ? "Live" : connected ? "Varsel" : "Ikke koblet";
+    el("bankTitle").textContent = settings.bankName || "Open Banking";
+    el("bankText").textContent = connected
+      ? "Bedriftskontoen leses automatisk via open-banking.io."
+      : settings.credentialsConfigured
+        ? "Credentials er funnet, men bankkontoen er ikke valgt ennå."
+        : "Open Banking-credentials mangler på serveren.";
+
+    el("bankBalance").textContent = fmtMinor(settings.lastBalanceMinor);
+    el("bankIncome").textContent = fmtMinor(data.month?.incomeMinor);
+    el("bankExpense").textContent = fmtMinor(data.month?.expenseMinor);
+    el("bankNet").textContent = fmtMinor(data.month?.netMinor, true);
+    el("bankAccountText").textContent = `Konto: ${settings.accountName || "Bedriftskonto"} · ${maskIban(settings.accountIban)}`;
+    el("bankSyncText").textContent = `Sist synkronisert: ${fmtDate(settings.lastSuccessfulSyncAt)}`;
+
+    const warningEl = el("bankWarning");
+    warningEl.hidden = !warning;
+    warningEl.textContent = warning ? `Banken ga et synkvarsel: ${warning}. Sist importerte data beholdes.` : "";
+
+    const candidates = Array.isArray(data.candidates) ? data.candidates.length : 0;
+    el("bankCandidateCount").textContent = candidates ? `${candidates} mulig fakturabetaling${candidates === 1 ? "" : "er"}` : "";
+    el("bankMatchMode").textContent = settings.autoMatchPayments
+      ? "Betalingsmatching: automatisk"
+      : "Betalingsmatching: testmodus – automatikk av";
+    renderBankTransactions(data.recent || []);
+  }
+
+  async function loadBank() {
+    try {
+      const data = await api("/admin/open-banking/status");
+      renderBank(data);
+    } catch (error) {
+      el("bankBadge").className = "fiken-badge error";
+      el("bankBadge").textContent = "Feil";
+      el("bankText").textContent = error.message;
+      el("bankTransactions").textContent = "";
+    }
+  }
+
+  async function syncBank() {
+    const button = el("bankSyncBtn");
+    button.disabled = true;
+    button.textContent = "Synkroniserer…";
+    try {
+      const data = await api("/admin/open-banking/sync", { method: "POST", body: "{}" });
+      renderBank(data);
+      const imported = Number(data.result?.imported || 0);
+      message(`Banksynk ferdig. ${imported} transaksjoner kontrollert.`);
+    } catch (error) {
+      message(error.message, true);
+    } finally {
+      button.disabled = false;
+      button.textContent = "Synk bank nå";
+    }
+  }
+
   async function load() {
     message("");
     const data = await api("/admin/fiken/status");
@@ -213,7 +337,8 @@
   el("settingsForm").addEventListener("submit", saveSettings);
   el("testBtn").addEventListener("click", testConnection);
   el("syncBtn").addEventListener("click", sync);
-  el("refreshBtn").addEventListener("click", load);
+  el("bankSyncBtn").addEventListener("click", syncBank);
+  el("refreshBtn").addEventListener("click", () => Promise.all([load(), loadBank()]));
 
-  load().catch((error) => message(error.message, true));
+  Promise.all([load(), loadBank()]).catch((error) => message(error.message, true));
 })();
