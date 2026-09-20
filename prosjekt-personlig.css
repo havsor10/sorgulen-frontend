@@ -288,3 +288,477 @@ body {
     box-shadow: 0 10px 32px rgba(15, 23, 42, .06);
   }
 }
+
+
+/* Kundeportal 2026: enkel hovedoversikt med store, tydelige flater. */
+.portal-brand {
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  min-height: 112px;
+  margin-bottom: 16px;
+  padding: 14px 20px 12px;
+  border-radius: 20px;
+  background: #071018;
+  color: #fff;
+  overflow: hidden;
+}
+
+.portal-brand-logo {
+  display: block;
+  width: min(100%, 390px);
+  max-height: 72px;
+  object-fit: contain;
+}
+
+.portal-brand span {
+  margin: 0;
+  color: #d7e0e6;
+  font-size: .84rem;
+  font-weight: 650;
+  letter-spacing: .01em;
+}
+
+.portal-overview {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.overview-intro {
+  padding: 2px 4px 6px;
+}
+
+.overview-intro h1 {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(1.65rem, 5.8vw, 2.2rem);
+  line-height: 1.08;
+  letter-spacing: -.025em;
+}
+
+.overview-intro p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.portal-overview .portal-card {
+  margin-bottom: 0;
+}
+
+.overview-state-card {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 15px;
+  align-items: center;
+  border: 1.5px solid #9dd8b5;
+  background: #ecf9f0;
+  box-shadow: none;
+}
+
+.overview-state-card.needs-action {
+  border-color: #e1bd69;
+  background: #fff9e9;
+}
+
+.overview-state-card.overdue {
+  border-color: #e5aaa7;
+  background: #fff3f2;
+}
+
+.overview-state-icon {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #16834c;
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+
+.overview-state-card.needs-action .overview-state-icon {
+  background: #9a6800;
+}
+
+.overview-state-card.overdue .overview-state-icon {
+  background: #9b2c2c;
+}
+
+.overview-state-card h2 {
+  margin: 0 0 2px;
+  color: #11663b;
+  font-size: clamp(1.2rem, 4.5vw, 1.55rem);
+}
+
+.overview-state-card.needs-action h2 { color: #755000; }
+.overview-state-card.overdue h2 { color: #842727; }
+
+.overview-state-card p {
+  margin: 0;
+  color: #335646;
+  font-size: .96rem;
+}
+
+.overview-info-card {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  box-shadow: none;
+}
+
+.overview-card-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #eef5fb;
+  color: #0d64a5;
+  font-size: 1.35rem;
+  font-weight: 900;
+}
+
+.overview-label {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--muted);
+  font-size: .86rem;
+  font-weight: 750;
+}
+
+.overview-info-card strong,
+.overview-project-copy > strong {
+  display: block;
+  color: var(--ink);
+  font-size: clamp(1.08rem, 4vw, 1.35rem);
+  line-height: 1.2;
+}
+
+.overview-info-card p,
+.overview-project-copy p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: .92rem;
+}
+
+.overview-project-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  box-shadow: none;
+}
+
+.overview-project-image-wrap {
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--soft);
+}
+
+.overview-project-image-wrap img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 7;
+  object-fit: cover;
+}
+
+.overview-status-help {
+  line-height: 1.45;
+}
+
+.overview-secondary-action {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #d6dde2;
+  border-radius: 12px;
+  background: #f7f9fa;
+  color: #16232d;
+  font-weight: 800;
+  text-decoration: none;
+  text-align: center;
+}
+
+.overview-secondary-action:focus-visible,
+.overview-call-button:focus-visible,
+.invoice-open-button:focus-visible {
+  outline: 3px solid #1a73b7;
+  outline-offset: 3px;
+}
+
+.overview-invoice-card {
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+}
+
+.overview-invoice-card .overview-secondary-action {
+  grid-column: 1 / -1;
+}
+
+.overview-invoice-copy strong {
+  font-size: clamp(1.35rem, 6vw, 1.75rem);
+}
+
+.overview-status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  background: #dcf5e4;
+  color: #11663b;
+  font-size: .86rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.overview-status-pill.unpaid {
+  background: #fff0c9;
+  color: #775100;
+}
+
+.overview-status-pill.overdue {
+  background: #fde2e0;
+  color: #922d29;
+}
+
+.overview-status-pill.credited {
+  background: #edf0f2;
+  color: #4c5861;
+}
+
+.overview-button {
+  font: inherit;
+  cursor: pointer;
+}
+
+.overview-call-button {
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  padding: 13px 20px;
+  border-radius: 15px;
+  background: #138447;
+  color: #fff;
+  text-decoration: none;
+  box-shadow: 0 8px 22px rgba(19, 132, 71, .18);
+}
+
+.overview-call-icon {
+  font-size: 1.55rem;
+  line-height: 1;
+}
+
+.overview-call-button span:last-child {
+  display: grid;
+  text-align: left;
+}
+
+.overview-call-button strong {
+  font-size: 1.16rem;
+  line-height: 1.15;
+}
+
+.overview-call-button small {
+  margin-top: 2px;
+  color: #e6f4eb;
+  font-size: .91rem;
+}
+
+.project-details-anchor {
+  scroll-margin-top: 16px;
+}
+
+.customer-history-card {
+  box-shadow: none;
+}
+
+.customer-history-list {
+  display: grid;
+  gap: 10px;
+}
+
+.customer-history-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 15px;
+  border: 1px solid #dde4e8;
+  border-radius: 13px;
+  background: #fafcfc;
+}
+
+.customer-history-row strong,
+.customer-history-row span {
+  display: block;
+}
+
+.customer-history-row strong {
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.customer-history-row span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: .86rem;
+}
+
+.customer-history-row-side {
+  display: grid;
+  justify-items: end;
+  gap: 7px;
+}
+
+.customer-history-amount {
+  color: var(--ink) !important;
+  font-size: 1rem !important;
+  font-weight: 850;
+}
+
+.customer-history-status {
+  display: inline-flex !important;
+  align-items: center;
+  min-height: 31px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #dcf5e4;
+  color: #11663b !important;
+  font-size: .78rem !important;
+  font-weight: 850;
+}
+
+.customer-history-status.unpaid {
+  background: #fff0c9;
+  color: #775100 !important;
+}
+
+.customer-history-status.overdue {
+  background: #fde2e0;
+  color: #922d29 !important;
+}
+
+.customer-history-status.credited {
+  background: #edf0f2;
+  color: #4c5861 !important;
+}
+
+.invoice-open-button {
+  min-height: 44px;
+  border: 1px solid #cfd8dd;
+  border-radius: 10px;
+  padding: 9px 13px;
+  background: #fff;
+  color: #14212b;
+  font: inherit;
+  font-size: .88rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+@media (min-width: 760px) {
+  .portal-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .overview-intro,
+  .overview-state-card,
+  .overview-call-button {
+    grid-column: 1 / -1;
+  }
+
+  .overview-project-card,
+  .overview-invoice-card {
+    min-height: 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  body {
+    background: #f3f5f6;
+  }
+
+  .portal-shell {
+    width: 100%;
+    padding-top: 0;
+  }
+
+  .portal-brand {
+    min-height: 104px;
+    margin: 0 0 14px;
+    border-radius: 0 0 19px 19px;
+    padding: 12px 18px 10px;
+  }
+
+  .portal-brand-logo {
+    width: min(92vw, 345px);
+    max-height: 66px;
+  }
+
+  .portal-brand span {
+    font-size: .82rem;
+  }
+
+  #loadingCard,
+  #errorCard,
+  #projectContent {
+    width: calc(100% - 18px);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .overview-intro {
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  .overview-state-card {
+    grid-template-columns: 46px minmax(0, 1fr);
+    padding: 17px 16px;
+  }
+
+  .overview-state-icon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .overview-info-card {
+    grid-template-columns: 44px minmax(0, 1fr);
+    padding: 17px 16px;
+  }
+
+  .overview-card-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .overview-invoice-card {
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+  }
+
+  .overview-project-card {
+    padding: 16px;
+  }
+
+  .customer-history-row {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-history-row-side {
+    justify-items: start;
+  }
+
+  .invoice-open-button {
+    width: 100%;
+  }
+}
