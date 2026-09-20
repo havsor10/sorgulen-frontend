@@ -9,6 +9,8 @@ const js = fs.readFileSync(path.join(root, "prosjekt.js"), "utf8");
 
 test("aktivt oppdrag er hovedinnholdet øverst", () => {
   assert.match(html, /sorgulen-logo-white-wordmark\.png/);
+  assert.match(html, /aria-label="Sørgulen Industriservice"/);
+  assert.doesNotMatch(html, /Personlig prosjektoppfølging/);
   assert.match(html, /class="portal-card welcome-card"/);
   assert.match(html, /id="nextWorkCard"/);
   assert.match(html, /class="portal-card status-card"/);
