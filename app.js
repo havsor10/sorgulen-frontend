@@ -280,7 +280,8 @@ document.querySelectorAll('.book-service-btn').forEach((btn) => {
   function safeHref(value, fallback) {
     var raw = String(value || "").trim();
     if (!raw) return fallback || "#";
-    if (/^(https:\/\/sorgulen\.no(?:\/|$)|https:\/\/www\.sorgulen\.no(?:\/|$)|\/|\.\.?\/|[a-z0-9_-]+\.html(?:[?#].*)?|mailto:|tel:)/i.test(raw)) return raw;
+    if (/^[a-z0-9_-]+\.html(?:[?#].*)?$/i.test(raw)) return "/" + raw;
+    if (/^(https:\/\/sorgulen\.no(?:\/|$)|https:\/\/www\.sorgulen\.no(?:\/|$)|\/|\.\.?\/|mailto:|tel:)/i.test(raw)) return raw;
     return fallback || "#";
   }
 
