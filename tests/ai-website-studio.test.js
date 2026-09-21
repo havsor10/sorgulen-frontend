@@ -30,7 +30,8 @@ test("publisert AI-innhold kobles til offentlige nettsider", () => {
   assert.match(app, /\/website-content/);
   assert.match(app, /renderDynamicRentals/);
   assert.match(app, /renderDynamicServices/);
-  assert.match(app, /renderCampaigns/);\n  assert.match(app, /renderDynamicSections/);
+  assert.match(app, /renderCampaigns/);
+  assert.match(app, /renderDynamicSections/);
   assert.match(app, /aiRentalDetail/);
   assert.match(app, /aiServiceDetail/);
   assert.ok(fs.existsSync("utleie/produkt.html"));
