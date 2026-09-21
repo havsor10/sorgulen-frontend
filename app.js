@@ -264,3 +264,198 @@ document.querySelectorAll('.book-service-btn').forEach((btn) => {
     return openRequestPage('Tjenesteforespørsel');
   });
 });
+
+/* === AI Website Studio: publisert dynamisk innhold === */
+(function () {
+  "use strict";
+
+  var CONTENT_API = ((window.CONFIG && window.CONFIG.API_BASE_URL) || "https://sorgulen-backend-2.onrender.com/api") + "/website-content";
+
+  function esc(value) {
+    return String(value == null ? "" : value)
+      .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+  }
+
+  function safeHref(value, fallback) {
+    var raw = String(value || "").trim();
+    if (!raw) return fallback || "#";
+    if (/^(https:\/\/sorgulen\.no(?:\/|$)|https:\/\/www\.sorgulen\.no(?:\/|$)|\/|\.\.?\/|[a-z0-9_-]+\.html(?:[?#].*)?|mailto:|tel:)/i.test(raw)) return raw;
+    return fallback || "#";
+  }
+
+  function priceText(item) {
+    var price = item && item.price ? item.price : {};
+    var amount = Number(price.amount || 0);
+    if (!amount) return price.label || "Pris avtales";
+    var suffix = { fixed: " kr", hour: " kr/time", day: " kr/døgn", week: " kr/uke", item: " kr/stk", custom: "" }[price.unit] || " kr";
+    var text = (price.from ? "Fra " : "") + amount.toLocaleString("no-NO") + suffix;
+    return price.label ? text + " · " + price.label : text;
+  }
+
+  async function fetchItems(type) {
+    try {
+      var response = await fetch(CONTENT_API + "?type=" + encodeURIComponent(type), { headers: { Accept: "application/json" } });
+      if (!response.ok) return [];
+      var data = await response.json();
+      return Array.isArray(data.items) ? data.items : [];
+    } catch (_) { return []; }
+  }
+
+  async function fetchOne(slug) {
+    try {
+      var response = await fetch(CONTENT_API + "/" + encodeURIComponent(slug), { headers: { Accept: "application/json" } });
+      if (!response.ok) return null;
+      var data = await response.json();
+      return data.item || null;
+    } catch (_) { return null; }
+  }
+
+  function renderDynamicRentals() {
+    var grid = document.querySelector(".rental-grid");
+    if (!grid) return;
+    fetchItems("rental").then(function (items) {
+      var existing = new Set(Array.from(grid.querySelectorAll("h3")).map(function (h) { return h.textContent.trim().toLowerCase(); }));
+      items.forEach(function (item) {
+        if (!item.title || existing.has(String(item.title).toLowerCase())) return;
+        existing.add(String(item.title).toLowerCase());
+        var specs = (item.specs || []).slice(0, 3).map(function (spec) {
+          return "<span>" + esc(spec.label) + ": " + esc(spec.value) + "</span>";
+        }).join("");
+        var image = item.media && item.media.imageUrl
+          ? '<img src="' + esc(item.media.imageUrl) + '" alt="' + esc(item.media.imageAlt || item.title) + '" loading="lazy" decoding="async">'
+          : '<img src="../assets/logo.png" alt="' + esc(item.title) + '" loading="lazy" decoding="async" style="object-fit:contain;padding:30px">';
+        var article = document.createElement("article");
+        article.className = "rental-card ai-published-card";
+        article.dataset.aiContent = item.slug || "";
+        article.innerHTML = '<div class="media">' + image + '<span class="price-badge">' + esc(priceText(item)) + '</span></div>' +
+          '<div class="content"><h3>' + esc(item.title) + '</h3><div class="meta">' + esc(item.summary || item.description || "") + '</div>' +
+          '<div class="mini-specs">' + specs + '</div><div class="actions"><a href="produkt.html?slug=' + encodeURIComponent(item.slug || "") + '" class="btn primary">Se pris og info</a></div></div>';
+        grid.appendChild(article);
+      });
+    });
+  }
+
+  function renderDynamicServices() {
+    var grid = document.getElementById("servicesGrid");
+    if (!grid) return;
+    fetchItems("service").then(function (items) {
+      var existing = new Set(Array.from(grid.querySelectorAll("h3")).map(function (h) { return h.textContent.trim().toLowerCase(); }));
+      items.forEach(function (item) {
+        if (!item.title || existing.has(String(item.title).toLowerCase())) return;
+        existing.add(String(item.title).toLowerCase());
+        var image = item.media && item.media.imageUrl
+          ? '<img src="' + esc(item.media.imageUrl) + '" alt="' + esc(item.media.imageAlt || item.title) + '" loading="lazy" decoding="async">'
+          : '<img src="assets/logo.png" alt="' + esc(item.title) + '" loading="lazy" decoding="async" style="object-fit:contain;padding:28px">';
+        var primaryHref = item.serviceSettings && item.serviceSettings.bookable
+          ? "booking.html?service=" + encodeURIComponent(item.title)
+          : "prisestimat.html?service=" + encodeURIComponent(item.title);
+        var primaryLabel = item.serviceSettings && item.serviceSettings.bookable ? "Bestill" : "Få prisestimat";
+        var article = document.createElement("article");
+        article.className = "card ai-published-card";
+        article.dataset.serviceKey = item.slug || "";
+        article.innerHTML = '<div class="media">' +
+          (item.badgeLabel ? '<span class="badge premium-badge">' + esc(item.badgeLabel) + " • " + esc(priceText(item)) + "</span>" : '<span class="badge">' + esc(priceText(item)) + "</span>") +
+          image + '</div><div class="content"><h3>' + esc(item.title) + '</h3><div class="meta">' + esc(item.summary || item.description || "") + '</div>' +
+          '<div class="actions"><a href="' + esc(primaryHref) + '" class="btn primary">' + esc(primaryLabel) + '</a>' +
+          '<a href="tjenester/tjeneste.html?slug=' + encodeURIComponent(item.slug || "") + '" class="btn">Pris og info</a></div></div>';
+        grid.appendChild(article);
+      });
+    });
+  }
+
+  function renderCampaigns() {
+    if (!/\/tilbud(?:\.html)?\/?$/i.test(location.pathname)) return;
+    var intro = document.querySelector("body > section");
+    if (!intro) return;
+    fetchItems("campaign").then(function (items) {
+      if (!items.length) return;
+      var section = document.createElement("section");
+      section.className = "wrap ai-campaign-section";
+      section.innerHTML = '<div class="section-title"><h2>Aktuelle kampanjer</h2></div><div class="ai-campaign-grid"></div>';
+      var grid = section.querySelector(".ai-campaign-grid");
+      items.forEach(function (item) {
+        var card = document.createElement("article");
+        card.className = "box ai-campaign-card";
+        card.innerHTML = (item.badgeLabel ? '<span class="ai-content-badge">' + esc(item.badgeLabel) + "</span>" : "") +
+          "<h3>" + esc(item.title) + "</h3><p>" + esc(item.summary || item.description || "") + "</p>" +
+          '<strong class="ai-content-price">' + esc(priceText(item)) + "</strong>" +
+          '<a class="btn primary" href="' + esc(safeHref(item.cta && item.cta.url, "kontakt.html")) + '">' + esc((item.cta && item.cta.label) || "Ta kontakt") + "</a>";
+        grid.appendChild(card);
+      });
+      intro.insertAdjacentElement("afterend", section);
+    });
+  }
+
+  function listHtml(title, values) {
+    if (!Array.isArray(values) || !values.length) return "";
+    return '<section class="ai-detail-section"><h2>' + esc(title) + "</h2><ul>" + values.map(function (value) {
+      return "<li>" + esc(value) + "</li>";
+    }).join("") + "</ul></section>";
+  }
+
+  function specsHtml(specs) {
+    if (!Array.isArray(specs) || !specs.length) return "";
+    return '<section class="ai-detail-section"><h2>Spesifikasjoner</h2><div class="ai-detail-specs">' + specs.map(function (spec) {
+      return '<div><small>' + esc(spec.label) + "</small><strong>" + esc(spec.value) + "</strong></div>";
+    }).join("") + "</div></section>";
+  }
+
+  function faqHtml(faq) {
+    if (!Array.isArray(faq) || !faq.length) return "";
+    return '<section class="ai-detail-section"><h2>Spørsmål og svar</h2>' + faq.map(function (item) {
+      return '<details><summary>' + esc(item.question) + "</summary><p>" + esc(item.answer) + "</p></details>";
+    }).join("") + "</section>";
+  }
+
+  function renderDetail(root, item, kind) {
+    if (!root || !item) return;
+    var image = item.media && item.media.imageUrl
+      ? '<img class="ai-detail-image" src="' + esc(item.media.imageUrl) + '" alt="' + esc(item.media.imageAlt || item.title) + '">'
+      : "";
+    var specs = specsHtml(item.specs);
+    var included = listHtml("Dette følger med", item.included);
+    var highlights = listHtml(kind === "rental" ? "Passer godt til" : "Dette får du", item.highlights);
+    var requirements = listHtml("Viktig å vite", item.requirements);
+    var faq = faqHtml(item.faq);
+    var fallback = kind === "rental" ? "../kontakt.html?service=Utleie" : "../prisestimat.html";
+    root.innerHTML = '<div class="ai-detail-grid"><div>' + image + specs + highlights + included + requirements + faq + '</div>' +
+      '<aside class="ai-detail-panel">' + (item.badgeLabel ? '<span class="ai-content-badge">' + esc(item.badgeLabel) + "</span>" : "") +
+      "<h1>" + esc(item.title) + "</h1><p>" + esc(item.summary || "") + "</p>" +
+      '<div class="ai-detail-price">' + esc(priceText(item)) + "</div><div class="ai-detail-description">" + esc(item.description || "") + "</div>" +
+      '<a class="btn primary" href="' + esc(safeHref(item.cta && item.cta.url, fallback)) + '">' + esc((item.cta && item.cta.label) || "Send forespørsel") + "</a></aside></div>";
+    document.title = (item.seo && item.seo.title) || item.title + " | Sørgulen Industriservice";
+    var meta = document.querySelector('meta[name="description"]');
+    if (meta && item.seo && item.seo.description) meta.setAttribute("content", item.seo.description);
+  }
+
+  function renderDetailPage() {
+    var rentalRoot = document.getElementById("aiRentalDetail");
+    var serviceRoot = document.getElementById("aiServiceDetail");
+    var root = rentalRoot || serviceRoot;
+    if (!root) return;
+    var slug = new URLSearchParams(location.search).get("slug") || "";
+    if (!slug) {
+      root.innerHTML = '<div class="box"><h1>Innholdet finnes ikke</h1><p>Mangler produkt- eller tjeneste-id.</p></div>';
+      return;
+    }
+    fetchOne(slug).then(function (item) {
+      var expectedType = rentalRoot ? "rental" : "service";
+      if (!item || item.type !== expectedType) {
+        root.innerHTML = '<div class="box"><h1>Innholdet finnes ikke</h1><p>Det kan være tatt av nettsida.</p></div>';
+        return;
+      }
+      renderDetail(root, item, expectedType);
+    });
+  }
+
+  function runDynamicContent() {
+    renderDynamicRentals();
+    renderDynamicServices();
+    renderCampaigns();
+    renderDetailPage();
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", runDynamicContent, { once: true });
+  else runDynamicContent();
+}());
