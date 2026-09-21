@@ -1335,3 +1335,10 @@ img[src*="buskrydder-gresstrimmer-43cc"] {
 .ai-content-badge{display:inline-flex;padding:6px 9px;border-radius:999px;background:rgba(18,194,133,.15);border:1px solid rgba(18,194,133,.28);color:#7ce2b8;font-size:.78rem;font-weight:900}
 .ai-content-price{display:block;color:var(--accent);font-size:1.2rem;margin:14px 0}
 @media(max-width:720px){.ai-campaign-grid{grid-template-columns:1fr}}
+
+.ai-dynamic-section{padding-top:16px;padding-bottom:16px}
+.ai-section-card{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:24px;align-items:center;padding:24px;border-radius:26px;background:radial-gradient(circle at 10% 0%,rgba(18,194,133,.12),transparent 32%),var(--card);border:1px solid rgba(255,255,255,.09)}
+.ai-section-media img{width:100%;max-height:360px;object-fit:cover;border-radius:20px;border:1px solid rgba(255,255,255,.09)}
+.ai-section-copy h2{font-size:clamp(1.7rem,3vw,2.7rem);margin:10px 0}
+.ai-section-copy p{color:var(--muted);line-height:1.7;white-space:pre-wrap}
+@media(max-width:800px){.ai-section-card{grid-template-columns:1fr;padding:18px}}
