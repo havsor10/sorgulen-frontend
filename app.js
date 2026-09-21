@@ -388,6 +388,30 @@ document.querySelectorAll('.book-service-btn').forEach((btn) => {
     });
   }
 
+  function renderDynamicSections() {
+    var services = document.getElementById("tjenester");
+    if (!services) return;
+    fetchItems("section").then(function (items) {
+      if (!items.length) return;
+      var last = services;
+      items.forEach(function (item) {
+        var section = document.createElement("section");
+        section.className = "wrap ai-dynamic-section";
+        section.dataset.aiContent = item.slug || "";
+        var image = item.media && item.media.imageUrl
+          ? '<div class="ai-section-media"><img src="' + esc(item.media.imageUrl) + '" alt="' + esc(item.media.imageAlt || item.title) + '" loading="lazy" decoding="async"></div>'
+          : "";
+        section.innerHTML = '<div class="ai-section-card">' + image + '<div class="ai-section-copy">' +
+          (item.badgeLabel ? '<span class="ai-content-badge">' + esc(item.badgeLabel) + "</span>" : "") +
+          "<h2>" + esc(item.title || "") + "</h2><p>" + esc(item.description || item.summary || "") + "</p>" +
+          ((item.cta && item.cta.label) ? '<a class="btn primary" href="' + esc(safeHref(item.cta.url, "/kontakt.html")) + '">' + esc(item.cta.label) + "</a>" : "") +
+          "</div></div>";
+        last.insertAdjacentElement("afterend", section);
+        last = section;
+      });
+    });
+  }
+
   function listHtml(title, values) {
     if (!Array.isArray(values) || !values.length) return "";
     return '<section class="ai-detail-section"><h2>' + esc(title) + "</h2><ul>" + values.map(function (value) {
@@ -454,6 +478,7 @@ document.querySelectorAll('.book-service-btn').forEach((btn) => {
     renderDynamicRentals();
     renderDynamicServices();
     renderCampaigns();
+    renderDynamicSections();
     renderDetailPage();
   }
 
