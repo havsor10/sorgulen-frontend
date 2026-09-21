@@ -422,7 +422,7 @@ document.querySelectorAll('.book-service-btn').forEach((btn) => {
     root.innerHTML = '<div class="ai-detail-grid"><div>' + image + specs + highlights + included + requirements + faq + '</div>' +
       '<aside class="ai-detail-panel">' + (item.badgeLabel ? '<span class="ai-content-badge">' + esc(item.badgeLabel) + "</span>" : "") +
       "<h1>" + esc(item.title) + "</h1><p>" + esc(item.summary || "") + "</p>" +
-      '<div class="ai-detail-price">' + esc(priceText(item)) + "</div><div class="ai-detail-description">" + esc(item.description || "") + "</div>" +
+      '<div class="ai-detail-price">' + esc(priceText(item)) + '</div><div class="ai-detail-description">' + esc(item.description || "") + '</div>' +
       '<a class="btn primary" href="' + esc(safeHref(item.cta && item.cta.url, fallback)) + '">' + esc((item.cta && item.cta.label) || "Send forespørsel") + "</a></aside></div>";
     document.title = (item.seo && item.seo.title) || item.title + " | Sørgulen Industriservice";
     var meta = document.querySelector('meta[name="description"]');
