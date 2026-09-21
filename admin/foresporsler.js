@@ -74,6 +74,28 @@
     return requests.filter((r) => r.status === currentTab);
   }
 
+  function briefBlock(r) {
+    const answers = Array.isArray(r.followUpAnswers) ? r.followUpAnswers.filter((a) => a && a.answer) : [];
+    const rows = answers.map((a) => `
+      <div class="req-brief-row">
+        <span>${escapeHtml(a.question || a.id || "Opplysning")}</span>
+        <strong>${escapeHtml(a.answer)}</strong>
+      </div>`).join("");
+
+    const category = r.serviceCategoryLabel || r.serviceCategory || "";
+    const status = r.intakeComplete ? '<span class="req-brief-complete">Komplett jobbbrief</span>' : "";
+    if (!r.customerAddress && !category && !rows) return "";
+
+    return `<div class="req-brief">
+      <div class="req-brief-head">
+        <div><span class="req-brief-kicker">Jobbbrief</span><strong>${escapeHtml(category || "Oppdrag")}</strong></div>
+        ${status}
+      </div>
+      ${r.customerAddress ? `<div class="req-brief-row"><span>Adresse</span><strong>${escapeHtml(r.customerAddress)}</strong></div>` : ""}
+      ${rows}
+    </div>`;
+  }
+
   function aiBlock(r) {
     if (r.aiError) {
       return `<div class="req-ai req-ai-error">

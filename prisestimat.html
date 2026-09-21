@@ -4,94 +4,25 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Få prisestimat | Sørgulen Industriservice</title>
-  <meta name="description" content="Send oss bilde og beskrivelse av jobben, så får du et raskt prisestimat. Søppelhenting, vask av uteområde, diverse arbeid i Florø og omegn.">
+  <meta name="description" content="Beskriv jobben og svar på noen smarte oppfølgingsspørsmål, så får Sørgulen Industriservice et bedre grunnlag for et presist prisestimat.">
   <link rel="canonical" href="https://sorgulen.no/prisestimat.html">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Få prisestimat | Sørgulen Industriservice">
-  <meta property="og:description" content="Send bilde og beskrivelse, få et raskt prisestimat.">
+  <meta property="og:description" content="Send bilder og en beskrivelse. Vi samler inn det viktigste før forespørselen sendes.">
   <meta property="og:url" content="https://sorgulen.no/prisestimat.html">
   <meta property="og:site_name" content="Sørgulen Industriservice">
   <meta property="og:image" content="https://sorgulen.no/assets/floro-hero-1280.jpg">
 
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="maintenance.css" />
+  <script src="config.js"></script>
   <script src="maintenance.js" defer></script>
 
   <style>
-    /* Side-spesifikke stiler – holder seg innenfor sidens fargepalett */
-    .pe-wrap { max-width: 760px; margin: auto; padding: 40px 20px; }
-    .pe-card {
-      background-color: #0f1522;
-      border: 1px solid #1e2940;
-      border-radius: 10px;
-      padding: 24px;
-      margin-bottom: 20px;
-    }
-    .pe-label {
-      display: block;
-      color: #cfe3ff;
-      font-size: 13px;
-      letter-spacing: .04em;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-    .pe-input, .pe-textarea {
-      width: 100%;
-      background: #0b1018;
-      border: 1px solid #25324b;
-      border-radius: 8px;
-      padding: 12px;
-      color: #e8eefb;
-      font-size: 15px;
-      font-family: inherit;
-      box-sizing: border-box;
-    }
-    .pe-input:focus, .pe-textarea:focus { outline: none; border-color: #2ea8ff; }
-    .pe-textarea { resize: vertical; min-height: 110px; }
-    .pe-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    @media (max-width: 560px) { .pe-row { grid-template-columns: 1fr; } }
-    .pe-field { margin-bottom: 18px; }
-
-    .pe-images { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-    @media (max-width: 560px) { .pe-images { grid-template-columns: repeat(3, 1fr); } }
-    .pe-thumb {
-      position: relative; aspect-ratio: 1; border-radius: 8px; overflow: hidden;
-      border: 1px solid #25324b; background: #0b1018;
-    }
-    .pe-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .pe-thumb button {
-      position: absolute; top: 4px; right: 4px; width: 22px; height: 22px;
-      border: none; border-radius: 5px; background: rgba(11,16,24,.85); color: #fff;
-      cursor: pointer; font-size: 14px; line-height: 1;
-    }
-    .pe-add {
-      aspect-ratio: 1; border: 1px dashed #2e3d59; border-radius: 8px; background: #0b1018;
-      color: #6b7a96; cursor: pointer; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 4px; font-size: 12px;
-    }
-    .pe-add:hover { border-color: #2ea8ff; color: #2ea8ff; }
-
-    .pe-btn {
-      width: 100%; background: #12c285; color: #06231a; font-weight: 700;
-      border: none; border-radius: 8px; padding: 14px; font-size: 15px; cursor: pointer;
-    }
-    .pe-btn:hover { background: #15d494; }
-    .pe-btn:disabled { background: #1b2433; color: #5a6678; cursor: not-allowed; }
-
-    .pe-note { color: #8b97ab; font-size: 12px; text-align: center; margin-top: 12px; }
-    .pe-msg { padding: 12px 14px; border-radius: 8px; font-size: 14px; margin-bottom: 16px; }
-    .pe-msg.err { background: #2a1620; border: 1px solid #5a2a3a; color: #ff9fb0; }
-    .pe-success { text-align: center; padding: 30px 20px; }
-    .pe-success .pe-check {
-      width: 46px; height: 46px; border-radius: 50%; margin: 0 auto 14px;
-      background: #12281c; border: 1px solid #2e5a3a; color: #8fe0a8;
-      display: flex; align-items: center; justify-content: center; font-size: 22px;
-    }
-    .pe-hidden { display: none; }
+    .pe-wrap{max-width:780px;margin:auto;padding:40px 20px}.pe-card{background:#0f1522;border:1px solid #1e2940;border-radius:12px;padding:24px;margin-bottom:20px}.pe-label{display:block;color:#cfe3ff;font-size:13px;letter-spacing:.04em;text-transform:uppercase;margin-bottom:8px}.pe-label .soft{color:#71819b;text-transform:none;font-weight:400}.pe-input,.pe-textarea{width:100%;background:#0b1018;border:1px solid #25324b;border-radius:8px;padding:12px;color:#e8eefb;font-size:16px;font-family:inherit;box-sizing:border-box}.pe-input:focus,.pe-textarea:focus{outline:none;border-color:#2ea8ff;box-shadow:0 0 0 3px rgba(46,168,255,.1)}.pe-textarea{resize:vertical;min-height:120px}.pe-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pe-field{margin-bottom:18px}.pe-help{margin:6px 0 0;color:#75839a;font-size:12px;line-height:1.45}.pe-images{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.pe-thumb{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;border:1px solid #25324b;background:#0b1018}.pe-thumb img{width:100%;height:100%;object-fit:cover;display:block}.pe-thumb button{position:absolute;top:4px;right:4px;width:26px;height:26px;border:0;border-radius:6px;background:rgba(11,16,24,.9);color:#fff;cursor:pointer;font-size:16px}.pe-add{aspect-ratio:1;border:1px dashed #2e3d59;border-radius:8px;background:#0b1018;color:#6b7a96;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:12px}.pe-add:hover{border-color:#2ea8ff;color:#2ea8ff}.pe-btn{width:100%;background:#12c285;color:#06231a;font-weight:800;border:0;border-radius:9px;padding:14px;font-size:15px;cursor:pointer}.pe-btn:hover{background:#15d494}.pe-btn:disabled{background:#1b2433;color:#5a6678;cursor:not-allowed}.pe-note{color:#8b97ab;font-size:12px;text-align:center;margin-top:12px}.pe-msg{padding:12px 14px;border-radius:8px;font-size:14px;margin-bottom:16px}.pe-msg.err{background:#2a1620;border:1px solid #5a2a3a;color:#ffb2bf}.pe-success{text-align:center;padding:32px 20px}.pe-success .pe-check{width:48px;height:48px;border-radius:50%;margin:0 auto 14px;background:#12281c;border:1px solid #2e5a3a;color:#8fe0a8;display:flex;align-items:center;justify-content:center;font-size:22px}.pe-hidden{display:none!important}.pe-progress{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px}.pe-step{display:grid;gap:5px;color:#64738b;font-size:11px;font-weight:700}.pe-step:before{content:"";height:4px;border-radius:999px;background:#1c2637}.pe-step.active{color:#cfe3ff}.pe-step.active:before,.pe-step.done:before{background:#12c285}.pe-intro{margin:0 0 18px;color:#9eabc0;line-height:1.55}.pe-question-box{background:#0b1a2a;border:1px solid #1e3a52;border-radius:10px;padding:16px;margin:18px 0}.pe-question-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}.pe-question-head p{margin:0;color:#9ed7ff;font-size:13px;line-height:1.45}.pe-category{padding:5px 8px;border-radius:999px;background:#132942;color:#8acbff;font-size:11px;font-weight:800;white-space:nowrap}.pe-question{padding:14px 0;border-top:1px solid #1d3248}.pe-question:first-child{border-top:0;padding-top:0}.pe-question:last-child{padding-bottom:0}.pe-question label{display:block;color:#e2edff;font-size:14px;font-weight:700;line-height:1.45;margin-bottom:8px}.pe-required{color:#6fc2ff}.pe-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.pe-choice{min-height:44px;padding:9px 10px;border:1px solid #2a3b53;border-radius:8px;background:#0b1018;color:#cfe3ff;cursor:pointer;text-align:left}.pe-choice.selected{background:#123d31;border-color:#12c285;color:#bdf8de}.pe-question-error{margin-top:6px;color:#ff9fb0;font-size:12px}.pe-summary{display:none;margin:0 0 14px;padding:10px 12px;border-left:3px solid #2ea8ff;background:#0c1725;color:#aebbd0;font-size:13px;line-height:1.5}.pe-loading{display:flex;align-items:center;justify-content:center;gap:8px}.pe-loading:after{content:"";width:14px;height:14px;border:2px solid #3b4c65;border-top-color:#8bd6ff;border-radius:50%;animation:pe-spin .7s linear infinite}@keyframes pe-spin{to{transform:rotate(360deg)}}@media(max-width:560px){.pe-wrap{padding:28px 14px}.pe-card{padding:18px}.pe-row{grid-template-columns:1fr}.pe-images{grid-template-columns:repeat(3,1fr)}.pe-choice-grid{grid-template-columns:1fr}.pe-step{font-size:10px}}
   </style>
 </head>
 <body>
-  <!-- HEADER -->
   <header>
     <div class="bar">
       <a href="index.html" class="logo" aria-label="Sørgulen Industriservice">
@@ -99,338 +30,103 @@
         <b>Sørgulen&nbsp;Industriservice</b>
       </a>
       <nav aria-label="Hovedmeny">
-        <a href="index.html">Hjem</a>
-        <a href="om-oss.html">Om oss</a>
-        <a href="utleie/index.html">Utleie</a>
-        <a href="prisestimat.html" class="active">Få prisestimat</a>
-        <a href="tilbud.html">Tilbud</a>
-        <a href="kontakt.html">Kontakt</a>
-        <a href="sporsmal.html">Spørsmål</a>
-        <a href="apningstider.html">Åpningstider</a>
-        <a href="feedback.html">Tilbakemelding</a>
+        <a href="index.html">Hjem</a><a href="om-oss.html">Om oss</a><a href="utleie/index.html">Utleie</a>
+        <a href="prisestimat.html" class="active">Få prisestimat</a><a href="tilbud.html">Tilbud</a>
+        <a href="kontakt.html">Kontakt</a><a href="sporsmal.html">Spørsmål</a><a href="apningstider.html">Tilgjengelighet</a>
       </nav>
       <button class="hamburger" id="hamburger" aria-label="Meny" aria-controls="menuPanel" aria-expanded="false">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="#cfe3ff" role="img" aria-hidden="true"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="#cfe3ff" aria-hidden="true"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
       </button>
     </div>
     <div class="menu-panel" id="menuPanel">
-      <a href="index.html">Hjem</a>
-      <a href="om-oss.html">Om oss</a>
-      <a href="utleie/index.html">Utleie</a>
-      <a href="prisestimat.html" class="active">Få prisestimat</a>
-      <a href="tilbud.html">Tilbud</a>
-      <a href="kontakt.html">Kontakt</a>
-      <a href="sporsmal.html">Spørsmål</a>
-      <a href="apningstider.html">Åpningstider</a>
-      <a href="feedback.html">Tilbakemelding</a>
+      <a href="index.html">Hjem</a><a href="om-oss.html">Om oss</a><a href="utleie/index.html">Utleie</a>
+      <a href="prisestimat.html" class="active">Få prisestimat</a><a href="tilbud.html">Tilbud</a>
+      <a href="kontakt.html">Kontakt</a><a href="sporsmal.html">Spørsmål</a><a href="apningstider.html">Tilgjengelighet</a>
     </div>
   </header>
 
-  <!-- HERO -->
-  <section class="hero" style="background-image: url('assets/floro-hero-1280.jpg');">
-    <h2>Få et raskt prisestimat</h2>
-    <p>Send oss et bilde og en kort beskrivelse av jobben – så får du et veiledende estimat tilbake.</p>
+  <section class="hero" style="background-image:url('assets/floro-hero-1280.jpg')">
+    <h1>Få et bedre prisestimat</h1>
+    <p>Beskriv jobben én gang. Vi stiller de oppfølgingsspørsmålene som faktisk trengs før forespørselen sendes.</p>
   </section>
 
-  <!-- INNHOLD -->
   <div class="pe-wrap">
+    <div class="pe-progress" aria-label="Fremdrift">
+      <div class="pe-step active" id="peStep1">1. Beskriv</div>
+      <div class="pe-step" id="peStep2">2. Avklar</div>
+      <div class="pe-step" id="peStep3">3. Send</div>
+    </div>
+
     <div id="peFormWrap">
       <div id="peMsg" class="pe-msg err pe-hidden"></div>
-
       <div class="pe-card">
-        <!-- Bilder -->
+        <p class="pe-intro">Jo bedre grunnlag du gir oss her, desto mindre trenger vi å spørre om etterpå. Bilder fra flere vinkler er spesielt nyttige.</p>
+
         <div class="pe-field">
-          <span class="pe-label">Bilde av jobben <span style="text-transform:none;color:#6b7a96;">(valgfritt, gir raskere svar)</span></span>
+          <span class="pe-label">Bilder av jobben <span class="soft">(valgfritt, opptil 4)</span></span>
           <div class="pe-images" id="peImages">
-            <button type="button" class="pe-add" id="peAdd">
-              <span style="font-size:20px;">＋</span>
-              <span>Legg til</span>
-            </button>
+            <button type="button" class="pe-add" id="peAdd"><span style="font-size:20px">＋</span><span>Legg til</span></button>
           </div>
           <input type="file" id="peFile" accept="image/*" multiple class="pe-hidden">
+          <p class="pe-help">Ta gjerne både et oversiktsbilde og nærbilder av det som kan påvirke arbeidet.</p>
         </div>
 
-        <!-- Beskrivelse -->
         <div class="pe-field">
-          <label class="pe-label" for="peDesc">Beskriv hva du trenger hjelp med</label>
-          <textarea id="peDesc" class="pe-textarea" placeholder="F.eks: Hei, eg ønsker å få kastet dette, hva tar du for henting og kasting?"></textarea>
+          <label class="pe-label" for="peDesc">Hva trenger du hjelp med?</label>
+          <textarea id="peDesc" class="pe-textarea" maxlength="2000" placeholder="F.eks. Eg vil ha fjernet mose og ugress fra innkjørselen. Området er rundt huset og det er lett å komme til med bil."></textarea>
+          <p class="pe-help">Beskriv hva som skal gjøres og hva du ønsker ferdig resultat skal være.</p>
         </div>
 
-        <!-- Kontaktinfo -->
+        <div class="pe-field">
+          <label class="pe-label" for="peAddress">Adresse der jobben skal utføres</label>
+          <input type="text" id="peAddress" class="pe-input" autocomplete="street-address" placeholder="Gateadresse, postnummer og sted">
+        </div>
+
+        <div class="pe-field">
+          <label class="pe-label" for="peTiming">Når ønsker du jobben utført?</label>
+          <select id="peTiming" class="pe-input">
+            <option value="">Velg</option>
+            <option>Så snart som mulig</option>
+            <option>Innen én uke</option>
+            <option>Innen én måned</option>
+            <option>Fleksibelt / ingen bestemt dato</option>
+          </select>
+        </div>
+
         <div class="pe-row">
-          <div class="pe-field">
-            <label class="pe-label" for="peName">Navn</label>
-            <input type="text" id="peName" class="pe-input" autocomplete="name">
-          </div>
-          <div class="pe-field">
-            <label class="pe-label" for="pePhone">Telefon</label>
-            <input type="tel" id="pePhone" class="pe-input" autocomplete="tel">
-          </div>
+          <div class="pe-field"><label class="pe-label" for="peName">Navn</label><input type="text" id="peName" class="pe-input" autocomplete="name"></div>
+          <div class="pe-field"><label class="pe-label" for="pePhone">Telefon</label><input type="tel" id="pePhone" class="pe-input" autocomplete="tel"></div>
         </div>
         <div class="pe-field">
-          <label class="pe-label" for="peEmail">E-post <span style="text-transform:none;color:#6b7a96;">(valgfritt)</span></label>
+          <label class="pe-label" for="peEmail">E-post <span class="soft">(valgfritt)</span></label>
           <input type="email" id="peEmail" class="pe-input" autocomplete="email">
         </div>
 
-        <!-- Honeypot (skjult for mennesker, fanger bots) -->
         <input type="text" id="peWebsite" class="pe-hidden" tabindex="-1" autocomplete="off" aria-hidden="true">
 
-        <!-- AI-oppfølgingsspørsmål (vises kun hvis AI trenger mer info) -->
-        <div id="peQuestions" class="pe-hidden" style="margin-bottom:18px;">
-          <div style="background:#0b1a2a; border:1px solid #1e3a52; border-radius:8px; padding:14px;">
-            <p style="color:#6fc2ff; font-size:13px; margin:0 0 12px; display:flex; align-items:center; gap:6px;">
-              <span style="font-size:16px;">💬</span> Et par raske spørsmål så vi kan gi deg et mer presist estimat:
-            </p>
-            <div id="peQuestionFields"></div>
+        <div id="peSummary" class="pe-summary"></div>
+
+        <div id="peQuestions" class="pe-question-box pe-hidden">
+          <div class="pe-question-head">
+            <p><strong>Noen raske avklaringer.</strong><br>Disse spørsmålene er valgt ut fra akkurat jobben du beskrev.</p>
+            <span id="peCategory" class="pe-category">Analyserer</span>
           </div>
+          <div id="peQuestionFields"></div>
         </div>
 
         <button type="button" class="pe-btn" id="peSubmit">Fortsett</button>
-        <p class="pe-note">Du får et veiledende prisestimat tilbake – endelig pris bekreftes alltid av oss før jobben starter.</p>
+        <p class="pe-note">Endelig pris bekreftes alltid av Sørgulen Industriservice før arbeidet starter.</p>
       </div>
     </div>
 
-    <!-- Kvittering -->
     <div id="peSuccess" class="pe-card pe-success pe-hidden">
       <div class="pe-check">✓</div>
-      <h3 style="color:#e8eefb; margin:0 0 8px;">Forespørsel mottatt</h3>
-      <p style="color:#8b97ab; max-width:380px; margin:0 auto; line-height:1.5;">
-        Vi går gjennom bilder og beskrivelse og sender deg et prisestimat så raskt vi kan.
-      </p>
+      <h2 style="color:#e8eefb;margin:0 0 8px">Forespørselen er mottatt</h2>
+      <p style="color:#8b97ab;max-width:450px;margin:0 auto;line-height:1.55">Vi har fått både beskrivelsen og avklaringene dine. Det gir oss et mye bedre grunnlag for å vurdere jobben og prisen.</p>
     </div>
   </div>
 
   <script src="app.js" defer></script>
-  <script>
-    (function () {
-      const BACKEND_URL = (window.CONFIG && window.CONFIG.API_BASE_URL) || 'https://sorgulen-backend-2.onrender.com/api';
-      const MAX_IMAGES = 4;
-
-      const imagesWrap = document.getElementById('peImages');
-      const addBtn = document.getElementById('peAdd');
-      const fileInput = document.getElementById('peFile');
-      const submitBtn = document.getElementById('peSubmit');
-      const msgBox = document.getElementById('peMsg');
-
-      let imageData = []; // base64 data-URIs
-
-      addBtn.addEventListener('click', () => fileInput.click());
-
-      fileInput.addEventListener('change', async (e) => {
-        const files = Array.from(e.target.files || []);
-        for (const file of files) {
-          if (imageData.length >= MAX_IMAGES) break;
-          if (!file.type.startsWith('image/')) continue;
-          try {
-            const dataUri = await fileToDataUri(file);
-            imageData.push(dataUri);
-          } catch (_) { /* hopp over filer som ikke kan leses */ }
-        }
-        fileInput.value = '';
-        renderThumbs();
-      });
-
-      function renderThumbs() {
-        // Fjern eksisterende thumbs (behold add-knappen)
-        imagesWrap.querySelectorAll('.pe-thumb').forEach((t) => t.remove());
-        imageData.forEach((uri, i) => {
-          const thumb = document.createElement('div');
-          thumb.className = 'pe-thumb';
-          const img = document.createElement('img');
-          img.src = uri;
-          const rm = document.createElement('button');
-          rm.type = 'button';
-          rm.textContent = '×';
-          rm.setAttribute('aria-label', 'Fjern bilde');
-          rm.addEventListener('click', () => { imageData.splice(i, 1); renderThumbs(); });
-          thumb.appendChild(img);
-          thumb.appendChild(rm);
-          imagesWrap.insertBefore(thumb, addBtn);
-        });
-        addBtn.style.display = imageData.length >= MAX_IMAGES ? 'none' : 'flex';
-      }
-
-      function fileToDataUri(file) {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
-      }
-
-      function showError(text) {
-        msgBox.textContent = text;
-        msgBox.classList.remove('pe-hidden');
-        msgBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-
-      let questionsShown = false;     // er spørsmålene allerede hentet/vist?
-      let uploadedImageUrls = null;   // bilder lastet opp i questions-steget (gjenbrukes)
-
-      function validateBasics() {
-        const name = document.getElementById('peName').value.trim();
-        const phone = document.getElementById('pePhone').value.trim();
-        const description = document.getElementById('peDesc').value.trim();
-        if (!name || !phone || !description) {
-          showError('Fyll inn navn, telefon og en beskrivelse av jobben.');
-          return false;
-        }
-        return true;
-      }
-
-      function renderQuestions(questions) {
-        const wrap = document.getElementById('peQuestionFields');
-        wrap.innerHTML = '';
-        questions.forEach((q, i) => {
-          const field = document.createElement('div');
-          field.style.marginBottom = i < questions.length - 1 ? '14px' : '0';
-
-          const label = document.createElement('label');
-          label.textContent = q.question;
-          label.style.cssText = 'display:block; color:#cfe3ff; font-size:14px; margin-bottom:6px;';
-          field.appendChild(label);
-
-          if (q.type === 'ja_nei') {
-            const btnWrap = document.createElement('div');
-            btnWrap.style.cssText = 'display:flex; gap:8px;';
-            ['Ja', 'Nei'].forEach((val) => {
-              const b = document.createElement('button');
-              b.type = 'button';
-              b.textContent = val;
-              b.dataset.qid = q.id;
-              b.dataset.value = val;
-              b.className = 'pe-yn';
-              b.style.cssText = 'flex:1; padding:10px; border:1px solid #25324b; border-radius:8px; background:#0b1018; color:#e8eefb; cursor:pointer; font-size:14px;';
-              b.addEventListener('click', () => {
-                btnWrap.querySelectorAll('.pe-yn').forEach((x) => { x.style.background = '#0b1018'; x.style.borderColor = '#25324b'; });
-                b.style.background = '#12c285'; b.style.borderColor = '#12c285'; b.style.color = '#06231a';
-                field.dataset.answer = val;
-              });
-              btnWrap.appendChild(b);
-            });
-            field.appendChild(btnWrap);
-          } else {
-            const input = document.createElement('input');
-            input.type = q.type === 'tall' ? 'number' : 'text';
-            input.className = 'pe-input';
-            input.placeholder = q.unit ? `Antall ${q.unit}` : 'Skriv her…';
-            input.addEventListener('input', () => { field.dataset.answer = input.value; });
-            field.appendChild(input);
-          }
-
-          field.dataset.question = q.question;
-          wrap.appendChild(field);
-        });
-      }
-
-      function collectAnswers() {
-        const fields = document.getElementById('peQuestionFields').children;
-        const answers = [];
-        for (const f of fields) {
-          if (f.dataset.question && f.dataset.answer) {
-            answers.push({ question: f.dataset.question, answer: f.dataset.answer });
-          }
-        }
-        return answers;
-      }
-
-      async function sendRequest(answers) {
-        const name = document.getElementById('peName').value.trim();
-        const phone = document.getElementById('pePhone').value.trim();
-        const email = document.getElementById('peEmail').value.trim();
-        const description = document.getElementById('peDesc').value.trim();
-        const website = document.getElementById('peWebsite').value;
-
-        const body = {
-          customerName: name,
-          customerPhone: phone,
-          customerEmail: email,
-          description: description,
-          website: website,
-          answers: answers || [],
-        };
-        // Gjenbruk bilder fra questions-steget hvis tilgjengelig, ellers send base64
-        if (uploadedImageUrls && uploadedImageUrls.length) {
-          body.uploadedImageUrls = uploadedImageUrls;
-        } else {
-          body.images = imageData;
-        }
-
-        const res = await fetch(BACKEND_URL + '/requests', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data.error || 'Noe gikk galt. Prøv igjen.');
-        }
-        document.getElementById('peFormWrap').classList.add('pe-hidden');
-        document.getElementById('peSuccess').classList.remove('pe-hidden');
-        document.getElementById('peSuccess').scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-
-      submitBtn.addEventListener('click', async () => {
-        msgBox.classList.add('pe-hidden');
-        if (!validateBasics()) return;
-
-        // Steg 2: spørsmål er allerede vist -> send med svar
-        if (questionsShown) {
-          submitBtn.disabled = true;
-          submitBtn.textContent = 'Sender…';
-          try {
-            await sendRequest(collectAnswers());
-          } catch (err) {
-            showError(err.message || 'Noe gikk galt. Prøv igjen.');
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Send forespørsel';
-          }
-          return;
-        }
-
-        // Steg 1: hent eventuelle oppfølgingsspørsmål
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Et øyeblikk…';
-        try {
-          const description = document.getElementById('peDesc').value.trim();
-          const website = document.getElementById('peWebsite').value;
-          const qRes = await fetch(BACKEND_URL + '/requests/questions', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ description, images: imageData, website }),
-          });
-          const qData = await qRes.json().catch(() => ({ questions: [] }));
-          const questions = Array.isArray(qData.questions) ? qData.questions : [];
-          // Lagre opplastede bilde-URLer så vi ikke laster opp på nytt
-          if (Array.isArray(qData.imageUrls)) uploadedImageUrls = qData.imageUrls;
-
-          if (questions.length > 0) {
-            // Vis spørsmålene, bytt knapp til "Send"
-            renderQuestions(questions);
-            document.getElementById('peQuestions').classList.remove('pe-hidden');
-            questionsShown = true;
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Send forespørsel';
-            document.getElementById('peQuestions').scrollIntoView({ behavior: 'smooth', block: 'center' });
-          } else {
-            // Ingen spørsmål -> send direkte
-            submitBtn.textContent = 'Sender…';
-            await sendRequest([]);
-          }
-        } catch (err) {
-          // Hvis spørsmåls-steget feiler, send forespørselen som vanlig
-          try {
-            submitBtn.textContent = 'Sender…';
-            await sendRequest([]);
-          } catch (err2) {
-            showError(err2.message || 'Noe gikk galt. Prøv igjen.');
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Fortsett';
-          }
-        }
-      });
-    })();
-  </script>
+  <script src="prisestimat.js?v=20260921-intake2" defer></script>\n  
 </body>
 </html>

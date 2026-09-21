@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b0e12">
+  <title>Nettside – Sørgulen admin</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin-shell.css">
+  <link rel="stylesheet" href="admin-pages.css">
+  <link rel="stylesheet" href="nettside.css?v=20260921-site1">
+</head>
+<body>
+  <div id="adminShell" data-page="website"></div>
+  <script src="admin-shell.js?v=20260921-site1"></script>
+
+  <main class="admin-main website-main">
+    <header class="admin-page-header">
+      <div>
+        <p class="admin-eyebrow">Én sannhet for sorgulen.no</p>
+        <h1>Nettside</h1>
+        <p>Rediger priser og tjenesteinformasjon her. Lagrede endringer brukes automatisk på nettsiden og av prisestimat-AI.</p>
+      </div>
+      <div class="admin-page-actions">
+        <a class="secondary-btn" href="https://sorgulen.no/" target="_blank" rel="noopener">Åpne nettsiden</a>
+        <button id="saveAllBtn" class="primary-btn" type="button" disabled>Lagre alle</button>
+      </div>
+    </header>
+
+    <div class="website-live-note">
+      <span class="website-live-dot" aria-hidden="true"></span>
+      <div><strong>Direkte publisering</strong><span>Når du lagrer en tjeneste, blir verdiene gjeldende uten ny Netlify-deploy.</span></div>
+    </div>
+
+    <div id="websiteMessage" class="status-message" role="status" aria-live="polite"></div>
+
+    <section class="admin-section">
+      <div class="section-heading-row">
+        <div>
+          <p class="section-kicker">Tjenestekatalog</p>
+          <h2>Priser og informasjon</h2>
+        </div>
+        <button id="refreshServicesBtn" class="admin-icon-button" type="button" aria-label="Hent verdier på nytt">↻</button>
+      </div>
+      <div id="serviceEditor" class="website-service-grid">
+        <div class="admin-card loading-card">Laster tjenester…</div>
+      </div>
+    </section>
+  </main>
+
+  <script src="../config.js?v=20260921-site1"></script>
+  <script src="nettside.js?v=20260921-site1" defer></script>
+</body>
+</html>

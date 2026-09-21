@@ -12,6 +12,7 @@
 
   const params = new URLSearchParams(window.location.search);
   const requestedServiceName = (params.get("service") || "").trim().toLowerCase();
+  const requestedServiceKey = ({ "brøyting": "broyting", "broyting": "broyting", "dekkskift": "dekkskift" })[requestedServiceName] || "";
 
   let services = [];
   let selectedService = null;
@@ -44,13 +45,15 @@
     const res = await fetch(`${API_BASE}/services`);
     const data = await res.json();
     services = Array.isArray(data.services) ? data.services : [];
-    const allowed = services.filter(s => ['brøyting','dekkskift'].includes(String(s.name).trim().toLowerCase()));
+    const allowed = services.filter((s) => s.active !== false && (s.bookable === true || ["broyting", "dekkskift"].includes(String(s.key || ""))));
     serviceSelect.innerHTML = allowed.map(s => `<option value="${s._id}">${s.name} – ${s.priceText || ''}</option>`).join('');
     if (!allowed.length) {
       showMessage('Ingen bookbare tjenester er tilgjengelige akkurat nå.', 'error');
       return;
     }
-    const pre = allowed.find(s => String(s.name).trim().toLowerCase() === requestedServiceName) || allowed[0];
+    const pre = allowed.find((s) => String(s.key || "") === requestedServiceKey)
+      || allowed.find((s) => String(s.name).trim().toLowerCase() === requestedServiceName)
+      || allowed[0];
     serviceSelect.value = pre._id;
     selectedService = pre;
     bookingTitle.textContent = `Bestill ${pre.name}`;
