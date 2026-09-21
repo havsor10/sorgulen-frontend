@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b0e12">
+  <title>AI Studio – Sørgulen admin</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin-shell.css">
+  <link rel="stylesheet" href="admin-pages.css">
+  <link rel="stylesheet" href="ai-studio.css?v=20260921-ai1">
+</head>
+<body>
+  <div id="adminShell" data-page="website"></div>
+  <script src="admin-shell.js?v=20260921-ai1"></script>
+
+  <main class="admin-main studio-main">
+    <header class="admin-page-header studio-header">
+      <div>
+        <p class="admin-eyebrow">Nettside → AI Studio</p>
+        <h1>Bygg sammen med AI</h1>
+        <p>Lag tjenester, utleieprodukter, kampanjer og reklameinnhold. AI lager utkast, du ser resultatet live og ingenting publiseres før du godkjenner.</p>
+      </div>
+      <div class="admin-page-actions">
+        <a class="secondary-btn" href="nettside.html">← Nettside</a>
+        <button id="newDraftBtn" class="primary-btn" type="button">+ Nytt med AI</button>
+      </div>
+    </header>
+
+    <div id="studioMessage" class="status-message" role="status" aria-live="polite"></div>
+
+    <section id="createPanel" class="admin-card studio-create">
+      <div class="studio-create-copy">
+        <p class="section-kicker">Start enkelt</p>
+        <h2>Hva vil du lage?</h2>
+        <p>Du trenger ikkje fylle ut alt. Skriv det du veit, legg gjerne ved bilde, så spør AI-en om resten.</p>
+      </div>
+      <div class="studio-create-grid">
+        <label class="website-field">
+          <span>Type</span>
+          <select id="createType">
+            <option value="service">Ny tjeneste</option>
+            <option value="rental">Nytt utleieprodukt</option>
+            <option value="campaign">Kampanje / tilbud</option>
+            <option value="social">Reklameinnlegg</option>
+            <option value="section">Ny nettsideseksjon</option>
+          </select>
+        </label>
+        <label class="website-field studio-create-prompt">
+          <span>Fortell AI-en hva du vil lage</span>
+          <textarea id="createPrompt" rows="5" maxlength="5000" placeholder="F.eks. Eg har kjøpt ein høgtrykksspylar AVA P60 som eg vil leige ut. Døgnpris 300 kr. Lag alt eg trenger på nettsida."></textarea>
+        </label>
+        <label class="studio-image-drop" for="createImage">
+          <input id="createImage" type="file" accept="image/jpeg,image/png,image/webp,image/heic">
+          <span class="studio-image-icon">＋</span>
+          <strong>Legg ved bilde</strong>
+          <small id="createImageName">Valgfritt – AI kan bruke bildet som kontekst</small>
+        </label>
+        <button id="createDraftBtn" class="primary-btn studio-generate" type="button">✨ Bygg første utkast</button>
+      </div>
+    </section>
+
+    <section class="studio-layout">
+      <aside class="admin-card studio-drafts">
+        <div class="studio-panel-head">
+          <div><p class="section-kicker">Innhold</p><h2>Utkast</h2></div>
+          <button id="refreshDraftsBtn" class="admin-icon-button" type="button" aria-label="Oppdater">↻</button>
+        </div>
+        <div class="studio-filter-row" role="tablist" aria-label="Filtrer innhold">
+          <button class="studio-filter is-active" data-filter="">Alle</button>
+          <button class="studio-filter" data-filter="draft">Utkast</button>
+          <button class="studio-filter" data-filter="published">Live</button>
+        </div>
+        <div id="draftList" class="studio-draft-list">
+          <div class="studio-empty">Laster…</div>
+        </div>
+      </aside>
+
+      <section id="workspace" class="studio-workspace" hidden>
+        <div class="admin-card studio-toolbar">
+          <div>
+            <div class="studio-status-line">
+              <span id="draftTypeBadge" class="studio-type-badge">UTKAST</span>
+              <span id="draftStatus" class="studio-status">Utkast</span>
+            </div>
+            <h2 id="workspaceTitle">Nytt innhold</h2>
+            <p id="workspaceUpdated" class="studio-muted"></p>
+          </div>
+          <div class="studio-toolbar-actions">
+            <button id="saveDraftBtn" class="secondary-btn" type="button">Lagre</button>
+            <button id="unpublishBtn" class="secondary-btn" type="button" hidden>Ta av nettsida</button>
+            <button id="publishBtn" class="primary-btn" type="button">Publiser</button>
+          </div>
+        </div>
+
+        <div id="missingInfo" class="studio-missing" hidden></div>
+
+        <div class="studio-columns">
+          <section class="admin-card studio-chat">
+            <div class="studio-panel-head">
+              <div><p class="section-kicker">Samarbeid</p><h3>AI</h3></div>
+              <span class="studio-ai-live">AI Studio</span>
+            </div>
+            <div id="chatLog" class="studio-chat-log"></div>
+            <div class="studio-quick-actions">
+              <button data-ai-action="Gjør teksten kortere og mer konkret, men behold alle fakta.">Kortere tekst</button>
+              <button data-ai-action="Forbedre SEO uten å endre fakta eller finne på noe.">Forbedre SEO</button>
+              <button data-ai-action="Lag et profesjonelt Facebook- og Instagram-innlegg basert på dette.">Lag reklame</button>
+              <button data-ai-action="Gjør presentasjonen mer premium og tydelig, men behold samme fakta.">Mer premium</button>
+              <button data-ai-action="Kontroller hele utkastet og spør meg kun om viktig informasjon som fortsatt mangler før publisering.">Hva mangler?</button>
+            </div>
+            <div class="studio-chat-compose">
+              <textarea id="chatInput" rows="3" maxlength="3000" placeholder="Skriv til AI-en… f.eks. «Prisen skal vere 700 kr per døgn»"></textarea>
+              <button id="sendChatBtn" class="primary-btn" type="button">Send</button>
+            </div>
+          </section>
+
+          <section class="admin-card studio-editor">
+            <div class="studio-panel-head">
+              <div><p class="section-kicker">Finjuster</p><h3>Innhold</h3></div>
+              <span class="studio-muted">Endringer vises direkte i forhåndsvisningen</span>
+            </div>
+            <div class="studio-form-grid">
+              <label class="website-field wide"><span>Tittel</span><input id="fieldTitle" maxlength="140"></label>
+              <label class="website-field wide"><span>Korttekst</span><textarea id="fieldSummary" rows="3" maxlength="520"></textarea></label>
+              <label class="website-field wide"><span>Full beskrivelse</span><textarea id="fieldDescription" rows="7" maxlength="6000"></textarea></label>
+              <label class="website-field"><span>Pris</span><input id="fieldPrice" type="number" min="0" step="1"></label>
+              <label class="website-field"><span>Prisenhet</span><select id="fieldPriceUnit">
+                <option value="fixed">Fastpris</option><option value="hour">Per time</option><option value="day">Per døgn</option>
+                <option value="week">Per uke</option><option value="item">Per stk</option><option value="custom">Egen tekst</option>
+              </select></label>
+              <label class="website-field"><span>Pristekst / tillegg</span><input id="fieldPriceLabel" maxlength="80" placeholder="F.eks. helg 500 kr"></label>
+              <label class="website-check"><input id="fieldPriceFrom" type="checkbox"> Vis «Fra»</label>
+              <label class="website-field"><span>Merkelapp</span><input id="fieldBadge" maxlength="50" placeholder="Nyhet / Populær"></label>
+              <label class="website-field"><span>Design</span><select id="fieldDesign"><option value="premium">Premium</option><option value="standard">Standard</option><option value="compact">Kompakt</option></select></label>
+              <label class="website-field wide"><span>Spesifikasjoner <small>én per linje: navn: verdi</small></span><textarea id="fieldSpecs" rows="4"></textarea></label>
+              <label class="website-field wide"><span>Fordeler / høydepunkter <small>én per linje</small></span><textarea id="fieldHighlights" rows="4"></textarea></label>
+              <label class="website-field wide"><span>Dette følger med <small>én per linje</small></span><textarea id="fieldIncluded" rows="4"></textarea></label>
+              <label class="website-field wide"><span>Viktig / krav <small>én per linje</small></span><textarea id="fieldRequirements" rows="4"></textarea></label>
+              <label class="website-field wide"><span>FAQ <small>én per linje: spørsmål | svar</small></span><textarea id="fieldFaq" rows="5"></textarea></label>
+              <label class="website-field"><span>CTA-knapp</span><input id="fieldCtaLabel" maxlength="60"></label>
+              <label class="website-field"><span>CTA-lenke</span><input id="fieldCtaUrl" maxlength="400"></label>
+              <label class="website-field wide"><span>Bilde</span><input id="fieldImage" type="file" accept="image/jpeg,image/png,image/webp,image/heic"><small id="currentImageText">Ingen bilde valgt</small></label>
+              <label class="website-field wide"><span>SEO-tittel</span><input id="fieldSeoTitle" maxlength="80"></label>
+              <label class="website-field wide"><span>SEO-beskrivelse</span><textarea id="fieldSeoDescription" rows="2" maxlength="180"></textarea></label>
+              <label class="website-field wide"><span>Reklameinnlegg</span><textarea id="fieldSocial" rows="6" maxlength="4000"></textarea></label>
+              <div id="serviceSettings" class="studio-service-settings wide" hidden>
+                <label class="website-check"><input id="fieldBookable" type="checkbox"> Direkte booking</label>
+                <label class="website-field"><span>Bookingvarighet</span><select id="fieldDuration">
+                  <option value="30">30 min</option><option value="45">45 min</option><option value="60">60 min</option><option value="90">90 min</option>
+                  <option value="120">120 min</option><option value="180">180 min</option><option value="240">240 min</option>
+                </select></label>
+              </div>
+            </div>
+          </section>
+
+          <aside class="admin-card studio-preview-panel">
+            <div class="studio-panel-head">
+              <div><p class="section-kicker">Live</p><h3>Forhåndsvisning</h3></div>
+              <button id="previewDeviceBtn" class="admin-icon-button" type="button" aria-label="Bytt bredde">▯</button>
+            </div>
+            <div id="previewCanvas" class="studio-preview-canvas">
+              <div id="previewContent"></div>
+            </div>
+            <p class="studio-preview-note">Dette er forhåndsvisning. Ingenting går live før du trykker «Publiser».</p>
+          </aside>
+        </div>
+      </section>
+
+      <section id="noSelection" class="admin-card studio-no-selection">
+        <div class="studio-orb">AI</div>
+        <h2>Velg et utkast eller lag noe nytt</h2>
+        <p>AI Studio kan intervjue deg, bygge innholdet og vise resultatet før publisering.</p>
+      </section>
+    </section>
+  </main>
+
+  <script src="../config.js?v=20260921-ai1"></script>
+  <script src="ai-studio.js?v=20260921-ai1" defer></script>
+</body>
+</html>
