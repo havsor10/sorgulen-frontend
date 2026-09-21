@@ -41,6 +41,7 @@
   document.body.classList.add("admin-app");
   if (page === "jobs") ensureAsset("script", { src: "ai-guide.js?v=20260917-project1" });
   ensureAsset("script", { src: "actionable-warnings.js?v=20260914-a1" });
+  ensureAsset("script", { src: "admin2-unified-flow.js?v=20260917-a1" });
   mount.innerHTML = `
     <header class="admin-app-header">
       <div class="admin-header-inner">
