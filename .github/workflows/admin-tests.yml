@@ -22,7 +22,11 @@ jobs:
           node-version: 24
       - name: Kontroller JavaScript-syntaks
         run: |
-          node --check admin/admin-shell.js\n          node --check admin/nettside.js\n          node --check prisestimat.js\n          node --check site-consistency.js\n          node --check booking.js
+          node --check admin/admin-shell.js
+          node --check admin/nettside.js
+          node --check prisestimat.js
+          node --check site-consistency.js
+          node --check booking.js
           node --check admin/autopilot.js
           node --check admin/ai-guide.js
           node --check admin/operations-ui.js
