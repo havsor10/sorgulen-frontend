@@ -326,4 +326,4 @@
       submitBtn.textContent = round > 0 ? (round < MAX_ROUNDS ? "Kontroller svar" : "Send forespørsel") : "Fortsett";
     }
   });
-})();\n
+})();
