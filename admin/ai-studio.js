@@ -59,6 +59,7 @@
     section: "Seksjon",
   };
   const UNIT_LABELS = { fixed: "kr", hour: "kr/time", day: "kr/døgn", week: "kr/uke", item: "kr/stk", custom: "" };
+  const isWebsiteType = (type) => ["service", "rental", "campaign", "section"].includes(type);
 
   let drafts = [];
   let current = null;
@@ -220,11 +221,15 @@
     el("serviceSettings").hidden = item.type !== "service";
     el("workspaceTitle").textContent = item.title || "Nytt innhold";
     el("draftTypeBadge").textContent = TYPE_LABELS[item.type] || item.type;
-    el("draftStatus").textContent = item.status === "published" ? "Live på nettsida" : item.status === "archived" ? "Arkivert" : "Utkast";
+    el("draftStatus").textContent = item.status === "published"
+      ? (isWebsiteType(item.type) ? "Live på nettsida" : "Godkjent / klar")
+      : item.status === "archived" ? "Arkivert" : "Utkast";
     el("draftStatus").classList.toggle("is-live", item.status === "published");
     el("workspaceUpdated").textContent = item.updatedAt ? "Sist endret " + formatDate(item.updatedAt) : "";
     unpublishBtn.hidden = item.status !== "published";
-    publishBtn.textContent = item.status === "published" ? "Publiser endringer" : "Publiser";
+    publishBtn.textContent = item.type === "social"
+      ? (item.status === "published" ? "Godkjenn endringer" : "Godkjenn innlegg")
+      : (item.status === "published" ? "Publiser endringer" : "Publiser");
     renderConversation();
     renderMissing();
     renderPreview();
@@ -243,9 +248,10 @@
     draftList.innerHTML = visible.map((item) => {
       const active = current && String(current._id) === String(item._id);
       const live = item.status === "published";
+      const stateLabel = live ? (isWebsiteType(item.type) ? "LIVE" : "GODKJENT") : "UTKAST";
       return '<button class="studio-draft-item' + (active ? " is-active" : "") + '" data-id="' + escapeHtml(item._id) + '">' +
         '<strong>' + escapeHtml(item.title || "Uten tittel") + '</strong>' +
-        '<small><span><i class="studio-draft-dot ' + (live ? "live" : "") + '"></i>' + escapeHtml(TYPE_LABELS[item.type] || item.type) + '</span><span>' + (live ? "LIVE" : "UTKAST") + '</span></small>' +
+        '<small><span><i class="studio-draft-dot ' + (live ? "live" : "") + '"></i>' + escapeHtml(TYPE_LABELS[item.type] || item.type) + '</span><span>' + stateLabel + '</span></small>' +
       '</button>';
     }).join("");
     draftList.querySelectorAll("[data-id]").forEach((button) => {
@@ -469,7 +475,7 @@
     busy = true;
     publishBtn.disabled = true;
     const old = publishBtn.textContent;
-    publishBtn.textContent = "Publiserer…";
+    publishBtn.textContent = current.type === "social" ? "Godkjenner…" : "Publiserer…";
     try {
       const data = await api("/drafts/" + encodeURIComponent(current._id) + "/publish", {
         method: "POST",
@@ -478,7 +484,9 @@
       current = data.item;
       await loadDrafts({ keepSelection: false });
       populate(current);
-      setMessage("Publisert. Dette innholdet er nå tilgjengelig for nettsida.", "success");
+      setMessage(current.type === "social"
+        ? "Reklameinnlegget er godkjent og klart til bruk."
+        : "Publisert. Dette innholdet er nå tilgjengelig på nettsida.", "success");
     } catch (error) {
       if (error.status === 409 && !force) {
         const list = (error.data?.questions || []).map((q) => "• " + q.question).join("\n");
@@ -499,7 +507,9 @@
 
   async function unpublish() {
     if (!current || busy) return;
-    if (!confirm("Ta dette innholdet av nettsida? Utkastet blir beholdt.")) return;
+    if (!confirm(current.type === "social"
+      ? "Sette reklameinnlegget tilbake som utkast?"
+      : "Ta dette innholdet av nettsida? Utkastet blir beholdt.")) return;
     busy = true;
     try {
       const data = await api("/drafts/" + encodeURIComponent(current._id) + "/unpublish", {
@@ -508,7 +518,9 @@
       current = data.item;
       await loadDrafts({ keepSelection: false });
       populate(current);
-      setMessage("Innholdet er tatt av nettsida og ligger fortsatt som utkast.", "success");
+      setMessage(current.type === "social"
+        ? "Reklameinnlegget er satt tilbake som utkast."
+        : "Innholdet er tatt av nettsida og ligger fortsatt som utkast.", "success");
     } catch (error) { setMessage(error.message, "error"); }
     finally { busy = false; }
   }
