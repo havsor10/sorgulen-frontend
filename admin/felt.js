@@ -145,10 +145,10 @@
     }
     if (job.status === "stopped") {
       return '<button class="field-action-primary" data-job-action="resume" data-id="' + esc(job._id) + '">FORTSETT ARBEID</button>' +
-        '<a class="field-action-secondary" href="oppdrag.html?open=' + encodeURIComponent(job._id) + '" style="display:grid;place-items:center;text-decoration:none">DETALJER</a>';
+        '<a class="field-action-secondary" href="oppdrag.html?open=' + encodeURIComponent(job._id) + '&from=field" style="display:grid;place-items:center;text-decoration:none">DETALJER</a>';
     }
     return '<button class="field-action-primary" data-job-action="start" data-id="' + esc(job._id) + '">START OPPDRAG</button>' +
-      '<a class="field-action-secondary" href="oppdrag.html?open=' + encodeURIComponent(job._id) + '" style="display:grid;place-items:center;text-decoration:none">DETALJER</a>';
+      '<a class="field-action-secondary" href="oppdrag.html?open=' + encodeURIComponent(job._id) + '&from=field" style="display:grid;place-items:center;text-decoration:none">DETALJER</a>';
   }
 
   function renderActive() {
@@ -194,7 +194,7 @@
         (primaryAction ? '<button class="primary" type="button" data-job-action="' + primaryAction + '" data-id="' + esc(job._id) + '">' + primaryLabel + '</button>' : "") +
         '<button type="button" data-open="expense" data-job-id="' + esc(job._id) + '">+ Utgift</button>' +
         '<button type="button" data-open="job-note" data-job-id="' + esc(job._id) + '">+ Notat</button>' +
-        '<a href="oppdrag.html?open=' + encodeURIComponent(job._id) + '">Åpne</a>' +
+        '<a href="oppdrag.html?open=' + encodeURIComponent(job._id) + '&from=field">Åpne</a>' +
       '</div></article>';
   }
 
@@ -224,7 +224,7 @@
         '<button type="button" data-customer-note="' + esc(customer._id) + '">+ Notat</button>' +
         '<button type="button" data-customer-job="' + esc(customer._id) + '">+ Oppdrag</button>' +
         (customer.phone ? '<a href="tel:' + esc(customer.phone.replace(/\s+/g, "")) + '">Ring</a>' : "") +
-        '<a href="kunde.html?id=' + encodeURIComponent(customer._id) + '">Åpne</a>' +
+        '<a href="kunde.html?id=' + encodeURIComponent(customer._id) + '&from=field">Åpne</a>' +
       '</div></article>';
   }
 

@@ -9,8 +9,8 @@ const shell = fs.readFileSync("admin/admin-shell.js", "utf8");
 test("Feltadmin is a separate admin surface with a return to full admin", () => {
   assert.match(html, /Feltadmin/);
   assert.match(html, /href="hjem\.html"/);
-  assert.match(shell, /href="felt\.html"/);
-  assert.match(shell, />Feltadmin</);
+  assert.match(shell, /modeSwitchHref = fieldContext \? "hjem\.html" : "felt\.html"/);
+  assert.match(shell, /fieldContext \? "Komplett admin" : "Feltadmin"/);
 });
 
 test("full admin navigation is still present", () => {
@@ -40,5 +40,5 @@ test("quick field job only requires a customer name and does not auto-start", ()
 test("Feltadmin has dedicated snow entry ready for Stormmodus", () => {
   assert.match(html, /data-nav="snow"/);
   assert.match(html, /Stormmodus bygges her/);
-  assert.match(html, /href="broyting\.html"/);
+  assert.match(html, /href="broyting\.html\?from=field"/);
 });
