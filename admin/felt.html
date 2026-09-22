@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#090d12">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Sørgulen Felt">
+  <title>Feltadmin – Sørgulen Industriservice</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="../assets/logo.png">
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="felt.css?v=20260922-felt1">
+</head>
+<body class="field-body">
+  <header class="field-topbar">
+    <div class="field-brand">
+      <img src="../assets/logo.png" alt="" width="34" height="34">
+      <div><strong>Sørgulen</strong><span>Feltadmin</span></div>
+    </div>
+    <a class="field-mode-switch" href="hjem.html" id="fullAdminLink">Komplett admin</a>
+  </header>
+
+  <main class="field-main">
+    <div id="fieldStatus" class="field-status" role="status" aria-live="polite"></div>
+
+    <section class="field-view is-active" data-view="today" aria-labelledby="todayTitle">
+      <div class="field-heading">
+        <div>
+          <p class="field-kicker">Ute i felt</p>
+          <h1 id="todayTitle">I dag</h1>
+        </div>
+        <button id="refreshFieldBtn" class="field-icon-btn" type="button" aria-label="Oppdater">↻</button>
+      </div>
+
+      <div id="fieldPulse" class="field-pulse" hidden></div>
+
+      <section id="activeJobCard" class="field-card field-active-card">
+        <div class="field-loading">Henter aktivt oppdrag…</div>
+      </section>
+
+      <section class="field-section">
+        <div class="field-section-head">
+          <div><p class="field-kicker">Kø</p><h2>Neste oppdrag</h2></div>
+          <button class="field-text-btn" type="button" data-open="new-job">+ Nytt</button>
+        </div>
+        <div id="todayQueue" class="field-stack"><div class="field-loading">Henter oppdrag…</div></div>
+      </section>
+    </section>
+
+    <section class="field-view" data-view="jobs" aria-labelledby="jobsTitle" hidden>
+      <div class="field-heading">
+        <div><p class="field-kicker">Arbeid</p><h1 id="jobsTitle">Oppdrag</h1></div>
+        <button class="field-primary-small" type="button" data-open="new-job">+ Nytt oppdrag</button>
+      </div>
+      <label class="field-search">
+        <span class="sr-only">Søk oppdrag</span>
+        <input id="jobSearch" type="search" placeholder="Søk kunde eller oppdrag">
+      </label>
+      <div id="fieldJobs" class="field-stack"><div class="field-loading">Henter oppdrag…</div></div>
+    </section>
+
+    <section class="field-view" data-view="customers" aria-labelledby="customersTitle" hidden>
+      <div class="field-heading">
+        <div><p class="field-kicker">Register</p><h1 id="customersTitle">Kunder</h1></div>
+        <button class="field-primary-small" type="button" data-open="new-job">+ Oppdrag</button>
+      </div>
+      <label class="field-search">
+        <span class="sr-only">Søk kunde</span>
+        <input id="customerSearch" type="search" placeholder="Søk navn, telefon eller adresse">
+      </label>
+      <div id="fieldCustomers" class="field-stack"><div class="field-loading">Søk eller vent litt…</div></div>
+    </section>
+
+    <section class="field-view" data-view="snow" aria-labelledby="snowTitle" hidden>
+      <div class="field-heading">
+        <div><p class="field-kicker">Sesongmodus</p><h1 id="snowTitle">Brøyting</h1></div>
+        <span class="field-chip">Neste byggetrinn</span>
+      </div>
+      <article class="field-card field-snow-card">
+        <div class="field-snow-icon">❄</div>
+        <h2>Stormmodus bygges her</h2>
+        <p>Denne delen blir laget for hektiske snødager: kø, nye henvendelser, kart, neste kunde, ett-trykks status og ekstremt rask registrering.</p>
+        <a class="field-primary-link" href="broyting.html">Åpne dagens brøyteadmin</a>
+      </article>
+      <article class="field-card field-roadmap-card">
+        <p class="field-kicker">Planlagt</p>
+        <div><strong>Nye henvendelser</strong><span>Registrer navn/adresse på sekunder.</span></div>
+        <div><strong>Smart kø</strong><span>Foreslå neste kunde uten å miste kontrollen.</span></div>
+        <div><strong>Brøyteflyt</strong><span>På vei → brøyter → ferdig → må tilbake.</span></div>
+      </article>
+    </section>
+  </main>
+
+  <nav class="field-nav" aria-label="Feltadmin">
+    <button class="field-nav-item is-active" type="button" data-nav="today"><span class="field-nav-icon">⌂</span><span>I dag</span></button>
+    <button class="field-nav-item" type="button" data-nav="jobs"><span class="field-nav-icon">◷</span><span>Oppdrag</span></button>
+    <button id="fieldPlusBtn" class="field-plus" type="button" aria-label="Registrer nytt"><span>+</span></button>
+    <button class="field-nav-item" type="button" data-nav="customers"><span class="field-nav-icon">◎</span><span>Kunder</span></button>
+    <button class="field-nav-item" type="button" data-nav="snow"><span class="field-nav-icon">❄</span><span>Brøyting</span></button>
+  </nav>
+
+  <div id="fieldSheetBackdrop" class="field-backdrop" hidden></div>
+  <aside id="fieldActionSheet" class="field-action-sheet" aria-hidden="true">
+    <div class="field-sheet-grip"></div>
+    <div class="field-sheet-head"><div><p class="field-kicker">Hurtigregistrering</p><h2>Hva skjedde?</h2></div><button id="closeActionSheet" class="field-icon-btn" type="button" aria-label="Lukk">×</button></div>
+    <div class="field-action-grid">
+      <button type="button" data-open="new-job"><span>＋</span><strong>Nytt oppdrag</strong><small>Kun navn er nødvendig</small></button>
+      <button type="button" data-open="expense"><span>kr</span><strong>Utgift / kjøp</strong><small>Beløp, kunde og kvittering</small></button>
+      <button type="button" data-open="customer-note"><span>✎</span><strong>Kundenotat</strong><small>Lagre noe du må huske</small></button>
+      <button type="button" data-open="time"><span>◷</span><strong>Legg til tid</strong><small>Arbeid, innkjøp eller transport</small></button>
+      <button type="button" data-open="material"><span>▦</span><strong>Materiale</strong><small>Registrer det som blei brukt</small></button>
+    </div>
+  </aside>
+
+  <div id="fieldModal" class="field-modal" hidden aria-hidden="true">
+    <div class="field-modal-backdrop" data-close-modal></div>
+    <section class="field-modal-card" role="dialog" aria-modal="true" aria-labelledby="fieldModalTitle">
+      <div class="field-modal-head">
+        <div><p id="fieldModalKicker" class="field-kicker"></p><h2 id="fieldModalTitle">Registrer</h2></div>
+        <button id="closeFieldModal" class="field-icon-btn" type="button" aria-label="Lukk">×</button>
+      </div>
+      <form id="fieldForm">
+        <div id="fieldFormBody"></div>
+        <p id="fieldFormError" class="field-form-error" role="alert"></p>
+        <button id="fieldFormSave" class="field-primary-action" type="submit">Lagre</button>
+      </form>
+    </section>
+  </div>
+
+  <script src="../config.js?v=20260922-felt1"></script>
+  <script src="work-order-time.js?v=20260918-session1"></script>
+  <script src="felt.js?v=20260922-felt1" defer></script>
+</body>
+</html>
