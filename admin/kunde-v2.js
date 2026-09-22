@@ -5,6 +5,7 @@
   const customerParams = new URLSearchParams(location.search);
   const customerId = customerParams.get("id");
   const fieldContext = customerParams.get("from") === "field" || localStorage.getItem("sorgulen_admin_mode") === "field";
+  const fieldQuerySuffix = fieldContext ? "&from=field" : "";
   const customerBackLink = document.getElementById("customerBackLink");
   if (fieldContext && customerBackLink) {
     customerBackLink.href = "felt.html";
@@ -126,7 +127,7 @@
         ${draftChanges.map((draft) => `<div class="billing-draft-warning"><strong>Fakturagrunnlaget er endret etter at utkastet ble laget.</strong><span>${draft.added?.length || 0} nye, ${draft.removed?.length || 0} fjernede og ${draft.modified?.length || 0} endrede poster.</span><p style="margin:8px 0 0"><a href="faktura-detalj.html?id=${encodeURIComponent(draft.invoiceId)}">Åpne fakturautkast</a></p></div>`).join("")}
         <div class="customer-ops-actions">
           <button type="button" class="primary-btn" data-customer-time="${esc(customer._id)}" data-rate="${esc(rate)}">+ Legg til arbeid</button>
-          <a class="secondary-btn" href="oppdrag.html?customerId=${encodeURIComponent(customer._id)}">Nytt prosjekt</a>
+          <a class="secondary-btn" href="oppdrag.html?customerId=${encodeURIComponent(customer._id)}${fieldQuerySuffix}">Nytt prosjekt</a>
           <button type="button" class="secondary-btn" id="toggleInvoicePanel" ${basis.count ? "" : "disabled"}>Opprett faktura</button>
         </div>
       </section>
@@ -166,8 +167,8 @@
         </form>
       </section>
 
-      <section class="customer-section"><h2>Aktive prosjekter</h2>${rows(activeProjects, (item) => `<a class="customer-row" href="oppdrag.html?open=${encodeURIComponent(item._id)}"><div><strong>${esc(item.serviceName)}</strong><p>${esc(statusText[item.status] || item.status)} · ${esc(item.jobDate)}</p></div><span>Åpne</span></a>`)}</section>
-      <section class="customer-section"><h2>Tidligere prosjekter</h2>${rows(previousProjects, (item) => `<a class="customer-row" href="oppdrag.html?open=${encodeURIComponent(item._id)}"><div><strong>${esc(item.serviceName)}</strong><p>${esc(statusText[item.status] || item.status)} · ${esc(item.jobDate)}</p></div><span>Åpne</span></a>`)}</section>
+      <section class="customer-section"><h2>Aktive prosjekter</h2>${rows(activeProjects, (item) => `<a class="customer-row" href="oppdrag.html?open=${encodeURIComponent(item._id)}${fieldQuerySuffix}"><div><strong>${esc(item.serviceName)}</strong><p>${esc(statusText[item.status] || item.status)} · ${esc(item.jobDate)}</p></div><span>Åpne</span></a>`)}</section>
+      <section class="customer-section"><h2>Tidligere prosjekter</h2>${rows(previousProjects, (item) => `<a class="customer-row" href="oppdrag.html?open=${encodeURIComponent(item._id)}${fieldQuerySuffix}"><div><strong>${esc(item.serviceName)}</strong><p>${esc(statusText[item.status] || item.status)} · ${esc(item.jobDate)}</p></div><span>Åpne</span></a>`)}</section>
       <section class="customer-section"><h2>Fakturaer</h2>${rows(data.invoices || [], (item) => `<a class="customer-row" href="faktura-detalj.html?id=${encodeURIComponent(item._id)}"><div><strong>${item.invoiceNumber ? `${item.isCreditNote ? "Kreditnota" : "Faktura"} ${esc(item.invoiceNumber)}` : "Fakturautkast"}</strong><p>${esc(fmtMoney(item.amount))} · ${esc(statusText[item.status] || item.status)}</p></div><span>Åpne</span></a>`)}</section>
       <section class="customer-section"><h2>Bookinger</h2>${rows(data.bookings || [], (item) => `<a class="customer-row" href="order-detail.html?id=${encodeURIComponent(item._id)}"><div><strong>${esc(item.serviceName || "Booking")}</strong><p>${esc(item.date || fmtDate(item.createdAt))} · ${esc(item.status || "")}</p></div><span>Åpne</span></a>`)}</section>
       <section class="customer-section"><h2>Prisforespørsler</h2>${rows(data.requests || [], (item) => `<a class="customer-row" href="foresporsler.html?open=${encodeURIComponent(item._id)}"><div><strong>${esc(item.description || "Prisforespørsel")}</strong><p>${fmtDate(item.createdAt)} · ${esc(item.status || "")}</p></div><span>Åpne</span></a>`)}</section>
