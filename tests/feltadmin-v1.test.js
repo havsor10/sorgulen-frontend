@@ -10,7 +10,7 @@ test("Feltadmin is a separate admin surface with a return to full admin", () => 
   assert.match(html, /Feltadmin/);
   assert.match(html, /href="hjem\.html"/);
   assert.match(shell, /modeSwitchHref = fieldContext \? "hjem\.html" : "felt\.html"/);
-  assert.match(shell, />Feltadmin</);
+  assert.match(shell, /fieldContext \? "Komplett admin" : "Feltadmin"/);
 });
 
 test("full admin navigation is still present", () => {
