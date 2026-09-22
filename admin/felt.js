@@ -647,9 +647,6 @@
     clearTimeout(state.customerSearchTimer);
     state.customerSearchTimer = setTimeout(() => loadCustomers(el("customerSearch").value.trim()), 220);
   });
-  document.querySelectorAll("#fieldActionSheet [data-open], .field-main [data-open]").forEach((button) => {
-    button.addEventListener("click", () => openModal(button.dataset.open, { jobId: button.dataset.jobId || "" }));
-  });
   el("fullAdminLink").addEventListener("click", () => localStorage.setItem("sorgulen_admin_mode", "full"));
 
   localStorage.setItem("sorgulen_admin_mode", "field");
