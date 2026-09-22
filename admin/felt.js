@@ -200,8 +200,9 @@
 
   function renderTodayQueue() {
     const root = el("todayQueue");
-    const activeId = String(state.home?.activeWorkOrder?._id || "");
-    const jobs = uniqueOpenJobs().filter((job) => String(job._id) !== activeId).slice(0, 7);
+    const focus = state.home?.activeWorkOrder || state.home?.ongoingProject || state.home?.nextWorkOrder;
+    const focusId = String(focus?._id || "");
+    const jobs = uniqueOpenJobs().filter((job) => String(job._id) !== focusId).slice(0, 7);
     root.innerHTML = jobs.length ? jobs.map((job) => jobCard(job, true)).join("") : '<div class="field-empty">Ingen andre oppdrag i køen.</div>';
     bindDynamic(root);
   }
@@ -509,14 +510,23 @@
           || state.defaultService?.name
           || "Diverse arbeid";
         const hourlyRate = Number(state.defaultService?.price || 650);
+        let resolvedCustomer = state.selectedCustomer;
+        if (!resolvedCustomer?._id) {
+          const lookup = await api("/admin/customers?q=" + encodeURIComponent(name) + "&limit=8");
+          const exact = (lookup.customers || []).filter((customer) =>
+            String(customer.name || "").trim().toLocaleLowerCase("nb-NO") === name.toLocaleLowerCase("nb-NO")
+          );
+          if (exact.length === 1) resolvedCustomer = exact[0];
+          if (exact.length > 1) throw new Error("Det finnes flere kunder med dette navnet. Velg riktig kunde fra forslagene.");
+        }
         const payload = {
           jobDate: osloToday(),
           serviceName,
           hourlyRate: hourlyRate > 0 ? hourlyRate : 650,
           pricingMode: "hourly",
           notes: String(data.get("notes") || "").trim(),
-          ...(state.selectedCustomer?._id
-            ? { customerId: state.selectedCustomer._id }
+          ...(resolvedCustomer?._id
+            ? { customerId: resolvedCustomer._id }
             : { customer: { name } }),
         };
         await api("/admin/work-orders", { method: "POST", body: JSON.stringify(payload) });
