@@ -15,6 +15,7 @@
   const page = mount.dataset.page || "";
   const modeParams = new URLSearchParams(window.location.search);
   if (modeParams.get("from") === "field") localStorage.setItem("sorgulen_admin_mode", "field");
+  if (page === "home" && modeParams.get("from") !== "field") localStorage.setItem("sorgulen_admin_mode", "full");
   const fieldContext = modeParams.get("from") === "field" || localStorage.getItem("sorgulen_admin_mode") === "field";
   const adminHomeHref = fieldContext ? "felt.html" : "hjem.html";
   const modeSwitchHref = fieldContext ? "hjem.html" : "felt.html";
