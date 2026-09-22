@@ -256,13 +256,12 @@
     const connected = Boolean(settings.credentialsConfigured && settings.accountId);
     const warning = settings.lastError || "";
     const rateLimited = isStoredRateLimit(settings);
-    const cooldownActive = settings.rateLimited === true
-      || (settings.nextSyncAllowedAt && new Date(settings.nextSyncAllowedAt).getTime() > Date.now());
+    const rateLimitActive = settings.rateLimited === true;
     const syncing = settings.syncInProgress === true;
     const healthy = connected && !warning;
 
-    el("bankBadge").className = `fiken-badge ${syncing ? "syncing" : cooldownActive ? "waiting" : healthy ? "ok" : connected ? "warn" : "error"}`;
-    el("bankBadge").textContent = syncing ? "Synker" : cooldownActive ? "Venter" : healthy ? "Live" : connected ? "Varsel" : "Ikke koblet";
+    el("bankBadge").className = `fiken-badge ${syncing ? "syncing" : rateLimitActive ? "waiting" : healthy ? "ok" : connected ? "warn" : "error"}`;
+    el("bankBadge").textContent = syncing ? "Synker" : rateLimitActive ? "Venter" : healthy ? "Live" : connected ? "Varsel" : "Ikke koblet";
     el("bankTitle").textContent = settings.bankName || "Open Banking";
     el("bankText").textContent = connected
       ? "Bedriftskontoen leses automatisk via open-banking.io."
@@ -284,7 +283,7 @@
       warningEl.textContent = "";
     } else if (rateLimited) {
       const wait = relativeWait(settings.nextSyncAllowedAt);
-      warningEl.textContent = cooldownActive && wait
+      warningEl.textContent = rateLimitActive && wait
         ? `Banken begrenser synk midlertidig. Siste bankdata er fortsatt tilgjengelig. Ny synk kan prøves om ${wait}.`
         : "Forrige banksynk ble midlertidig begrenset av banken. Siste bankdata er beholdt, og du kan prøve igjen nå.";
     } else {
@@ -327,6 +326,11 @@
           : "Banken begrenser synk akkurat no. Siste data er beholdt.");
       } else if (result.reason === "sync_in_progress") {
         message("Banksynk pågår allerede. Du trenger ikkje starte ein ny.");
+      } else if (result.reason === "recently_synced") {
+        const wait = relativeWait(result.retryAt || data.settings?.nextSyncAllowedAt);
+        message(wait
+          ? `Banken blei nettopp synkronisert. Ny manuell synk er mulig om ${wait}.`
+          : "Banken blei nettopp synkronisert.");
       } else if (result.reason === "disabled" || result.reason === "credentials_missing") {
         message("Banksynk er ikkje klar ennå.", true);
       } else {
