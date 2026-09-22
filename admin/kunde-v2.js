@@ -2,7 +2,14 @@
   "use strict";
   const API = (window.CONFIG && window.CONFIG.API_BASE_URL) || "https://sorgulen-backend-2.onrender.com/api";
   const KEY = "sorgulen_admin_key";
-  const customerId = new URLSearchParams(location.search).get("id");
+  const customerParams = new URLSearchParams(location.search);
+  const customerId = customerParams.get("id");
+  const fieldContext = customerParams.get("from") === "field" || localStorage.getItem("sorgulen_admin_mode") === "field";
+  const customerBackLink = document.getElementById("customerBackLink");
+  if (fieldContext && customerBackLink) {
+    customerBackLink.href = "felt.html";
+    customerBackLink.textContent = "← Tilbake til Feltadmin";
+  }
   const detail = document.getElementById("customerDetail");
   const status = document.getElementById("customerStatus");
   let pageData = null;
