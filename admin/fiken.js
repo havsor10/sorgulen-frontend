@@ -4,6 +4,7 @@
   let current = null;
   let discovery = null;
   let bankCurrent = null;
+  let bankSyncTimer = null;
 
   const el = (id) => document.getElementById(id);
   const statusMessage = el("statusMessage");
@@ -153,6 +154,63 @@
     return text.length > 4 ? `•••• ${text.slice(-4)}` : text;
   }
 
+  function isStoredRateLimit(settings = {}) {
+    return settings.lastErrorCode === "rate_limited"
+      || /429|too many requests|rate.?limit/i.test(String(settings.lastError || ""));
+  }
+
+  function relativeWait(target) {
+    const ms = new Date(target || 0).getTime() - Date.now();
+    if (!Number.isFinite(ms) || ms <= 0) return "";
+    const minutes = Math.max(1, Math.ceil(ms / 60_000));
+    if (minutes < 60) return minutes === 1 ? "1 min" : minutes + " min";
+    const hours = Math.ceil(minutes / 60);
+    return hours === 1 ? "1 time" : hours + " timer";
+  }
+
+  function updateBankSyncButton(settings = {}) {
+    const button = el("bankSyncBtn");
+    if (!button) return;
+    if (bankSyncTimer) {
+      clearInterval(bankSyncTimer);
+      bankSyncTimer = null;
+    }
+
+    const refresh = () => {
+      const connected = Boolean(settings.credentialsConfigured && settings.accountId);
+      const retryAt = settings.nextSyncAllowedAt ? new Date(settings.nextSyncAllowedAt).getTime() : 0;
+      const waiting = Number.isFinite(retryAt) && retryAt > Date.now();
+
+      if (settings.syncInProgress) {
+        button.disabled = true;
+        button.textContent = "Synk pågår…";
+        return;
+      }
+      if (waiting) {
+        button.disabled = true;
+        button.textContent = "Kan synkes om " + relativeWait(settings.nextSyncAllowedAt);
+        return;
+      }
+      if (settings.nextSyncAllowedAt && bankSyncTimer && settings.cooldownReason === "rate_limited") {
+        clearInterval(bankSyncTimer);
+        bankSyncTimer = null;
+        setTimeout(() => loadBank(), 0);
+      }
+      if (!connected || settings.autoSync === false) {
+        button.disabled = true;
+        button.textContent = "Banksynk ikke klar";
+        return;
+      }
+      button.disabled = false;
+      button.textContent = "Synk bank nå";
+    };
+
+    refresh();
+    if (settings.nextSyncAllowedAt) {
+      bankSyncTimer = setInterval(refresh, 30_000);
+    }
+  }
+
   function bankTransactionLabel(tx) {
     return tx.counterpartyName || tx.remittanceInformation || tx.note || "Banktransaksjon";
   }
@@ -202,10 +260,13 @@
     const settings = data.settings || {};
     const connected = Boolean(settings.credentialsConfigured && settings.accountId);
     const warning = settings.lastError || "";
+    const rateLimited = isStoredRateLimit(settings);
+    const rateLimitActive = settings.rateLimited === true;
+    const syncing = settings.syncInProgress === true;
     const healthy = connected && !warning;
 
-    el("bankBadge").className = `fiken-badge ${healthy ? "ok" : connected ? "warn" : "error"}`;
-    el("bankBadge").textContent = healthy ? "Live" : connected ? "Varsel" : "Ikke koblet";
+    el("bankBadge").className = `fiken-badge ${syncing ? "syncing" : rateLimitActive ? "waiting" : healthy ? "ok" : connected ? "warn" : "error"}`;
+    el("bankBadge").textContent = syncing ? "Synker" : rateLimitActive ? "Venter" : healthy ? "Live" : connected ? "Varsel" : "Ikke koblet";
     el("bankTitle").textContent = settings.bankName || "Open Banking";
     el("bankText").textContent = connected
       ? "Bedriftskontoen leses automatisk via open-banking.io."
@@ -221,8 +282,19 @@
     el("bankSyncText").textContent = `Sist synkronisert: ${fmtDate(settings.lastSuccessfulSyncAt)}`;
 
     const warningEl = el("bankWarning");
+    warningEl.classList.toggle("is-rate-limit", rateLimited);
     warningEl.hidden = !warning;
-    warningEl.textContent = warning ? `Banken ga et synkvarsel: ${warning}. Sist importerte data beholdes.` : "";
+    if (!warning) {
+      warningEl.textContent = "";
+    } else if (rateLimited) {
+      const wait = relativeWait(settings.nextSyncAllowedAt);
+      warningEl.textContent = rateLimitActive && wait
+        ? `Banken begrenser synk midlertidig. Siste bankdata er fortsatt tilgjengelig. Ny synk kan prøves om ${wait}.`
+        : "Forrige banksynk ble midlertidig begrenset av banken. Siste bankdata er beholdt, og du kan prøve igjen nå.";
+    } else {
+      warningEl.textContent = `Banken ga et synkvarsel: ${warning}. Siste importerte data beholdes.`;
+    }
+    updateBankSyncButton(settings);
 
     const candidates = Array.isArray(data.candidates) ? data.candidates.length : 0;
     el("bankCandidateCount").textContent = candidates ? `${candidates} mulig fakturabetaling${candidates === 1 ? "" : "er"}` : "";
@@ -251,13 +323,33 @@
     try {
       const data = await api("/admin/open-banking/sync", { method: "POST", body: "{}" });
       renderBank(data);
-      const imported = Number(data.result?.imported || 0);
-      message(`Banksynk ferdig. ${imported} transaksjoner kontrollert.`);
+      const result = data.result || {};
+      if (result.reason === "rate_limited") {
+        const wait = relativeWait(result.retryAt || data.settings?.nextSyncAllowedAt);
+        message(wait
+          ? `Banken begrenser synk akkurat no. Siste data er beholdt. Nytt forsøk er mulig om ${wait}.`
+          : "Banken begrenser synk akkurat no. Siste data er beholdt.");
+      } else if (result.reason === "sync_in_progress") {
+        message("Banksynk pågår allerede. Du trenger ikkje starte ein ny.");
+      } else if (result.reason === "recently_synced") {
+        const wait = relativeWait(result.retryAt || data.settings?.nextSyncAllowedAt);
+        message(wait
+          ? `Banken blei nettopp synkronisert. Ny manuell synk er mulig om ${wait}.`
+          : "Banken blei nettopp synkronisert.");
+      } else if (result.reason === "disabled" || result.reason === "credentials_missing") {
+        message("Banksynk er ikkje klar ennå.", true);
+      } else {
+        const imported = Number(result.imported || 0);
+        message(`Banksynk ferdig. ${imported} transaksjoner kontrollert.`);
+      }
     } catch (error) {
       message(error.message, true);
     } finally {
-      button.disabled = false;
-      button.textContent = "Synk bank nå";
+      if (bankCurrent?.settings) updateBankSyncButton(bankCurrent.settings);
+      else {
+        button.disabled = false;
+        button.textContent = "Synk bank nå";
+      }
     }
   }
 
