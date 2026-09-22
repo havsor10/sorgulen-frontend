@@ -191,6 +191,11 @@
         button.textContent = "Kan synkes om " + relativeWait(settings.nextSyncAllowedAt);
         return;
       }
+      if (settings.nextSyncAllowedAt && bankSyncTimer && settings.cooldownReason === "rate_limited") {
+        clearInterval(bankSyncTimer);
+        bankSyncTimer = null;
+        setTimeout(() => loadBank(), 0);
+      }
       if (!connected || settings.autoSync === false) {
         button.disabled = true;
         button.textContent = "Banksynk ikke klar";
