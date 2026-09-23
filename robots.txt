@@ -1,6 +1,14 @@
-User-agent: *
+# Sørgulen Industriservice – offentlig nettsted
+# Tillat søkemotorer og AI-søk å finne offentlig innhold.
+
+User-agent: OAI-SearchBot
 Allow: /
 
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: *
+Allow: /
 Disallow: /admin/
 Disallow: /login.html
 Disallow: /prosjekt.html
