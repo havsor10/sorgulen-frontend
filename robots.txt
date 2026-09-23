@@ -1,11 +1,17 @@
 # Sørgulen Industriservice – offentlig nettsted
-# Tillat søkemotorer og AI-søk å finne offentlig innhold.
+# Tillat søkemotorer og AI-søk å finne offentlig innhold, men ikke private/admin-flater.
 
 User-agent: OAI-SearchBot
 Allow: /
+Disallow: /admin/
+Disallow: /login.html
+Disallow: /prosjekt.html
 
 User-agent: ChatGPT-User
 Allow: /
+Disallow: /admin/
+Disallow: /login.html
+Disallow: /prosjekt.html
 
 User-agent: *
 Allow: /
