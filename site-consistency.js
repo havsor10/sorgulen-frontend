@@ -16,7 +16,7 @@
     phoneDisplay: "407 30 187",
     phoneHref: "+4740730187",
     email: "sor.industri@gmail.com",
-    address: "Kleiva 91 B, 6900 Florø",
+    address: "Kleiva 91B, 6906 Florø",
     bookingWindow: "09:00–20:00",
     apiBaseUrl: "https://sorgulen-backend-2.onrender.com/api",
     prices: PRICES
