@@ -5,18 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#0a0f18" />
 
-  <title>Sørgulen Industriservice | Brøyting, dekkskift og utleie i Florø</title>
-  <meta name="description" content="Sørgulen Industriservice tilbyr brøyting, dekkskift, vedlikehold og utleie i Florø og omegn. Enkel booking og ryddig oppfølging.">
+  <title>Sørgulen Industriservice | Småjobber, brøyting og utleie i Florø</title>
+  <meta name="description" content="Sørgulen Industriservice hjelper private og bedrifter i Florø og Kinn med brøyting, småjobber, vedlikehold, montering, rydding, takrennerens og utleie.">
   <link rel="canonical" href="https://sorgulen.no/">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Sørgulen Industriservice | Brøyting, dekkskift og utleie i Florø">
-  <meta property="og:description" content="Sørgulen Industriservice tilbyr brøyting, dekkskift, vedlikehold og utleie i Florø og omegn. Enkel booking og ryddig oppfølging.">
+  <meta property="og:title" content="Sørgulen Industriservice | Småjobber, brøyting og utleie i Florø">
+  <meta property="og:description" content="Sørgulen Industriservice hjelper private og bedrifter i Florø og Kinn med brøyting, småjobber, vedlikehold, montering, rydding, takrennerens og utleie.">
   <meta property="og:url" content="https://sorgulen.no/">
   <meta property="og:site_name" content="Sørgulen Industriservice">
   <meta property="og:image" content="https://sorgulen.no/assets/floro-hero-1280.jpg">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Sørgulen Industriservice | Brøyting, dekkskift og utleie i Florø">
-  <meta name="twitter:description" content="Sørgulen Industriservice tilbyr brøyting, dekkskift, vedlikehold og utleie i Florø og omegn. Enkel booking og ryddig oppfølging.">
+  <meta name="twitter:title" content="Sørgulen Industriservice | Småjobber, brøyting og utleie i Florø">
+  <meta name="twitter:description" content="Sørgulen Industriservice hjelper private og bedrifter i Florø og Kinn med brøyting, småjobber, vedlikehold, montering, rydding, takrennerens og utleie.">
   <meta name="twitter:image" content="https://sorgulen.no/assets/floro-hero-1280.jpg">
 
   <link rel="stylesheet" href="style.css" />
@@ -27,21 +27,62 @@
 {
   "@context": "https://schema.org",
   "@type": "LocalBusiness",
+  "@id": "https://sorgulen.no/#business",
   "name": "Sørgulen Industriservice",
-  "url": "https://sorgulen.no",
-  "image": "https://sorgulen.no/assets/logo.png",
-  "areaServed": ["Florø", "Kinn", "Sunnfjord og omegn"],
-  "description": "Brøyting, dekkskift, vedlikehold og utleie i Florø og omegn.",
-  "telephone": "+47 407 30 187",
+  "legalName": "Sørgulen Industriservice",
+  "url": "https://sorgulen.no/",
+  "logo": "https://sorgulen.no/assets/logo.png",
+  "image": "https://sorgulen.no/assets/floro-hero-1280.jpg",
+  "description": "Lokal servicebedrift i Florø som utfører brøyting, småjobber, vedlikehold, montering, rydding, takrennerens og utleie for private og bedrifter.",
+  "telephone": "+4740730187",
   "email": "sor.industri@gmail.com",
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "Organisasjonsnummer",
+    "value": "935179580"
+  },
   "address": {
     "@type": "PostalAddress",
-    "streetAddress": "Kleiva 91 B",
-    "postalCode": "6900",
+    "streetAddress": "Kleiva 91B",
+    "postalCode": "6906",
     "addressLocality": "Florø",
+    "addressRegion": "Vestland",
     "addressCountry": "NO"
   },
-  "priceRange": "$$"
+  "areaServed": [
+    {"@type": "City", "name": "Florø"},
+    {"@type": "AdministrativeArea", "name": "Kinn"},
+    {"@type": "AdministrativeArea", "name": "Vestland"}
+  ],
+  "openingHoursSpecification": [
+    {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+      "opens": "08:00",
+      "closes": "16:00"
+    },
+    {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": "Saturday",
+      "opens": "10:00",
+      "closes": "14:00"
+    }
+  ],
+  "sameAs": [
+    "https://virksomhet.brreg.no/nb/oppslag/enheter/935179580"
+  ],
+  "priceRange": "$$",
+  "hasOfferCatalog": {
+    "@type": "OfferCatalog",
+    "name": "Tjenester i Florø og Kinn",
+    "itemListElement": [
+      {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Brøyting", "serviceType": "Snøbrøyting"}},
+      {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Småjobber og vedlikehold", "serviceType": "Praktisk hjelp og mindre vedlikeholdsoppdrag"}},
+      {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Takrennevask og rens", "serviceType": "Rens og spyling av takrenner og nedløp"}},
+      {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Vask av søppeldunker", "serviceType": "Rengjøring av søppeldunker"}},
+      {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Utleie av verktøy og utstyr", "serviceType": "Lokal utleie"}}
+    ]
+  }
 }
 </script>
 
@@ -89,7 +130,7 @@
       <div class="hero-copy reveal-on-load">
         <span class="eyebrow">Lokalt • effektivt • trygt</span>
         <h1>Sørgulen Industriservice</h1>
-        <p class="lead">Profesjonelle tjenester i Florø og omegn. Vi utfører mindre og varierte oppdrag som normalt kan gjennomføres i løpet av én arbeidsdag. Book brøyting og dekkskift direkte, eller send forespørsel på øvrige oppdrag.</p>
+        <p class="lead">Lokal hjelp for private og bedrifter i Florø og Kinn. Vi utfører brøyting, småjobber, vedlikehold, montering, rydding, takrennerens og andre mindre oppdrag som normalt kan gjennomføres i løpet av én arbeidsdag.</p>
         <div class="btns hero-actions">
           <a href="booking.html?service=Brøyting" class="btn primary hero-cta">Bestill tjeneste</a>
           <a href="prisestimat.html" class="btn secondary">Få prisestimat</a>
@@ -102,8 +143,8 @@
       </div>
       <aside class="hero-panel reveal-on-load" aria-label="Fordeler for kunde">
         <span class="panel-kicker">Rask og ryddig hjelp</span>
-        <h2>Brøyting fra 350 kr</h2>
-        <p>Dekkskift 450 kr. Velg tidspunkt, send bestilling og få bekreftelse på e-post.</p>
+        <h2>Brøyting fra 1 200 kr</h2>
+        <p>Bestill brøyting direkte, eller send bilder og beskrivelse for et uforpliktende prisestimat på andre oppdrag.</p>
         <div class="panel-grid">
           <span>Ledige tider</span>
           <span>Ryddig oppfølging</span>
@@ -123,7 +164,7 @@
     <div class="grid" id="servicesGrid">
       <article class="card" data-tags="vinter">
         <div class="media">
-          <span class="badge premium-badge">Populær • Fra 350 kr</span>
+          <span class="badge premium-badge">Populær • Fra 1 200 kr</span>
           <picture>
             <source srcset="assets/tjenester/broyting.webp" type="image/webp">
             <img src="assets/tjenester/broyting.jpg" alt="Brøyting" loading="lazy" decoding="async">
@@ -135,24 +176,6 @@
           <div class="actions">
             <a href="booking.html?service=Brøyting" class="btn primary">Bestill</a>
             <a href="tjenester/broyting-pris-info.html" class="btn">Pris og info</a>
-          </div>
-        </div>
-      </article>
-
-      <article class="card" data-tags="">
-        <div class="media">
-          <span class="badge premium-badge">450 kr</span>
-          <picture>
-            <source srcset="assets/tjenester/dekkskift.webp" type="image/webp">
-            <img src="assets/tjenester/dekkskift.jpg" alt="Dekkskift" loading="lazy" decoding="async">
-          </picture>
-        </div>
-        <div class="content">
-          <h3>Dekkskift</h3>
-          <div class="meta">Mobilt dekkskift i Florø og omegn – vi kommer dit du er!</div>
-          <div class="actions">
-            <a href="booking.html?service=Dekkskift" class="btn primary">Bestill</a>
-            <a href="tjenester/dekkskift-pris-info.html" class="btn">Pris og info</a>
           </div>
         </div>
       </article>
@@ -169,8 +192,8 @@
           <h3>Diverse arbeid</h3>
           <div class="meta">Mindre oppdrag som normalt tar én arbeidsdag: montering, vedlikehold, bortkjøring og enklere hagearbeid. Ta kontakt for en uforpliktende forespørsel.</div>
           <div class="actions">
-            <a href="kontakt.html?service=Diverse%20arbeid" class="btn primary">Send forespørsel</a>
-            <a href="tjenester/diverse-pris-info.html" class="btn">Pris og info</a>
+            <a href="prisestimat.html" class="btn primary">Få prisestimat</a>
+            <a href="tjenester/smajobber-floro.html" class="btn">Småjobber i Florø</a>
           </div>
         </div>
       </article>
@@ -232,6 +255,7 @@
 
       <div class="btns">
         <a href="prisestimat.html" class="btn primary">Få prisestimat</a>
+        <a href="tjenester/smajobber-floro.html" class="btn secondary">Les om småjobber</a>
         <a href="tel:+4740730187" class="btn secondary" data-site-phone>407&nbsp;30&nbsp;187</a>
         <a href="mailto:sor.industri@gmail.com" class="btn" data-site-email>sor.industri@gmail.com</a>
       </div>
@@ -241,7 +265,7 @@
     <div class="box other-jobs" id="prismodell" style="margin-top:16px">
       <h3 style="margin:0 0 10px">Slik priser vi oppdrag</h3>
       <ul class="price-model-list">
-        <li>Fastpris på utvalgte standardtjenester, for eksempel dekkskift til 450 kr.</li>
+        <li>Brøyting prises fra 1 200 kr. Andre standardtjenester kan ha egen fastpris.</li>
         <li>Andre oppdrag prises normalt fra 650 kr per time.</li>
         <li>Det kan komme tillegg for nødvendig maskinbruk, spesialutstyr, materiell, transport eller bortkjøring. Tillegg opplyses eller avtales før oppstart når det er mulig.</li>
         <li>Send inn bilder og informasjon via <a href="prisestimat.html">Få prisestimat</a> dersom du ønsker en vurdering før arbeidet starter.</li>
@@ -254,7 +278,7 @@
       <div><span class="eyebrow small">Slik fungerer det</span><h2>Enkel bestilling fra start til utført jobb</h2></div>
     </div>
     <div class="process-grid">
-      <div class="process-card"><span>1</span><h3>Velg tjeneste</h3><p>Velg brøyting eller dekkskift og finn ledig tidspunkt.</p></div>
+      <div class="process-card"><span>1</span><h3>Velg tjeneste</h3><p>Bestill brøyting direkte, eller velg prisestimat for småjobber og andre oppdrag.</p></div>
       <div class="process-card"><span>2</span><h3>Send bestilling</h3><p>Du får tydelig oppsummering og bekreftelse på e-post.</p></div>
       <div class="process-card"><span>3</span><h3>Vi følger opp</h3><p>Bestillingen blir registrert og fulgt opp ryddig frem til oppdraget er utført.</p></div>
     </div>
@@ -291,7 +315,7 @@
   <section id="kontakt" class="wrap">
     <div class="section-title"><h2>Kontakt</h2></div>
     <div class="box">
-      <p>Telefon: <a href="tel:+4740730187" data-site-phone>407&nbsp;30&nbsp;187</a> • E-post: <a href="mailto:sor.industri@gmail.com" data-site-email>sor.industri@gmail.com</a> • Adresse: <span data-site-address>Kleiva&nbsp;91&nbsp;B, 6900 Florø</span></p>
+      <p>Telefon: <a href="tel:+4740730187" data-site-phone>407&nbsp;30&nbsp;187</a> • E-post: <a href="mailto:sor.industri@gmail.com" data-site-email>sor.industri@gmail.com</a> • Adresse: <span data-site-address>Kleiva&nbsp;91B, 6906 Florø</span></p>
       <p class="note"><a href="kontakt.html" aria-label="Kontakt oss">Åpne kontaktside&nbsp;→</a></p>
     </div>
   </section>
@@ -373,7 +397,7 @@
         </div>
         <div class="footer-pill-row">
           <span class="footer-pill">Brøyting</span>
-          <span class="footer-pill">Dekkskift</span>
+          <span class="footer-pill">Småjobber</span>
           <span class="footer-pill">Utleie</span>
           <span class="footer-pill">Vedlikehold</span>
         </div>
@@ -393,7 +417,7 @@
         <h3>Tjenester</h3>
         <ul>
           <li><a href="booking.html?service=Brøyting">Brøyting</a></li>
-          <li><a href="booking.html?service=Dekkskift">Dekkskift</a></li>
+          <li><a href="tjenester/smajobber-floro.html">Småjobber i Florø</a></li>
           <li><a href="utleie/index.html">Utleie</a></li>
         </ul>
       </div>
