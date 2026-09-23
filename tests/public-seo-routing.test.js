@@ -56,6 +56,12 @@ test('AI-søk kan lese offentlig innhold og private flater er blokkert', () => {
   assert.match(robots, /User-agent: OAI-SearchBot\nAllow: \//);
   assert.match(robots, /User-agent: ChatGPT-User\nAllow: \//);
   assert.match(robots, /Disallow: \/admin\//);
+  const oaiGroup = robots.match(/User-agent: OAI-SearchBot\n([\s\S]*?)(?=\nUser-agent:|\nSitemap:|$)/)?.[1] || '';
+  const chatgptGroup = robots.match(/User-agent: ChatGPT-User\n([\s\S]*?)(?=\nUser-agent:|\nSitemap:|$)/)?.[1] || '';
+  assert.match(oaiGroup, /Disallow: \/admin\//);
+  assert.match(oaiGroup, /Disallow: \/login\.html/);
+  assert.match(oaiGroup, /Disallow: \/prosjekt\.html/);
+  assert.match(chatgptGroup, /Disallow: \/admin\//);
   assert.match(robots, /Sitemap: https:\/\/sorgulen\.no\/sitemap\.xml/);
 });
 
