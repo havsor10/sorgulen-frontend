@@ -39,3 +39,23 @@ test("business page has its own responsive presentation and navigation", () => {
   assert.match(js, /menuButton/);
   assert.match(js, /IntersectionObserver/);
 });
+
+test("business page lists the supplied licences and competence classes precisely", () => {
+  for (const text of [
+    "B · BE · T",
+    "T1 · T2 · T4",
+    "Lavtløftende palletruck",
+    "Skyvemasttruck / støttebenstruck",
+    "Motvektstruck",
+    "G4 · G11",
+    "Bro- og traverskran",
+    "Løfteredskap",
+  ]) {
+    assert.ok(page.includes(text), "Missing competence label: " + text);
+  }
+});
+
+test("hot work is not presented as a valid certificate yet", () => {
+  assert.match(page, /praktisk slokkeøvelse gjenstår/);
+  assert.match(page, /Ikke markert som gyldig ennå/);
+});
