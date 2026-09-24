@@ -4,6 +4,7 @@
   const API_BASE = (window.CONFIG && window.CONFIG.API_BASE_URL) || "https://sorgulen-backend-2.onrender.com/api";
   const KEY = "sorgulen_admin_key";
   const timeTools = window.SorgulenWorkOrderTime;
+  const offline = window.SorgulenFieldOffline;
   const el = (id) => document.getElementById(id);
 
   const state = {
@@ -18,6 +19,7 @@
     modalContext: {},
     selectedCustomer: null,
     customerSearchTimer: null,
+    syncSummary: { total: 0, pending: 0, error: 0, syncing: 0, items: [] },
   };
 
   const STATUS_LABEL = {
@@ -99,6 +101,140 @@
   function operationId(prefix) {
     const id = (crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(36).slice(2));
     return (prefix + "-" + id).replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 100);
+  }
+
+  function retryableMutationError(error) {
+    if (navigator.onLine === false) return true;
+    const status = Number(error?.status || 0);
+    return !status || status === 408 || status === 425 || status === 429 || status >= 500;
+  }
+
+  async function submitMutation({ id, type, label, endpoint, method = "POST", body }) {
+    const mutation = { id, type, label, endpoint, method, body, createdAt: new Date().toISOString() };
+    if (!offline?.supported?.()) {
+      return { queued: false, data: await api(endpoint, { method, body: JSON.stringify(body) }) };
+    }
+
+    if (navigator.onLine === false) {
+      await offline.add(mutation);
+      return { queued: true, data: null };
+    }
+
+    try {
+      return { queued: false, data: await api(endpoint, { method, body: JSON.stringify(body) }) };
+    } catch (error) {
+      if (!retryableMutationError(error)) throw error;
+      await offline.add(mutation);
+      return { queued: true, data: null };
+    }
+  }
+
+  async function sendQueuedMutation(item) {
+    try {
+      return await api(item.endpoint, {
+        method: item.method || "POST",
+        body: JSON.stringify(item.body == null ? {} : item.body),
+      });
+    } catch (error) {
+      const status = Number(error?.status || 0);
+      error.permanent = Boolean(status && status < 500 && ![408, 425, 429].includes(status));
+      throw error;
+    }
+  }
+
+  function syncItemStatus(item) {
+    if (item.status === "error") return item.lastError || "Krever kontroll";
+    if (item.status === "syncing") return "Synkroniserer…";
+    return navigator.onLine === false ? "Lagret på telefonen" : "Venter på synk";
+  }
+
+  function renderSyncSummary(summary = state.syncSummary) {
+    state.syncSummary = summary || { total: 0, pending: 0, error: 0, syncing: 0, items: [] };
+    const badge = el("fieldSyncBadge");
+    const text = el("fieldSyncText");
+    if (!badge || !text) return;
+    badge.className = "field-sync-badge";
+
+    if (state.syncSummary.error > 0) {
+      badge.classList.add("is-error");
+      text.textContent = state.syncSummary.error + " trenger kontroll";
+    } else if (navigator.onLine === false) {
+      badge.classList.add("is-offline");
+      text.textContent = state.syncSummary.total
+        ? "Frakoblet · " + state.syncSummary.total + " lagret"
+        : "Frakoblet · lokal lagring aktiv";
+    } else if (state.syncSummary.pending > 0 || state.syncSummary.syncing > 0) {
+      badge.classList.add("is-pending");
+      text.textContent = (state.syncSummary.pending + state.syncSummary.syncing) + " venter på synk";
+    } else {
+      badge.classList.add("is-synced");
+      text.textContent = "Alt synkronisert";
+    }
+
+    const itemsRoot = el("fieldSyncItems");
+    if (itemsRoot && !el("fieldSyncModal")?.hidden) renderSyncItems();
+  }
+
+  function renderSyncItems() {
+    const root = el("fieldSyncItems");
+    if (!root) return;
+    const items = state.syncSummary.items || [];
+    root.innerHTML = items.length ? items.map((item) =>
+      '<div class="field-sync-item ' + (item.status === "error" ? "error" : "") + '">' +
+        '<div><strong>' + esc(item.label || "Feltregistrering") + '</strong>' +
+        '<span>' + esc(syncItemStatus(item)) + '</span></div>' +
+        '<button type="button" data-sync-delete="' + esc(item.id) + '">Slett</button>' +
+      '</div>'
+    ).join("") : '<div class="field-sync-empty">Ingen registreringer venter. Alt er synkronisert.</div>';
+    root.querySelectorAll("[data-sync-delete]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        if (!confirm("Slette denne lokale registreringen uten å synkronisere den?")) return;
+        await offline.remove(button.dataset.syncDelete);
+        renderSyncItems();
+      });
+    });
+    const retry = el("fieldSyncRetryBtn");
+    const now = el("fieldSyncNowBtn");
+    if (retry) retry.disabled = state.syncSummary.error <= 0 || navigator.onLine === false;
+    if (now) now.disabled = state.syncSummary.total <= 0 || navigator.onLine === false;
+  }
+
+  async function flushOfflineQueue({ refresh = true } = {}) {
+    if (!offline?.supported?.() || navigator.onLine === false) {
+      if (offline?.summary) renderSyncSummary(await offline.summary());
+      return;
+    }
+    const before = await offline.summary();
+    const after = await offline.flush(sendQueuedMutation);
+    renderSyncSummary(after);
+    if (refresh && before.total > after.total) {
+      await Promise.allSettled([loadField(false), loadCustomers("")]);
+    }
+  }
+
+  async function cacheSet(key, value) {
+    if (!offline?.supported?.()) return;
+    try { await offline.setCache(key, value); } catch (_) {}
+  }
+
+  async function cacheGet(key) {
+    if (!offline?.supported?.()) return null;
+    try { return (await offline.getCache(key))?.value ?? null; } catch (_) { return null; }
+  }
+
+  function openSyncModal() {
+    const modal = el("fieldSyncModal");
+    if (!modal) return;
+    modal.hidden = false;
+    modal.setAttribute("aria-hidden", "false");
+    renderSyncItems();
+  }
+
+  function closeSyncModal() {
+    const modal = el("fieldSyncModal");
+    if (!modal) return;
+    modal.hidden = true;
+    modal.setAttribute("aria-hidden", "true");
   }
 
   function uniqueOpenJobs() {
@@ -256,20 +392,32 @@
       state.defaultService = services.find((s) => s.key === "diverse-arbeid" && s.active !== false)
         || services.find((s) => s.active !== false)
         || null;
+      await cacheSet("default-service", state.defaultService);
     } catch (_) {
-      state.defaultService = null;
+      state.defaultService = await cacheGet("default-service");
     }
   }
 
   async function loadCustomers(query = "") {
+    const normalized = String(query || "").trim().toLowerCase();
     try {
       const data = await api("/admin/customers?q=" + encodeURIComponent(query) + "&limit=30");
       state.customers = data.customers || [];
+      if (!normalized) await cacheSet("customers", state.customers);
       renderCustomers();
       return state.customers;
     } catch (error) {
-      if (state.currentView === "customers") setStatus(error.message, "error");
-      return [];
+      const cached = await cacheGet("customers");
+      const source = Array.isArray(cached) ? cached : state.customers;
+      state.customers = normalized
+        ? source.filter((customer) => [customer.name, customer.phone, customer.address, customer.city]
+          .join(" ").toLowerCase().includes(normalized)).slice(0, 30)
+        : source;
+      renderCustomers();
+      if (state.currentView === "customers" && !state.customers.length) {
+        setStatus("Ingen lagrede kundedata på denne enheten ennå.", "error");
+      }
+      return state.customers;
     }
   }
 
@@ -282,10 +430,25 @@
       ]);
       state.home = home;
       state.workOrders = jobs.workOrders || [];
+      await Promise.all([
+        cacheSet("field-home", state.home),
+        cacheSet("field-work-orders", state.workOrders),
+      ]);
       renderAll();
       if (showStatus) setStatus("");
     } catch (error) {
-      setStatus(error.message, "error");
+      const [cachedHome, cachedJobs] = await Promise.all([
+        cacheGet("field-home"),
+        cacheGet("field-work-orders"),
+      ]);
+      if (cachedHome || Array.isArray(cachedJobs)) {
+        state.home = cachedHome || state.home;
+        state.workOrders = Array.isArray(cachedJobs) ? cachedJobs : state.workOrders;
+        renderAll();
+        setStatus("Frakoblet – viser sist lagrede feltdata. Nye registreringer lagres på telefonen.");
+      } else {
+        setStatus("Ingen nett og ingen feltdata er lagret på denne enheten ennå.", "error");
+      }
     }
   }
 
@@ -366,24 +529,34 @@
       const q = input.value.trim();
       if (q.length < 2) { suggestions.innerHTML = ""; return; }
       state.customerSearchTimer = setTimeout(async () => {
+        let list = [];
         try {
-          const data = await api("/admin/customers?q=" + encodeURIComponent(q) + "&limit=8");
-          const list = data.customers || [];
-          suggestions.innerHTML = list.map((customer, index) =>
-            '<button type="button" data-pick-index="' + index + '"><strong>' + esc(customer.name) + '</strong><span>' +
-            esc([customer.phone, customer.address].filter(Boolean).join(" · ") || "Eksisterende kunde") + '</span></button>'
-          ).join("");
-          suggestions.querySelectorAll("[data-pick-index]").forEach((button) => {
-            button.onclick = () => {
-              const customer = list[Number(button.dataset.pickIndex)];
-              state.selectedCustomer = customer;
-              input.value = customer.name;
-              selectedRoot.innerHTML = selectedCustomerHtml(customer);
-              suggestions.innerHTML = "";
-              bindClear();
-            };
-          });
+          if (navigator.onLine !== false) {
+            const data = await api("/admin/customers?q=" + encodeURIComponent(q) + "&limit=8");
+            list = data.customers || [];
+          }
         } catch (_) {}
+        if (!list.length) {
+          const cached = await cacheGet("customers");
+          const source = Array.isArray(cached) ? cached : state.customers;
+          const needle = q.toLowerCase();
+          list = source.filter((customer) => [customer.name, customer.phone, customer.address, customer.city]
+            .join(" ").toLowerCase().includes(needle)).slice(0, 8);
+        }
+        suggestions.innerHTML = list.map((customer, index) =>
+          '<button type="button" data-pick-index="' + index + '"><strong>' + esc(customer.name) + '</strong><span>' +
+          esc([customer.phone, customer.address].filter(Boolean).join(" · ") || "Eksisterende kunde") + '</span></button>'
+        ).join("");
+        suggestions.querySelectorAll("[data-pick-index]").forEach((button) => {
+          button.onclick = () => {
+            const customer = list[Number(button.dataset.pickIndex)];
+            state.selectedCustomer = customer;
+            input.value = customer.name;
+            selectedRoot.innerHTML = selectedCustomerHtml(customer);
+            suggestions.innerHTML = "";
+            bindClear();
+          };
+        });
       }, 180);
     });
   }
@@ -503,6 +676,9 @@
     save.textContent = "Lagrer…";
 
     try {
+      let result = null;
+      let successText = "";
+
       if (state.modalType === "new-job") {
         const name = String(data.get("customerName") || "").trim();
         if (!name) throw new Error("Skriv kundenavn.");
@@ -511,15 +687,23 @@
           || "Diverse arbeid";
         const hourlyRate = Number(state.defaultService?.price || 650);
         let resolvedCustomer = state.selectedCustomer;
-        if (!resolvedCustomer?._id) {
-          const lookup = await api("/admin/customers?q=" + encodeURIComponent(name) + "&limit=8");
-          const exact = (lookup.customers || []).filter((customer) =>
-            String(customer.name || "").trim().toLocaleLowerCase("nb-NO") === name.toLocaleLowerCase("nb-NO")
-          );
-          if (exact.length === 1) resolvedCustomer = exact[0];
-          if (exact.length > 1) throw new Error("Det finnes flere kunder med dette navnet. Velg riktig kunde fra forslagene.");
+
+        if (!resolvedCustomer?._id && navigator.onLine !== false) {
+          try {
+            const lookup = await api("/admin/customers?q=" + encodeURIComponent(name) + "&limit=8");
+            const exact = (lookup.customers || []).filter((customer) =>
+              String(customer.name || "").trim().toLocaleLowerCase("nb-NO") === name.toLocaleLowerCase("nb-NO")
+            );
+            if (exact.length === 1) resolvedCustomer = exact[0];
+            if (exact.length > 1) throw new Error("Det finnes flere kunder med dette navnet. Velg riktig kunde fra forslagene.");
+          } catch (error) {
+            if (!retryableMutationError(error)) throw error;
+          }
         }
+
+        const id = operationId("job");
         const payload = {
+          operationId: id,
           jobDate: osloToday(),
           serviceName,
           hourlyRate: hourlyRate > 0 ? hourlyRate : 650,
@@ -529,73 +713,114 @@
             ? { customerId: resolvedCustomer._id }
             : { customer: { name } }),
         };
-        await api("/admin/work-orders", { method: "POST", body: JSON.stringify(payload) });
-        setStatus("Oppdraget er lagret i køen. Aktiv jobb blei ikkje påvirket.", "success");
+        result = await submitMutation({
+          id,
+          type: "new-job",
+          label: "Nytt oppdrag · " + name,
+          endpoint: "/admin/work-orders",
+          body: payload,
+        });
+        successText = "Oppdraget er lagret i køen. Aktiv jobb blei ikkje påvirket.";
       } else if (state.modalType === "expense") {
         const jobId = String(data.get("jobId") || "");
         if (!jobId) throw new Error("Velg oppdrag.");
         const receipt = form.querySelector('input[name="receipt"]')?.files?.[0];
-        await api("/admin/work-orders/" + encodeURIComponent(jobId) + "/expenses", {
-          method: "POST",
-          body: JSON.stringify({
-            operationId: operationId("expense"),
-            amount: Number(data.get("amount")),
-            description: String(data.get("description") || "").trim(),
-            supplier: String(data.get("supplier") || "").trim(),
-            billable: data.get("billable") === "on",
-            receiptImage: receipt ? await fileData(receipt) : "",
-          }),
+        const id = operationId("expense");
+        const payload = {
+          operationId: id,
+          amount: Number(data.get("amount")),
+          description: String(data.get("description") || "").trim(),
+          supplier: String(data.get("supplier") || "").trim(),
+          billable: data.get("billable") === "on",
+          receiptImage: receipt ? await fileData(receipt) : "",
+        };
+        result = await submitMutation({
+          id,
+          type: "expense",
+          label: "Utgift · " + (payload.description || fmtMoney(payload.amount)),
+          endpoint: "/admin/work-orders/" + encodeURIComponent(jobId) + "/expenses",
+          body: payload,
         });
-        setStatus("Utgiften er registrert på oppdraget.", "success");
+        successText = "Utgiften er registrert på oppdraget.";
       } else if (state.modalType === "customer-note") {
         if (!state.selectedCustomer?._id) throw new Error("Velg ein eksisterende kunde før notatet lagres.");
-        await api("/admin/customers/" + encodeURIComponent(state.selectedCustomer._id), {
-          method: "PATCH",
-          body: JSON.stringify({ note: String(data.get("note") || "").trim() }),
+        const id = operationId("customer-note");
+        const textValue = String(data.get("note") || "").trim();
+        result = await submitMutation({
+          id,
+          type: "customer-note",
+          label: "Kundenotat · " + state.selectedCustomer.name,
+          endpoint: "/admin/customers/" + encodeURIComponent(state.selectedCustomer._id) + "/notes",
+          body: { operationId: id, text: textValue },
         });
-        setStatus("Kundenotatet er lagret.", "success");
+        successText = "Kundenotatet er lagret.";
       } else if (state.modalType === "job-note") {
         const jobId = String(data.get("jobId") || "");
-        await api("/admin/work-orders/" + encodeURIComponent(jobId) + "/notes", {
-          method: "POST",
-          body: JSON.stringify({ operationId: operationId("note"), text: String(data.get("text") || "").trim() }),
+        if (!jobId) throw new Error("Velg oppdrag.");
+        const id = operationId("note");
+        const payload = { operationId: id, text: String(data.get("text") || "").trim() };
+        result = await submitMutation({
+          id,
+          type: "job-note",
+          label: "Jobbnotat",
+          endpoint: "/admin/work-orders/" + encodeURIComponent(jobId) + "/notes",
+          body: payload,
         });
-        setStatus("Notatet er lagt i oppdragsloggen.", "success");
+        successText = "Notatet er lagt i oppdragsloggen.";
       } else if (state.modalType === "time") {
         const jobId = String(data.get("jobId") || "");
+        if (!jobId) throw new Error("Velg oppdrag.");
         const minutes = Number(data.get("minutes"));
         if (!Number.isFinite(minutes) || minutes <= 0) throw new Error("Skriv antall minutter.");
-        await api("/admin/work-orders/" + encodeURIComponent(jobId) + "/time-entries", {
-          method: "POST",
-          body: JSON.stringify({
-            operationId: operationId("time"),
-            startedAt: new Date(Date.now() - minutes * 60_000).toISOString(),
-            durationMinutes: minutes,
-            category: String(data.get("category") || "work"),
-            comment: String(data.get("comment") || "").trim(),
-            billable: data.get("billable") === "on",
-          }),
+        const id = operationId("time");
+        const payload = {
+          operationId: id,
+          startedAt: new Date(Date.now() - minutes * 60_000).toISOString(),
+          durationMinutes: minutes,
+          category: String(data.get("category") || "work"),
+          comment: String(data.get("comment") || "").trim(),
+          billable: data.get("billable") === "on",
+        };
+        result = await submitMutation({
+          id,
+          type: "time",
+          label: "Tid · " + minutes + " min",
+          endpoint: "/admin/work-orders/" + encodeURIComponent(jobId) + "/time-entries",
+          body: payload,
         });
-        setStatus("Tiden er registrert.", "success");
+        successText = "Tiden er registrert.";
       } else if (state.modalType === "material") {
         const jobId = String(data.get("jobId") || "");
-        await api("/admin/work-orders/" + encodeURIComponent(jobId) + "/materials", {
-          method: "POST",
-          body: JSON.stringify({
-            operationId: operationId("material"),
-            item: String(data.get("item") || "").trim(),
-            quantity: Number(data.get("quantity") || 1),
-            unit: String(data.get("unit") || "stk").trim(),
-            purchaseUnitPrice: data.get("purchaseUnitPrice") ? Number(data.get("purchaseUnitPrice")) : null,
-            unitPrice: data.get("unitPrice") ? Number(data.get("unitPrice")) : null,
-            comment: String(data.get("comment") || "").trim(),
-            billable: data.get("billable") === "on",
-          }),
+        if (!jobId) throw new Error("Velg oppdrag.");
+        const id = operationId("material");
+        const payload = {
+          operationId: id,
+          item: String(data.get("item") || "").trim(),
+          quantity: Number(data.get("quantity") || 1),
+          unit: String(data.get("unit") || "stk").trim(),
+          purchaseUnitPrice: data.get("purchaseUnitPrice") ? Number(data.get("purchaseUnitPrice")) : null,
+          unitPrice: data.get("unitPrice") ? Number(data.get("unitPrice")) : null,
+          comment: String(data.get("comment") || "").trim(),
+          billable: data.get("billable") === "on",
+        };
+        result = await submitMutation({
+          id,
+          type: "material",
+          label: "Materiale · " + (payload.item || "registrering"),
+          endpoint: "/admin/work-orders/" + encodeURIComponent(jobId) + "/materials",
+          body: payload,
         });
-        setStatus("Materialet er registrert.", "success");
+        successText = "Materialet er registrert.";
       }
+
       closeModal();
-      await Promise.all([loadField(false), loadCustomers(el("customerSearch").value.trim())]);
+      if (result?.queued) {
+        setStatus("Lagret på telefonen – venter på synk.", "success");
+        if (offline?.summary) renderSyncSummary(await offline.summary());
+      } else {
+        setStatus(successText || "Registreringen er lagret.", "success");
+        await Promise.allSettled([loadField(false), loadCustomers(el("customerSearch").value.trim())]);
+      }
     } catch (error) {
       errorEl.textContent = error.message;
     } finally {
@@ -607,6 +832,10 @@
 
   async function jobAction(id, action) {
     if (state.busy) return;
+    if (navigator.onLine === false) {
+      setStatus("START/PAUSE/FORTSETT krever nett for sikker tidsføring. Andre feltregistreringer lagres offline.", "error");
+      return;
+    }
     state.busy = true;
     setStatus(action === "pause" ? "Pauser arbeid…" : action === "stop" ? "Avslutter økta…" : "Starter arbeid…");
     try {
@@ -651,16 +880,49 @@
   el("closeFieldModal").addEventListener("click", closeModal);
   document.querySelectorAll("[data-close-modal]").forEach((node) => node.addEventListener("click", closeModal));
   el("fieldForm").addEventListener("submit", submitFieldForm);
-  el("refreshFieldBtn").addEventListener("click", () => loadField(true));
+  el("refreshFieldBtn").addEventListener("click", async () => {
+    await flushOfflineQueue({ refresh: false });
+    await loadField(true);
+  });
   el("jobSearch").addEventListener("input", renderJobs);
   el("customerSearch").addEventListener("input", () => {
     clearTimeout(state.customerSearchTimer);
     state.customerSearchTimer = setTimeout(() => loadCustomers(el("customerSearch").value.trim()), 220);
   });
+  el("fieldSyncBadge")?.addEventListener("click", openSyncModal);
+  el("closeFieldSync")?.addEventListener("click", closeSyncModal);
+  document.querySelectorAll("[data-close-sync]").forEach((node) => node.addEventListener("click", closeSyncModal));
+  el("fieldSyncNowBtn")?.addEventListener("click", async () => {
+    setStatus("Synkroniserer lagrede feltregistreringer…");
+    await flushOfflineQueue();
+    setStatus(state.syncSummary.total ? "Noen registreringer venter fortsatt." : "Alt er synkronisert.", state.syncSummary.error ? "error" : "success");
+    renderSyncItems();
+  });
+  el("fieldSyncRetryBtn")?.addEventListener("click", async () => {
+    if (!offline?.supported?.() || navigator.onLine === false) return;
+    await offline.retryErrors();
+    await flushOfflineQueue();
+    renderSyncItems();
+  });
   el("fullAdminLink").addEventListener("click", () => localStorage.setItem("sorgulen_admin_mode", "full"));
+
+  window.addEventListener("online", async () => {
+    if (offline?.summary) renderSyncSummary(await offline.summary());
+    setStatus("Nettet er tilbake – synkroniserer feltregistreringer…");
+    await flushOfflineQueue();
+    if (!state.syncSummary.total) setStatus("Alt er synkronisert.", "success");
+  });
+  window.addEventListener("offline", async () => {
+    if (offline?.summary) renderSyncSummary(await offline.summary());
+    setStatus("Frakoblet – nye registreringer lagres på telefonen.");
+  });
 
   localStorage.setItem("sorgulen_admin_mode", "field");
   bindDynamic(document);
-  Promise.all([loadServices(), loadCustomers(""), loadField(true)]).catch((error) => setStatus(error.message, "error"));
+  if (offline?.onChange) offline.onChange(renderSyncSummary);
+  Promise.all([loadServices(), loadCustomers(""), loadField(true)])
+    .then(() => flushOfflineQueue())
+    .catch((error) => setStatus(error.message, "error"));
   setInterval(updateTimers, 1000);
+  setInterval(() => flushOfflineQueue(), 30_000);
 })();

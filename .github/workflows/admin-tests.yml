@@ -35,6 +35,7 @@ jobs:
           node --check admin/kunde-v2.js
           node --check admin/hjem.js
           node --check admin/felt.js
+          node --check admin/field-offline.js
           node --check admin/home-attention.js
           node --check admin/home-project-link.js
           node --check admin/work-order-time.js
