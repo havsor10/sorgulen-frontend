@@ -181,10 +181,18 @@
     const items = state.syncSummary.items || [];
     root.innerHTML = items.length ? items.map((item) =>
       '<div class="field-sync-item ' + (item.status === "error" ? "error" : "") + '">' +
-        '<strong>' + esc(item.label || "Feltregistrering") + '</strong>' +
-        '<span>' + esc(syncItemStatus(item)) + '</span>' +
+        '<div><strong>' + esc(item.label || "Feltregistrering") + '</strong>' +
+        '<span>' + esc(syncItemStatus(item)) + '</span></div>' +
+        '<button type="button" data-sync-delete="' + esc(item.id) + '">Slett</button>' +
       '</div>'
     ).join("") : '<div class="field-sync-empty">Ingen registreringer venter. Alt er synkronisert.</div>';
+    root.querySelectorAll("[data-sync-delete]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        if (!confirm("Slette denne lokale registreringen uten å synkronisere den?")) return;
+        await offline.remove(button.dataset.syncDelete);
+        renderSyncItems();
+      });
+    });
     const retry = el("fieldSyncRetryBtn");
     const now = el("fieldSyncNowBtn");
     if (retry) retry.disabled = state.syncSummary.error <= 0 || navigator.onLine === false;
