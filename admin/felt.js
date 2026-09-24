@@ -4,6 +4,7 @@
   const API_BASE = (window.CONFIG && window.CONFIG.API_BASE_URL) || "https://sorgulen-backend-2.onrender.com/api";
   const KEY = "sorgulen_admin_key";
   const timeTools = window.SorgulenWorkOrderTime;
+  const offline = window.SorgulenFieldOffline;
   const el = (id) => document.getElementById(id);
 
   const state = {
@@ -18,6 +19,7 @@
     modalContext: {},
     selectedCustomer: null,
     customerSearchTimer: null,
+    syncSummary: { total: 0, pending: 0, error: 0, syncing: 0, items: [] },
   };
 
   const STATUS_LABEL = {
@@ -99,6 +101,132 @@
   function operationId(prefix) {
     const id = (crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(36).slice(2));
     return (prefix + "-" + id).replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 100);
+  }
+
+  function retryableMutationError(error) {
+    if (navigator.onLine === false) return true;
+    const status = Number(error?.status || 0);
+    return !status || status === 408 || status === 425 || status === 429 || status >= 500;
+  }
+
+  async function submitMutation({ id, type, label, endpoint, method = "POST", body }) {
+    const mutation = { id, type, label, endpoint, method, body, createdAt: new Date().toISOString() };
+    if (!offline?.supported?.()) {
+      return { queued: false, data: await api(endpoint, { method, body: JSON.stringify(body) }) };
+    }
+
+    if (navigator.onLine === false) {
+      await offline.add(mutation);
+      return { queued: true, data: null };
+    }
+
+    try {
+      return { queued: false, data: await api(endpoint, { method, body: JSON.stringify(body) }) };
+    } catch (error) {
+      if (!retryableMutationError(error)) throw error;
+      await offline.add(mutation);
+      return { queued: true, data: null };
+    }
+  }
+
+  async function sendQueuedMutation(item) {
+    try {
+      return await api(item.endpoint, {
+        method: item.method || "POST",
+        body: JSON.stringify(item.body == null ? {} : item.body),
+      });
+    } catch (error) {
+      const status = Number(error?.status || 0);
+      error.permanent = Boolean(status && status < 500 && ![408, 425, 429].includes(status));
+      throw error;
+    }
+  }
+
+  function syncItemStatus(item) {
+    if (item.status === "error") return item.lastError || "Krever kontroll";
+    if (item.status === "syncing") return "Synkroniserer…";
+    return navigator.onLine === false ? "Lagret på telefonen" : "Venter på synk";
+  }
+
+  function renderSyncSummary(summary = state.syncSummary) {
+    state.syncSummary = summary || { total: 0, pending: 0, error: 0, syncing: 0, items: [] };
+    const badge = el("fieldSyncBadge");
+    const text = el("fieldSyncText");
+    if (!badge || !text) return;
+    badge.className = "field-sync-badge";
+
+    if (state.syncSummary.error > 0) {
+      badge.classList.add("is-error");
+      text.textContent = state.syncSummary.error + " trenger kontroll";
+    } else if (navigator.onLine === false) {
+      badge.classList.add("is-offline");
+      text.textContent = state.syncSummary.total
+        ? "Frakoblet · " + state.syncSummary.total + " lagret"
+        : "Frakoblet · lokal lagring aktiv";
+    } else if (state.syncSummary.pending > 0 || state.syncSummary.syncing > 0) {
+      badge.classList.add("is-pending");
+      text.textContent = (state.syncSummary.pending + state.syncSummary.syncing) + " venter på synk";
+    } else {
+      badge.classList.add("is-synced");
+      text.textContent = "Alt synkronisert";
+    }
+
+    const itemsRoot = el("fieldSyncItems");
+    if (itemsRoot && !el("fieldSyncModal")?.hidden) renderSyncItems();
+  }
+
+  function renderSyncItems() {
+    const root = el("fieldSyncItems");
+    if (!root) return;
+    const items = state.syncSummary.items || [];
+    root.innerHTML = items.length ? items.map((item) =>
+      '<div class="field-sync-item ' + (item.status === "error" ? "error" : "") + '">' +
+        '<strong>' + esc(item.label || "Feltregistrering") + '</strong>' +
+        '<span>' + esc(syncItemStatus(item)) + '</span>' +
+      '</div>'
+    ).join("") : '<div class="field-sync-empty">Ingen registreringer venter. Alt er synkronisert.</div>';
+    const retry = el("fieldSyncRetryBtn");
+    const now = el("fieldSyncNowBtn");
+    if (retry) retry.disabled = state.syncSummary.error <= 0 || navigator.onLine === false;
+    if (now) now.disabled = state.syncSummary.total <= 0 || navigator.onLine === false;
+  }
+
+  async function flushOfflineQueue({ refresh = true } = {}) {
+    if (!offline?.supported?.() || navigator.onLine === false) {
+      if (offline?.summary) renderSyncSummary(await offline.summary());
+      return;
+    }
+    const before = await offline.summary();
+    const after = await offline.flush(sendQueuedMutation);
+    renderSyncSummary(after);
+    if (refresh && before.total > after.total) {
+      await Promise.allSettled([loadField(false), loadCustomers("")]);
+    }
+  }
+
+  async function cacheSet(key, value) {
+    if (!offline?.supported?.()) return;
+    try { await offline.setCache(key, value); } catch (_) {}
+  }
+
+  async function cacheGet(key) {
+    if (!offline?.supported?.()) return null;
+    try { return (await offline.getCache(key))?.value ?? null; } catch (_) { return null; }
+  }
+
+  function openSyncModal() {
+    const modal = el("fieldSyncModal");
+    if (!modal) return;
+    modal.hidden = false;
+    modal.setAttribute("aria-hidden", "false");
+    renderSyncItems();
+  }
+
+  function closeSyncModal() {
+    const modal = el("fieldSyncModal");
+    if (!modal) return;
+    modal.hidden = true;
+    modal.setAttribute("aria-hidden", "true");
   }
 
   function uniqueOpenJobs() {
@@ -256,20 +384,32 @@
       state.defaultService = services.find((s) => s.key === "diverse-arbeid" && s.active !== false)
         || services.find((s) => s.active !== false)
         || null;
+      await cacheSet("default-service", state.defaultService);
     } catch (_) {
-      state.defaultService = null;
+      state.defaultService = await cacheGet("default-service");
     }
   }
 
   async function loadCustomers(query = "") {
+    const normalized = String(query || "").trim().toLowerCase();
     try {
       const data = await api("/admin/customers?q=" + encodeURIComponent(query) + "&limit=30");
       state.customers = data.customers || [];
+      if (!normalized) await cacheSet("customers", state.customers);
       renderCustomers();
       return state.customers;
     } catch (error) {
-      if (state.currentView === "customers") setStatus(error.message, "error");
-      return [];
+      const cached = await cacheGet("customers");
+      const source = Array.isArray(cached) ? cached : state.customers;
+      state.customers = normalized
+        ? source.filter((customer) => [customer.name, customer.phone, customer.address, customer.city]
+          .join(" ").toLowerCase().includes(normalized)).slice(0, 30)
+        : source;
+      renderCustomers();
+      if (state.currentView === "customers" && !state.customers.length) {
+        setStatus("Ingen lagrede kundedata på denne enheten ennå.", "error");
+      }
+      return state.customers;
     }
   }
 
@@ -282,10 +422,25 @@
       ]);
       state.home = home;
       state.workOrders = jobs.workOrders || [];
+      await Promise.all([
+        cacheSet("field-home", state.home),
+        cacheSet("field-work-orders", state.workOrders),
+      ]);
       renderAll();
       if (showStatus) setStatus("");
     } catch (error) {
-      setStatus(error.message, "error");
+      const [cachedHome, cachedJobs] = await Promise.all([
+        cacheGet("field-home"),
+        cacheGet("field-work-orders"),
+      ]);
+      if (cachedHome || Array.isArray(cachedJobs)) {
+        state.home = cachedHome || state.home;
+        state.workOrders = Array.isArray(cachedJobs) ? cachedJobs : state.workOrders;
+        renderAll();
+        setStatus("Frakoblet – viser sist lagrede feltdata. Nye registreringer lagres på telefonen.");
+      } else {
+        setStatus("Ingen nett og ingen feltdata er lagret på denne enheten ennå.", "error");
+      }
     }
   }
 
