@@ -93,6 +93,226 @@
     })[status] || "";
   }
 
+  function invoiceStatusText(status) {
+    return ({
+      paid: "Betalt",
+      unpaid: "Ikke betalt",
+      overdue: "Forfalt",
+      credited: "Kreditert",
+    })[status] || "Faktura";
+  }
+
+  function jobStatusText(status) {
+    return ({
+      planned: "Planlagt",
+      active: "Pågår",
+      paused: "Pauset",
+      stopped: "Pågår",
+      completed: "Ferdig",
+      cancelled: "Avsluttet",
+    })[status] || "Oppdrag";
+  }
+
+  function renderCustomerOverview(project) {
+    const overview = project.customerOverview || {};
+    const invoices = Array.isArray(overview.invoices) ? overview.invoices : [];
+    const jobs = Array.isArray(overview.jobs) ? overview.jobs : [];
+
+    const notice = document.getElementById("customerActionNotice");
+    const noticeIcon = document.getElementById("customerActionIcon");
+    const noticeTitle = document.getElementById("customerActionTitle");
+    const noticeText = document.getElementById("customerActionText");
+    const noticeLink = document.getElementById("customerActionLink");
+
+    const overdueCount = invoices.filter((invoice) => invoice.status === "overdue").length;
+    const unpaidCount = invoices.filter((invoice) => invoice.status === "unpaid").length;
+    const needsApproval = project.statusAttention === "approval";
+    const actionCount = (needsApproval ? 1 : 0) + overdueCount + unpaidCount;
+
+    notice?.classList.remove("is-ok", "needs-action", "is-urgent");
+    noticeLink?.classList.add("hidden");
+
+    if (overdueCount > 0) {
+      notice?.classList.add("is-urgent");
+      noticeIcon.textContent = "!";
+      noticeTitle.textContent = actionCount > 1
+        ? `Du har ${actionCount} ting som må ordnes`
+        : "En faktura har passert forfall";
+      noticeText.textContent = needsApproval
+        ? "Du har også noe som må godkjennes på prosjektet."
+        : "Åpne fakturaen nedenfor for å se betalingsinformasjonen.";
+      noticeLink.textContent = "Se faktura";
+      noticeLink.href = "#currentInvoiceCard";
+      noticeLink.classList.remove("hidden");
+    } else if (actionCount > 0) {
+      notice?.classList.add("needs-action");
+      noticeIcon.textContent = "!";
+      if (needsApproval && unpaidCount > 0) {
+        noticeTitle.textContent = `Du har ${actionCount} ting som trenger oppmerksomhet`;
+        noticeText.textContent = "Du må godkjenne noe på prosjektet, og du har en faktura som venter på betaling.";
+        noticeLink.textContent = "Se hva du må gjøre";
+        noticeLink.href = "#procurementContainer";
+      } else if (needsApproval) {
+        noticeTitle.textContent = "Du har noe som må godkjennes";
+        noticeText.textContent = "Se godkjenningen nedenfor og svar når det passer.";
+        noticeLink.textContent = "Se godkjenningen";
+        noticeLink.href = "#procurementContainer";
+      } else {
+        noticeTitle.textContent = unpaidCount === 1
+          ? "Du har en faktura som venter på betaling"
+          : `Du har ${unpaidCount} fakturaer som venter på betaling`;
+        noticeText.textContent = "Åpne fakturaen nedenfor for å se beløp og forfallsdato.";
+        noticeLink.textContent = "Se faktura";
+        noticeLink.href = "#currentInvoiceCard";
+      }
+      noticeLink.classList.remove("hidden");
+    } else {
+      notice?.classList.add("is-ok");
+      noticeIcon.textContent = "✓";
+      noticeTitle.textContent = "Alt er greit";
+      noticeText.textContent = "Du trenger ikke gjøre noe akkurat nå.";
+    }
+
+    const currentInvoice = invoices.find((invoice) => invoice.status === "overdue")
+      || invoices.find((invoice) => invoice.status === "unpaid")
+      || null;
+
+    const currentInvoiceCard = document.getElementById("currentInvoiceCard");
+    if (currentInvoice) {
+      const title = document.getElementById("currentInvoiceTitle");
+      const meta = document.getElementById("currentInvoiceMeta");
+      const amount = document.getElementById("currentInvoiceAmount");
+      const status = document.getElementById("currentInvoiceStatus");
+      const open = document.getElementById("currentInvoiceOpen");
+
+      title.textContent = currentInvoice.invoiceNumber
+        ? `Faktura ${currentInvoice.invoiceNumber}`
+        : "Faktura";
+      amount.textContent = formatCurrency(currentInvoice.amount);
+      meta.textContent = currentInvoice.dueDate
+        ? `Forfall ${formatDate(currentInvoice.dueDate, false)}`
+        : "Denne fakturaen venter på betaling.";
+      status.textContent = invoiceStatusText(currentInvoice.status);
+      status.className = `customer-history-status ${currentInvoice.status || "unpaid"}`;
+      open.dataset.openInvoice = currentInvoice.id;
+      currentInvoiceCard.classList.toggle("overdue", currentInvoice.status === "overdue");
+      currentInvoiceCard.classList.remove("hidden");
+    } else {
+      currentInvoiceCard?.classList.add("hidden");
+      currentInvoiceCard?.classList.remove("overdue");
+    }
+
+    const invoiceHistoryCard = document.getElementById("invoiceHistoryCard");
+    const invoiceHistoryList = document.getElementById("invoiceHistoryList");
+    invoiceHistoryList.replaceChildren();
+    if (invoices.length) {
+      invoices.forEach((invoice) => {
+        const row = document.createElement("div");
+        row.className = "customer-history-row";
+
+        const main = document.createElement("div");
+        const title = document.createElement("strong");
+        title.textContent = invoice.invoiceNumber
+          ? `${invoice.isCreditNote ? "Kreditnota" : "Faktura"} ${invoice.invoiceNumber}`
+          : (invoice.isCreditNote ? "Kreditnota" : "Faktura");
+        const date = document.createElement("span");
+        date.textContent = invoice.status === "paid" && invoice.paidAt
+          ? `Betalt ${formatDate(invoice.paidAt, false)}`
+          : invoice.dueDate
+            ? `Forfall ${formatDate(invoice.dueDate, false)}`
+            : formatDate(invoice.issuedAt, false);
+        main.append(title, date);
+
+        const side = document.createElement("div");
+        side.className = "customer-history-row-side";
+        const amount = document.createElement("span");
+        amount.className = "customer-history-amount";
+        amount.textContent = formatCurrency(invoice.amount);
+        const invoiceStatus = document.createElement("span");
+        invoiceStatus.className = `customer-history-status ${invoice.status || ""}`;
+        invoiceStatus.textContent = invoiceStatusText(invoice.status);
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "invoice-open-button";
+        button.dataset.openInvoice = invoice.id;
+        button.textContent = "Åpne faktura";
+        side.append(amount, invoiceStatus, button);
+        row.append(main, side);
+        invoiceHistoryList.appendChild(row);
+      });
+      invoiceHistoryCard.classList.remove("hidden");
+    } else {
+      invoiceHistoryCard.classList.add("hidden");
+    }
+
+    const jobHistoryCard = document.getElementById("jobHistoryCard");
+    const jobHistoryList = document.getElementById("jobHistoryList");
+    jobHistoryList.replaceChildren();
+    const previousJobs = jobs.filter((job) => !project.id || job.id !== project.id);
+    if (previousJobs.length) {
+      previousJobs.forEach((job) => {
+        const row = document.createElement("div");
+        row.className = "customer-history-row";
+
+        const main = document.createElement("div");
+        const title = document.createElement("strong");
+        title.textContent = job.serviceName || "Oppdrag";
+        const date = document.createElement("span");
+        date.textContent = job.jobDate ? formatDate(job.jobDate, false) : "";
+        main.append(title, date);
+
+        const side = document.createElement("div");
+        side.className = "customer-history-row-side";
+        const jobStatus = document.createElement("span");
+        jobStatus.className = "customer-history-status";
+        jobStatus.textContent = jobStatusText(job.status);
+        side.appendChild(jobStatus);
+        row.append(main, side);
+        jobHistoryList.appendChild(row);
+      });
+      jobHistoryCard.classList.remove("hidden");
+    } else {
+      jobHistoryCard.classList.add("hidden");
+    }
+
+    const historySection = document.getElementById("historySection");
+    historySection?.classList.toggle("hidden", invoices.length === 0 && previousJobs.length === 0);
+  }
+
+  async function openInvoicePdf(invoiceId) {
+    if (!invoiceId) return;
+    if (isDemo) {
+      alert("Dette er en demo. På en ekte kundeportal åpnes fakturaen som PDF her.");
+      return;
+    }
+    const popup = window.open("", "_blank");
+    if (!popup) {
+      alert("Nettleseren blokkerte åpningen. Tillat nye faner og prøv igjen.");
+      return;
+    }
+    popup.opener = null;
+    try {
+      popup.document.write("<p style=\"font-family:Arial,sans-serif;padding:24px\">Henter faktura…</p>");
+      const response = await fetch(`${API_BASE}/customer-project/access/invoices/${encodeURIComponent(invoiceId)}/pdf`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        body: JSON.stringify({ token: accessToken }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || "Kunne ikke åpne fakturaen.");
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      popup.location.replace(url);
+      setTimeout(() => URL.revokeObjectURL(url), 120000);
+    } catch (error) {
+      popup.close();
+      alert(error.message || "Kunne ikke åpne fakturaen.");
+    }
+  }
+
   function showError(message) {
     loadingCard.classList.add("hidden");
     projectContent.classList.add("hidden");
@@ -229,6 +449,7 @@
       nextSubtext.textContent = project.nextWorkMessage || "Prosjektet er fortsatt aktivt. Siden oppdateres så snart neste arbeidsdag er satt.";
     }
 
+    renderCustomerOverview(project);
     renderProcurements(project.procurements);
 
     const legacyMaterialCard = document.getElementById("legacyMaterialCard");
@@ -289,7 +510,8 @@
 
   function demoProject() {
     return {
-      customerName: "Eksempelkunde",
+      id: "demo-current",
+      customerName: "Kjartan Hansen",
       serviceName: "Spyling og rengjøring av uteområde",
       status: "stopped",
       statusText: "Venter på din godkjenning",
@@ -326,6 +548,47 @@
         { date: "2026-09-02", seconds: 3 * 3600 + 45 * 60 },
       ],
       images: [],
+      customerOverview: {
+        unpaidInvoiceCount: 1,
+        overdueInvoiceCount: 0,
+        latestInvoice: {
+          id: "demo-invoice-current",
+          invoiceNumber: 1027,
+          amount: 2800,
+          status: "unpaid",
+          issuedAt: "2026-09-18T10:00:00.000Z",
+          dueDate: "2026-09-28T10:00:00.000Z",
+          paidAt: null,
+          isCreditNote: false,
+        },
+        invoices: [
+          {
+            id: "demo-invoice-current",
+            invoiceNumber: 1027,
+            amount: 2800,
+            status: "unpaid",
+            issuedAt: "2026-09-18T10:00:00.000Z",
+            dueDate: "2026-09-28T10:00:00.000Z",
+            paidAt: null,
+            isCreditNote: false,
+          },
+          {
+            id: "demo-invoice-old",
+            invoiceNumber: 1024,
+            amount: 4250,
+            status: "paid",
+            issuedAt: "2026-08-12T10:00:00.000Z",
+            dueDate: "2026-08-26T10:00:00.000Z",
+            paidAt: "2026-08-20T12:00:00.000Z",
+            isCreditNote: false,
+          },
+        ],
+        jobs: [
+          { id: "demo-current", serviceName: "Spyling og rengjøring av uteområde", jobDate: "2026-09-13", status: "stopped" },
+          { id: "demo-old", serviceName: "Rengjøring av terrasse", jobDate: "2026-08-12", status: "completed" },
+          { id: "demo-older", serviceName: "Vedlikehold uteområde", jobDate: "2026-05-03", status: "completed" },
+        ],
+      },
       updatedAt: new Date().toISOString(),
     };
   }
@@ -365,6 +628,11 @@
       approvalInFlight = false;
     }
   }
+
+  projectContent.addEventListener("click", (event) => {
+    const invoiceButton = event.target.closest("[data-open-invoice]");
+    if (invoiceButton) openInvoicePdf(invoiceButton.dataset.openInvoice);
+  });
 
   procurementContainer.addEventListener("click", (event) => {
     const approve = event.target.closest("[data-approve-procurement]");
