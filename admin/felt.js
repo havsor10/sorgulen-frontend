@@ -824,6 +824,10 @@
 
   async function jobAction(id, action) {
     if (state.busy) return;
+    if (navigator.onLine === false) {
+      setStatus("START/PAUSE/FORTSETT krever nett for sikker tidsføring. Andre feltregistreringer lagres offline.", "error");
+      return;
+    }
     state.busy = true;
     setStatus(action === "pause" ? "Pauser arbeid…" : action === "stop" ? "Avslutter økta…" : "Starter arbeid…");
     try {
@@ -868,16 +872,49 @@
   el("closeFieldModal").addEventListener("click", closeModal);
   document.querySelectorAll("[data-close-modal]").forEach((node) => node.addEventListener("click", closeModal));
   el("fieldForm").addEventListener("submit", submitFieldForm);
-  el("refreshFieldBtn").addEventListener("click", () => loadField(true));
+  el("refreshFieldBtn").addEventListener("click", async () => {
+    await flushOfflineQueue({ refresh: false });
+    await loadField(true);
+  });
   el("jobSearch").addEventListener("input", renderJobs);
   el("customerSearch").addEventListener("input", () => {
     clearTimeout(state.customerSearchTimer);
     state.customerSearchTimer = setTimeout(() => loadCustomers(el("customerSearch").value.trim()), 220);
   });
+  el("fieldSyncBadge")?.addEventListener("click", openSyncModal);
+  el("closeFieldSync")?.addEventListener("click", closeSyncModal);
+  document.querySelectorAll("[data-close-sync]").forEach((node) => node.addEventListener("click", closeSyncModal));
+  el("fieldSyncNowBtn")?.addEventListener("click", async () => {
+    setStatus("Synkroniserer lagrede feltregistreringer…");
+    await flushOfflineQueue();
+    setStatus(state.syncSummary.total ? "Noen registreringer venter fortsatt." : "Alt er synkronisert.", state.syncSummary.error ? "error" : "success");
+    renderSyncItems();
+  });
+  el("fieldSyncRetryBtn")?.addEventListener("click", async () => {
+    if (!offline?.supported?.() || navigator.onLine === false) return;
+    await offline.retryErrors();
+    await flushOfflineQueue();
+    renderSyncItems();
+  });
   el("fullAdminLink").addEventListener("click", () => localStorage.setItem("sorgulen_admin_mode", "full"));
+
+  window.addEventListener("online", async () => {
+    if (offline?.summary) renderSyncSummary(await offline.summary());
+    setStatus("Nettet er tilbake – synkroniserer feltregistreringer…");
+    await flushOfflineQueue();
+    if (!state.syncSummary.total) setStatus("Alt er synkronisert.", "success");
+  });
+  window.addEventListener("offline", async () => {
+    if (offline?.summary) renderSyncSummary(await offline.summary());
+    setStatus("Frakoblet – nye registreringer lagres på telefonen.");
+  });
 
   localStorage.setItem("sorgulen_admin_mode", "field");
   bindDynamic(document);
-  Promise.all([loadServices(), loadCustomers(""), loadField(true)]).catch((error) => setStatus(error.message, "error"));
+  if (offline?.onChange) offline.onChange(renderSyncSummary);
+  Promise.all([loadServices(), loadCustomers(""), loadField(true)])
+    .then(() => flushOfflineQueue())
+    .catch((error) => setStatus(error.message, "error"));
   setInterval(updateTimers, 1000);
+  setInterval(() => flushOfflineQueue(), 30_000);
 })();
