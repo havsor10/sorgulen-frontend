@@ -366,3 +366,7 @@ footer{padding:27px 0 34px;background:#050a0f;border-top:1px solid rgba(255,255,
   .mobile-call-bar span{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em}
   .mobile-call-bar strong{font-size:17px}
 }
+
+.contract-note{margin:14px 0 0;padding:16px 18px;border:1px solid #d3dee4;border-radius:13px;background:#f0f5f7}
+.contract-note strong{display:block;color:#213c4d;font-size:11px}
+.contract-note p{margin:5px 0 0;color:#667986;font-size:10px;line-height:1.6}
