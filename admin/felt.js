@@ -521,24 +521,34 @@
       const q = input.value.trim();
       if (q.length < 2) { suggestions.innerHTML = ""; return; }
       state.customerSearchTimer = setTimeout(async () => {
+        let list = [];
         try {
-          const data = await api("/admin/customers?q=" + encodeURIComponent(q) + "&limit=8");
-          const list = data.customers || [];
-          suggestions.innerHTML = list.map((customer, index) =>
-            '<button type="button" data-pick-index="' + index + '"><strong>' + esc(customer.name) + '</strong><span>' +
-            esc([customer.phone, customer.address].filter(Boolean).join(" · ") || "Eksisterende kunde") + '</span></button>'
-          ).join("");
-          suggestions.querySelectorAll("[data-pick-index]").forEach((button) => {
-            button.onclick = () => {
-              const customer = list[Number(button.dataset.pickIndex)];
-              state.selectedCustomer = customer;
-              input.value = customer.name;
-              selectedRoot.innerHTML = selectedCustomerHtml(customer);
-              suggestions.innerHTML = "";
-              bindClear();
-            };
-          });
+          if (navigator.onLine !== false) {
+            const data = await api("/admin/customers?q=" + encodeURIComponent(q) + "&limit=8");
+            list = data.customers || [];
+          }
         } catch (_) {}
+        if (!list.length) {
+          const cached = await cacheGet("customers");
+          const source = Array.isArray(cached) ? cached : state.customers;
+          const needle = q.toLowerCase();
+          list = source.filter((customer) => [customer.name, customer.phone, customer.address, customer.city]
+            .join(" ").toLowerCase().includes(needle)).slice(0, 8);
+        }
+        suggestions.innerHTML = list.map((customer, index) =>
+          '<button type="button" data-pick-index="' + index + '"><strong>' + esc(customer.name) + '</strong><span>' +
+          esc([customer.phone, customer.address].filter(Boolean).join(" · ") || "Eksisterende kunde") + '</span></button>'
+        ).join("");
+        suggestions.querySelectorAll("[data-pick-index]").forEach((button) => {
+          button.onclick = () => {
+            const customer = list[Number(button.dataset.pickIndex)];
+            state.selectedCustomer = customer;
+            input.value = customer.name;
+            selectedRoot.innerHTML = selectedCustomerHtml(customer);
+            suggestions.innerHTML = "";
+            bindClear();
+          };
+        });
       }, 180);
     });
   }
@@ -658,6 +668,9 @@
     save.textContent = "Lagrer…";
 
     try {
+      let result = null;
+      let successText = "";
+
       if (state.modalType === "new-job") {
         const name = String(data.get("customerName") || "").trim();
         if (!name) throw new Error("Skriv kundenavn.");
@@ -666,15 +679,23 @@
           || "Diverse arbeid";
         const hourlyRate = Number(state.defaultService?.price || 650);
         let resolvedCustomer = state.selectedCustomer;
-        if (!resolvedCustomer?._id) {
-          const lookup = await api("/admin/customers?q=" + encodeURIComponent(name) + "&limit=8");
-          const exact = (lookup.customers || []).filter((customer) =>
-            String(customer.name || "").trim().toLocaleLowerCase("nb-NO") === name.toLocaleLowerCase("nb-NO")
-          );
-          if (exact.length === 1) resolvedCustomer = exact[0];
-          if (exact.length > 1) throw new Error("Det finnes flere kunder med dette navnet. Velg riktig kunde fra forslagene.");
+
+        if (!resolvedCustomer?._id && navigator.onLine !== false) {
+          try {
+            const lookup = await api("/admin/customers?q=" + encodeURIComponent(name) + "&limit=8");
+            const exact = (lookup.customers || []).filter((customer) =>
+              String(customer.name || "").trim().toLocaleLowerCase("nb-NO") === name.toLocaleLowerCase("nb-NO")
+            );
+            if (exact.length === 1) resolvedCustomer = exact[0];
+            if (exact.length > 1) throw new Error("Det finnes flere kunder med dette navnet. Velg riktig kunde fra forslagene.");
+          } catch (error) {
+            if (!retryableMutationError(error)) throw error;
+          }
         }
+
+        const id = operationId("job");
         const payload = {
+          operationId: id,
           jobDate: osloToday(),
           serviceName,
           hourlyRate: hourlyRate > 0 ? hourlyRate : 650,
@@ -684,73 +705,114 @@
             ? { customerId: resolvedCustomer._id }
             : { customer: { name } }),
         };
-        await api("/admin/work-orders", { method: "POST", body: JSON.stringify(payload) });
-        setStatus("Oppdraget er lagret i køen. Aktiv jobb blei ikkje påvirket.", "success");
+        result = await submitMutation({
+          id,
+          type: "new-job",
+          label: "Nytt oppdrag · " + name,
+          endpoint: "/admin/work-orders",
+          body: payload,
+        });
+        successText = "Oppdraget er lagret i køen. Aktiv jobb blei ikkje påvirket.";
       } else if (state.modalType === "expense") {
         const jobId = String(data.get("jobId") || "");
         if (!jobId) throw new Error("Velg oppdrag.");
         const receipt = form.querySelector('input[name="receipt"]')?.files?.[0];
-        await api("/admin/work-orders/" + encodeURIComponent(jobId) + "/expenses", {
-          method: "POST",
-          body: JSON.stringify({
-            operationId: operationId("expense"),
-            amount: Number(data.get("amount")),
-            description: String(data.get("description") || "").trim(),
-            supplier: String(data.get("supplier") || "").trim(),
-            billable: data.get("billable") === "on",
-            receiptImage: receipt ? await fileData(receipt) : "",
-          }),
+        const id = operationId("expense");
+        const payload = {
+          operationId: id,
+          amount: Number(data.get("amount")),
+          description: String(data.get("description") || "").trim(),
+          supplier: String(data.get("supplier") || "").trim(),
+          billable: data.get("billable") === "on",
+          receiptImage: receipt ? await fileData(receipt) : "",
+        };
+        result = await submitMutation({
+          id,
+          type: "expense",
+          label: "Utgift · " + (payload.description || fmtMoney(payload.amount)),
+          endpoint: "/admin/work-orders/" + encodeURIComponent(jobId) + "/expenses",
+          body: payload,
         });
-        setStatus("Utgiften er registrert på oppdraget.", "success");
+        successText = "Utgiften er registrert på oppdraget.";
       } else if (state.modalType === "customer-note") {
         if (!state.selectedCustomer?._id) throw new Error("Velg ein eksisterende kunde før notatet lagres.");
-        await api("/admin/customers/" + encodeURIComponent(state.selectedCustomer._id), {
-          method: "PATCH",
-          body: JSON.stringify({ note: String(data.get("note") || "").trim() }),
+        const id = operationId("customer-note");
+        const textValue = String(data.get("note") || "").trim();
+        result = await submitMutation({
+          id,
+          type: "customer-note",
+          label: "Kundenotat · " + state.selectedCustomer.name,
+          endpoint: "/admin/customers/" + encodeURIComponent(state.selectedCustomer._id) + "/notes",
+          body: { operationId: id, text: textValue },
         });
-        setStatus("Kundenotatet er lagret.", "success");
+        successText = "Kundenotatet er lagret.";
       } else if (state.modalType === "job-note") {
         const jobId = String(data.get("jobId") || "");
-        await api("/admin/work-orders/" + encodeURIComponent(jobId) + "/notes", {
-          method: "POST",
-          body: JSON.stringify({ operationId: operationId("note"), text: String(data.get("text") || "").trim() }),
+        if (!jobId) throw new Error("Velg oppdrag.");
+        const id = operationId("note");
+        const payload = { operationId: id, text: String(data.get("text") || "").trim() };
+        result = await submitMutation({
+          id,
+          type: "job-note",
+          label: "Jobbnotat",
+          endpoint: "/admin/work-orders/" + encodeURIComponent(jobId) + "/notes",
+          body: payload,
         });
-        setStatus("Notatet er lagt i oppdragsloggen.", "success");
+        successText = "Notatet er lagt i oppdragsloggen.";
       } else if (state.modalType === "time") {
         const jobId = String(data.get("jobId") || "");
+        if (!jobId) throw new Error("Velg oppdrag.");
         const minutes = Number(data.get("minutes"));
         if (!Number.isFinite(minutes) || minutes <= 0) throw new Error("Skriv antall minutter.");
-        await api("/admin/work-orders/" + encodeURIComponent(jobId) + "/time-entries", {
-          method: "POST",
-          body: JSON.stringify({
-            operationId: operationId("time"),
-            startedAt: new Date(Date.now() - minutes * 60_000).toISOString(),
-            durationMinutes: minutes,
-            category: String(data.get("category") || "work"),
-            comment: String(data.get("comment") || "").trim(),
-            billable: data.get("billable") === "on",
-          }),
+        const id = operationId("time");
+        const payload = {
+          operationId: id,
+          startedAt: new Date(Date.now() - minutes * 60_000).toISOString(),
+          durationMinutes: minutes,
+          category: String(data.get("category") || "work"),
+          comment: String(data.get("comment") || "").trim(),
+          billable: data.get("billable") === "on",
+        };
+        result = await submitMutation({
+          id,
+          type: "time",
+          label: "Tid · " + minutes + " min",
+          endpoint: "/admin/work-orders/" + encodeURIComponent(jobId) + "/time-entries",
+          body: payload,
         });
-        setStatus("Tiden er registrert.", "success");
+        successText = "Tiden er registrert.";
       } else if (state.modalType === "material") {
         const jobId = String(data.get("jobId") || "");
-        await api("/admin/work-orders/" + encodeURIComponent(jobId) + "/materials", {
-          method: "POST",
-          body: JSON.stringify({
-            operationId: operationId("material"),
-            item: String(data.get("item") || "").trim(),
-            quantity: Number(data.get("quantity") || 1),
-            unit: String(data.get("unit") || "stk").trim(),
-            purchaseUnitPrice: data.get("purchaseUnitPrice") ? Number(data.get("purchaseUnitPrice")) : null,
-            unitPrice: data.get("unitPrice") ? Number(data.get("unitPrice")) : null,
-            comment: String(data.get("comment") || "").trim(),
-            billable: data.get("billable") === "on",
-          }),
+        if (!jobId) throw new Error("Velg oppdrag.");
+        const id = operationId("material");
+        const payload = {
+          operationId: id,
+          item: String(data.get("item") || "").trim(),
+          quantity: Number(data.get("quantity") || 1),
+          unit: String(data.get("unit") || "stk").trim(),
+          purchaseUnitPrice: data.get("purchaseUnitPrice") ? Number(data.get("purchaseUnitPrice")) : null,
+          unitPrice: data.get("unitPrice") ? Number(data.get("unitPrice")) : null,
+          comment: String(data.get("comment") || "").trim(),
+          billable: data.get("billable") === "on",
+        };
+        result = await submitMutation({
+          id,
+          type: "material",
+          label: "Materiale · " + (payload.item || "registrering"),
+          endpoint: "/admin/work-orders/" + encodeURIComponent(jobId) + "/materials",
+          body: payload,
         });
-        setStatus("Materialet er registrert.", "success");
+        successText = "Materialet er registrert.";
       }
+
       closeModal();
-      await Promise.all([loadField(false), loadCustomers(el("customerSearch").value.trim())]);
+      if (result?.queued) {
+        setStatus("Lagret på telefonen – venter på synk.", "success");
+        if (offline?.summary) renderSyncSummary(await offline.summary());
+      } else {
+        setStatus(successText || "Registreringen er lagret.", "success");
+        await Promise.allSettled([loadField(false), loadCustomers(el("customerSearch").value.trim())]);
+      }
     } catch (error) {
       errorEl.textContent = error.message;
     } finally {
