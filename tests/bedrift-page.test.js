@@ -12,37 +12,21 @@ test("business page stays separate from the main website navigation", () => {
   assert.match(page, /Arbeidsversjon/);
 });
 
-test("business draft is hidden from search engines until launch", () => {
+test("business draft stays hidden from search engines until launch", () => {
   assert.match(page, /name="robots" content="noindex,nofollow"/);
 });
 
-test("business page covers the intended business-use areas", () => {
+test("competence is visible before detailed experience and hire information", () => {
+  const competence = page.indexOf('id="kompetanse"');
+  const experience = page.indexOf('id="erfaring"');
+  const hire = page.indexOf('id="innleie"');
+  assert.ok(competence > 0);
+  assert.ok(experience > competence);
+  assert.ok(hire > experience);
+});
+
+test("business page lists supplied licence and competence classes precisely", () => {
   for (const text of [
-    "Praktisk industribistand",
-    "Lager og internflyt",
-    "Vedlikehold og praktiske oppgaver",
-    "Uteområder og sesong",
-    "HMS og krav",
-    "Fra behov til utført jobb",
-  ]) {
-    assert.match(page, new RegExp(text));
-  }
-});
-
-test("business page has direct contact paths without depending on site navigation", () => {
-  assert.match(page, /tel:\+4740730187/);
-  assert.match(page, /mailto:sor\.industri@gmail\.com/);
-});
-
-test("business page has its own responsive presentation and navigation", () => {
-  assert.match(css, /@media\(max-width:720px\)/);
-  assert.match(js, /menuButton/);
-  assert.match(js, /IntersectionObserver/);
-});
-
-test("business page lists the supplied licences and competence classes precisely", () => {
-  for (const text of [
-    "B · BE · T",
     "T1 · T2 · T4",
     "Lavtløftende palletruck",
     "Skyvemasttruck / støttebenstruck",
@@ -50,12 +34,54 @@ test("business page lists the supplied licences and competence classes precisely
     "G4 · G11",
     "Bro- og traverskran",
     "Løfteredskap",
+    "B · BE · T",
+    "Personbil med tilhenger",
+    "Traktor",
   ]) {
     assert.ok(page.includes(text), "Missing competence label: " + text);
   }
 });
 
-test("hot work is not presented as a valid certificate yet", () => {
-  assert.match(page, /praktisk slokkeøvelse gjenstår/);
+test("hot work is clearly not presented as a valid certificate yet", () => {
+  assert.match(page, /Praktisk slokkeøvelse gjenstår/);
   assert.match(page, /Ikke markert som gyldig ennå/);
+});
+
+test("practical experience is separate and relevant to industrial hire", () => {
+  for (const text of [
+    "Logistikk og lager",
+    "Truckarbeid",
+    "Lasting og lossing",
+    "Industri og drift",
+    "Praktisk mekanisk arbeid",
+    "Service, enklere reparasjoner og vedlikehold",
+    "Montering og demontering",
+    "Brøyting og vinterarbeid",
+  ]) {
+    assert.ok(page.includes(text), "Missing experience item: " + text);
+  }
+});
+
+test("employer names are not used as marketing claims", () => {
+  assert.doesNotMatch(page, /EWOS/i);
+  assert.doesNotMatch(page, /Cargill/i);
+});
+
+test("direct telephone contact is the primary business action", () => {
+  const telephoneLinks = page.match(/href="tel:\+4740730187"/g) || [];
+  assert.ok(telephoneLinks.length >= 4);
+  assert.match(page, /Ring direkte/);
+  assert.match(page, /407 30 187/);
+  assert.match(page, /class="mobile-call-bar"/);
+});
+
+test("mobile layout keeps a persistent call action", () => {
+  assert.match(css, /\.mobile-call-bar/);
+  assert.match(css, /position:fixed/);
+  assert.match(css, /@media\(max-width:720px\)/);
+});
+
+test("business page keeps its own responsive navigation", () => {
+  assert.match(js, /menuButton/);
+  assert.match(js, /IntersectionObserver/);
 });
