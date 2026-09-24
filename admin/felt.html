@@ -24,6 +24,9 @@
 
   <main class="field-main">
     <div id="fieldStatus" class="field-status" role="status" aria-live="polite"></div>
+    <button id="fieldSyncBadge" class="field-sync-badge is-synced" type="button" aria-haspopup="dialog">
+      <span class="field-sync-dot"></span><span id="fieldSyncText">Alt synkronisert</span>
+    </button>
 
     <section class="field-view is-active" data-view="today" aria-labelledby="todayTitle">
       <div class="field-heading">
@@ -114,6 +117,22 @@
     </div>
   </aside>
 
+  <div id="fieldSyncModal" class="field-modal" hidden aria-hidden="true">
+    <div class="field-modal-backdrop" data-close-sync></div>
+    <section class="field-modal-card field-sync-card" role="dialog" aria-modal="true" aria-labelledby="fieldSyncTitle">
+      <div class="field-modal-head">
+        <div><p class="field-kicker">Lokal sikkerhet</p><h2 id="fieldSyncTitle">Synkstatus</h2></div>
+        <button id="closeFieldSync" class="field-icon-btn" type="button" aria-label="Lukk">×</button>
+      </div>
+      <p id="fieldSyncHelp" class="field-sync-help">Registreringer lagres på denne enheten dersom nettet forsvinner.</p>
+      <div id="fieldSyncItems" class="field-sync-items"></div>
+      <div class="field-sync-actions">
+        <button id="fieldSyncRetryBtn" class="field-action-secondary" type="button">Prøv igjen</button>
+        <button id="fieldSyncNowBtn" class="field-action-primary" type="button">Synk nå</button>
+      </div>
+    </section>
+  </div>
+
   <div id="fieldModal" class="field-modal" hidden aria-hidden="true">
     <div class="field-modal-backdrop" data-close-modal></div>
     <section class="field-modal-card" role="dialog" aria-modal="true" aria-labelledby="fieldModalTitle">
@@ -131,6 +150,7 @@
 
   <script src="../config.js?v=20260922-felt1"></script>
   <script src="work-order-time.js?v=20260918-session1"></script>
-  <script src="felt.js?v=20260922-felt1" defer></script>
+  <script src="field-offline.js?v=20260924-offline1"></script>
+  <script src="felt.js?v=20260924-offline1" defer></script>
 </body>
 </html>
