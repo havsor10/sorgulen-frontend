@@ -13,18 +13,18 @@
   <link rel="stylesheet" href="admin.css">
   <link rel="stylesheet" href="admin-shell.css">
   <link rel="stylesheet" href="admin-pages.css">
-  <link rel="stylesheet" href="innboks.css?v=20260925-mail1">
+  <link rel="stylesheet" href="innboks.css?v=20260925-mail2">
 </head>
 <body>
   <div id="adminShell" data-page="mailbox"></div>
-  <script src="admin-shell.js?v=20260925-mail1"></script>
+  <script src="admin-shell.js?v=20260925-mail2"></script>
 
   <main class="admin-main mailbox-main">
     <header class="admin-page-header mailbox-header">
       <div>
         <p class="admin-eyebrow">Firmamail · sor.industri@gmail.com</p>
         <h1>Innboks</h1>
-        <p>Viktige e-poster blir hentet inn automatisk og løftet fram når de ser ut til å kreve handling.</p>
+        <p>AI går gjennom firmamailen og viser bare e-post som faktisk krever oppfølging fra deg. Resten blir filtrert bort.</p>
       </div>
       <button id="syncMailboxBtn" class="mailbox-sync-btn" type="button">Synkroniser nå</button>
     </header>
@@ -36,16 +36,16 @@
         <span>Krever handling</span>
         <strong id="mailAttentionCount">–</strong>
       </button>
-      <button class="mailbox-stat" data-scope-jump="other" type="button">
-        <span>Andre nye</span>
-        <strong id="mailOtherCount">–</strong>
-      </button>
       <button class="mailbox-stat" data-scope-jump="handled" type="button">
         <span>Ferdig behandlet</span>
         <strong id="mailHandledCount">–</strong>
       </button>
+      <div class="mailbox-stat mailbox-filter-state">
+        <span>AI-filter</span>
+        <strong>Kun viktig</strong>
+      </div>
       <div class="mailbox-stat mailbox-sync-state">
-        <span>Sist synk</span>
+        <span>Sist kontrollert</span>
         <strong id="mailLastSync">–</strong>
       </div>
     </section>
@@ -54,9 +54,7 @@
       <div class="mailbox-toolbar">
         <div class="mailbox-tabs" role="tablist" aria-label="E-postfilter">
           <button class="mailbox-tab is-active" type="button" data-mail-scope="attention">Krever handling</button>
-          <button class="mailbox-tab" type="button" data-mail-scope="other">Andre</button>
-          <button class="mailbox-tab" type="button" data-mail-scope="all">Alle</button>
-          <button class="mailbox-tab" type="button" data-mail-scope="handled">Ferdig</button>
+          <button class="mailbox-tab" type="button" data-mail-scope="handled">Ferdig behandlet</button>
         </div>
         <p id="mailboxListMeta" class="mailbox-list-meta"></p>
       </div>
@@ -80,7 +78,7 @@
     </section>
   </main>
 
-  <script src="../config.js?v=20260925-mail1"></script>
-  <script src="innboks.js?v=20260925-mail1"></script>
+  <script src="../config.js?v=20260925-mail2"></script>
+  <script src="innboks.js?v=20260925-mail2"></script>
 </body>
 </html>
