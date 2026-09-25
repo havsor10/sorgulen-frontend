@@ -29,3 +29,12 @@ test("public crawlers can discover public content while admin stays excluded", (
   assert.match(robots, /Disallow: \/admin\//);
   assert.match(robots, /Sitemap: https:\/\/sorgulen\.no\/sitemap\.xml/);
 });
+
+test("public entity references connect website, Maps and directory profiles", () => {
+  for (const url of [
+    "https://maps.google.com/maps?cid=1107497880330651244",
+    "https://www.gulesider.no/s%C3%B8rgulen%2Bindustriservice%2Bflor%C3%B8/302865144/bedrift",
+  ]) {
+    assert.ok(llms.includes(url), "Missing public entity URL: " + url);
+  }
+});
