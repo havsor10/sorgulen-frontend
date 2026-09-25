@@ -10,7 +10,6 @@
   const listMeta = document.getElementById("mailboxListMeta");
   const syncBtn = document.getElementById("syncMailboxBtn");
   const attentionCount = document.getElementById("mailAttentionCount");
-  const otherCount = document.getElementById("mailOtherCount");
   const handledCount = document.getElementById("mailHandledCount");
   const lastSync = document.getElementById("mailLastSync");
   const tabs = [...document.querySelectorAll("[data-mail-scope]")];
@@ -86,7 +85,6 @@
 
   function renderSummary(data) {
     attentionCount.textContent = data.counts?.attention ?? 0;
-    otherCount.textContent = data.counts?.other ?? 0;
     handledCount.textContent = data.counts?.handled ?? 0;
     lastSync.textContent = data.state?.lastSuccessAt ? fmtDate(data.state.lastSuccessAt) : "Ikke synkronisert";
     if (!data.configured) {
@@ -104,10 +102,8 @@
     listMeta.textContent = `${messages.length} e-post${messages.length === 1 ? "" : "er"}`;
     if (!messages.length) {
       const copy = scope === "attention"
-        ? "Ingen e-poster krever handling akkurat nå."
-        : scope === "handled"
-          ? "Ingen ferdigbehandlede e-poster ennå."
-          : "Ingen e-poster i denne visningen.";
+        ? "Ingen viktige firmamailer krever handling akkurat nå."
+        : "Ingen ferdigbehandlede e-poster ennå.";
       listNode.innerHTML = `<div class="mailbox-empty">${escapeHtml(copy)}</div>`;
       return;
     }
@@ -121,7 +117,7 @@
             <span class="mail-time">${escapeHtml(fmtDate(mail.receivedAt))}</span>
           </div>
           <div class="mail-subject">${escapeHtml(mail.subject || "(uten emne)")}</div>
-          <div class="mail-snippet">${escapeHtml(mail.snippet || "Ingen forhåndsvisning")}</div>
+          <div class="mail-snippet">${escapeHtml(mail.triageSummary || mail.snippet || "Viktig firmamail")}</div>
           <div class="mail-row-meta">
             ${mail.requiresAction ? `<span class="mail-pill ${escapeHtml(mail.priority)}">${escapeHtml(priorityLabel(mail.priority))}</span>` : ""}
             <span class="mail-pill ${escapeHtml(mail.category)}">${escapeHtml(categoryLabel(mail.category))}</span>
@@ -143,8 +139,8 @@
     }
 
     const sender = mail.senderName || mail.senderEmail || "Ukjent avsender";
-    const reasons = (mail.classificationReasons || []).length
-      ? `<div class="mail-reasons"><strong>Hvorfor systemet sorterte den slik</strong><ul>${mail.classificationReasons.map((reason) => `<li>${escapeHtml(reason)}</li>`).join("")}</ul></div>`
+    const reasons = mail.triageReason
+      ? `<div class="mail-reasons"><strong>Hvorfor AI slapp den gjennom</strong><p>${escapeHtml(mail.triageReason)}</p></div>`
       : "";
     const customer = mail.customer
       ? `<a class="mail-customer-link" href="kunde.html?id=${encodeURIComponent(mail.customer.id)}">Åpne kunde: ${escapeHtml(mail.customer.name)}</a>`
@@ -192,7 +188,7 @@
     const data = await api(`/messages?scope=${encodeURIComponent(scope)}&limit=80`);
     messages = data.messages || [];
     if (!preserveActive || (activeId && !messages.some((mail) => mail.id === activeId))) {
-      if (!activeId || scope !== "all") activeId = messages[0]?.id || "";
+      if (!activeId) activeId = messages[0]?.id || "";
     }
     renderList();
     if (activeId) await openMessage(activeId, { updateUrl: false });
@@ -231,7 +227,7 @@
     setStatus("Henter nye e-poster fra firmakontoen…");
     try {
       const result = await api("/sync", { method: "POST", body: "{}" });
-      setStatus(result.imported ? `${result.imported} nye e-poster hentet inn.` : "Innboksen er oppdatert.", "success");
+      setStatus("AI-kontrollen er ferdig. Bare e-post som krever oppfølging vises her.", "success");
       await Promise.all([loadSummary(), loadMessages({ preserveActive: true })]);
       window.SorgulenAdminShell?.refreshBadges?.();
     } catch (error) {
