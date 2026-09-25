@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b0f13">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Sørgulen Admin">
+  <title>Innboks – Sørgulen admin</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="../assets/logo.png">
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin-shell.css">
+  <link rel="stylesheet" href="admin-pages.css">
+  <link rel="stylesheet" href="innboks.css?v=20260925-mail1">
+</head>
+<body>
+  <div id="adminShell" data-page="mailbox"></div>
+  <script src="admin-shell.js?v=20260925-mail1"></script>
+
+  <main class="admin-main mailbox-main">
+    <header class="admin-page-header mailbox-header">
+      <div>
+        <p class="admin-eyebrow">Firmamail · sor.industri@gmail.com</p>
+        <h1>Innboks</h1>
+        <p>Viktige e-poster blir hentet inn automatisk og løftet fram når de ser ut til å kreve handling.</p>
+      </div>
+      <button id="syncMailboxBtn" class="mailbox-sync-btn" type="button">Synkroniser nå</button>
+    </header>
+
+    <div id="mailboxStatus" class="mailbox-status" role="status" aria-live="polite"></div>
+
+    <section class="mailbox-summary" aria-label="Status for firmainnboks">
+      <button class="mailbox-stat is-attention" data-scope-jump="attention" type="button">
+        <span>Krever handling</span>
+        <strong id="mailAttentionCount">–</strong>
+      </button>
+      <button class="mailbox-stat" data-scope-jump="other" type="button">
+        <span>Andre nye</span>
+        <strong id="mailOtherCount">–</strong>
+      </button>
+      <button class="mailbox-stat" data-scope-jump="handled" type="button">
+        <span>Ferdig behandlet</span>
+        <strong id="mailHandledCount">–</strong>
+      </button>
+      <div class="mailbox-stat mailbox-sync-state">
+        <span>Sist synk</span>
+        <strong id="mailLastSync">–</strong>
+      </div>
+    </section>
+
+    <section class="mailbox-panel" aria-labelledby="mailboxListTitle">
+      <div class="mailbox-toolbar">
+        <div class="mailbox-tabs" role="tablist" aria-label="E-postfilter">
+          <button class="mailbox-tab is-active" type="button" data-mail-scope="attention">Krever handling</button>
+          <button class="mailbox-tab" type="button" data-mail-scope="other">Andre</button>
+          <button class="mailbox-tab" type="button" data-mail-scope="all">Alle</button>
+          <button class="mailbox-tab" type="button" data-mail-scope="handled">Ferdig</button>
+        </div>
+        <p id="mailboxListMeta" class="mailbox-list-meta"></p>
+      </div>
+
+      <div class="mailbox-layout">
+        <div>
+          <h2 id="mailboxListTitle" class="sr-only">E-poster</h2>
+          <div id="mailboxList" class="mailbox-list">
+            <div class="mailbox-empty">Henter firmamail…</div>
+          </div>
+        </div>
+
+        <aside id="mailDetail" class="mail-detail" aria-live="polite">
+          <div class="mail-detail-empty">
+            <span>✉</span>
+            <h2>Velg en e-post</h2>
+            <p>Her ser du hele meldingen og kan markere hva som er ferdig eller må følges opp.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <script src="../config.js?v=20260925-mail1"></script>
+  <script src="innboks.js?v=20260925-mail1"></script>
+</body>
+</html>

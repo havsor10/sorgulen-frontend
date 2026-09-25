@@ -34,6 +34,7 @@
     { key: "jobs", href: "oppdrag.html", label: "Oppdrag" },
     { key: "bookings", href: "admin-dashboard.html", label: "Bookinger" },
     { key: "requests", href: "foresporsler.html", label: "Forespørsler" },
+    { key: "mailbox", href: "innboks.html", label: "Innboks" },
     { key: "customers", href: "kunder.html", label: "Kunder" },
     { key: "invoices", href: "fakturaer.html", label: "Fakturaer" },
   ];
@@ -74,7 +75,7 @@
     </header>
     <nav class="admin-mobile-nav" aria-label="Mobilnavigasjon">
       ${mobileItems.map((item) => `<a class="admin-mobile-link${activeClass(item.key)}" href="${item.href}"${activeAttr(item.key)}><span class="admin-mobile-icon" aria-hidden="true">${mobileIcon(item.key)}</span><span class="admin-mobile-label">${item.label}</span>${badge(item.key)}</a>`).join("")}
-      <button class="admin-mobile-link${["bookings", "requests", "inventory", "snow", "autopilot", "notifications", "portal", "fiken", "website", "more"].includes(page) ? " is-active" : ""}" id="adminMoreButton" type="button" aria-expanded="false" aria-controls="adminMoreMenu">
+      <button class="admin-mobile-link${["bookings", "requests", "mailbox", "inventory", "snow", "autopilot", "notifications", "portal", "fiken", "website", "more"].includes(page) ? " is-active" : ""}" id="adminMoreButton" type="button" aria-expanded="false" aria-controls="adminMoreMenu">
         <span class="admin-mobile-icon" aria-hidden="true">•••</span><span class="admin-mobile-label">Mer</span>${badge("more")}
       </button>
     </nav>
@@ -88,6 +89,7 @@
       <a class="admin-more-link${activeClass("snow")}" href="broyting.html"${activeAttr("snow")}><span>Brøyting</span><span class="admin-more-tail">${badge("snow")}<span aria-hidden="true">›</span></span></a>
       <a class="admin-more-link${activeClass("bookings")}" href="admin-dashboard.html"${activeAttr("bookings")}><span>Bookinger</span><span class="admin-more-tail">${badge("bookings")}<span aria-hidden="true">›</span></span></a>
       <a class="admin-more-link${activeClass("requests")}" href="foresporsler.html"${activeAttr("requests")}><span>Forespørsler</span><span class="admin-more-tail">${badge("requests")}<span aria-hidden="true">›</span></span></a>
+      <a class="admin-more-link${activeClass("mailbox")}" href="innboks.html"${activeAttr("mailbox")}><span>Innboks</span><span class="admin-more-tail">${badge("mailbox")}<span aria-hidden="true">›</span></span></a>
       <a class="admin-more-link${activeClass("inventory")}" href="lager.html"${activeAttr("inventory")}><span>Lager</span><span class="admin-more-tail">${badge("inventory")}<span aria-hidden="true">›</span></span></a>
       <a class="admin-more-link${activeClass("notifications")}" href="varslinger.html"${activeAttr("notifications")}><span>Varslinger</span><span aria-hidden="true">›</span></a>
       <a class="admin-more-link${activeClass("more")}" href="statistikk.html"${activeAttr("more")}><span>Statistikk</span><span aria-hidden="true">›</span></a>
@@ -137,11 +139,12 @@
     const adminKey = (localStorage.getItem("sorgulen_admin_key") || "").trim();
     if (!adminKey) return;
     const apiBase = (window.CONFIG && window.CONFIG.API_BASE_URL) || "https://sorgulen-backend-2.onrender.com/api";
-    const [operations, inventory, snow, autopilot] = await Promise.all([
+    const [operations, inventory, snow, autopilot, mailbox] = await Promise.all([
       fetchJson(`${apiBase}/admin/operations/notifications`, adminKey),
       fetchJson(`${apiBase}/admin/inventory/summary`, adminKey),
       fetchJson(`${apiBase}/admin/snow/state`, adminKey),
       fetchJson(`${apiBase}/admin/autopilot/inbox/summary`, adminKey),
+      fetchJson(`${apiBase}/admin/mailbox/summary`, adminKey),
     ]);
     if (operations) {
       Object.entries(operations.badges || {}).forEach(([key, value]) => showBadge(key, value));
@@ -151,13 +154,15 @@
     const snowCount = Math.max(0, Number(snow?.summary?.queued) || 0);
     const autopilotCount = Math.max(0, Number(autopilot?.inbox?.counts?.pending) || 0)
       + Math.max(0, Number(autopilot?.inbox?.counts?.revisionRequested) || 0);
+    const mailboxCount = Math.max(0, Number(mailbox?.counts?.attention) || 0);
     showBadge("inventory", inventoryCount);
     showBadge("snow", snowCount);
     showBadge("autopilot", autopilotCount);
+    showBadge("mailbox", mailboxCount);
     const operationAttention = Object.entries(operations?.badges || {}).filter(([key]) => key !== "more").reduce((sum, [, value]) => sum + Math.max(0, Number(value) || 0), 0);
-    showBadge("overview", operationAttention + autopilotCount + inventoryCount + snowCount);
+    showBadge("overview", operationAttention + autopilotCount + inventoryCount + snowCount + mailboxCount);
     const existingMore = Math.max(0, Number(operations?.badges?.more) || 0);
-    showBadge("more", existingMore + inventoryCount + snowCount + autopilotCount);
+    showBadge("more", existingMore + inventoryCount + snowCount + autopilotCount + mailboxCount);
   }
 
   moreButton.addEventListener("click", () => setMenu(!moreMenu.classList.contains("is-open")));
