@@ -14,13 +14,16 @@ test("firm mailbox is a first-class complete-admin destination", () => {
   assert.match(html, /data-page="mailbox"/);
 });
 
-test("mailbox presents action-first filters and direct Gmail handoff", () => {
+test("mailbox is AI-gated instead of mirroring Gmail", () => {
+  assert.match(html, /AI går gjennom firmamailen/);
+  assert.match(html, /Kun viktig/);
   assert.match(html, /Krever handling/);
-  assert.match(html, /Andre nye/);
   assert.match(html, /Ferdig behandlet/);
-  assert.match(js, /\/messages\?scope=/);
-  assert.match(js, /Ferdig behandlet/);
-  assert.match(js, /Må følges opp/);
+  assert.doesNotMatch(html, /Andre nye/);
+  assert.doesNotMatch(html, /data-mail-scope="all"/);
+  assert.match(js, /triageSummary/);
+  assert.match(js, /Hvorfor AI slapp den gjennom/);
+  assert.match(js, /AI-kontrollen er ferdig/);
   assert.match(js, /Åpne i Gmail/);
 });
 
