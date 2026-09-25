@@ -374,7 +374,7 @@
             <strong>${escapeHtml(formatDate(workOrder.jobDate))}</strong>
           </div>
           <div class="history-main">
-            <h3>${escapeHtml(customer.name || "Ukjent kunde")}</h3>
+            <h3>${escapeHtml(customer.name || "Ukjent kunde")} ${workOrder.isTest ? '<span class="work-status-badge" style="margin-left:6px;color:#f4bd67;border-color:rgba(244,189,103,.35)">TEST</span>' : ""}</h3>
             <p>${escapeHtml(workOrder.serviceName)}</p>
           </div>
           <div class="history-metric">

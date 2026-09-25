@@ -429,7 +429,7 @@
         api("/admin/work-orders?limit=100"),
       ]);
       state.home = home;
-      state.workOrders = jobs.workOrders || [];
+      state.workOrders = (jobs.workOrders || []).filter((job) => !job.isTest && !job.trashedAt);
       await Promise.all([
         cacheSet("field-home", state.home),
         cacheSet("field-work-orders", state.workOrders),
@@ -443,7 +443,7 @@
       ]);
       if (cachedHome || Array.isArray(cachedJobs)) {
         state.home = cachedHome || state.home;
-        state.workOrders = Array.isArray(cachedJobs) ? cachedJobs : state.workOrders;
+        state.workOrders = Array.isArray(cachedJobs) ? cachedJobs.filter((job) => !job.isTest && !job.trashedAt) : state.workOrders;
         renderAll();
         setStatus("Frakoblet – viser sist lagrede feltdata. Nye registreringer lagres på telefonen.");
       } else {
