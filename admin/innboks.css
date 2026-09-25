@@ -30,7 +30,9 @@ button.mailbox-stat{cursor:pointer}
 .mailbox-stat strong{display:block;margin-top:7px;font-size:27px;line-height:1}
 .mailbox-stat.is-attention{border-color:#654841;background:linear-gradient(180deg,#1a1718,#12171b)}
 .mailbox-stat.is-attention strong{color:#ffd0c4}
-.mailbox-sync-state strong{font-size:13px;line-height:1.4;color:#cad5dc}
+.mailbox-sync-state strong,.mailbox-filter-state strong{font-size:13px;line-height:1.4;color:#cad5dc}
+.mailbox-filter-state{border-color:#2c493d;background:#101d18}
+.mailbox-filter-state strong{color:#aee4ca}
 
 .mailbox-panel{border:1px solid var(--mail-line);border-radius:18px;background:#0e1419;overflow:hidden}
 .mailbox-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 14px;border-bottom:1px solid var(--mail-line)}
@@ -89,6 +91,7 @@ button.mailbox-stat{cursor:pointer}
 .mail-reasons{padding:13px 14px;border-radius:12px;background:#101d19;border:1px solid #243b32}
 .mail-reasons strong{display:block;color:#aee4ca;font-size:9px;text-transform:uppercase;letter-spacing:.09em}
 .mail-reasons ul{margin:7px 0 0;padding-left:18px;color:#8fa39a;font-size:10px}
+.mail-reasons p{margin:7px 0 0;color:#9fb2a8;font-size:11px;line-height:1.5}
 .mail-attachments{margin-top:12px;color:#9baab5;font-size:10px}
 .mail-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
 .mail-action{
