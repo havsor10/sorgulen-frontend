@@ -756,7 +756,7 @@
     const autopilot = resultValue(results[6], {});
 
     state.home = home || {};
-    state.workOrders = Array.isArray(jobs.workOrders) ? jobs.workOrders : [];
+    state.workOrders = Array.isArray(jobs.workOrders) ? jobs.workOrders.filter((order) => !order.isTest && !order.trashedAt) : [];
     state.invoices = Array.isArray(invoices.invoices) ? invoices.invoices : [];
     state.bookings = Array.isArray(bookings.bookings) ? bookings.bookings : [];
     state.requests = Array.isArray(requests.requests) ? requests.requests : [];
