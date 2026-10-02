@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Økonomi | Sørgulen Admin</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin-shell.css">
+  <link rel="stylesheet" href="admin-pages.css">
+  <link rel="stylesheet" href="admin-hub.css">
+</head>
+<body>
+  <div id="adminShell" data-page="economy"></div>
+  <script src="admin-shell.js"></script>
+
+  <main class="admin-main admin-hub-wrap">
+    <header class="admin-page-header admin-hub-intro">
+      <div>
+        <p class="admin-eyebrow">Økonomi</p>
+        <h1>Pengene på ett sted</h1>
+        <p>Fakturering, regnskap og nøkkeltall er samlet her.</p>
+      </div>
+    </header>
+
+    <div class="admin-hub-grid">
+      <a class="admin-hub-card" href="fakturaer.html">
+        <div>
+          <span class="admin-eyebrow">Daglig bruk</span>
+          <h2>Fakturaer</h2>
+          <p>Lag, send, følg opp og kontroller betalinger.</p>
+        </div>
+        <span class="admin-nav-badge" data-admin-badge="invoices" hidden></span>
+        <span class="admin-hub-card-arrow" aria-hidden="true">›</span>
+      </a>
+
+      <a class="admin-hub-card" href="fiken.html">
+        <div>
+          <span class="admin-eyebrow">Regnskap</span>
+          <h2>Fiken og bank</h2>
+          <p>Tilkobling, regnskapsstatus, bankfeed og synkronisering.</p>
+        </div>
+        <span class="admin-hub-card-arrow" aria-hidden="true">›</span>
+      </a>
+
+      <a class="admin-hub-card" href="statistikk.html">
+        <div>
+          <span class="admin-eyebrow">Analyse</span>
+          <h2>Statistikk</h2>
+          <p>Se utvikling, inntekter og andre nøkkeltall.</p>
+        </div>
+        <span class="admin-hub-card-arrow" aria-hidden="true">›</span>
+      </a>
+    </div>
+
+    <div class="admin-hub-note">Sørgulen AI er tilgjengelig her også og kan bruke økonomidataene i admin når du ber om en vurdering.</div>
+  </main>
+
+  <script src="../config.js"></script>
+</body>
+</html>
