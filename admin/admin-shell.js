@@ -22,7 +22,7 @@
   const modeSwitchLabel = fieldContext ? "Komplett admin" : "Feltadmin";
   const modeSwitchMode = fieldContext ? "full" : "field";
   ensureAsset("link", { rel: "stylesheet", href: "operations.css?v=20260904-snow1" });
-  ensureAsset("link", { rel: "stylesheet", href: "ai-universal.css?v=20261002-u1" });
+  ensureAsset("link", { rel: "stylesheet", href: "ai-universal.css?v=20261002-u2" });
   if (page === "jobs") ensureAsset("link", { rel: "stylesheet", href: "ai-guide.css?v=20260917-project1" });
   ensureAsset("link", { rel: "manifest", href: "manifest.webmanifest" });
   ensureAsset("link", { rel: "apple-touch-icon", href: "../assets/logo.png" });
@@ -59,7 +59,7 @@
   }
 
   document.body.classList.add("admin-app");
-  ensureAsset("script", { src: "ai-universal.js?v=20261002-u1" });
+  ensureAsset("script", { src: "ai-universal.js?v=20261002-u2" });
   if (page === "jobs") ensureAsset("script", { src: "ai-guide.js?v=20260917-project1" });
   ensureAsset("script", { src: "actionable-warnings.js?v=20260914-a1" });
   mount.innerHTML = `
