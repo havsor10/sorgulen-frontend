@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>System | Sørgulen Admin</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin-shell.css">
+  <link rel="stylesheet" href="admin-pages.css">
+  <link rel="stylesheet" href="admin-hub.css">
+</head>
+<body>
+  <div id="adminShell" data-page="system"></div>
+  <script src="admin-shell.js"></script>
+
+  <main class="admin-main admin-hub-wrap">
+    <header class="admin-page-header admin-hub-intro">
+      <div>
+        <p class="admin-eyebrow">System</p>
+        <h1>Oppsett og verktøy</h1>
+        <p>Funksjoner du trenger av og til, men som ikke skal ta plass i den daglige navigasjonen.</p>
+      </div>
+    </header>
+
+    <div class="admin-hub-grid">
+      <a class="admin-hub-card" href="felt.html?from=field">
+        <div>
+          <span class="admin-eyebrow">Arbeidsmodus</span>
+          <h2>Feltadmin</h2>
+          <p>Enklere visning for rask bruk ute på oppdrag.</p>
+        </div>
+        <span class="admin-hub-card-arrow" aria-hidden="true">›</span>
+      </a>
+
+      <a class="admin-hub-card" href="nettside.html">
+        <div>
+          <span class="admin-eyebrow">Nettside</span>
+          <h2>Nettside og priser</h2>
+          <p>Rediger innhold, tjenester og prisinformasjon på nettsiden.</p>
+        </div>
+        <span class="admin-hub-card-arrow" aria-hidden="true">›</span>
+      </a>
+
+      <a class="admin-hub-card" href="kundeportal.html">
+        <div>
+          <span class="admin-eyebrow">Kunder</span>
+          <h2>Kundeportal</h2>
+          <p>Administrer portaler og deling mot kunder.</p>
+        </div>
+        <span class="admin-hub-card-arrow" aria-hidden="true">›</span>
+      </a>
+
+      <a class="admin-hub-card" href="autopilot.html">
+        <div>
+          <span class="admin-eyebrow">Automatisering</span>
+          <h2>Autopilot</h2>
+          <p>Forslag og handlinger som venter på kontroll eller godkjenning.</p>
+        </div>
+        <span class="admin-nav-badge" data-admin-badge="autopilot" hidden></span>
+        <span class="admin-hub-card-arrow" aria-hidden="true">›</span>
+      </a>
+
+      <a class="admin-hub-card" href="varslinger.html">
+        <div>
+          <span class="admin-eyebrow">Varsler</span>
+          <h2>Varslinger</h2>
+          <p>Pushvarsler, påminnelser og andre varslingsinnstillinger.</p>
+        </div>
+        <span class="admin-nav-badge" data-admin-badge="notifications" hidden></span>
+        <span class="admin-hub-card-arrow" aria-hidden="true">›</span>
+      </a>
+    </div>
+  </main>
+
+  <script src="../config.js"></script>
+</body>
+</html>
