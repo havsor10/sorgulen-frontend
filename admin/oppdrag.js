@@ -239,6 +239,7 @@
     const items = (workOrder.events || []).filter((event) => labels[event.type]).map((event) => ({ at: event.at, title: labels[event.type], detail: event.description || "" }));
     (workOrder.workIntervals || []).filter((interval) => interval.source === "manual").forEach((interval) => items.push({ at: interval.createdAt || interval.startedAt, title: "Tid lagt til manuelt", detail: `${interval.category === "purchase" ? "Innkjøp" : interval.category === "transport" ? "Transport" : "Arbeid"} · ${formatDuration(Math.max(0, (new Date(interval.endedAt) - new Date(interval.startedAt)) / 1000))}${interval.comment ? ` · ${interval.comment}` : ""}` }));
     (workOrder.additionalCosts || []).forEach((item) => items.push({ at: item.occurredAt, title: "Utgift registrert", detail: `${item.item} · ${formatCurrency(item.amount)}` }));
+    (workOrder.equipment || []).forEach((item) => items.push({ at: item.createdAt, title: "Utstyr registrert", detail: `${item.item} · ${item.durationMinutes || 0} min · ${formatCurrency(item.amount || 0)}` }));
     (workOrder.materials || []).forEach((item) => items.push({ at: item.createdAt, title: "Materiale registrert", detail: `${item.item} · ${item.quantity} ${item.unit || "stk"}` }));
     (workOrder.projectNotes || []).forEach((item) => items.push({ at: item.createdAt, title: "Notat", detail: item.text }));
     items.sort((a, b) => new Date(b.at) - new Date(a.at));
@@ -706,9 +707,11 @@
     const completed = effectiveStatus(workOrder) === "completed";
     const contactParts = [customer.phone, customer.email, customer.address].filter(Boolean);
     const expenses = workOrder.additionalCosts || [];
+    const equipment = workOrder.equipment || [];
     const materials = workOrder.materials || [];
     const projectNotes = workOrder.projectNotes || [];
     const expenseTotal = expenses.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    const equipmentTotal = equipment.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
     const categoryTotals = intervalCategoryTotals(workOrder);
 
     detailModalContent.innerHTML = `
@@ -740,6 +743,11 @@
       <section class="detail-section">
         <h3>Utgifter · ${escapeHtml(formatCurrency(expenseTotal))}</h3>
         ${expenses.length ? `<ul class="interval-list">${expenses.map((expense) => `<li><span>${escapeHtml(formatDateTime(expense.occurredAt))}</span><strong>${escapeHtml(expense.item)}</strong><span>${escapeHtml(formatCurrency(expense.amount))} · ${expense.billable === false ? "Intern" : "Fakturerbar"}${expense.receiptUrl ? ` · <a href="${escapeHtml(expense.receiptUrl)}" target="_blank" rel="noopener">Kvittering</a>` : ""}</span></li>`).join("")}</ul>` : '<p class="muted">Ingen utgifter registrert.</p>'}
+      </section>
+
+      <section class="detail-section">
+        <h3>Utstyr · ${escapeHtml(formatCurrency(equipmentTotal))}</h3>
+        ${equipment.length ? `<ul class="interval-list">${equipment.map((item) => `<li><span>${escapeHtml(formatDateTime(item.createdAt))}</span><strong>${escapeHtml(item.item)}</strong><span>${escapeHtml(String(item.durationMinutes || 0))} min · ${escapeHtml(formatCurrency(item.hourlyRateSnapshot || 0))}/t · ${escapeHtml(formatCurrency(item.amount || 0))}${item.billable === false ? " · Intern" : ""}</span></li>`).join("")}</ul>` : '<p class="muted">Ingen utstyrsbruk registrert.</p>'}
       </section>
 
       <section class="detail-section">
