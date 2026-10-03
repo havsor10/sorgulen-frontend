@@ -25,12 +25,11 @@ test("automatisk korrektur går bare på fritekst, ikke priser eller produktnavn
   assert.match(source, /catch \(_\) \{ return null; \}/);
 });
 
-test("ulogiske opplysninger blir spørsmål med Ordne nå eller Ignorer", () => {
+test("AI-tekstkontroll lager ikke en separat varselkø", () => {
   const source = read("admin/work-order-ai.js");
-  assert.match(source, /AI-kontroll/);
-  assert.match(source, /Ordne nå/);
-  assert.match(source, /Ignorer/);
-  assert.match(source, /sorgulen_ai_questions_v1/);
+  assert.match(source, /localStorage\.removeItem\(QUESTION_KEY\)/);
+  assert.doesNotMatch(source, /addQuestions\(info\.orderId/);
+  assert.match(source, /Fakturakontrollen/);
 });
 
 test("bildeimport krever eksplisitt godkjenning før økonomi skrives", () => {
