@@ -18,7 +18,7 @@ test("shared admin shell routes Home and logo back to Feltadmin in field context
   assert.match(shell, /modeParams\.get\("from"\) === "field"/);
   assert.match(shell, /adminHomeHref = fieldContext \? "felt\.html" : "hjem\.html"/);
   assert.match(shell, /href="\$\{adminHomeHref\}"/);
-  assert.match(shell, /modeSwitchLabel = fieldContext \? "Komplett" : "Felt"/);
+  assert.match(shell, /modeSwitchLabel = fieldContext \? "Komplett admin" : "Feltadmin"/);
 });
 
 test("opening the real full-admin home resets full mode", () => {
