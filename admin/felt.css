@@ -11,4 +11,3 @@
 
 .field-sync-item{grid-template-columns:minmax(0,1fr) auto;align-items:center}.field-sync-item>div{display:grid;gap:4px;min-width:0}.field-sync-item button{border:1px solid var(--field-line);border-radius:9px;background:#111923;color:#aab8c5;min-height:34px;padding:0 9px;font-size:10px;font-weight:800}.field-sync-item.error button{border-color:#5b3734;color:#ffc1bc}
 
-.field-action-primary.is-confirming,.field-job-card-actions .primary.is-confirming{background:#e3b35d;color:#191207;border-color:#e3b35d;box-shadow:0 0 0 3px rgba(227,179,93,.14)}
