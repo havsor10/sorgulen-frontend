@@ -12,6 +12,7 @@
     workOrders: [],
     customers: [],
     defaultService: null,
+    equipmentRates: [],
     serverOffset: 0,
     busy: false,
     currentView: "today",
@@ -301,6 +302,7 @@
     const total = currentSeconds(job);
     const session = currentSessionSeconds(job);
     const expenses = (job.additionalCosts || []).reduce((sum, item) => sum + Number(item.amount || 0), 0);
+    const equipmentAmount = (job.equipment || []).reduce((sum, item) => sum + Number(item.amount || 0), 0);
     card.className = "field-card field-active-card" + (isRunning ? " is-running" : "");
     card.innerHTML =
       '<div class="field-active-top"><div><p class="field-kicker">' + (isRunning ? "Pågår nå" : job.status === "stopped" ? "Pågående prosjekt" : "Neste oppdrag") + '</p>' +
@@ -308,12 +310,13 @@
       '<span class="field-state ' + esc(job.status) + '">' + esc(STATUS_LABEL[job.status] || job.status) + '</span></div>' +
       '<div class="field-timer" data-live-job="' + esc(job._id) + '" data-mode="' + (isRunning ? "session" : "total") + '">' + fmtDuration(isRunning ? session : total) + '</div>' +
       '<div class="field-timer-label">' + (isRunning ? "Denne arbeidsøkta" : "Registrert arbeidstid") + '</div>' +
-      '<div class="field-job-meta"><span>' + (job.hourlyRate ? esc(fmtMoney(job.hourlyRate)) + '/t' : "Timesats mangler") + '</span><span>' + esc(fmtMoney(expenses)) + ' utgifter</span><span>' + ((job.projectNotes || []).length) + ' notat</span></div>' +
+      '<div class="field-job-meta"><span>' + (job.hourlyRate ? esc(fmtMoney(job.hourlyRate)) + '/t' : "Timesats mangler") + '</span><span>' + esc(fmtMoney(expenses)) + ' utgifter</span><span>' + esc(fmtMoney(equipmentAmount)) + ' utstyr</span><span>' + ((job.projectNotes || []).length) + ' notat</span></div>' +
       '<div class="field-main-actions">' + activeActionButtons(job) + '</div>' +
       '<div class="field-quick-row">' +
         '<button type="button" data-open="expense" data-job-id="' + esc(job._id) + '">+ Utgift</button>' +
         '<button type="button" data-open="job-note" data-job-id="' + esc(job._id) + '">+ Notat</button>' +
         '<button type="button" data-open="time" data-job-id="' + esc(job._id) + '">+ Tid</button>' +
+        '<button type="button" data-open="equipment" data-job-id="' + esc(job._id) + '">+ Utstyr</button>' +
         '<button type="button" data-open="material" data-job-id="' + esc(job._id) + '">+ Materiale</button>' +
       '</div>';
     bindDynamic(card);
@@ -396,6 +399,19 @@
     } catch (_) {
       state.defaultService = await cacheGet("default-service");
     }
+  }
+
+  async function loadEquipmentRates() {
+    try {
+      const data = await api("/admin/rates");
+      state.equipmentRates = (data.rates || []).filter((rate) =>
+        rate.category === "Utstyr" && rate.unit === "hour" && Number(rate.defaultRate) > 0
+      );
+      await cacheSet("equipment-rates", state.equipmentRates);
+    } catch (_) {
+      state.equipmentRates = await cacheGet("equipment-rates") || [];
+    }
+    return state.equipmentRates;
   }
 
   async function loadCustomers(query = "") {
@@ -613,6 +629,27 @@
         '<label class="field-field"><span>Type</span><select class="field-select" name="category"><option value="work">Arbeid</option><option value="purchase">Innkjøp</option><option value="transport">Transport</option></select></label></div>' +
         '<label class="field-field"><span>Kommentar <small>valgfritt</small></span><input class="field-input" name="comment" maxlength="1000"></label>' +
         '<label class="field-check"><input name="billable" type="checkbox" checked> Fakturerbar tid</label></div>';
+    } else if (type === "equipment") {
+      kicker.textContent = "Maskin / utstyr";
+      title.textContent = "Registrer utstyrsbruk";
+      save.textContent = "Lagre utstyrsbruk";
+      const options = state.equipmentRates.map((rate) =>
+        '<option value="' + esc(rate.code) + '">' + esc(rate.name) + ' · ' + esc(fmtMoney(rate.defaultRate)) + '/t</option>'
+      ).join("");
+      const firstValue = state.equipmentRates.length ? state.equipmentRates[0].code : "__new__";
+      body.innerHTML = '<div class="field-form-grid">' + jobSelect(context.jobId) +
+        '<label class="field-field"><span>Utstyr</span><select id="equipmentRateCode" class="field-select" name="rateCode" required>' +
+          options + '<option value="__new__"' + (state.equipmentRates.length ? "" : " selected") + '>+ Legg til nytt utstyr</option></select></label>' +
+        '<div id="equipmentNewFields" class="field-form-grid" hidden>' +
+          '<label class="field-field"><span>Navn på utstyr</span><input id="equipmentName" class="field-input" name="equipmentName" maxlength="120" placeholder="F.eks. Gressklipper"></label>' +
+          '<label class="field-field"><span>Fast sats per time</span><input id="equipmentHourlyRate" class="field-input" name="equipmentHourlyRate" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="kr/time"></label>' +
+        '</div>' +
+        '<label class="field-field"><span>Brukstid i minutter</span><input id="equipmentMinutes" class="field-input" name="durationMinutes" type="number" min="1" max="10080" value="30" inputmode="numeric" required></label>' +
+        '<div id="equipmentAmountPreview" class="field-equipment-preview">Velg utstyr og brukstid.</div>' +
+        '<label class="field-field"><span>Notat <small>valgfritt</small></span><input class="field-input" name="note" maxlength="500" placeholder="F.eks. lånt gressklipper"></label>' +
+        '<label class="field-check"><input name="billable" type="checkbox" checked> Skal med på kundens fakturagrunnlag</label></div>';
+      el("equipmentRateCode").value = firstValue;
+      bindEquipmentForm();
     } else if (type === "material") {
       kicker.textContent = "Forbruk";
       title.textContent = "Registrer materiale";
@@ -630,6 +667,46 @@
     el("fieldModal").hidden = false;
     el("fieldModal").setAttribute("aria-hidden", "false");
     setTimeout(() => body.querySelector("[autofocus]")?.focus(), 60);
+  }
+
+  function selectedEquipmentRate() {
+    const select = el("equipmentRateCode");
+    if (!select || select.value === "__new__") return null;
+    return state.equipmentRates.find((rate) => rate.code === select.value) || null;
+  }
+
+  function updateEquipmentPreview() {
+    const select = el("equipmentRateCode");
+    const newFields = el("equipmentNewFields");
+    const nameInput = el("equipmentName");
+    const rateInput = el("equipmentHourlyRate");
+    const minutesInput = el("equipmentMinutes");
+    const preview = el("equipmentAmountPreview");
+    if (!select || !preview) return;
+
+    const isNew = select.value === "__new__";
+    if (newFields) newFields.hidden = !isNew;
+    if (nameInput) nameInput.required = isNew;
+    if (rateInput) rateInput.required = isNew;
+
+    const rate = isNew ? Number(rateInput?.value || 0) : Number(selectedEquipmentRate()?.defaultRate || 0);
+    const minutes = Number(minutesInput?.value || 0);
+    if (!(rate > 0) || !(minutes > 0)) {
+      preview.textContent = isNew ? "Skriv inn sats og brukstid." : "Velg utstyr og brukstid.";
+      return;
+    }
+    const amount = Math.round(((minutes * rate) / 60 + Number.EPSILON) * 100) / 100;
+    preview.textContent = minutes + " min × " + fmtMoney(rate) + "/t = " + fmtMoney(amount);
+  }
+
+  function bindEquipmentForm() {
+    const select = el("equipmentRateCode");
+    const rate = el("equipmentHourlyRate");
+    const minutes = el("equipmentMinutes");
+    select?.addEventListener("change", updateEquipmentPreview);
+    rate?.addEventListener("input", updateEquipmentPreview);
+    minutes?.addEventListener("input", updateEquipmentPreview);
+    updateEquipmentPreview();
   }
 
   function closeModal() {
@@ -789,6 +866,50 @@
           body: payload,
         });
         successText = "Tiden er registrert.";
+      } else if (state.modalType === "equipment") {
+        const jobId = String(data.get("jobId") || "");
+        if (!jobId) throw new Error("Velg oppdrag.");
+        const minutes = Number(data.get("durationMinutes"));
+        if (!Number.isFinite(minutes) || minutes <= 0) throw new Error("Skriv brukstid i minutter.");
+
+        let rate = selectedEquipmentRate();
+        if (String(data.get("rateCode") || "") === "__new__") {
+          if (navigator.onLine === false) throw new Error("Nytt utstyr må opprettes mens du har nett. Eksisterende utstyr kan registreres offline.");
+          const name = String(data.get("equipmentName") || "").trim();
+          const hourlyRate = Number(data.get("equipmentHourlyRate"));
+          if (!name) throw new Error("Skriv navn på utstyret.");
+          if (!Number.isFinite(hourlyRate) || hourlyRate <= 0) throw new Error("Skriv fast sats per time.");
+          const created = await api("/admin/rates/equipment", {
+            method: "POST",
+            body: JSON.stringify({ name, defaultRate: hourlyRate }),
+          });
+          rate = created.rate;
+          state.equipmentRates = [
+            ...state.equipmentRates.filter((item) => item.code !== rate.code),
+            rate,
+          ].sort((a, b) => String(a.name).localeCompare(String(b.name), "nb"));
+          await cacheSet("equipment-rates", state.equipmentRates);
+        }
+        if (!rate?.code || !(Number(rate.defaultRate) > 0)) throw new Error("Velg en gyldig utstyrssats.");
+
+        const id = operationId("equipment");
+        const amount = Math.round(((minutes * Number(rate.defaultRate)) / 60 + Number.EPSILON) * 100) / 100;
+        const payload = {
+          operationId: id,
+          rateCode: rate.code,
+          durationMinutes: minutes,
+          hourlyRateSnapshot: Number(rate.defaultRate),
+          note: String(data.get("note") || "").trim(),
+          billable: data.get("billable") === "on",
+        };
+        result = await submitMutation({
+          id,
+          type: "equipment",
+          label: "Utstyr · " + rate.name + " · " + minutes + " min",
+          endpoint: "/admin/work-orders/" + encodeURIComponent(jobId) + "/equipment",
+          body: payload,
+        });
+        successText = rate.name + " er registrert: " + minutes + " min · " + fmtMoney(amount) + ".";
       } else if (state.modalType === "material") {
         const jobId = String(data.get("jobId") || "");
         if (!jobId) throw new Error("Velg oppdrag.");
@@ -929,7 +1050,7 @@
   localStorage.setItem("sorgulen_admin_mode", "field");
   bindDynamic(document);
   if (offline?.onChange) offline.onChange(renderSyncSummary);
-  Promise.all([loadServices(), loadCustomers(""), loadField(true)])
+  Promise.all([loadServices(), loadEquipmentRates(), loadCustomers(""), loadField(true)])
     .then(() => flushOfflineQueue())
     .catch((error) => setStatus(error.message, "error"));
   setInterval(updateTimers, 1000);
