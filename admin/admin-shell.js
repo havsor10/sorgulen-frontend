@@ -19,7 +19,7 @@
   const fieldContext = modeParams.get("from") === "field" || localStorage.getItem("sorgulen_admin_mode") === "field";
   const adminHomeHref = fieldContext ? "felt.html" : "hjem.html";
   const modeSwitchHref = fieldContext ? "hjem.html" : "felt.html";
-  const modeSwitchLabel = fieldContext ? "Komplett" : "Felt";
+  const modeSwitchLabel = fieldContext ? "Komplett admin" : "Feltadmin";
   const modeSwitchMode = fieldContext ? "full" : "field";
   ensureAsset("link", { rel: "stylesheet", href: "operations.css?v=20260904-snow1" });
   ensureAsset("link", { rel: "stylesheet", href: "ai-universal.css?v=20261002-u1" });
