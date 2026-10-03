@@ -266,8 +266,8 @@
     if (!booking && !requests) { node.hidden = true; return; }
     node.hidden = false;
     node.innerHTML =
-      '<div><strong>' + booking + '</strong><span>nye bookinger</span></div>' +
-      '<div><strong>' + requests + '</strong><span>prisforespørsler</span></div>';
+      '<a class="field-pulse-link" href="admin-dashboard.html?from=field" aria-label="Åpne bookinger. ' + booking + ' nye"><strong>' + booking + '</strong><span>nye bookinger</span><b aria-hidden="true">›</b></a>' +
+      '<a class="field-pulse-link" href="foresporsler.html?from=field" aria-label="Åpne prisforespørsler. ' + requests + ' nye"><strong>' + requests + '</strong><span>prisforespørsler</span><b aria-hidden="true">›</b></a>';
   }
 
   function activeActionButtons(job) {
@@ -852,6 +852,36 @@
     }
   }
 
+  function resetStartConfirmation(button) {
+    if (!button) return;
+    clearTimeout(button._confirmTimer);
+    if (button.dataset.originalLabel) button.textContent = button.dataset.originalLabel;
+    button.classList.remove("is-confirming");
+    delete button.dataset.confirmStart;
+    delete button.dataset.originalLabel;
+  }
+
+  function requestSafeJobAction(button) {
+    const action = button.dataset.jobAction;
+    if (!["start", "resume"].includes(action)) {
+      jobAction(button.dataset.id, action);
+      return;
+    }
+
+    if (button.dataset.confirmStart === "1") {
+      const id = button.dataset.id;
+      resetStartConfirmation(button);
+      jobAction(id, action);
+      return;
+    }
+
+    button.dataset.confirmStart = "1";
+    button.dataset.originalLabel = button.textContent;
+    button.classList.add("is-confirming");
+    button.textContent = action === "start" ? "TRYKK IGJEN FOR Å STARTE" : "TRYKK IGJEN FOR Å FORTSETTE";
+    button._confirmTimer = setTimeout(() => resetStartConfirmation(button), 4500);
+  }
+
   function bindDynamic(root = document) {
     root.querySelectorAll("[data-open]").forEach((button) => {
       if (button.dataset.fieldBound) return;
@@ -861,7 +891,7 @@
     root.querySelectorAll("[data-job-action]").forEach((button) => {
       if (button.dataset.fieldBound) return;
       button.dataset.fieldBound = "1";
-      button.addEventListener("click", () => jobAction(button.dataset.id, button.dataset.jobAction));
+      button.addEventListener("click", () => requestSafeJobAction(button));
     });
   }
 
