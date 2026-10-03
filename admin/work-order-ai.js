@@ -4,6 +4,9 @@
   const API = (window.CONFIG && window.CONFIG.API_BASE_URL) || "https://sorgulen-backend-2.onrender.com/api";
   const KEY = "sorgulen_admin_key";
   const QUESTION_KEY = "sorgulen_ai_questions_v1";
+  // Gamle AI-spørsmål var en separat, vedvarende varselkø som skapte støy og falske konflikter.
+  // Fjern dem ved oppstart. Reelle mangler håndteres av den deterministiske Fakturakontrollen.
+  try { localStorage.removeItem(QUESTION_KEY); } catch (_) {}
   const nativeFetch = window.fetch.bind(window);
   const money = (value) => new Intl.NumberFormat("no-NO", { style: "currency", currency: "NOK", maximumFractionDigits: 2 }).format(Number(value) || 0);
   const esc = (value) => String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
@@ -111,7 +114,6 @@
         method: "POST",
         body: JSON.stringify({ field: info.field, text, entryId: info.entryId, values: info.payload }),
       }, 7000);
-      if (Array.isArray(result.questions) && result.questions.length) addQuestions(info.orderId, info.field, info.entryId, result.questions);
       return result;
     } catch (_) { return null; }
   }
@@ -131,20 +133,9 @@
   }
 
   function renderQuestionPanel() {
-    const workspace = currentWorkspace();
-    if (!workspace) return;
-    const orderId = workspace.dataset.orderId;
-    const questions = loadQuestions()[orderId] || [];
-    let panel = workspace.querySelector("[data-work-ai-questions]");
-    if (!questions.length) { panel?.remove(); return; }
-    if (!panel) {
-      panel = document.createElement("section");
-      panel.className = "work-ai-questions";
-      panel.dataset.workAiQuestions = "";
-      const readiness = workspace.querySelector("#fieldReadiness");
-      (readiness?.parentNode || workspace).insertBefore(panel, readiness || workspace.firstChild);
-    }
-    panel.innerHTML = `<div class="work-ai-questions-head"><div><span>AI-kontroll</span><strong>${questions.length} ${questions.length === 1 ? "ting bør avklares" : "ting bør avklares"}</strong></div></div><div class="work-ai-question-list">${questions.map((item) => `<div class="work-ai-question" data-ai-question-key="${esc(item.key)}"><p>${esc(item.message)}</p><div><button type="button" class="secondary-btn" data-ai-question-fix>Ordne nå</button><button type="button" class="work-ai-link" data-ai-question-ignore>Ignorer</button></div></div>`).join("")}</div>`;
+    // AI-tekstkontroll skal ikke lage en ekstra varselkø. Alt som krever handling
+    // vises i den eksisterende Fakturakontrollen, som har konkrete og klikkbare handlinger.
+    document.querySelectorAll("[data-work-ai-questions]").forEach((node) => node.remove());
   }
 
   function focusQuestion(question) {
@@ -347,16 +338,7 @@
   document.addEventListener("click", (event) => {
     const open = event.target.closest("[data-work-ai-open]");
     if (open) { event.preventDefault(); openAiModal(); return; }
-    const fix = event.target.closest("[data-ai-question-fix]");
-    const ignore = event.target.closest("[data-ai-question-ignore]");
-    if (fix || ignore) {
-      const row = event.target.closest("[data-ai-question-key]");
-      const key = row?.dataset.aiQuestionKey || "";
-      const questions = loadQuestions()[state.orderId] || [];
-      const question = questions.find((item) => item.key === key);
-      if (ignore) removeQuestion(state.orderId, key);
-      else focusQuestion(question);
-    }
+
   });
 
   const observer = new MutationObserver(() => window.setTimeout(ensureAiButton, 0));
