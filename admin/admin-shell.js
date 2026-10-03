@@ -18,34 +18,44 @@
   if (page === "home" && modeParams.get("from") !== "field") localStorage.setItem("sorgulen_admin_mode", "full");
   const fieldContext = modeParams.get("from") === "field" || localStorage.getItem("sorgulen_admin_mode") === "field";
   const adminHomeHref = fieldContext ? "felt.html" : "hjem.html";
-  const modeSwitchHref = fieldContext ? "hjem.html" : "felt.html";
-  const modeSwitchLabel = fieldContext ? "Komplett" : "Felt";
+  const modeSwitchHref = fieldContext ? "hjem.html" : "felt.html?from=field";
+  const modeSwitchLabel = fieldContext ? "Komplett admin" : "Feltadmin";
   const modeSwitchMode = fieldContext ? "full" : "field";
   ensureAsset("link", { rel: "stylesheet", href: "operations.css?v=20260904-snow1" });
   ensureAsset("link", { rel: "stylesheet", href: "ai-universal.css?v=20261002-u1" });
   if (page === "jobs") ensureAsset("link", { rel: "stylesheet", href: "ai-guide.css?v=20260917-project1" });
   ensureAsset("link", { rel: "manifest", href: "manifest.webmanifest" });
   ensureAsset("link", { rel: "apple-touch-icon", href: "../assets/logo.png" });
-  if (!["home", "overview", "inventory", "snow", "jobs"].includes(page)) ensureAsset("script", { src: "operations-ui.js?v=20260918-workflow1" });
+  if (!["home", "overview", "inventory", "snow", "jobs", "economy", "incoming", "drift", "system"].includes(page)) ensureAsset("script", { src: "operations-ui.js?v=20260918-workflow1" });
   if (page === "jobs") ensureAsset("script", { src: "inventory-material-edit.js?v=20260904-snow1" });
 
-  const navItems = [
+  const economyPages = new Set(["economy", "invoices", "fiken", "statistics"]);
+  const incomingPages = new Set(["incoming", "bookings", "requests", "mailbox"]);
+  const driftPages = new Set(["drift", "overview", "inventory", "snow"]);
+  const systemPages = new Set(["system", "autopilot", "notifications", "portal", "website"]);
+
+  function pageMatches(key) {
+    if (key === "economy") return economyPages.has(page);
+    if (key === "incoming") return incomingPages.has(page);
+    if (key === "drift") return driftPages.has(page);
+    if (key === "system") return systemPages.has(page);
+    return key === page;
+  }
+
+  const desktopNavItems = [
     { key: "home", href: adminHomeHref, label: "Hjem" },
-    { key: "overview", href: "oversikt.html", label: "Oversikt" },
     { key: "jobs", href: "oppdrag.html", label: "Oppdrag" },
-    { key: "bookings", href: "admin-dashboard.html", label: "Bookinger" },
-    { key: "requests", href: "foresporsler.html", label: "Forespørsler" },
-    { key: "mailbox", href: "innboks.html", label: "Innboks" },
     { key: "customers", href: "kunder.html", label: "Kunder" },
-    { key: "invoices", href: "fakturaer.html", label: "Fakturaer" },
+    { key: "economy", href: "okonomi.html", label: "Økonomi" },
+    { key: "incoming", href: "innkommende.html", label: "Innkommende" },
   ];
-  const mobileItems = navItems.filter((item) => ["home", "overview", "jobs", "invoices"].includes(item.key));
-  const activeClass = (key) => key === page ? " is-active" : "";
-  const activeAttr = (key) => key === page ? ' aria-current="page"' : "";
+  const mobileItems = desktopNavItems.filter((item) => ["home", "jobs", "customers", "economy"].includes(item.key));
+  const activeClass = (key) => pageMatches(key) ? " is-active" : "";
+  const activeAttr = (key) => pageMatches(key) ? ' aria-current="page"' : "";
   const badge = (key) => `<span class="admin-nav-badge" data-admin-badge="${key}" hidden></span>`;
 
   function mobileIcon(key) {
-    return ({ home: "⌂", overview: "◈", jobs: "◷", customers: "◎", invoices: "▤" })[key] || "•";
+    return ({ home: "⌂", jobs: "◷", customers: "◎", economy: "▤" })[key] || "•";
   }
 
   document.body.classList.add("admin-app");
@@ -60,41 +70,27 @@
           <strong>Admin</strong>
         </a>
         <nav class="admin-desktop-nav" aria-label="Hovednavigasjon">
-          ${navItems.map((item) => `<a class="admin-nav-link${activeClass(item.key)}" href="${item.href}"${activeAttr(item.key)}><span>${item.label}</span>${badge(item.key)}</a>`).join("")}
+          ${desktopNavItems.map((item) => `<a class="admin-nav-link${activeClass(item.key)}" href="${item.href}"${activeAttr(item.key)}><span>${item.label}</span>${badge(item.key)}</a>`).join("")}
         </nav>
         <div class="admin-header-actions">
-          <a class="admin-quiet-action" href="${modeSwitchHref}" data-admin-mode="${modeSwitchMode}"><span>${modeSwitchLabel}</span></a>
-          <a class="admin-quiet-action${activeClass("website")}" href="nettside.html"${activeAttr("website")}><span>Nettside</span></a>\n          <a class="admin-quiet-action${activeClass("portal")}" href="kundeportal.html"${activeAttr("portal")}><span>Kundeportal</span></a>
-          <a class="admin-quiet-action${activeClass("fiken")}" href="fiken.html"${activeAttr("fiken")}><span>Fiken</span></a>
-          <a class="admin-quiet-action${activeClass("snow")}" href="broyting.html"${activeAttr("snow")}><span>Brøyting</span>${badge("snow")}</a>
-          <a class="admin-quiet-action${activeClass("inventory")}" href="lager.html"${activeAttr("inventory")}><span>Lager</span>${badge("inventory")}</a>
-          <a class="admin-quiet-action${activeClass("autopilot")}" href="autopilot.html"${activeAttr("autopilot")}><span>Autopilot</span>${badge("autopilot")}</a>
-          <a class="admin-quiet-action${activeClass("notifications")}" href="varslinger.html"${activeAttr("notifications")}>Varslinger</a>
-          <a class="admin-quiet-action" href="statistikk.html">Statistikk</a>
+          <a class="admin-quiet-action${activeClass("drift")}" href="drift.html"${activeAttr("drift")}><span>Drift</span>${badge("drift")}</a>
+          <a class="admin-quiet-action${activeClass("system")}" href="system.html"${activeAttr("system")}><span>System</span>${badge("system")}</a>
           <a class="admin-quiet-action" id="logoutBtn" href="login.html">Logg ut</a>
         </div>
       </div>
     </header>
     <nav class="admin-mobile-nav" aria-label="Mobilnavigasjon">
       ${mobileItems.map((item) => `<a class="admin-mobile-link${activeClass(item.key)}" href="${item.href}"${activeAttr(item.key)}><span class="admin-mobile-icon" aria-hidden="true">${mobileIcon(item.key)}</span><span class="admin-mobile-label">${item.label}</span>${badge(item.key)}</a>`).join("")}
-      <button class="admin-mobile-link${["bookings", "requests", "mailbox", "inventory", "snow", "autopilot", "notifications", "portal", "fiken", "website", "more"].includes(page) ? " is-active" : ""}" id="adminMoreButton" type="button" aria-expanded="false" aria-controls="adminMoreMenu">
+      <button class="admin-mobile-link${(incomingPages.has(page) || driftPages.has(page) || systemPages.has(page) || page === "more") ? " is-active" : ""}" id="adminMoreButton" type="button" aria-expanded="false" aria-controls="adminMoreMenu">
         <span class="admin-mobile-icon" aria-hidden="true">•••</span><span class="admin-mobile-label">Mer</span>${badge("more")}
       </button>
     </nav>
     <div class="admin-menu-backdrop" id="adminMenuBackdrop" hidden></div>
     <aside class="admin-more-menu" id="adminMoreMenu" aria-label="Flere adminvalg" aria-hidden="true">
       <div class="admin-more-head"><strong>Mer</strong><button id="adminMoreClose" class="admin-icon-button" type="button" aria-label="Lukk meny">×</button></div>
-      <a class="admin-more-link" href="${modeSwitchHref}" data-admin-mode="${modeSwitchMode}"><span>${fieldContext ? "Komplett admin" : "Feltadmin"}</span><span aria-hidden="true">›</span></a>
-      <a class="admin-more-link${activeClass("website")}" href="nettside.html"${activeAttr("website")}><span>Nettside / priser</span><span aria-hidden="true">›</span></a>\n      <a class="admin-more-link${activeClass("portal")}" href="kundeportal.html"${activeAttr("portal")}><span>Kundeportal</span><span aria-hidden="true">›</span></a>
-      <a class="admin-more-link${activeClass("fiken")}" href="fiken.html"${activeAttr("fiken")}><span>Fiken / regnskap</span><span aria-hidden="true">›</span></a>
-      <a class="admin-more-link${activeClass("autopilot")}" href="autopilot.html"${activeAttr("autopilot")}><span>Autopilot</span><span class="admin-more-tail">${badge("autopilot")}<span aria-hidden="true">›</span></span></a>
-      <a class="admin-more-link${activeClass("snow")}" href="broyting.html"${activeAttr("snow")}><span>Brøyting</span><span class="admin-more-tail">${badge("snow")}<span aria-hidden="true">›</span></span></a>
-      <a class="admin-more-link${activeClass("bookings")}" href="admin-dashboard.html"${activeAttr("bookings")}><span>Bookinger</span><span class="admin-more-tail">${badge("bookings")}<span aria-hidden="true">›</span></span></a>
-      <a class="admin-more-link${activeClass("requests")}" href="foresporsler.html"${activeAttr("requests")}><span>Forespørsler</span><span class="admin-more-tail">${badge("requests")}<span aria-hidden="true">›</span></span></a>
-      <a class="admin-more-link${activeClass("mailbox")}" href="innboks.html"${activeAttr("mailbox")}><span>Innboks</span><span class="admin-more-tail">${badge("mailbox")}<span aria-hidden="true">›</span></span></a>
-      <a class="admin-more-link${activeClass("inventory")}" href="lager.html"${activeAttr("inventory")}><span>Lager</span><span class="admin-more-tail">${badge("inventory")}<span aria-hidden="true">›</span></span></a>
-      <a class="admin-more-link${activeClass("notifications")}" href="varslinger.html"${activeAttr("notifications")}><span>Varslinger</span><span aria-hidden="true">›</span></a>
-      <a class="admin-more-link${activeClass("more")}" href="statistikk.html"${activeAttr("more")}><span>Statistikk</span><span aria-hidden="true">›</span></a>
+      <a class="admin-more-link${activeClass("incoming")}" href="innkommende.html"${activeAttr("incoming")}><span>Innkommende</span><span class="admin-more-tail">${badge("incoming")}<span aria-hidden="true">›</span></span></a>
+      <a class="admin-more-link${activeClass("drift")}" href="drift.html"${activeAttr("drift")}><span>Drift</span><span class="admin-more-tail">${badge("drift")}<span aria-hidden="true">›</span></span></a>
+      <a class="admin-more-link${activeClass("system")}" href="system.html"${activeAttr("system")}><span>System</span><span class="admin-more-tail">${badge("system")}<span aria-hidden="true">›</span></span></a>
       <button class="admin-more-link admin-menu-logout" id="adminMobileLogout" type="button"><span>Logg ut</span><span aria-hidden="true">›</span></button>
     </aside>
   `;
@@ -157,14 +153,23 @@
     const autopilotCount = Math.max(0, Number(autopilot?.inbox?.counts?.pending) || 0)
       + Math.max(0, Number(autopilot?.inbox?.counts?.revisionRequested) || 0);
     const mailboxCount = Math.max(0, Number(mailbox?.counts?.attention) || 0);
+    const bookingCount = Math.max(0, Number(operations?.badges?.bookings) || 0);
+    const requestCount = Math.max(0, Number(operations?.badges?.requests) || 0);
+    const invoiceCount = Math.max(0, Number(operations?.badges?.invoices) || 0);
+    const notificationCount = Math.max(0, Number(operations?.badges?.notifications) || 0);
+    const incomingCount = bookingCount + requestCount + mailboxCount;
+    const driftCount = inventoryCount + snowCount;
+    const systemCount = autopilotCount + notificationCount;
+
     showBadge("inventory", inventoryCount);
     showBadge("snow", snowCount);
     showBadge("autopilot", autopilotCount);
     showBadge("mailbox", mailboxCount);
-    const operationAttention = Object.entries(operations?.badges || {}).filter(([key]) => key !== "more").reduce((sum, [, value]) => sum + Math.max(0, Number(value) || 0), 0);
-    showBadge("overview", operationAttention + autopilotCount + inventoryCount + snowCount + mailboxCount);
-    const existingMore = Math.max(0, Number(operations?.badges?.more) || 0);
-    showBadge("more", existingMore + inventoryCount + snowCount + autopilotCount + mailboxCount);
+    showBadge("incoming", incomingCount);
+    showBadge("economy", invoiceCount);
+    showBadge("drift", driftCount);
+    showBadge("system", systemCount);
+    showBadge("more", incomingCount + driftCount + systemCount);
   }
 
   moreButton.addEventListener("click", () => setMenu(!moreMenu.classList.contains("is-open")));

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Drift | Sørgulen Admin</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin-shell.css">
+  <link rel="stylesheet" href="admin-pages.css">
+  <link rel="stylesheet" href="admin-hub.css">
+</head>
+<body>
+  <div id="adminShell" data-page="drift"></div>
+  <script src="admin-shell.js"></script>
+
+  <main class="admin-main admin-hub-wrap">
+    <header class="admin-page-header admin-hub-intro">
+      <div>
+        <p class="admin-eyebrow">Drift</p>
+        <h1>Operativ drift</h1>
+        <p>Det du bruker for å styre arbeid, kapasitet, brøyting og utstyr.</p>
+      </div>
+    </header>
+
+    <div class="admin-hub-grid">
+      <a class="admin-hub-card" href="oversikt.html">
+        <div>
+          <span class="admin-eyebrow">Status</span>
+          <h2>Driftsoversikt</h2>
+          <p>Samlet oversikt over det som skjer i firmaet akkurat nå.</p>
+        </div>
+        <span class="admin-hub-card-arrow" aria-hidden="true">›</span>
+      </a>
+
+      <a class="admin-hub-card" href="broyting.html">
+        <div>
+          <span class="admin-eyebrow">Sesong</span>
+          <h2>Brøyting</h2>
+          <p>Kunder, runder og status for brøytearbeidet.</p>
+        </div>
+        <span class="admin-nav-badge" data-admin-badge="snow" hidden></span>
+        <span class="admin-hub-card-arrow" aria-hidden="true">›</span>
+      </a>
+
+      <a class="admin-hub-card" href="lager.html">
+        <div>
+          <span class="admin-eyebrow">Utstyr og varer</span>
+          <h2>Lager</h2>
+          <p>Beholdning, materialer og varer som trenger oppfølging.</p>
+        </div>
+        <span class="admin-nav-badge" data-admin-badge="inventory" hidden></span>
+        <span class="admin-hub-card-arrow" aria-hidden="true">›</span>
+      </a>
+    </div>
+  </main>
+
+  <script src="../config.js"></script>
+</body>
+</html>

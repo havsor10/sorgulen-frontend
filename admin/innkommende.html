@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Innkommende | Sørgulen Admin</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin-shell.css">
+  <link rel="stylesheet" href="admin-pages.css">
+  <link rel="stylesheet" href="admin-hub.css">
+</head>
+<body>
+  <div id="adminShell" data-page="incoming"></div>
+  <script src="admin-shell.js"></script>
+
+  <main class="admin-main admin-hub-wrap">
+    <header class="admin-page-header admin-hub-intro">
+      <div>
+        <p class="admin-eyebrow">Innkommende</p>
+        <h1>Alt som kommer inn</h1>
+        <p>Bestillinger, prisforespørsler og viktige e-poster samlet på ett sted.</p>
+      </div>
+    </header>
+
+    <div class="admin-hub-grid">
+      <a class="admin-hub-card" href="admin-dashboard.html">
+        <div>
+          <span class="admin-eyebrow">Planlagt arbeid</span>
+          <h2>Bookinger</h2>
+          <p>Direkte bestillinger av Brøyting og Dekkskift.</p>
+        </div>
+        <span class="admin-nav-badge" data-admin-badge="bookings" hidden></span>
+        <span class="admin-hub-card-arrow" aria-hidden="true">›</span>
+      </a>
+
+      <a class="admin-hub-card" href="foresporsler.html">
+        <div>
+          <span class="admin-eyebrow">Nye muligheter</span>
+          <h2>Forespørsler</h2>
+          <p>Prisforespørsler og andre jobber som må vurderes.</p>
+        </div>
+        <span class="admin-nav-badge" data-admin-badge="requests" hidden></span>
+        <span class="admin-hub-card-arrow" aria-hidden="true">›</span>
+      </a>
+
+      <a class="admin-hub-card" href="innboks.html">
+        <div>
+          <span class="admin-eyebrow">Kommunikasjon</span>
+          <h2>Innboks</h2>
+          <p>E-poster som AI-en har vurdert som relevante for driften.</p>
+        </div>
+        <span class="admin-nav-badge" data-admin-badge="mailbox" hidden></span>
+        <span class="admin-hub-card-arrow" aria-hidden="true">›</span>
+      </a>
+    </div>
+  </main>
+
+  <script src="../config.js"></script>
+</body>
+</html>
