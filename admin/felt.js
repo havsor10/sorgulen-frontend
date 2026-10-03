@@ -852,34 +852,13 @@
     }
   }
 
-  function resetStartConfirmation(button) {
-    if (!button) return;
-    clearTimeout(button._confirmTimer);
-    if (button.dataset.originalLabel) button.textContent = button.dataset.originalLabel;
-    button.classList.remove("is-confirming");
-    delete button.dataset.confirmStart;
-    delete button.dataset.originalLabel;
-  }
-
   function requestSafeJobAction(button) {
     const action = button.dataset.jobAction;
-    if (!["start", "resume"].includes(action)) {
-      jobAction(button.dataset.id, action);
-      return;
+    if (["start", "resume"].includes(action)) {
+      const confirmed = window.confirm("Ønsker du å starte en ny arbeidsøkt?");
+      if (!confirmed) return;
     }
-
-    if (button.dataset.confirmStart === "1") {
-      const id = button.dataset.id;
-      resetStartConfirmation(button);
-      jobAction(id, action);
-      return;
-    }
-
-    button.dataset.confirmStart = "1";
-    button.dataset.originalLabel = button.textContent;
-    button.classList.add("is-confirming");
-    button.textContent = action === "start" ? "TRYKK IGJEN FOR Å STARTE" : "TRYKK IGJEN FOR Å FORTSETTE";
-    button._confirmTimer = setTimeout(() => resetStartConfirmation(button), 4500);
+    jobAction(button.dataset.id, action);
   }
 
   function bindDynamic(root = document) {
