@@ -162,7 +162,10 @@
           <label>Navn<input name="name" value="${esc(customer.name)}" required maxlength="160"></label>
           <label>Telefon<input name="phone" type="tel" value="${esc(customer.phone)}"></label>
           <label>E-post<input name="email" type="email" value="${esc(customer.email)}"></label>
-          <label class="wide">Adresse<input name="address" value="${esc(customer.address)}" maxlength="220"></label>
+          <label class="wide">Gateadresse<input name="address" value="${esc(customer.address)}" maxlength="220" autocomplete="street-address" placeholder="F.eks. Vestnesvegen 7"></label>
+          <label>Postnummer<input name="postalCode" value="${esc(customer.postalCode)}" maxlength="20" inputmode="numeric" autocomplete="postal-code" placeholder="6906"></label>
+          <label>Poststed<input name="city" value="${esc(customer.city)}" maxlength="100" autocomplete="address-level2" placeholder="Florø"></label>
+          <label class="wide">Organisasjonsnummer<input name="organizationNumber" value="${esc(customer.organizationNumber)}" maxlength="30" inputmode="numeric" placeholder="Kun for bedriftskunde"></label>
           <p id="customerEditError" class="error-text wide"></p><button class="secondary-btn" type="submit">Lagre kundeopplysninger</button>
         </form>
       </section>
