@@ -20,7 +20,8 @@ test("fakturautkast har prosent og fast kunderabatt", () => {
 });
 
 test("rabatt beregnes i live preview uten å endre fakturalinjene", () => {
-  assert.match(editJs, /function discountFor\(gross\)/);
+  assert.match(editJs, /window.createInvoiceFinancialPreview/);
+  assert.doesNotMatch(editJs, /function discountFor|Math\.floor/);
   assert.match(editJs, /Sum før rabatt:/);
   assert.match(editJs, /Kunden får rabatt/);
   assert.match(editJs, /Du sparer kunden/);

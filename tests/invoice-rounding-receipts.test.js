@@ -7,10 +7,12 @@ const edit = fs.readFileSync("admin/faktura-rediger.js", "utf8");
 const detail = fs.readFileSync("admin/faktura-detalj.js", "utf8");
 
 test("fakturaflyt viser at totalen alltid rundes ned til hele kroner", () => {
-  assert.match(create, /Math\.floor\(beforeRounding\)/);
+  assert.match(create, /createInvoiceFinancialPreview/);
+  assert.doesNotMatch(create, /Math\.floor/);
   assert.match(create, /Øreavrunding/);
   assert.match(create, /Å betale/);
-  assert.match(edit, /Math\.floor\(beforeRounding\)/);
+  assert.match(edit, /createInvoiceFinancialPreview/);
+  assert.doesNotMatch(edit, /Math\.floor/);
   assert.match(edit, /Øreavrunding/);
   assert.match(detail, /roundingAdjustment/);
 });

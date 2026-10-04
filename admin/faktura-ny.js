@@ -133,16 +133,20 @@
       const p = Number(tr.querySelector(".line-price").value) || 0;
       tr.querySelector(".line-total").textContent = money(Math.round((q * p + Number.EPSILON) * 100) / 100);
     }
-    const subtotal = getLines().reduce((sum, line) => sum + line.amount, 0);
-    const tax = Math.round((subtotal * vatRate / 100 + Number.EPSILON) * 100) / 100;
-    const beforeRounding = Math.round((subtotal + tax + Number.EPSILON) * 100) / 100;
-    const roundedTotal = beforeRounding > 0 ? Math.floor(beforeRounding) : beforeRounding;
-    const rounding = Math.round((roundedTotal - beforeRounding + Number.EPSILON) * 100) / 100;
-    const roundingText = Math.abs(rounding) >= 0.01 ? ` · Øreavrunding: −${money(Math.abs(rounding))}` : "";
-    totalDisplay.textContent = vatRate
-      ? `Delsum: ${money(subtotal)} · MVA ${vatRate}%: ${money(tax)}${roundingText} · Å betale: ${money(roundedTotal)}`
-      : `Sum: ${money(subtotal)}${roundingText} · Å betale: ${money(roundedTotal)}`;
+    previewFinancials();
   }
+
+  const previewFinancials = window.createInvoiceFinancialPreview({
+    endpoint: `${API_BASE}/invoices/financial-preview`, headers,
+    payload: () => ({ lines: getLines() }),
+    pending: () => { totalDisplay.textContent = "Beregner fakturasum…"; },
+    error: (message) => { totalDisplay.textContent = message; },
+    render: (totals) => {
+      const rounding = totals.roundingAdjustment;
+      const roundingText = Math.abs(rounding) >= 0.01 ? ` · Øreavrunding: ${rounding < 0 ? "−" : "+"}${money(Math.abs(rounding))}` : "";
+      totalDisplay.textContent = `Sum før avrunding: ${money(totals.amountBeforeRounding)}${roundingText} · Å betale: ${money(totals.amount)}`;
+    },
+  });
 
   function fillCustomer(customer = {}) {
     f.name.value = customer.name || "";
