@@ -176,8 +176,9 @@
       detail = `Salg-ID ${escapeHtml(fiken.saleId)}${paid > 0 ? ` · registrert betalt ${money(paid)}` : ""}${outstanding != null ? ` · utestående ${money(outstanding)}` : ""}.`;
     } else if (state === "error") {
       tone = "fd-warn";
-      title = "Fiken trenger oppmerksomhet";
-      detail = fiken.lastError || "Synkronisering med Fiken feilet.";
+      const transient = isTransientFikenMessage(fiken.lastError);
+      title = transient ? "Fiken synkroniseres automatisk senere" : "Fiken trenger oppmerksomhet";
+      detail = friendlyFikenError(fiken.lastError);
     } else if (state === "pending") {
       title = "Fiken-registrering pågår";
       detail = "Fakturaen venter på bekreftet registrering i Fiken.";
