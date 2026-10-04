@@ -50,3 +50,18 @@ body.admin-app .create-form .primary-btn{background:var(--admin-action);color:#1
 }
 @media(max-width:430px){.admin-page-header{display:grid}.admin-page-actions{justify-content:flex-start}.admin-page-actions>*{width:100%}.customer-toolbar{display:grid}.work-history-card{grid-template-columns:1fr}.history-main,.history-status,.history-action{grid-column:1}.admin-main,.work-order-main,.customer-main,.detail-main{padding-inline:12px}}
 @media(prefers-reduced-motion:reduce){.admin-more-menu{transition:none}}
+
+/* Forenklet adminnavigasjon: fem hovedvalg, resten gruppert under Mer. */
+.admin-more-desktop{position:relative;border:0;background:transparent;cursor:pointer}
+.admin-more-desktop.is-active{color:var(--admin-text);background:var(--admin-chip)}
+.admin-more-group{display:grid;gap:0;margin-top:8px;border-top:1px solid var(--admin-border-soft)}
+.admin-more-group-title{margin:0;padding:12px 12px 5px;color:var(--admin-subtle);font-size:10px;font-weight:850;letter-spacing:.09em;text-transform:uppercase}
+@media(min-width:721px){
+  .admin-menu-backdrop{position:fixed;z-index:880;inset:0;display:block;background:rgba(0,0,0,.38)}
+  .admin-menu-backdrop[hidden]{display:none}
+  .admin-more-menu{position:fixed;z-index:900;top:64px;right:max(16px,calc((100vw - var(--admin-max))/2 + 16px));display:grid;width:min(360px,calc(100vw - 32px));max-height:calc(100dvh - 82px);overflow:auto;padding:12px;background:var(--admin-card);border:1px solid var(--admin-border);border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.55);transform:translateY(-8px);opacity:0;visibility:hidden;transition:transform .16s ease,opacity .16s ease,visibility .16s}
+  .admin-more-menu.is-open{transform:none;opacity:1;visibility:visible}
+  .admin-more-head{display:flex;align-items:center;justify-content:space-between;padding:3px 4px 10px}
+  .admin-more-link{display:flex;align-items:center;justify-content:space-between;min-height:46px;padding:0 12px;border:0;border-top:1px solid var(--admin-border-soft);background:transparent;color:var(--admin-text-soft);text-decoration:none;text-align:left;font-weight:650}
+  .admin-more-link.is-active{color:var(--admin-text);background:var(--admin-hover)}
+}
