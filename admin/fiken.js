@@ -35,6 +35,18 @@
     statusMessage.style.color = error ? "#ff9e98" : "#92deb0";
   }
 
+  function friendlyFikenError(value) {
+    const text = String(value?.message || value || "").trim();
+    const upper = text.toUpperCase();
+    const transient = [
+      "FETCH FAILED", "ECONNRESET", "ECONNREFUSED", "ENOTFOUND", "EAI_AGAIN",
+      "ETIMEDOUT", "UND_ERR_", "SOCKET HANG UP", "HTTP 429", "HTTP 502", "HTTP 503", "HTTP 504",
+    ].some((needle) => upper.includes(needle));
+    return transient
+      ? "Fiken er midlertidig utilgjengelig. Ingen fakturadata er tapt; automatisk synk prøver igjen senere."
+      : text || "Fiken-kallet feilet.";
+  }
+
   function fmtDate(value) {
     if (!value) return "Aldri";
     const date = new Date(value);
@@ -372,7 +384,7 @@
         ? `Tilkoblingen virker. Fant ${data.discovery.selectedCompany.name}.`
         : "Tilkoblingen virker, men riktig foretak må velges.");
     } catch (error) {
-      message(error.message, true);
+      message(friendlyFikenError(error), true);
     } finally {
       button.disabled = false;
     }
@@ -418,9 +430,12 @@
     try {
       const data = await api("/admin/fiken/sync", { method: "POST", body: JSON.stringify({ limit: 150 }) });
       render(data);
-      message(`Synk ferdig. Kontrollerte ${data.result?.checked || 0} fakturaer. ${data.result?.paid || 0} ble oppdatert til betalt.`);
+      const registered = Number(data.result?.registered || 0);
+      const checked = Number(data.result?.checked || 0);
+      const paid = Number(data.result?.paid || 0);
+      message(`Synk ferdig. ${registered} faktura(er) registrert i Fiken, ${checked} koblede fakturaer kontrollert og ${paid} oppdatert til betalt.`);
     } catch (error) {
-      message(error.message, true);
+      message(friendlyFikenError(error), true);
     } finally {
       button.disabled = false;
     }
