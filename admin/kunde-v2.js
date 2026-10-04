@@ -25,7 +25,7 @@
     const h = Math.floor(total / 3600); const m = Math.floor((total % 3600) / 60);
     return h ? `${h} t${m ? ` ${m} min` : ""}` : `${m} min`;
   };
-  const statusText = { planned: "Planlagt", active: "Aktiv", paused: "Pauset", stopped: "Mellom økter", completed: "Ferdig", cancelled: "Avbrutt", draft: "Utkast", sent: "Sendt", paid: "Betalt", credited: "Kreditert" };
+  const statusText = { planned: "Planlagt", active: "Aktiv", paused: "Pauset", stopped: "Mellom økter", completed: "Ferdig", cancelled: "Avbrutt", draft: "Utkast", issued: "Utstedt", sent: "Sendt", paid: "Betalt", credited: "Kreditert" };
   const categoryText = (value) => value === "purchase" ? "Innkjøp" : value === "transport" ? "Transport" : "Arbeid";
 
   async function api(path, options = {}) {
