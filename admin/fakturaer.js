@@ -44,7 +44,7 @@
   };
 
   function fmtDate(d) {
-    return d ? new Date(d).toLocaleDateString("no-NO", { day: "2-digit", month: "2-digit", year: "numeric" }) : "–";
+    return d ? new Date(d).toLocaleDateString("no-NO", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Europe/Oslo" }) : "–";
   }
 
   function fmtMoney(value) {
