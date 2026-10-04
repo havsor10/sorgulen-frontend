@@ -14,9 +14,10 @@ test("Oversikt er slått sammen med Hjem og finnes ikke lenger i hovednavigasjon
   assert.match(html, /Denne siden er slått sammen med Hjem/);
 });
 
-test("Varslinger er flyttet til handlingskøen på Hjem", () => {
+test("push-varslinger er kun en System-innstilling, ikke en egen varselkø", () => {
   const shell = read("admin/admin-shell.js");
   const html = read("admin/varslinger.html");
-  assert.doesNotMatch(shell, />Varslinger</);
-  assert.match(html, /url=hjem\.html#handling/);
+  assert.match(shell, /Varslingsinnstillinger/);
+  assert.match(shell, /href="varslinger\.html"/);
+  assert.match(html, /id="enablePushBtn"/);
 });
