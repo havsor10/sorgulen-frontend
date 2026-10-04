@@ -547,7 +547,15 @@
           body: "{}",
         });
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || "Fiken-synk feilet");
+        if (!res.ok) {
+          const message = data.error || "Fiken-synk feilet";
+          if (isTransientFikenMessage(message)) {
+            setMessage("Fiken er midlertidig utilgjengelig. Ingen data er tapt, og systemet prøver automatisk igjen.", "error");
+            if (element) element.disabled = false;
+            return load();
+          }
+          throw new Error(message);
+        }
         setMessage("Fiken er synkronisert. ✓", "success");
         return load();
       }
