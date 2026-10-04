@@ -47,8 +47,15 @@
     if (workOrder?.status === "completed" && workOrder.calculatedAmount != null) {
       return Number(workOrder.calculatedAmount);
     }
+    if (workOrder?.pricingMode === "fixed") return Number(workOrder.fixedPrice || 0);
     const rate = Number(workOrder?.hourlyRate || 0);
-    return Math.round((((Number(seconds) * rate) / 3600) + Number.EPSILON) * 100) / 100;
+    const timeOre = (workOrder?.workIntervals || []).reduce((sum, interval) => {
+      if (interval.billable === false) return sum;
+      const hours = Math.round(intervalSeconds(interval) / 3600 * 1000000) / 1000000;
+      const snapshotRate = Math.round((Number(interval.hourlyRateSnapshot ?? rate) + Number.EPSILON) * 100) / 100;
+      return sum + Math.round((hours * snapshotRate + Number.EPSILON) * 100);
+    }, 0);
+    return timeOre / 100 + (workOrder?.pricingMode === "hybrid" ? Number(workOrder.fixedPrice || 0) : 0);
   }
 
   return { intervalSeconds, calculateWorkSeconds, calculateCurrentSessionSeconds, calculateEstimatedAmount };

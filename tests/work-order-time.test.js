@@ -115,3 +115,14 @@ test("completed history keeps the stored time and amount snapshots", () => {
   assert.equal(calculateWorkSeconds(completed), 8_072);
   assert.equal(calculateEstimatedAmount(completed), 1_905.89);
 });
+test("prosjektverdi bevarer registrerte satser, avrunder hver post og utelater intern tid", () => {
+  const order = { pricingMode: "hourly", hourlyRate: 2000, status: "stopped", workIntervals: [
+    { source: "manual", durationSeconds: 1200, hourlyRateSnapshot: 650 },
+    { source: "manual", durationSeconds: 1200, hourlyRateSnapshot: 650 },
+    { source: "manual", durationSeconds: 3600, hourlyRateSnapshot: 850 },
+    { source: "manual", durationSeconds: 3600, hourlyRateSnapshot: 900, billable: false },
+  ] };
+  assert.equal(calculateEstimatedAmount(order), 1283.34);
+  assert.equal(calculateEstimatedAmount({ ...order, pricingMode: "hybrid", fixedPrice: 100 }), 1383.34);
+  assert.equal(calculateEstimatedAmount({ ...order, pricingMode: "fixed", fixedPrice: 100 }), 100);
+});

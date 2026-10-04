@@ -52,6 +52,6 @@ test("pågående prosjekt lager ikke parallelle utkast eller tilbyr allerede fak
   assert.match(field, /Åpne fakturautkast/);
   assert.match(field, /const isUnbilled = \(kind, entryId\)/);
   assert.match(field, /registrationBillingLock\(order, kind, entryId\)/);
-  assert.match(field, /order\.pricingMode === "fixed"/);
+  assert.match(field, /SorgulenWorkOrderTime\.calculateEstimatedAmount/);
 });
 

@@ -91,15 +91,7 @@
   }
 
   function projectedTotal(order) {
-    const seconds = totalSeconds(order);
-    const labor = (seconds / 3600) * Number(order.hourlyRate || 0);
-    let base = order.status === "completed" && order.calculatedAmount != null
-      ? Number(order.calculatedAmount)
-      : order.pricingMode === "fixed"
-        ? Number(order.fixedPrice || 0)
-        : order.pricingMode === "hybrid"
-          ? Number(order.fixedPrice || 0) + labor
-          : labor;
+    let base = window.SorgulenWorkOrderTime.calculateEstimatedAmount(order);
     base += (order.additionalCosts || []).filter((x) => x.billable !== false).reduce((sum, x) => sum + Number(x.amount || 0), 0);
     base += (order.equipment || []).filter((x) => x.billable !== false).reduce((sum, x) => sum + Number(x.amount || 0), 0);
     base += (order.materials || []).filter((x) => x.billable !== false && x.unitPrice != null).reduce((sum, x) => sum + Number(x.quantity || 0) * Number(x.unitPrice || 0), 0);
