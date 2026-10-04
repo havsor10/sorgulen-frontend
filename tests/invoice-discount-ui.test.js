@@ -41,8 +41,8 @@ test("fakturadetalj viser rabatten tydelig og har direkte Gi rabatt-knapp", () =
 });
 
 test("cache er bustet for rabattversjonen", () => {
-  assert.match(editHtml, /faktura-rediger\\.js\\?v=20261004-invoice2/);
-  assert.match(detailHtml, /faktura-detalj\\.js\\?v=20261004-invoice2/);
+  assert.match(editHtml, /faktura-rediger\.js\?v=20261004-invoice2/);
+  assert.match(detailHtml, /faktura-detalj\.js\?v=20261004-invoice2/);
   assert.match(editHtml, /admin-pages\.css\?v=20260919-discount1/);
   assert.match(detailHtml, /admin-pages\.css\?v=20260919-discount1/);
 });
