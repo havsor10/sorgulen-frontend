@@ -42,7 +42,7 @@
     }
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return "–";
-    return date.toLocaleDateString("no-NO", { day: "2-digit", month: "2-digit", year: "numeric" });
+    return date.toLocaleDateString("no-NO", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Europe/Oslo" });
   }
   function money(value) {
     const n = Number(value);
@@ -88,7 +88,7 @@
       throw new Error("Betalingsvinduet kunne ikke åpnes.");
     }
 
-    const today = new Date().toLocaleDateString("sv-SE");
+    const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Oslo" });
     const outstanding = inv.fiken?.outstandingBalanceOre != null
       ? Number(inv.fiken.outstandingBalanceOre) / 100
       : Number(inv.amount || 0);
