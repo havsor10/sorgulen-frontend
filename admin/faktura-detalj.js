@@ -50,7 +50,7 @@
   }
   function quantity(value) {
     const n = Number(value);
-    return new Intl.NumberFormat("nb-NO", { minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(Number.isFinite(n) ? n : 0);
+    return new Intl.NumberFormat("nb-NO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number.isFinite(n) ? n : 0);
   }
   function documentName(inv) {
     if (!inv.invoiceNumber) return inv.isCreditNote ? "Kreditnotautkast" : "Fakturautkast";
@@ -68,6 +68,23 @@
   }
   function latestFailedEmail(inv) {
     return [...(inv.emailLog || [])].reverse().find((entry) => entry.status === "failed") || null;
+  }
+
+  function isTransientFikenMessage(value) {
+    const text = String(value || "").toUpperCase();
+    return [
+      "FETCH FAILED", "ECONNRESET", "ECONNREFUSED", "ENOTFOUND", "EAI_AGAIN",
+      "ETIMEDOUT", "UND_ERR_", "SOCKET HANG UP", "HTTP 502", "HTTP 503", "HTTP 504", "HTTP 429",
+    ].some((needle) => text.includes(needle));
+  }
+
+  function friendlyFikenError(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "Synkronisering med Fiken feilet.";
+    if (isTransientFikenMessage(raw)) {
+      return "Fiken er midlertidig utilgjengelig. Fakturaen er trygg i admin, og systemet prøver automatisk å synkronisere igjen.";
+    }
+    return raw;
   }
   function validationParts(validation) {
     const warnings = Array.isArray(validation?.warnings) ? validation.warnings : [];
@@ -159,8 +176,9 @@
       detail = `Salg-ID ${escapeHtml(fiken.saleId)}${paid > 0 ? ` · registrert betalt ${money(paid)}` : ""}${outstanding != null ? ` · utestående ${money(outstanding)}` : ""}.`;
     } else if (state === "error") {
       tone = "fd-warn";
-      title = "Fiken trenger oppmerksomhet";
-      detail = fiken.lastError || "Synkronisering med Fiken feilet.";
+      const transient = isTransientFikenMessage(fiken.lastError);
+      title = transient ? "Fiken synkroniseres automatisk senere" : "Fiken trenger oppmerksomhet";
+      detail = friendlyFikenError(fiken.lastError);
     } else if (state === "pending") {
       title = "Fiken-registrering pågår";
       detail = "Fakturaen venter på bekreftet registrering i Fiken.";
@@ -511,7 +529,12 @@
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || "E-postsending feilet. Fakturaen er fortsatt utstedt og kan prøves sendt igjen.");
-        setMessage("Dokumentet er sendt. ✓", "success");
+        setMessage(
+          data.fikenDeferred
+            ? "Dokumentet er sendt. Fiken var midlertidig utilgjengelig og synkroniseres automatisk senere. ✓"
+            : "Dokumentet er sendt. ✓",
+          "success"
+        );
         return load();
       }
 
@@ -524,7 +547,15 @@
           body: "{}",
         });
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || "Fiken-synk feilet");
+        if (!res.ok) {
+          const message = data.error || "Fiken-synk feilet";
+          if (isTransientFikenMessage(message)) {
+            setMessage("Fiken er midlertidig utilgjengelig. Ingen data er tapt, og systemet prøver automatisk igjen.", "error");
+            if (element) element.disabled = false;
+            return load();
+          }
+          throw new Error(message);
+        }
         setMessage("Fiken er synkronisert. ✓", "success");
         return load();
       }
