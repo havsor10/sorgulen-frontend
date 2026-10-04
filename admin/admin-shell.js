@@ -118,6 +118,7 @@
         <a class="admin-more-link${pageClass("website")}" href="nettside.html"><span>Nettside / priser</span><span aria-hidden="true">›</span></a>
         <a class="admin-more-link${pageClass("portal")}" href="kundeportal.html"><span>Kundeportal</span><span aria-hidden="true">›</span></a>
         <a class="admin-more-link${pageClass("autopilot")}" href="autopilot.html"><span>Autopilot</span><span class="admin-more-tail">${badge("autopilot")}<span aria-hidden="true">›</span></span></a>
+        <a class="admin-more-link" href="varslinger.html"><span>Varslingsinnstillinger</span><span aria-hidden="true">›</span></a>
       </div>
 
       <a class="admin-more-link admin-menu-logout" id="logoutBtn" href="login.html"><span>Logg ut</span><span aria-hidden="true">›</span></a>
