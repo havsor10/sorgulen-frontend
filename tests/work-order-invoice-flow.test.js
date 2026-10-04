@@ -26,7 +26,9 @@ test("oppdrag kan korrigeres, delfaktureres og sluttfaktureres uten å miste reg
   assert.match(field, /data-entry="expense"/);
   assert.match(field, /data-field-add-equipment/);
   assert.match(field, /data-entry="material"/);
-  assert.match(field, /data-entry="note"/);\n  assert.match(field, /billingLocks/);\n  assert.match(field, /registrationBillingLock/);
+  assert.match(field, /data-entry="note"/);
+  assert.match(field, /billingLocks/);
+  assert.match(field, /registrationBillingLock/);
 });
 
 test("ny faktura tilbyr ferdige oppdrag uten krav om referanse", () => {
