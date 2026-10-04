@@ -10,6 +10,7 @@ test("customer workflow labels unbilled, draft and invoiced registrations", () =
   assert.match(code, /Ikke fakturert/);
   assert.match(code, /I utkast/);
   assert.match(code, /Fakturert/);
+  assert.match(code, /issued: "Utstedt"/);
 });
 
 test("customer invoice form defaults to all unbilled entries with optional date range", () => {
