@@ -98,6 +98,7 @@
         const customer = order.customerSnapshot || {};
         const amount = Number(order.calculatedAmount || 0)
           + (order.additionalCosts || []).filter((x) => x.billable !== false).reduce((sum, x) => sum + Number(x.amount || 0), 0)
+          + (order.equipment || []).filter((x) => x.billable !== false).reduce((sum, x) => sum + Number(x.amount || 0), 0)
           + (order.materials || []).filter((x) => x.billable !== false && x.unitPrice != null).reduce((sum, x) => sum + Number(x.quantity || 0) * Number(x.unitPrice || 0), 0);
         return `<a class="invoice-workorder-row" href="faktura-ny.html?workOrderId=${encodeURIComponent(order._id)}">
           <span><strong>${esc(customer.name || "Ukjent kunde")}</strong><small>${esc(order.serviceName || "Oppdrag")} · ${esc(order.jobDate || "")}</small></span>
