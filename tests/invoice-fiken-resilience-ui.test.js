@@ -16,3 +16,8 @@ test("vellykket e-postsending kan bekreftes selv om Fiken retryes senere", () =>
   assert.match(code, /data\.fikenDeferred/);
   assert.match(code, /Dokumentet er sendt\. Fiken var midlertidig utilgjengelig/);
 });
+
+test("fakturasiden viser mengde med to desimaler i stedet for rå flyttall", () => {
+  assert.match(code, /minimumFractionDigits: 2, maximumFractionDigits: 2/);
+});
+
