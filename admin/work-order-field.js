@@ -101,6 +101,7 @@
           ? Number(order.fixedPrice || 0) + labor
           : labor;
     base += (order.additionalCosts || []).filter((x) => x.billable !== false).reduce((sum, x) => sum + Number(x.amount || 0), 0);
+    base += (order.equipment || []).filter((x) => x.billable !== false).reduce((sum, x) => sum + Number(x.amount || 0), 0);
     base += (order.materials || []).filter((x) => x.billable !== false && x.unitPrice != null).reduce((sum, x) => sum + Number(x.quantity || 0) * Number(x.unitPrice || 0), 0);
     return Math.round((base + Number.EPSILON) * 100) / 100;
   }
@@ -190,6 +191,7 @@
   function relatedByDay(order, key) {
     const rows = [];
     (order.additionalCosts || []).filter((item) => osloDateKey(item.occurredAt) === key).forEach((item) => rows.push({ type: "Utgift", title: item.item, tail: money(item.amount) }));
+    (order.equipment || []).filter((item) => osloDateKey(item.createdAt) === key).forEach((item) => rows.push({ type: "Utstyr", title: `${item.item || "Utstyr"} · ${item.durationMinutes || 0} min`, tail: money(item.amount || 0) }));
     (order.materials || []).filter((item) => osloDateKey(item.createdAt) === key).forEach((item) => rows.push({ type: "Materiale", title: `${item.item} · ${item.quantity} ${item.unit || "stk"}`, tail: item.unitPrice == null ? "Pris mangler" : money(Number(item.quantity) * Number(item.unitPrice)) }));
     (order.projectNotes || []).filter((item) => osloDateKey(item.createdAt) === key).forEach((item) => rows.push({ type: "Notat", title: item.text, tail: "" }));
     return rows;
@@ -224,11 +226,9 @@
         <div class="field-description${missing || zeroDuration ? " warn" : ""}">${zeroDuration ? "Denne økten har 0 minutter registrert. Hvis den ikke er reell, slett den her." : missing ? "Denne økten mangler en beskrivelse. Legg inn hva du gjorde mens du fortsatt husker det." : esc(entry.comment)}</div>
         ${open
           ? '<button class="field-edit-session" type="button" disabled>Pause eller stopp økten før du redigerer</button>'
-          : order.invoiceId
-            ? '<p class="field-locked-note">Økten er låst fordi oppdraget er koblet til faktura.</p>'
-            : order.status === "cancelled"
-              ? '<p class="field-locked-note">Gjenåpne oppdraget før du endrer registreringer.</p>'
-              : `<div class="field-entry-actions"><button class="field-edit-session" type="button" data-field-edit-session="${esc(entry.entryId)}">${zeroDuration ? "Rediger" : missing ? "Legg inn hva eg gjorde" : "Rediger denne økten"}</button><button class="field-delete-entry${zeroDuration ? " zero-delete" : ""}" type="button" data-field-delete-registration="time" data-entry-id="${esc(entry.entryId)}" data-entry-label="${esc(zeroDuration ? "0-min økten" : entry.comment || "arbeidsøkten")}">${zeroDuration ? "Slett 0-min økt" : "Slett økt"}</button></div>`}
+          : order.status === "cancelled"
+            ? '<p class="field-locked-note">Gjenåpne oppdraget før du endrer registreringer.</p>'
+            : `<div class="field-entry-actions"><button class="field-edit-session" type="button" data-field-edit-session="${esc(entry.entryId)}">${zeroDuration ? "Rediger" : missing ? "Legg inn hva eg gjorde" : "Rediger denne økten"}</button><button class="field-delete-entry${zeroDuration ? " zero-delete" : ""}" type="button" data-field-delete-registration="time" data-entry-id="${esc(entry.entryId)}" data-entry-label="${esc(zeroDuration ? "0-min økten" : entry.comment || "arbeidsøkten")}">${zeroDuration ? "Slett 0-min økt" : "Slett økt"}</button></div>`}
       </div>
     </details>`;
   }
@@ -269,17 +269,17 @@
 
   function registrationsMarkup(order) {
     const expenses = order.additionalCosts || [];
+    const equipment = order.equipment || [];
     const materials = order.materials || [];
     const notes = order.projectNotes || [];
-    const editable = typeof order.workflow?.canEditRegistrations === "boolean"
-      ? order.workflow.canEditRegistrations
-      : !order.invoiceId && order.status !== "cancelled";
+    const editable = order.status !== "cancelled";
     const actions = (kind, entryId, label) => editable
       ? `<div class="field-register-actions"><button type="button" data-field-registration-edit="${esc(kind)}" data-entry-id="${esc(entryId)}">Rediger</button><button type="button" class="field-delete-entry" data-field-delete-registration="${esc(kind)}" data-entry-id="${esc(entryId)}" data-entry-label="${esc(label)}">Slett</button></div>`
       : "";
     const rows = (items, mapper, empty) => items.length ? `<div class="field-register-list">${items.map(mapper).join("")}</div>` : `<p class="muted">${esc(empty)}</p>`;
     return `<div class="field-registration-groups">
       <section class="field-register-group"><h4>Utgifter · ${expenses.length}</h4>${rows(expenses, (x) => `<div class="field-register-row"><div><strong>${esc(x.item)}</strong><span>${esc(dateTime(x.occurredAt))}${x.supplier ? ` · ${esc(x.supplier)}` : ""}</span></div><span>${esc(money(x.amount))}</span>${actions("expense", x.entryId, x.item || "utgiften")}</div>`, "Ingen utgifter")}</section>
+      <section class="field-register-group"><h4>Utstyr · ${equipment.length}</h4>${rows(equipment, (x) => `<div class="field-register-row"><div><strong>${esc(x.item || "Utstyr")}</strong><span>${esc(x.durationMinutes || 0)} min · ${esc(money(x.hourlyRateSnapshot || 0))}/t${x.note ? ` · ${esc(x.note)}` : ""}</span></div><span>${esc(money(x.amount || 0))}</span>${actions("equipment", x.entryId, x.item || "utstyrsregistreringen")}</div>`, "Ingen utstyrsbruk")}</section>
       <section class="field-register-group"><h4>Materialer · ${materials.length}</h4>${rows(materials, (x) => `<div class="field-register-row"><div><strong>${esc(x.item)}</strong><span>${esc(x.quantity)} ${esc(x.unit || "stk")}${x.comment ? ` · ${esc(x.comment)}` : ""}</span></div><span>${x.unitPrice == null ? "Pris mangler" : esc(money(Number(x.quantity) * Number(x.unitPrice)))}</span>${actions("material", x.entryId, x.item || "materialet")}</div>`, "Ingen materialer")}</section>
       <section class="field-register-group"><h4>Notater · ${notes.length}</h4>${rows(notes, (x) => `<div class="field-register-row"><div><strong>${esc(x.text)}</strong><span>${esc(dateTime(x.createdAt))}</span></div><span></span>${actions("note", x.entryId, "notatet")}</div>`, "Ingen løpende notater")}</section>
     </div>`;
@@ -306,9 +306,7 @@
   }
 
   function addMenuMarkup(order) {
-    const canAdd = typeof order.workflow?.canAddRegistrations === "boolean"
-      ? order.workflow.canAddRegistrations
-      : order.status !== "cancelled" && !order.invoiceId;
+    const canAdd = order.status !== "cancelled";
     if (!canAdd) return "";
     return `<div class="field-action-row">
       <button type="button" class="field-add-main" data-field-add-toggle aria-expanded="false">+ Legg til registrering</button>
@@ -332,12 +330,21 @@
     if (status === "cancelled") {
       return `<section class="field-status-workflow is-cancelled"><div><strong>Oppdraget er avbrutt</strong><span>Registreringene er bevart. Gjenåpne før du korrigerer, ferdigstiller eller fakturerer.</span></div><button type="button" data-field-recover-order>Gjenåpne for korrigering</button></section>`;
     }
-    if (status !== "completed") return "";
+    if (status !== "completed") {
+      const hasClosedWork = (order.workIntervals || []).some((entry) => entry.billable !== false && (entry.source === "manual" || entry.endedAt) && intervalSeconds(entry) > 0);
+      const hasBillableRegistrations = hasClosedWork
+        || (order.additionalCosts || []).some((entry) => entry.billable !== false)
+        || (order.equipment || []).some((entry) => entry.billable !== false && Number(entry.amount) > 0)
+        || (order.materials || []).some((entry) => entry.billable !== false && entry.unitPrice != null);
+      if (!order.customerId || !hasBillableRegistrations) return "";
+      const openTimer = Boolean(workflow.hasOpenTimer || (order.workIntervals || []).some((entry) => entry.source !== "manual" && !entry.endedAt));
+      return `<section class="field-status-workflow"><div><strong>Prosjektet pågår</strong><span>${openTimer ? "Pause eller stopp arbeidsøkten før du lager delfaktura." : "Du kan fakturere alt ikke-fakturert arbeid hittil og fortsette samme prosjekt etterpå."}</span></div><button type="button" data-field-invoice-now ${openTimer ? "disabled" : ""}>Fakturer arbeid hittil</button></section>`;
+    }
     if (workflow.canOpenInvoice || order.invoiceId) {
-      return `<section class="field-status-workflow is-invoiced"><div><strong>Oppdraget er koblet til faktura</strong><span>Registreringene er låst mot fakturagrunnlaget.</span></div><a href="faktura-detalj.html?id=${encodeURIComponent(order.invoiceId)}">Åpne faktura</a></section>`;
+      return `<section class="field-status-workflow is-invoiced"><div><strong>Oppdraget er koblet til sluttfaktura</strong><span>Utkast kan fortsatt korrigeres. Når fakturaen er utstedt, låses registreringene som inngår i den.</span></div><a href="faktura-detalj.html?id=${encodeURIComponent(order.invoiceId)}">Åpne faktura</a></section>`;
     }
     if (workflow.canCreateInvoice === false) return "";
-    return `<section class="field-status-workflow is-completed"><div><strong>Ferdigstilt – klar for kontroll og faktura</strong><span>Du kan fortsatt korrigere tid, utgifter, materialer og notater før fakturaen opprettes.</span></div><a href="faktura-ny.html?workOrderId=${encodeURIComponent(order._id)}">Opprett faktura</a></section>`;
+    return `<section class="field-status-workflow is-completed"><div><strong>Ferdigstilt – klar for sluttfaktura</strong><span>Du kan fortsatt korrigere tid, utgifter, utstyr, materialer og notater før fakturaen utstedes.</span></div><a href="faktura-ny.html?workOrderId=${encodeURIComponent(order._id)}">Opprett sluttfaktura</a></section>`;
   }
 
   function closeAddMenu() {
@@ -387,7 +394,7 @@
 
       <details id="fieldProjectInfo" class="field-collapse"><summary>Kunde og prosjektinfo <span>${esc(pricingLabel(order))}</span></summary><div class="field-collapse-body"><div class="field-info-grid"><div><span>Kunde</span><strong>${esc(customer.name || "–")}</strong></div><div><span>Kontakt</span><strong>${esc(contact)}</strong></div><div><span>Oppdrag</span><strong>${esc(order.serviceName)}</strong></div><div><span>Oppdragsdato</span><strong>${esc(order.jobDate || "–")}</strong></div><div><span>Pris</span><strong>${esc(pricingLabel(order))}</strong></div><div><span>Kilde</span><strong>${esc(order.customerSourceType || "Manuell")}${order.sourceRefNumber ? ` · #${esc(order.sourceRefNumber)}` : ""}</strong></div></div></div></details>
 
-      <details class="field-collapse"><summary>Utgifter, materialer og notater <span>${(order.additionalCosts || []).length + (order.materials || []).length + (order.projectNotes || []).length} registreringer</span></summary><div class="field-collapse-body">${registrationsMarkup(order)}</div></details>
+      <details class="field-collapse"><summary>Utgifter, utstyr, materialer og notater <span>${(order.additionalCosts || []).length + (order.equipment || []).length + (order.materials || []).length + (order.projectNotes || []).length} registreringer</span></summary><div class="field-collapse-body">${registrationsMarkup(order)}</div></details>
 
       <details class="field-collapse field-notes"><summary>Prosjektbeskrivelse <span>${order.notes ? "Registrert" : "Tom"}</span></summary><div class="field-collapse-body"><textarea id="detailNotes" maxlength="5000" placeholder="Avtaler, omfang eller annen viktig prosjektinfo">${esc(order.notes || "")}</textarea><button id="saveDetailNotes" type="button" class="secondary-btn">Lagre prosjektbeskrivelse</button></div></details>
 
@@ -469,11 +476,11 @@
   }
 
   function registrationEndpoint(kind) {
-    return ({ time: "time", expense: "expenses", material: "materials", note: "notes" })[kind] || "";
+    return ({ time: "time", expense: "expenses", equipment: "equipment", material: "materials", note: "notes" })[kind] || "";
   }
 
   async function deleteRegistration(kind, entryId, label) {
-    if (!currentOrder || currentOrder.invoiceId || currentOrder.status === "cancelled") return;
+    if (!currentOrder || currentOrder.status === "cancelled") return;
     const endpoint = registrationEndpoint(kind);
     if (!endpoint || !entryId) return;
     if (!confirm(`Slette ${label || "registreringen"}? Denne endringen lagres med en gang.`)) return;
@@ -505,6 +512,23 @@
         alert(error?.message || "Kunne ikke gjenåpne oppdraget.");
         recover.disabled = false;
         recover.textContent = "Gjenåpne for korrigering";
+      }
+      return;
+    }
+
+    const invoiceNow = event.target.closest("[data-field-invoice-now]");
+    if (invoiceNow && currentOrder) {
+      event.preventDefault();
+      invoiceNow.disabled = true;
+      const oldText = invoiceNow.textContent;
+      invoiceNow.textContent = "Lager fakturautkast…";
+      try {
+        const result = await api(`/admin/operations/work-orders/${encodeURIComponent(currentOrder._id)}/invoice-draft`, { method: "POST", body: JSON.stringify({}) });
+        location.href = `faktura-detalj.html?id=${encodeURIComponent(result.invoice._id)}`;
+      } catch (error) {
+        alert(error?.message || "Kunne ikke lage fakturautkast.");
+        invoiceNow.disabled = false;
+        invoiceNow.textContent = oldText;
       }
       return;
     }
