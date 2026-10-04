@@ -29,11 +29,13 @@ test("every primary and related admin page mounts the same shell", () => {
   }
 });
 
-test("shared navigation contains the six primary destinations and secondary logout", () => {
+test("shared navigation is reduced to five primary destinations with grouped secondary tools", () => {
   const shell = read("admin/admin-shell.js");
-  for (const label of ["Hjem", "Oppdrag", "Bookinger", "Forespørsler", "Kunder", "Fakturaer"]) assert.match(shell, new RegExp(`label: "${label}"`));
+  for (const label of ["Hjem", "Oppdrag", "Kunder", "Innkommende", "Økonomi"]) assert.match(shell, new RegExp(`label: "${label}"`));
+  for (const group of ["Innkommende", "Drift", "Økonomi", "System"]) assert.match(shell, new RegExp(`admin-more-group-title">${group}`));
+  assert.doesNotMatch(shell, /label: "Oversikt"/);
+  assert.doesNotMatch(shell, />Varslinger</);
   assert.match(shell, /id="logoutBtn"/);
-  assert.match(shell, /adminMobileLogout/);
 });
 
 test("mobile navigation is fixed, safe-area aware and horizontally bounded", () => {
