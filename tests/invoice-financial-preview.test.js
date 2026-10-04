@@ -40,3 +40,19 @@ test("financial preview displays backend validation errors and a bounded timeout
   slow(); const running = stalled.run(200); stalled.run(15000); await running;
   assert.match(errors[1], /tok for lang tid/);
 });
+
+test('line amounts display the server result and clear while the preview is pending', () => {
+  const context = { window: {}, Intl, AbortController, setTimeout, clearTimeout };
+  vm.runInNewContext(fs.readFileSync('admin/invoice-financial-preview.js', 'utf8'), context);
+  const total = { textContent: 'old value' };
+  const blank = { textContent: 'old blank value' };
+  const body = { querySelectorAll() { return [
+    { querySelector(selector) { return selector === '.line-item' ? { value: 'Precision time' } : total; } },
+    { querySelector(selector) { return selector === '.line-item' ? { value: '' } : blank; } },
+  ]; } };
+  context.window.renderInvoiceLineFinancials(body, [{ amount: 2164.32 }]);
+  assert.equal(total.textContent, '2 164,32 kr');
+  assert.equal(blank.textContent, '–');
+  context.window.renderInvoiceLineFinancials(body);
+  assert.equal(total.textContent, '–');
+});

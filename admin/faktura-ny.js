@@ -85,7 +85,7 @@
     tr.dataset.receiptUrl = details.receiptUrl || "";
     tr.innerHTML = `
       <td><input type="text" class="line-item" placeholder="Arbeid/beskrivelse" value="${esc(item)}"><input type="text" class="line-description" placeholder="Detaljer (valgfritt)" value="${esc(details.description || "")}" style="margin-top:5px"></td>
-      <td><input type="number" class="line-quantity" min="0.01" step="0.01" inputmode="decimal" value="${esc(quantity)}"></td>
+      <td><input type="number" class="line-quantity" min="0.000001" step="0.000001" inputmode="decimal" value="${esc(quantity)}"></td>
       <td><select class="line-unit">
         <option value="hour" ${unit === "hour" ? "selected" : ""}>timer</option>
         <option value="fixed" ${unit === "fixed" ? "selected" : ""}>oppdrag</option>
@@ -114,7 +114,6 @@
         unit,
         unitLabel: unitLabel(unit),
         unitPrice,
-        amount: Math.round((quantity * unitPrice + Number.EPSILON) * 100) / 100,
         rateCode: tr.dataset.rateCode || "",
         sourceType: tr.dataset.sourceType || "manual",
         sourceEntryKey: tr.dataset.sourceEntryKey || "",
@@ -128,20 +127,16 @@
   }
 
   function updateTotal() {
-    for (const tr of linesBody.querySelectorAll("tr")) {
-      const q = Number(tr.querySelector(".line-quantity").value) || 0;
-      const p = Number(tr.querySelector(".line-price").value) || 0;
-      tr.querySelector(".line-total").textContent = money(Math.round((q * p + Number.EPSILON) * 100) / 100);
-    }
     previewFinancials();
   }
 
   const previewFinancials = window.createInvoiceFinancialPreview({
     endpoint: `${API_BASE}/invoices/financial-preview`, headers,
     payload: () => ({ lines: getLines() }),
-    pending: () => { totalDisplay.textContent = "Beregner fakturasum…"; },
+    pending: () => { window.renderInvoiceLineFinancials(linesBody); totalDisplay.textContent = "Beregner fakturasum…"; },
     error: (message) => { totalDisplay.textContent = message; },
     render: (totals) => {
+      window.renderInvoiceLineFinancials(linesBody, totals.lines);
       const rounding = totals.roundingAdjustment;
       const roundingText = Math.abs(rounding) >= 0.01 ? ` · Øreavrunding: ${rounding < 0 ? "−" : "+"}${money(Math.abs(rounding))}` : "";
       totalDisplay.textContent = `Sum før avrunding: ${money(totals.amountBeforeRounding)}${roundingText} · Å betale: ${money(totals.amount)}`;

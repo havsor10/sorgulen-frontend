@@ -50,7 +50,7 @@
   }
   function quantity(value) {
     const n = Number(value);
-    return new Intl.NumberFormat("nb-NO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number.isFinite(n) ? n : 0);
+    return new Intl.NumberFormat("nb-NO", { minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(Number.isFinite(n) ? n : 0);
   }
   function documentName(inv) {
     if (!inv.invoiceNumber) return inv.isCreditNote ? "Kreditnotautkast" : "Fakturautkast";

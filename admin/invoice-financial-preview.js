@@ -25,3 +25,16 @@
     };
   };
 })();
+
+// Display normalized line amounts returned by the same authority as the totals.
+window.renderInvoiceLineFinancials = function (body, lines) {
+  const rows = Array.from(body.querySelectorAll("tr"));
+  rows.forEach(row => { row.querySelector(".line-total").textContent = "–"; });
+  const included = rows.filter(row => row.querySelector(".line-item").value.trim());
+  if (!Array.isArray(lines) || lines.length !== included.length) return;
+  const format = new Intl.NumberFormat("nb-NO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  included.forEach((row, index) => {
+    const amount = Number(lines[index].amount);
+    if (Number.isFinite(amount)) row.querySelector(".line-total").textContent = `${format.format(amount)} kr`;
+  });
+};
