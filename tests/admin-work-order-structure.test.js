@@ -23,7 +23,7 @@ test("all JavaScript element references exist exactly once in the page", () => {
 
 test("loads production configuration and timestamp logic before the page controller", () => {
   const configIndex = html.indexOf('<script src="../config.js"></script>');
-  const timeIndex = html.indexOf('<script src="work-order-time.js"></script>');
+  const timeIndex = html.indexOf('<script src="work-order-time.js?v=');
   const controllerIndex = html.indexOf('<script src="oppdrag.js"></script>');
   assert.ok(configIndex >= 0 && configIndex < timeIndex);
   assert.ok(timeIndex < controllerIndex);
