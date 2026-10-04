@@ -317,6 +317,7 @@
         <div class="field-add-grid">
           <button type="button" class="field-add-option" data-field-add-time><span class="field-add-icon">◷</span><strong>Tid / arbeid</strong><small>Arbeidstid og hva du gjorde</small></button>
           <button type="button" class="field-add-option" data-entry="expense" data-id="${esc(order._id)}"><span class="field-add-icon">kr</span><strong>Utgift</strong><small>Kjøp og andre kostnader</small></button>
+          <button type="button" class="field-add-option" data-field-add-equipment><span class="field-add-icon">⚙</span><strong>Utstyr</strong><small>Maskin- og utstyrsbruk med sats</small></button>
           <button type="button" class="field-add-option" data-entry="material" data-id="${esc(order._id)}"><span class="field-add-icon">▣</span><strong>Materiale</strong><small>Materiale kjøpt til oppdraget</small></button>
           <button type="button" class="field-add-option" data-entry="note" data-id="${esc(order._id)}"><span class="field-add-icon">✎</span><strong>Notat</strong><small>Husk noe om arbeidet</small></button>
         </div>
@@ -566,6 +567,13 @@
       event.preventDefault();
       closeAddMenu();
       window.SorgulenOperations?.openManualTime?.({ orderId: currentOrder._id, rate: currentOrder.hourlyRate });
+      return;
+    }
+    const addEquipment = event.target.closest("[data-field-add-equipment]");
+    if (addEquipment && currentOrder) {
+      event.preventDefault();
+      closeAddMenu();
+      window.SorgulenOperations?.openEquipmentAdd?.(currentOrder._id);
       return;
     }
     if (event.target.closest("[data-field-add-menu] [data-entry]")) closeAddMenu();
