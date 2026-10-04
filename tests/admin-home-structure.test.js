@@ -6,64 +6,53 @@ const path = require("node:path");
 const root = path.resolve(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "admin/hjem.html"), "utf8");
 const js = fs.readFileSync(path.join(root, "admin/hjem.js"), "utf8");
-const attentionJs = fs.readFileSync(path.join(root, "admin/home-attention.js"), "utf8");
 const css = fs.readFileSync(path.join(root, "admin/hjem.css"), "utf8");
-const attentionCss = fs.readFileSync(path.join(root, "admin/home-attention.css"), "utf8");
-const activeCustomersCss = fs.readFileSync(path.join(root, "admin/home-active-customers.css"), "utf8");
 const shellCss = fs.readFileSync(path.join(root, "admin/admin-shell.css"), "utf8");
 
-test("home prioritizes current work and concrete actions instead of dashboard noise", () => {
+test("home prioritizes current work and one concrete action queue", () => {
   assert.match(html, /focusContent/);
   assert.match(html, /Hva trenger deg nå\?/);
   assert.match(html, /Bare ting som faktisk krever handling/);
-  assert.match(html, /home-attention\.js/);
-  assert.match(html, /home-attention\.css/);
-  assert.match(attentionCss, /#latestBookings/);
-  assert.match(attentionCss, /#ongoingSection/);
+  assert.match(html, /id="handling"/);
+  assert.doesNotMatch(html, /home-attention\.js/);
+  assert.doesNotMatch(html, /aiSummary/);
+  assert.doesNotMatch(html, /latestBookings/);
   assert.doesNotMatch(html, /Omsetning|Mulig inntekt|canvas|chart/i);
 });
 
-test("active customers are visible on home when ongoing projects exist", () => {
+test("active customers are visible before the action queue", () => {
   assert.match(html, /id="ongoingSection" aria-labelledby="ongoingTitle"/);
-  assert.doesNotMatch(html, /id="ongoingSection" class="hidden"/);
   assert.match(html, /Aktive kunder/);
-  assert.match(html, /home-active-customers\.css/);
-  assert.match(activeCustomersCss, /#ongoingSection:not\(\.hidden\)/);
-  assert.doesNotMatch(attentionJs, /getElementById\("ongoingSection"\)\?\.classList\.add\("hidden"\)/);
   assert.match(js, /ongoingProjects/);
-  assert.match(js, /status:\s*"stopped"|ongoingProjects/);
-  assert.match(js, /Start takstameter/);
-  assert.match(js, /Start ny økt/);
-  assert.match(js, /Fortsett \/ ny økt/);
-  assert.ok(html.indexOf('id="ongoingSection"') < html.indexOf('aria-labelledby="tasksTitle"'), "aktive kunder skal stå før oppfølgingsvarsler");
+  assert.ok(html.indexOf('id="ongoingSection"') < html.indexOf('id="handling"'), "aktive kunder skal stå før handlingskøen");
 });
 
-test("attention engine uses visual priority, direct actions and a calm all-clear state", () => {
-  assert.match(attentionJs, /attention-card/);
-  assert.match(attentionJs, /actionLabel/);
-  assert.match(attentionJs, /statusLabel/);
-  assert.match(attentionJs, /Alt er under kontroll/);
-  assert.match(attentionJs, /Ingenting krever deg nå/);
-  assert.match(attentionCss, /attentionPulse/);
-  assert.match(attentionCss, /attention-card\.critical/);
-  assert.match(attentionCss, /attention-card\.high/);
-  assert.match(attentionCss, /attention-card\.medium/);
+test("action queue shows at most three before explicit expansion", () => {
+  assert.match(js, /tasks\.slice\(0,3\)/);
+  assert.match(js, /data-task-more/);
+  assert.match(js, /Vis alle/);
+  assert.match(js, /actionLabel/);
+  assert.match(js, /taskMarkup/);
 });
 
-test("assistant shows the customer draft before approving a proposed next day", () => {
-  assert.match(attentionJs, /publish_next_work/);
-  assert.match(attentionJs, /admin\/assistant\/actions\/next-work/);
-  assert.match(attentionJs, /expectedStart/);
-  assert.match(attentionJs, /expectedEnd/);
-  assert.match(attentionJs, /data-message/);
-  assert.match(attentionJs, /Kundemelding:/);
-  assert.match(attentionJs, /Ingen SMS eller e-post sendes/);
-  assert.match(attentionCss, /assistant-ready/);
-  assert.match(attentionCss, /attention-action--assistant/);
+test("the whole action card is the direct action", () => {
+  assert.match(js, /<a class="task-item" href=/);
+  assert.match(js, /task-go/);
+  assert.match(css, /task-item:active/);
+  assert.match(css, /task-more/);
+});
+
+test("assistant proposal can still be approved directly from the action queue", () => {
+  assert.match(js, /publish_next_work/);
+  assert.match(js, /admin\/assistant\/actions\/next-work/);
+  assert.match(js, /expectedStart/);
+  assert.match(js, /expectedEnd/);
+  assert.match(js, /Ingen SMS eller e-post sendes/);
 });
 
 test("every project quick action is wired to a protected backend route", () => {
   assert.match(js, /data-quick="expense"/);
+  assert.match(js, /data-quick="equipment"/);
   assert.match(js, /data-quick="material"/);
   assert.match(js, /data-quick="note"/);
   assert.match(js, /admin\/work-orders\/\$\{encodeURIComponent\(quickType\.id\)\}/);
@@ -72,17 +61,14 @@ test("every project quick action is wired to a protected backend route", () => {
 
 test("home has responsive touch targets and no horizontal navigation scrolling", () => {
   assert.match(css, /min-height:46px/);
-  assert.match(attentionCss, /min-height: 50px/);
   assert.match(shellCss, /grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
   assert.match(shellCss, /position:fixed/);
   assert.match(css, /@media\(max-width:430px\)/);
-  assert.match(attentionCss, /@media \(max-width: 430px\)/);
   assert.match(html, /viewport-fit=cover/);
 });
 
-test("home renders only server data or honest loading and empty states", () => {
+test("home renders only live server data or honest empty states", () => {
   assert.doesNotMatch(html, /Ola Hansen|Kari Olsen|32 450/);
-  assert.match(js, /Ingen ting krever handling akkurat nå/);
+  assert.match(js, /Ingenting krever handling akkurat nå/);
   assert.match(js, /admin\/assistant\/home/);
-  assert.match(attentionJs, /admin\/assistant\/home/);
 });

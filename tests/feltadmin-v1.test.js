@@ -13,10 +13,11 @@ test("Feltadmin is a separate admin surface with a return to full admin", () => 
   assert.match(shell, /fieldContext \? "Komplett admin" : "Feltadmin"/);
 });
 
-test("full admin navigation is still present", () => {
-  for (const label of ["Hjem", "Oversikt", "Oppdrag", "Bookinger", "Forespørsler", "Kunder", "Fakturaer", "Nettside", "Kundeportal", "Fiken", "Brøyting", "Lager"]) {
+test("full admin navigation keeps core areas while secondary tools are grouped", () => {
+  for (const label of ["Hjem", "Oppdrag", "Kunder", "Innkommende", "Økonomi", "Bookinger", "Prisforespørsler", "Innboks", "Nettside", "Kundeportal", "Fiken", "Brøyting", "Lager"]) {
     assert.match(shell, new RegExp(label));
   }
+  assert.doesNotMatch(shell, /label: "Oversikt"/);
 });
 
 test("Feltadmin provides fast field logging workflows", () => {

@@ -38,3 +38,12 @@ test("action layer stays deterministic and does not send or spend automatically"
   assert.doesNotMatch(source, /approve_purchase_execution/);
   assert.doesNotMatch(source, /triggerPurchase|executePurchase|spendMoney/);
 });
+
+
+test("warning cards themselves are clickable when an action exists", () => {
+  const source = read("admin/actionable-warnings.js");
+  assert.match(source, /makeWarningClickable/);
+  assert.match(source, /is-actionable-warning/);
+  assert.match(source, /actionElement\.click\(\)/);
+  assert.match(source, /field-issue,\.portal-warning/);
+});

@@ -50,6 +50,8 @@
       .actionable-warning-error{min-height:0;margin:0;color:#ffb0a8;font-size:.9rem}
       .autopilot-watchdog-item .actionable-warning-action{margin-left:auto;margin-top:0}
       .fd-validation-list li .actionable-warning-action{display:flex;width:max-content}
+      .is-actionable-warning{cursor:pointer;outline:none}
+      .is-actionable-warning:focus-visible{box-shadow:0 0 0 3px rgba(115,154,200,.28)}
       @media(max-width:720px){.actionable-warning-action{width:100%}.autopilot-watchdog-item .actionable-warning-action{width:100%;margin-top:9px}}
     `;
     document.head.appendChild(style);
@@ -64,6 +66,27 @@
     return true;
   }
 
+  function makeWarningClickable(container, actionElement) {
+    const card = container?.closest?.(".field-issue,.portal-warning,.fd-warn,.autopilot-watchdog-item,.fd-validation-list li,.customer-ops-hero") || container;
+    if (!card || !actionElement || card.dataset.actionableWholeCard === "1") return;
+    card.dataset.actionableWholeCard = "1";
+    card.classList.add("is-actionable-warning");
+    if (!card.hasAttribute("tabindex")) card.tabIndex = 0;
+    if (!card.hasAttribute("role")) card.setAttribute("role", "button");
+
+    const run = (event) => {
+      if (event?.target?.closest?.("a,button,input,select,textarea,label,form")) return;
+      actionElement.click();
+    };
+    card.addEventListener("click", run);
+    card.addEventListener("keydown", (event) => {
+      if (!["Enter", " "].includes(event.key)) return;
+      if (event.target?.closest?.("a,button,input,select,textarea,label,form")) return;
+      event.preventDefault();
+      actionElement.click();
+    });
+  }
+
   function addButton(container, label, handler, key) {
     if (!container || container.querySelector(`[data-actionable-key="${key}"]`)) return null;
     const button = document.createElement("button");
@@ -73,6 +96,7 @@
     button.textContent = label;
     button.addEventListener("click", handler);
     container.appendChild(button);
+    makeWarningClickable(container, button);
     return button;
   }
 
@@ -84,6 +108,7 @@
     link.href = href;
     link.textContent = label;
     container.appendChild(link);
+    makeWarningClickable(container, link);
     return link;
   }
 
