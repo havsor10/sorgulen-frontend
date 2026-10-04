@@ -19,3 +19,13 @@ test("customer invoice form defaults to all unbilled entries with optional date 
   assert.match(code, /name="from"/);
   assert.match(code, /name="to"/);
 });
+
+test("customer editor exposes the complete structured invoice address", () => {
+  const code = read("admin/kunde-v2.js");
+  assert.match(code, /name="address"/);
+  assert.match(code, /name="postalCode"/);
+  assert.match(code, /name="city"/);
+  assert.match(code, /name="organizationNumber"/);
+  assert.match(code, /Gateadresse/);
+});
+
