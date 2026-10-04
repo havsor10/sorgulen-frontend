@@ -48,6 +48,7 @@
   const mobileItems = navItems.filter((item) => ["home", "jobs", "customers", "economy"].includes(item.key));
   const activeClass = (key) => key === activeGroup ? " is-active" : "";
   const activeAttr = (key) => key === activeGroup ? ' aria-current="page"' : "";
+  const pageClass = (key) => key === page ? " is-active" : "";
   const badge = (key) => `<span class="admin-nav-badge" data-admin-badge="${key}" hidden></span>`;
 
   function mobileIcon(key) {
@@ -94,29 +95,29 @@
 
       <div class="admin-more-group">
         <p class="admin-more-group-title">Innkommende</p>
-        <a class="admin-more-link${activeClass("bookings")}" href="admin-dashboard.html"><span>Bookinger</span><span class="admin-more-tail">${badge("bookings")}<span aria-hidden="true">›</span></span></a>
-        <a class="admin-more-link${activeClass("requests")}" href="foresporsler.html"><span>Prisforespørsler</span><span class="admin-more-tail">${badge("requests")}<span aria-hidden="true">›</span></span></a>
-        <a class="admin-more-link${activeClass("mailbox")}" href="innboks.html"><span>Innboks</span><span class="admin-more-tail">${badge("mailbox")}<span aria-hidden="true">›</span></span></a>
+        <a class="admin-more-link${pageClass("bookings")}" href="admin-dashboard.html"><span>Bookinger</span><span class="admin-more-tail">${badge("bookings")}<span aria-hidden="true">›</span></span></a>
+        <a class="admin-more-link${pageClass("requests")}" href="foresporsler.html"><span>Prisforespørsler</span><span class="admin-more-tail">${badge("requests")}<span aria-hidden="true">›</span></span></a>
+        <a class="admin-more-link${pageClass("mailbox")}" href="innboks.html"><span>Innboks</span><span class="admin-more-tail">${badge("mailbox")}<span aria-hidden="true">›</span></span></a>
       </div>
 
       <div class="admin-more-group">
         <p class="admin-more-group-title">Drift</p>
-        <a class="admin-more-link${activeClass("snow")}" href="broyting.html"><span>Brøyting</span><span class="admin-more-tail">${badge("snow")}<span aria-hidden="true">›</span></span></a>
-        <a class="admin-more-link${activeClass("inventory")}" href="lager.html"><span>Lager</span><span class="admin-more-tail">${badge("inventory")}<span aria-hidden="true">›</span></span></a>
+        <a class="admin-more-link${pageClass("snow")}" href="broyting.html"><span>Brøyting</span><span class="admin-more-tail">${badge("snow")}<span aria-hidden="true">›</span></span></a>
+        <a class="admin-more-link${pageClass("inventory")}" href="lager.html"><span>Lager</span><span class="admin-more-tail">${badge("inventory")}<span aria-hidden="true">›</span></span></a>
       </div>
 
       <div class="admin-more-group">
         <p class="admin-more-group-title">Økonomi</p>
         <a class="admin-more-link${activeClass("economy")}" href="fakturaer.html"><span>Fakturaer</span><span class="admin-more-tail">${badge("economy")}<span aria-hidden="true">›</span></span></a>
-        <a class="admin-more-link${activeClass("fiken")}" href="fiken.html"><span>Fiken / regnskap</span><span aria-hidden="true">›</span></a>
+        <a class="admin-more-link${pageClass("fiken")}" href="fiken.html"><span>Fiken / regnskap</span><span aria-hidden="true">›</span></a>
         <a class="admin-more-link" href="statistikk.html"><span>Statistikk</span><span aria-hidden="true">›</span></a>
       </div>
 
       <div class="admin-more-group">
         <p class="admin-more-group-title">System</p>
-        <a class="admin-more-link${activeClass("website")}" href="nettside.html"><span>Nettside / priser</span><span aria-hidden="true">›</span></a>
-        <a class="admin-more-link${activeClass("portal")}" href="kundeportal.html"><span>Kundeportal</span><span aria-hidden="true">›</span></a>
-        <a class="admin-more-link${activeClass("autopilot")}" href="autopilot.html"><span>Autopilot</span><span class="admin-more-tail">${badge("autopilot")}<span aria-hidden="true">›</span></span></a>
+        <a class="admin-more-link${pageClass("website")}" href="nettside.html"><span>Nettside / priser</span><span aria-hidden="true">›</span></a>
+        <a class="admin-more-link${pageClass("portal")}" href="kundeportal.html"><span>Kundeportal</span><span aria-hidden="true">›</span></a>
+        <a class="admin-more-link${pageClass("autopilot")}" href="autopilot.html"><span>Autopilot</span><span class="admin-more-tail">${badge("autopilot")}<span aria-hidden="true">›</span></span></a>
       </div>
 
       <a class="admin-more-link admin-menu-logout" id="logoutBtn" href="login.html"><span>Logg ut</span><span aria-hidden="true">›</span></a>
