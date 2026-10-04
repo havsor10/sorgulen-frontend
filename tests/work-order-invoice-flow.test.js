@@ -44,3 +44,12 @@ test("work-order fakturaflyt henter kunde og linjer fra backend", () => {
   assert.match(invoiceJs, /\(data\.lines \|\| \[\]\)\.forEach/);
   assert.match(invoiceJs, /sourceType: data\.sourceType/);
 });
+
+test("pågående prosjekt lager ikke parallelle utkast eller tilbyr allerede fakturerte poster på nytt", () => {
+  assert.match(field, /const activeDraft = Object\.values\(order\.billingLocks\?\.entries \|\| \{\}\)/);
+  assert.match(field, /Åpne fakturautkast/);
+  assert.match(field, /const isUnbilled = \(kind, entryId\)/);
+  assert.match(field, /registrationBillingLock\(order, kind, entryId\)/);
+  assert.match(field, /order\.pricingMode === "fixed"/);
+});
+
