@@ -118,11 +118,11 @@
     bar.classList.add(copy.state);
     const title = bar.querySelector("[data-publish-title]");
     const help = bar.querySelector("[data-publish-help]");
-    if (title) title.textContent = copy.title;
-    if (help) help.textContent = copy.help;
+    if (title && title.textContent !== copy.title) title.textContent = copy.title;
+    if (help && help.textContent !== copy.help) help.textContent = copy.help;
     const confirmation = bar.querySelector("#portalPublishConfirmation");
     if (confirmation) {
-      confirmation.innerHTML = lastConfirmationHtml;
+      if (confirmation.innerHTML !== lastConfirmationHtml) confirmation.innerHTML = lastConfirmationHtml;
       confirmation.hidden = !lastConfirmationHtml;
     }
   }
@@ -137,21 +137,21 @@
     if (!editor) return;
     const internalDraft = editor.querySelector('[data-save-procurement="researching"]');
     if (internalDraft) {
-      internalDraft.textContent = "Lagre som internt utkast";
+      if (internalDraft.textContent !== "Lagre som internt utkast") internalDraft.textContent = "Lagre som internt utkast";
       internalDraft.title = "Dette blir ikke synlig for kunden.";
     }
     const sendApproval = editor.querySelector('[data-save-procurement="awaiting_approval"]');
     if (sendApproval) {
-      sendApproval.textContent = "Gjør synlig for kunden og be om godkjenning";
+      if (sendApproval.textContent !== "Gjør synlig for kunden og be om godkjenning") sendApproval.textContent = "Gjør synlig for kunden og be om godkjenning";
       sendApproval.title = "Denne handlingen gjør innkjøpet synlig på kundesiden med en gang.";
     }
     editor.querySelectorAll("[data-set-procurement-status]").forEach((button) => {
-      button.textContent = "Lagre status på kundesiden";
+      if (button.textContent !== "Lagre status på kundesiden") button.textContent = "Lagre status på kundesiden";
       button.title = "Statusen blir synlig for kunden med en gang.";
     });
     const upload = editor.querySelector("#uploadPortalImage");
     if (upload) {
-      upload.textContent = "Legg til bilde på kundesiden";
+      if (upload.textContent !== "Legg til bilde på kundesiden") upload.textContent = "Legg til bilde på kundesiden";
       upload.title = "Bildet blir lagt til på kundesiden når opplastingen er ferdig.";
     }
   }
