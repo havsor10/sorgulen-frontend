@@ -13,6 +13,7 @@
     customers: [],
     defaultService: null,
     equipmentRates: [],
+    actionExpanded: false,
     serverOffset: 0,
     busy: false,
     currentView: "today",
@@ -258,17 +259,52 @@
     return job?.customerSnapshot?.name || "Ukjent kunde";
   }
 
+  function fieldTaskHref(href) {
+    const value = String(href || "").trim();
+    if (!value) return "";
+    if (/^(https?:|mailto:|tel:)/i.test(value)) return value;
+    if (/[?&]from=field(?:&|$)/.test(value)) return value;
+    return value + (value.includes("?") ? "&" : "?") + "from=field";
+  }
+
+  function actionableTasks() {
+    const raw = Array.isArray(state.home?.overview?.tasks) ? state.home.overview.tasks : [];
+    const seen = new Set();
+    return raw.filter((task) => {
+      if (!task?.href || !task?.actionLabel) return false;
+      const key = [task.href, task.actionLabel, task.title].join("|");
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
   function renderPulse() {
     const node = el("fieldPulse");
-    const overview = state.home?.overview;
-    if (!overview) { node.hidden = true; return; }
-    const booking = Number(overview.counts?.pendingBookings || 0);
-    const requests = Number(overview.counts?.pendingRequests || 0);
-    if (!booking && !requests) { node.hidden = true; return; }
+    const tasks = actionableTasks();
+    if (!tasks.length) { node.hidden = true; node.innerHTML = ""; return; }
+
+    const visible = state.actionExpanded ? tasks : tasks.slice(0, 3);
     node.hidden = false;
     node.innerHTML =
-      '<a class="field-pulse-link" href="admin-dashboard.html?from=field" aria-label="Åpne bookinger. ' + booking + ' nye"><strong>' + booking + '</strong><span>nye bookinger</span><b aria-hidden="true">›</b></a>' +
-      '<a class="field-pulse-link" href="foresporsler.html?from=field" aria-label="Åpne prisforespørsler. ' + requests + ' nye"><strong>' + requests + '</strong><span>prisforespørsler</span><b aria-hidden="true">›</b></a>';
+      '<div class="field-action-queue-head"><div><p class="field-kicker">Krever handling</p><h2>' + tasks.length + ' ting å ordne</h2></div>' +
+        (tasks.length > 3 ? '<button class="field-text-btn" type="button" data-toggle-field-actions>' + (state.actionExpanded ? "Vis færre" : "Vis alle (" + tasks.length + ")") + '</button>' : '') +
+      '</div>' +
+      '<div class="field-action-queue">' +
+        visible.map((task) =>
+          '<a class="field-action-card ' + esc(task.priority || "medium") + '" href="' + esc(fieldTaskHref(task.href)) + '">' +
+            '<span class="field-action-status">' + esc(task.statusLabel || "KREVER HANDLING") + '</span>' +
+            '<strong>' + esc(task.title || "Krever handling") + '</strong>' +
+            (task.detail ? '<span class="field-action-detail">' + esc(task.detail) + '</span>' : '') +
+            '<span class="field-action-go">' + esc(task.actionLabel) + ' <b aria-hidden="true">›</b></span>' +
+          '</a>'
+        ).join("") +
+      '</div>';
+
+    node.querySelector("[data-toggle-field-actions]")?.addEventListener("click", () => {
+      state.actionExpanded = !state.actionExpanded;
+      renderPulse();
+    });
   }
 
   function activeActionButtons(job) {
