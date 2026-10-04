@@ -99,6 +99,21 @@
       return data.workOrder;
     }
 
+    function registrationEndpoint(kind) {
+      return ({ time: "time", expense: "expenses", equipment: "equipment", material: "materials", note: "notes" })[kind] || "";
+    }
+
+    async function deleteExistingRegistration({ kind, orderId, entryId, label = "registreringen" }) {
+      const endpoint = registrationEndpoint(kind);
+      if (!endpoint || !orderId || !entryId) throw new Error("Registreringen kunne ikke identifiseres.");
+      if (!confirm(`Slette ${label}? Denne endringen lagres med en gang.`)) return false;
+      await api(`/admin/operations/work-orders/${encodeURIComponent(orderId)}/${endpoint}/${encodeURIComponent(entryId)}`, { method: "DELETE" });
+      closeModal();
+      await window.SorgulenAdminShell?.refreshBadges?.();
+      location.reload();
+      return true;
+    }
+
     function timeFormMarkup({ orderId = "", customerId = "", entry = null, rate = 850 } = {}) {
       const seconds = entry ? intervalSeconds(entry) : 0;
       const hours = Math.floor(seconds / 3600);
@@ -118,13 +133,30 @@
           <div class="operation-preview"><span>Beregnet beløp</span><strong id="operationAmount">0 kr</strong></div>
         </div>
         <p id="operationError" class="operation-error" role="alert"></p>
-        <div class="operation-actions"><button type="button" class="secondary-btn" data-operation-close-2>Avbryt</button><button id="operationSaveTime" type="submit" class="primary-btn">Lagre</button></div>
+        <div class="operation-actions">${entry?.entryId ? `<button type="button" class="secondary-btn operation-danger" data-operation-delete>Slett registrering</button>` : ""}<button type="button" class="secondary-btn" data-operation-close-2>Avbryt</button><button id="operationSaveTime" type="submit" class="primary-btn">Lagre</button></div>
       </form>`;
     }
 
     function bindTimeForm({ orderId = "", customerId = "", entry = null }) {
       const form = sheet.querySelector("#operationTimeForm");
       sheet.querySelector("[data-operation-close-2]").addEventListener("click", closeModal);
+      const deleteButton = sheet.querySelector("[data-operation-delete]");
+      if (deleteButton && entry?.entryId) {
+        deleteButton.addEventListener("click", async () => {
+          deleteButton.disabled = true;
+          try {
+            await deleteExistingRegistration({
+              kind: "time",
+              orderId,
+              entryId: entry.entryId,
+              label: entry.comment || "tidsregistreringen",
+            });
+          } catch (error) {
+            sheet.querySelector("#operationError").textContent = error.message;
+            deleteButton.disabled = false;
+          }
+        });
+      }
       const preview = () => {
         const hours = Math.max(0, Number(form.elements.hours.value) || 0);
         const minutes = Math.max(0, Number(form.elements.minutes.value) || 0);
@@ -192,7 +224,7 @@
         <div class="operation-field"><label>Leverandør</label><input name="supplier" value="${esc(item.supplier || "")}"></div>
         <div class="operation-field"><label>Dato</label><input name="occurredAt" type="date" value="${esc(dateValue(item.occurredAt) || today())}" required></div>
         <label class="operation-check"><input name="billable" type="checkbox" ${item.billable === false ? "" : "checked"}> Fakturerbar</label>
-      </div><p id="operationError" class="operation-error"></p><div class="operation-actions"><button type="button" class="secondary-btn" data-operation-close-2>Avbryt</button><button type="submit" class="primary-btn">Lagre</button></div></form>`;
+      </div><p id="operationError" class="operation-error"></p><div class="operation-actions"><button type="button" class="secondary-btn operation-danger" data-operation-delete>Slett registrering</button><button type="button" class="secondary-btn" data-operation-close-2>Avbryt</button><button type="submit" class="primary-btn">Lagre</button></div></form>`;
     }
     function materialFormMarkup(orderId, item) {
       return `<form id="operationEditForm" data-kind="material" data-order-id="${esc(orderId)}" data-entry-id="${esc(item.entryId)}"><div class="operation-grid">
@@ -203,21 +235,48 @@
         <div class="operation-field"><label>Kundepris</label><input name="unitPrice" type="number" min="0" max="1000000" step="0.01" value="${esc(item.unitPrice ?? "")}"></div>
         <div class="operation-field wide"><label>Kommentar</label><input name="comment" value="${esc(item.comment || "")}"></div>
         <label class="operation-check"><input name="billable" type="checkbox" ${item.billable === false ? "" : "checked"}> Fakturerbar</label>
-      </div><p id="operationError" class="operation-error"></p><div class="operation-actions"><button type="button" class="secondary-btn" data-operation-close-2>Avbryt</button><button type="submit" class="primary-btn">Lagre</button></div></form>`;
+      </div><p id="operationError" class="operation-error"></p><div class="operation-actions"><button type="button" class="secondary-btn operation-danger" data-operation-delete>Slett registrering</button><button type="button" class="secondary-btn" data-operation-close-2>Avbryt</button><button type="submit" class="primary-btn">Lagre</button></div></form>`;
     }
+    function equipmentFormMarkup(orderId, item) {
+      return `<form id="operationEditForm" data-kind="equipment" data-order-id="${esc(orderId)}" data-entry-id="${esc(item.entryId)}"><div class="operation-grid">
+        <div class="operation-field wide"><label>Utstyr</label><input name="item" value="${esc(item.item || "")}" required></div>
+        <div class="operation-field"><label>Brukstid (min)</label><input name="durationMinutes" type="number" min="0.01" max="10080" step="0.01" value="${esc(item.durationMinutes ?? "")}" required></div>
+        <div class="operation-field"><label>Timesats</label><input name="hourlyRateSnapshot" type="number" min="0" max="1000000" step="0.01" value="${esc(item.hourlyRateSnapshot ?? "")}" required></div>
+        <div class="operation-field wide"><label>Kommentar</label><input name="note" value="${esc(item.note || "")}"></div>
+        <label class="operation-check"><input name="billable" type="checkbox" ${item.billable === false ? "" : "checked"}> Fakturerbar</label>
+      </div><p id="operationError" class="operation-error"></p><div class="operation-actions"><button type="button" class="secondary-btn operation-danger" data-operation-delete>Slett registrering</button><button type="button" class="secondary-btn" data-operation-close-2>Avbryt</button><button type="submit" class="primary-btn">Lagre</button></div></form>`;
+    }
+
     function noteFormMarkup(orderId, item) {
-      return `<form id="operationEditForm" data-kind="note" data-order-id="${esc(orderId)}" data-entry-id="${esc(item.entryId)}"><div class="operation-field"><label>Notat</label><textarea name="text" maxlength="2000" required>${esc(item.text)}</textarea></div><p id="operationError" class="operation-error"></p><div class="operation-actions"><button type="button" class="secondary-btn" data-operation-close-2>Avbryt</button><button type="submit" class="primary-btn">Lagre</button></div></form>`;
+      return `<form id="operationEditForm" data-kind="note" data-order-id="${esc(orderId)}" data-entry-id="${esc(item.entryId)}"><div class="operation-field"><label>Notat</label><textarea name="text" maxlength="2000" required>${esc(item.text)}</textarea></div><p id="operationError" class="operation-error"></p><div class="operation-actions"><button type="button" class="secondary-btn operation-danger" data-operation-delete>Slett registrering</button><button type="button" class="secondary-btn" data-operation-close-2>Avbryt</button><button type="submit" class="primary-btn">Lagre</button></div></form>`;
     }
 
     function bindGenericEdit(kind) {
       const form = sheet.querySelector("#operationEditForm");
       sheet.querySelector("[data-operation-close-2]").addEventListener("click", closeModal);
+      const deleteButton = sheet.querySelector("[data-operation-delete]");
+      if (deleteButton) {
+        deleteButton.addEventListener("click", async () => {
+          deleteButton.disabled = true;
+          try {
+            await deleteExistingRegistration({
+              kind,
+              orderId: form.dataset.orderId,
+              entryId: form.dataset.entryId,
+              label: kind === "expense" ? "utgiften" : kind === "equipment" ? "utstyrsregistreringen" : kind === "material" ? "materialet" : "notatet",
+            });
+          } catch (error) {
+            sheet.querySelector("#operationError").textContent = error.message;
+            deleteButton.disabled = false;
+          }
+        });
+      }
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
         const payload = Object.fromEntries(new FormData(form).entries());
         if (kind !== "note") payload.billable = form.elements.billable.checked;
         if (kind === "expense") payload.occurredAt = `${payload.occurredAt}T12:00:00.000Z`;
-        const endpoint = kind === "expense" ? "expenses" : kind === "material" ? "materials" : "notes";
+        const endpoint = registrationEndpoint(kind);
         const button = form.querySelector("button[type=submit]");
         button.disabled = true;
         try {
@@ -266,6 +325,7 @@
     function managerMarkup(order) {
       const intervals = order.workIntervals || [];
       const expenses = order.additionalCosts || [];
+      const equipment = order.equipment || [];
       const materials = order.materials || [];
       const notes = order.projectNotes || [];
       const list = (items, mapper, empty) => items.length ? items.map(mapper).join("") : `<p class="empty-state">${esc(empty)}</p>`;
@@ -280,9 +340,10 @@
         return `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(entry.comment || categoryName(entry.category))}<span class="operation-source">${entry.source === "manual" ? "Manuell" : "Takstameter"}</span></strong><p>${esc(entry.workDate || dateValue(entry.startedAt))} · ${esc(durationText(seconds))} · ${esc(categoryName(entry.category))} · ${esc(money(rate))}/t · ${esc(money(amount))}${entry.billable === false ? " · Intern" : ""}</p></div><div class="operations-entry-actions">${actions}</div></div>`;
       }, "Ingen tid registrert.");
       const expenseRows = list(expenses, (item) => `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(item.item)}</strong><p>${esc(dateValue(item.occurredAt))} · ${esc(money(item.amount))}${item.supplier ? ` · ${esc(item.supplier)}` : ""}${item.billable === false ? " · Intern" : ""}</p></div><div class="operations-entry-actions"><button class="secondary-btn" data-op-edit="expense" data-entry-id="${esc(item.entryId)}">Rediger</button><button class="secondary-btn operation-danger" data-op-delete="expense" data-entry-id="${esc(item.entryId)}" data-label="${esc(item.item)}">Slett</button></div></div>`, "Ingen utgifter registrert.");
+      const equipmentRows = list(equipment, (item) => `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(item.item || "Utstyr")}</strong><p>${esc(item.durationMinutes || 0)} min · ${esc(money(item.hourlyRateSnapshot || 0))}/t · ${esc(money(item.amount || 0))}${item.billable === false ? " · Intern" : ""}</p></div><div class="operations-entry-actions"><button class="secondary-btn" data-op-edit="equipment" data-entry-id="${esc(item.entryId)}">Rediger</button><button class="secondary-btn operation-danger" data-op-delete="equipment" data-entry-id="${esc(item.entryId)}" data-label="${esc(item.item || "utstyrsregistreringen")}">Slett</button></div></div>`, "Ingen utstyrsbruk registrert.");
       const materialRows = list(materials, (item) => `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(item.item)}</strong><p>${esc(item.quantity)} ${esc(item.unit || "stk")}${item.unitPrice != null ? ` · ${esc(money(Number(item.quantity) * Number(item.unitPrice)))}` : " · Pris ikke satt"}${item.billable === false ? " · Intern" : ""}</p></div><div class="operations-entry-actions"><button class="secondary-btn" data-op-edit="material" data-entry-id="${esc(item.entryId)}">Rediger</button><button class="secondary-btn operation-danger" data-op-delete="material" data-entry-id="${esc(item.entryId)}" data-label="${esc(item.item)}">Slett</button></div></div>`, "Ingen materialer registrert.");
       const noteRows = list(notes, (item) => `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(item.text)}</strong><p>${esc(dateValue(item.createdAt))}</p></div><div class="operations-entry-actions"><button class="secondary-btn" data-op-edit="note" data-entry-id="${esc(item.entryId)}">Rediger</button><button class="secondary-btn operation-danger" data-op-delete="note" data-entry-id="${esc(item.entryId)}" data-label="notatet">Slett</button></div></div>`, "Ingen notater registrert.");
-      return `<div class="customer-ops-actions" style="margin-bottom:18px"><button class="primary-btn" data-op-add-time>+ Tid</button><button class="secondary-btn" data-op-edit-project>Rediger prosjekt</button></div><div class="operations-manager-list"><section class="operations-manager-section"><h3>Tid</h3>${timeRows}</section><section class="operations-manager-section"><h3>Utgifter</h3>${expenseRows}</section><section class="operations-manager-section"><h3>Materialer</h3>${materialRows}</section><section class="operations-manager-section"><h3>Notater</h3>${noteRows}</section></div>`;
+      return `<div class="customer-ops-actions" style="margin-bottom:18px"><button class="primary-btn" data-op-add-time>+ Tid</button><button class="secondary-btn" data-op-edit-project>Rediger prosjekt</button></div><div class="operations-manager-list"><section class="operations-manager-section"><h3>Tid</h3>${timeRows}</section><section class="operations-manager-section"><h3>Utgifter</h3>${expenseRows}</section><section class="operations-manager-section"><h3>Utstyr</h3>${equipmentRows}</section><section class="operations-manager-section"><h3>Materialer</h3>${materialRows}</section><section class="operations-manager-section"><h3>Notater</h3>${noteRows}</section></div>`;
     }
 
     async function openManager(orderId) {
@@ -305,6 +366,9 @@
             } else if (kind === "expense") {
               const item = (order.additionalCosts || []).find((entry) => entry.entryId === id);
               if (item) { showModal({ title: "Rediger utgift", body: expenseFormMarkup(orderId, item) }); bindGenericEdit("expense"); }
+            } else if (kind === "equipment") {
+              const item = (order.equipment || []).find((entry) => entry.entryId === id);
+              if (item) { showModal({ title: "Rediger utstyr", body: equipmentFormMarkup(orderId, item) }); bindGenericEdit("equipment"); }
             } else if (kind === "material") {
               const item = (order.materials || []).find((entry) => entry.entryId === id);
               if (item) { showModal({ title: "Rediger materiale", body: materialFormMarkup(orderId, item) }); bindGenericEdit("material"); }
@@ -318,7 +382,7 @@
             const id = del.dataset.entryId;
             const label = del.dataset.label || "registreringen";
             if (!confirm(`Slette ${label}? Denne endringen lagres.`)) return;
-            const endpoint = kind === "time" ? "time" : kind === "expense" ? "expenses" : kind === "material" ? "materials" : "notes";
+            const endpoint = registrationEndpoint(kind);
             try {
               await api(`/admin/operations/work-orders/${encodeURIComponent(orderId)}/${endpoint}/${encodeURIComponent(id)}`, { method: "DELETE" });
               closeModal();
@@ -345,6 +409,13 @@
         if (!item) throw new Error("Utgiften finnes ikke lenger.");
         showModal({ title: "Rediger utgift", body: expenseFormMarkup(orderId, item) });
         bindGenericEdit("expense");
+        return;
+      }
+      if (kind === "equipment") {
+        const item = (order.equipment || []).find((entry) => entry.entryId === entryId);
+        if (!item) throw new Error("Utstyrsregistreringen finnes ikke lenger.");
+        showModal({ title: "Rediger utstyr", body: equipmentFormMarkup(orderId, item) });
+        bindGenericEdit("equipment");
         return;
       }
       if (kind === "material") {
