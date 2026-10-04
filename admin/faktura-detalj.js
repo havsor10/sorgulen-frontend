@@ -173,7 +173,13 @@
       title = "✓ Registrert i Fiken";
       const paid = Number(fiken.totalPaidOre || 0) / 100;
       const outstanding = fiken.outstandingBalanceOre == null ? null : Number(fiken.outstandingBalanceOre) / 100;
+      const syncNote = String(fiken.lastError || "").trim();
       detail = `Salg-ID ${escapeHtml(fiken.saleId)}${paid > 0 ? ` · registrert betalt ${money(paid)}` : ""}${outstanding != null ? ` · utestående ${money(outstanding)}` : ""}.`;
+      if (syncNote) {
+        tone = "fd-warn";
+        title = "✓ Registrert i Fiken – vedlegg trenger oppmerksomhet";
+        detail += ` ${friendlyFikenError(syncNote)}`;
+      }
     } else if (state === "error") {
       tone = "fd-warn";
       const transient = isTransientFikenMessage(fiken.lastError);
