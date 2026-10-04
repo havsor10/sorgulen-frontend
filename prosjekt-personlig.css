@@ -1,4 +1,4 @@
-/* Personlig, rolig og fullt responsiv kundeportal. */
+/* Kundeportal: aktivt oppdrag først, historikk nederst. */
 
 html,
 body {
@@ -12,7 +12,8 @@ body {
 
 .portal-shell {
   width: min(100% - 24px, 920px);
-  padding: clamp(16px, 3vw, 34px) 0 clamp(38px, 6vw, 72px);
+  margin: 0 auto;
+  padding: clamp(16px, 3vw, 34px) 0 clamp(40px, 6vw, 76px);
 }
 
 .portal-card {
@@ -21,21 +22,121 @@ body {
   padding: clamp(18px, 3vw, 28px);
 }
 
+/* Firmatopp */
 .portal-brand {
-  padding: 4px 4px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 82px;
+  margin: 0 0 18px;
+  padding: 10px 18px;
+  border-radius: 18px;
+  background: #05090c;
+  color: #fff;
+  overflow: hidden;
 }
 
-.portal-brand strong {
-  font-size: clamp(1.02rem, 2vw, 1.14rem);
+.portal-brand-logo {
+  display: block;
+  width: min(76vw, 305px);
+  height: auto;
+  max-height: 58px;
+  object-fit: contain;
+  object-position: left center;
 }
 
+/* Kort statusvarsel: én enkel beskjed om kunden må gjøre noe. */
+.customer-action-notice {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  margin: 0 0 12px;
+  padding: 14px 16px;
+  border: 1px solid #abd8bb;
+  border-radius: 14px;
+  background: #edf8f1;
+}
+
+.customer-action-notice.needs-action {
+  border-color: #e2c675;
+  background: #fff9e8;
+}
+
+.customer-action-notice.is-urgent {
+  border-color: #dfa8a5;
+  background: #fff2f1;
+}
+
+.customer-action-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #17834c;
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 900;
+}
+
+.customer-action-notice.needs-action .customer-action-icon {
+  background: #956700;
+}
+
+.customer-action-notice.is-urgent .customer-action-icon {
+  background: #9b302d;
+}
+
+.customer-action-copy strong {
+  display: block;
+  margin: 0;
+  color: #173a27;
+  font-size: 1.03rem;
+}
+
+.customer-action-notice.needs-action .customer-action-copy strong {
+  color: #6e4b00;
+}
+
+.customer-action-notice.is-urgent .customer-action-copy strong {
+  color: #842b28;
+}
+
+.customer-action-copy p {
+  margin: 3px 0 0;
+  color: #526159;
+  font-size: .91rem;
+  line-height: 1.4;
+}
+
+.customer-action-link {
+  display: inline-flex;
+  margin-top: 8px;
+  color: #173f2a;
+  font-size: .91rem;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.customer-action-notice.needs-action .customer-action-link {
+  color: #684700;
+}
+
+.customer-action-notice.is-urgent .customer-action-link {
+  color: #842b28;
+}
+
+/* Aktivt oppdrag */
 .welcome-card {
   background: linear-gradient(145deg, #ffffff 0%, #f7faf8 100%);
   border-color: #d8e4dd;
 }
 
 .welcome-eyebrow,
-.personal-kicker {
+.personal-kicker,
+.current-invoice-kicker {
   margin: 0 0 7px;
   color: #397052;
   font-size: .82rem;
@@ -74,7 +175,7 @@ body {
 
 .project-summary strong {
   color: var(--ink);
-  font-size: 1.02rem;
+  font-size: 1.04rem;
 }
 
 .customer-source {
@@ -175,6 +276,109 @@ body {
   word-break: break-word;
 }
 
+/* Kun fakturaer som krever handling får plass i dagens del. */
+.current-invoice-card {
+  border: 2px solid #d8b15b;
+  background: #fffaf0;
+}
+
+.current-invoice-card.overdue {
+  border-color: #d99b98;
+  background: #fff4f3;
+}
+
+.current-invoice-kicker {
+  color: #7b590a;
+}
+
+.current-invoice-card.overdue .current-invoice-kicker {
+  color: #8e302d;
+}
+
+.current-invoice-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
+}
+
+.current-invoice-head h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.current-invoice-head p {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+
+.current-invoice-head > strong {
+  color: var(--ink);
+  font-size: clamp(1.35rem, 5vw, 1.75rem);
+  white-space: nowrap;
+}
+
+.current-invoice-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.customer-history-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 31px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #dcf5e4;
+  color: #11663b;
+  font-size: .8rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.customer-history-status.unpaid {
+  background: #fff0c9;
+  color: #775100;
+}
+
+.customer-history-status.overdue {
+  background: #fde2e0;
+  color: #922d29;
+}
+
+.customer-history-status.credited {
+  background: #edf0f2;
+  color: #4c5861;
+}
+
+.invoice-open-button {
+  min-height: 46px;
+  border: 1px solid #cfd8dd;
+  border-radius: 11px;
+  padding: 10px 14px;
+  background: #fff;
+  color: #14212b;
+  font: inherit;
+  font-size: .9rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.primary-invoice-button {
+  flex: 1;
+  border-color: #7c5b12;
+  background: #76560f;
+  color: #fff;
+}
+
+.current-invoice-card.overdue .primary-invoice-button {
+  border-color: #8d302d;
+  background: #8d302d;
+}
+
+/* Kontakt hører fortsatt til aktivt oppdrag. */
 .contact-card {
   background: #172d24;
   border-color: #172d24;
@@ -205,7 +409,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 52px;
+  min-height: 54px;
   padding: 12px 16px;
   border-radius: 12px;
   font-weight: 800;
@@ -225,7 +429,7 @@ body {
 }
 
 .portal-update-block {
-  padding: 2px 4px 0;
+  padding: 2px 4px 4px;
   text-align: center;
 }
 
@@ -242,10 +446,130 @@ body {
   line-height: 1.4;
 }
 
+/* Alt under dette punktet er historikk og ikke nødvendig for dagens oppdrag. */
+.history-section {
+  margin-top: clamp(34px, 7vw, 58px);
+}
+
+.history-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 2px 18px;
+  color: #78818a;
+  font-size: .78rem;
+  font-weight: 850;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.history-divider::before,
+.history-divider::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: #d4dade;
+}
+
+.history-intro {
+  margin: 0 4px 18px;
+}
+
+.history-intro h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(1.35rem, 4vw, 1.75rem);
+}
+
+.history-intro p {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: .96rem;
+}
+
+.customer-history-card {
+  box-shadow: none;
+}
+
+.customer-history-list {
+  display: grid;
+  gap: 10px;
+}
+
+.customer-history-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 15px;
+  border: 1px solid #dde4e8;
+  border-radius: 13px;
+  background: #fafcfc;
+}
+
+.customer-history-row strong,
+.customer-history-row span {
+  display: block;
+}
+
+.customer-history-row strong {
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.customer-history-row span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: .86rem;
+}
+
+.customer-history-row-side {
+  display: grid;
+  justify-items: end;
+  gap: 7px;
+}
+
+.customer-history-amount {
+  color: var(--ink) !important;
+  font-size: 1rem !important;
+  font-weight: 850;
+}
+
+.invoice-open-button:focus-visible,
+.contact-primary:focus-visible,
+.contact-secondary:focus-visible {
+  outline: 3px solid #1a73b7;
+  outline-offset: 3px;
+}
+
 @media (max-width: 560px) {
+  body {
+    background: #f3f5f6;
+  }
+
   .portal-shell {
-    width: min(100% - 18px, 920px);
-    padding-top: 10px;
+    width: 100%;
+    padding-top: 0;
+  }
+
+  .portal-brand {
+    min-height: 76px;
+    margin: 0 0 14px;
+    border-radius: 0 0 17px 17px;
+    padding: 9px 16px;
+  }
+
+  .portal-brand-logo {
+    width: min(74vw, 285px);
+    max-height: 54px;
+  }
+
+  #loadingCard,
+  #errorCard,
+  #projectContent {
+    width: calc(100% - 18px);
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .portal-card {
@@ -266,6 +590,33 @@ body {
 
   .work-day-list span {
     text-align: right;
+  }
+
+  .current-invoice-head {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .current-invoice-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .current-invoice-actions .customer-history-status {
+    justify-self: start;
+  }
+
+  .primary-invoice-button,
+  .invoice-open-button {
+    width: 100%;
+  }
+
+  .customer-history-row {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-history-row-side {
+    justify-items: start;
   }
 }
 

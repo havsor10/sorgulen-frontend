@@ -12,9 +12,8 @@
 </head>
 <body>
   <main class="portal-shell">
-    <header class="portal-brand">
-      <strong>Sørgulen Industriservice</strong>
-      <span>Personlig prosjektoppfølging</span>
+    <header class="portal-brand" aria-label="Sørgulen Industriservice">
+      <img class="portal-brand-logo" src="assets/sorgulen-logo-white-wordmark.png" alt="Sørgulen Industriservice">
     </header>
 
     <section id="loadingCard" class="portal-card loading-card" aria-live="polite">
@@ -27,6 +26,15 @@
     </section>
 
     <div id="projectContent" class="hidden">
+      <section id="customerActionNotice" class="customer-action-notice is-ok" aria-live="polite">
+        <span id="customerActionIcon" class="customer-action-icon" aria-hidden="true">✓</span>
+        <div class="customer-action-copy">
+          <strong id="customerActionTitle">Alt er greit</strong>
+          <p id="customerActionText">Du trenger ikke gjøre noe akkurat nå.</p>
+          <a id="customerActionLink" class="customer-action-link hidden" href="#">Se hva du må gjøre</a>
+        </div>
+      </section>
+
       <section class="portal-card welcome-card">
         <p class="welcome-eyebrow">Din oppfølging</p>
         <h1 id="personalGreeting">Hei!</h1>
@@ -98,20 +106,56 @@
         <div id="photoGrid" class="photo-grid"></div>
       </section>
 
+      <section id="currentInvoiceCard" class="portal-card current-invoice-card hidden" aria-live="polite">
+        <p class="current-invoice-kicker">Faktura som må ordnes</p>
+        <div class="current-invoice-head">
+          <div>
+            <h2 id="currentInvoiceTitle">Faktura</h2>
+            <p id="currentInvoiceMeta"></p>
+          </div>
+          <strong id="currentInvoiceAmount"></strong>
+        </div>
+        <div class="current-invoice-actions">
+          <span id="currentInvoiceStatus" class="customer-history-status unpaid"></span>
+          <button id="currentInvoiceOpen" class="invoice-open-button primary-invoice-button" type="button">Åpne faktura</button>
+        </div>
+      </section>
+
       <section class="portal-card contact-card">
         <p class="personal-kicker">Trenger du meg?</p>
         <h2>Du kan selvfølgelig ta kontakt</h2>
         <p>Hvis noe ikke blir besvart her, er det bare å kontakte meg. Målet med siden er at du skal føle deg oppdatert og vite hva som skjer videre.</p>
         <div class="contact-actions">
-          <a class="contact-primary" href="mailto:sor.industri@gmail.com">Send e-post til Håvard</a>
-          <a class="contact-secondary" href="kontakt.html">Se kontaktinformasjon</a>
+          <a class="contact-primary" href="tel:+4740730187">Ring Håvard · 407 30 187</a>
+          <a class="contact-secondary" href="mailto:sor.industri@gmail.com">Send e-post</a>
         </div>
       </section>
 
       <div class="portal-update-block">
         <p id="updatedText" class="portal-updated"></p>
-        <p class="portal-updated-help">Dette viser når informasjonen på denne siden sist ble oppdatert, ikke når arbeidet ble utført.</p>
+        <p class="portal-updated-help">Dette viser når informasjonen på siden sist ble oppdatert.</p>
       </div>
+
+      <section id="historySection" class="history-section hidden" aria-labelledby="historyTitle">
+        <div class="history-divider">
+          <span>Tidligere</span>
+        </div>
+        <div class="history-intro">
+          <h2 id="historyTitle">Tidligere arbeid og fakturaer</h2>
+          <p>Her kan du se tilbake på tidligere oppdrag og fakturaer hvis du ønsker det.</p>
+        </div>
+
+        <section id="jobHistoryCard" class="portal-card customer-history-card hidden">
+          <h2>Tidligere arbeid hos deg</h2>
+          <div id="jobHistoryList" class="customer-history-list"></div>
+        </section>
+
+        <section id="invoiceHistoryCard" class="portal-card customer-history-card hidden">
+          <h2>Fakturaer</h2>
+          <p class="section-explanation">Her ser du fakturaene som er sendt til deg og om de er betalt.</p>
+          <div id="invoiceHistoryList" class="customer-history-list"></div>
+        </section>
+      </section>
     </div>
   </main>
 
