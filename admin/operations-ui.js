@@ -237,6 +237,62 @@
         <label class="operation-check"><input name="billable" type="checkbox" ${item.billable === false ? "" : "checked"}> Fakturerbar</label>
       </div><p id="operationError" class="operation-error"></p><div class="operation-actions"><button type="button" class="secondary-btn operation-danger" data-operation-delete>Slett registrering</button><button type="button" class="secondary-btn" data-operation-close-2>Avbryt</button><button type="submit" class="primary-btn">Lagre</button></div></form>`;
     }
+    function equipmentCreateFormMarkup(orderId, rates) {
+      const options = rates.map((rate) => `<option value="${esc(rate.code)}" data-rate="${esc(rate.defaultRate)}">${esc(rate.name)} · ${esc(money(rate.defaultRate))}/t</option>`).join("");
+      return `<form id="operationEquipmentCreateForm" data-order-id="${esc(orderId)}"><div class="operation-grid">
+        <div class="operation-field wide"><label>Utstyr</label><select name="rateCode" required>${options}</select></div>
+        <div class="operation-field"><label>Brukstid (min)</label><input name="durationMinutes" type="number" min="0.01" max="10080" step="0.01" value="60" required></div>
+        <div class="operation-field"><label>Timesats</label><input name="hourlyRateSnapshot" type="number" min="0.01" max="1000000" step="0.01" required></div>
+        <div class="operation-field wide"><label>Kommentar</label><input name="note" maxlength="500" placeholder="Valgfritt"></div>
+        <label class="operation-check"><input name="billable" type="checkbox" checked> Fakturerbar</label>
+      </div><p id="operationError" class="operation-error"></p><div class="operation-actions"><button type="button" class="secondary-btn" data-operation-close-2>Avbryt</button><button type="submit" class="primary-btn">Legg til utstyr</button></div></form>`;
+    }
+
+    async function openEquipmentAdd(orderId) {
+      try {
+        const data = await api("/admin/rates");
+        const rates = (data.rates || []).filter((rate) => rate.category === "Utstyr" && Number(rate.defaultRate) > 0);
+        if (!rates.length) throw new Error("Ingen aktive utstyrssatser finnes. Legg til utstyrssats først.");
+        showModal({ title: "Legg til utstyr", subtitle: "Registrer faktisk brukstid og sats", body: equipmentCreateFormMarkup(orderId, rates) });
+        const form = sheet.querySelector("#operationEquipmentCreateForm");
+        const select = form.elements.rateCode;
+        const rateInput = form.elements.hourlyRateSnapshot;
+        const syncRate = () => {
+          const option = select.selectedOptions[0];
+          rateInput.value = option?.dataset.rate || "";
+        };
+        syncRate();
+        select.addEventListener("change", syncRate);
+        sheet.querySelector("[data-operation-close-2]").addEventListener("click", closeModal);
+        form.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const error = sheet.querySelector("#operationError");
+          const button = form.querySelector('button[type="submit"]');
+          error.textContent = "";
+          button.disabled = true;
+          try {
+            const payload = {
+              rateCode: select.value,
+              durationMinutes: Number(form.elements.durationMinutes.value),
+              hourlyRateSnapshot: Number(rateInput.value),
+              note: form.elements.note.value.trim(),
+              billable: form.elements.billable.checked,
+              operationId: globalThis.crypto?.randomUUID?.() || `equipment-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            };
+            await api(`/admin/work-orders/${encodeURIComponent(orderId)}/equipment`, { method: "POST", body: JSON.stringify(payload) });
+            closeModal();
+            await window.SorgulenAdminShell?.refreshBadges?.();
+            location.reload();
+          } catch (err) {
+            error.textContent = err.message;
+            button.disabled = false;
+          }
+        });
+      } catch (error) {
+        showModal({ title: "Kunne ikke legge til utstyr", body: `<p class="operation-error">${esc(error.message)}</p>` });
+      }
+    }
+
     function equipmentFormMarkup(orderId, item) {
       return `<form id="operationEditForm" data-kind="equipment" data-order-id="${esc(orderId)}" data-entry-id="${esc(item.entryId)}"><div class="operation-grid">
         <div class="operation-field wide"><label>Utstyr</label><input name="item" value="${esc(item.item || "")}" required></div>
@@ -343,7 +399,7 @@
       const equipmentRows = list(equipment, (item) => `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(item.item || "Utstyr")}</strong><p>${esc(item.durationMinutes || 0)} min · ${esc(money(item.hourlyRateSnapshot || 0))}/t · ${esc(money(item.amount || 0))}${item.billable === false ? " · Intern" : ""}</p></div><div class="operations-entry-actions"><button class="secondary-btn" data-op-edit="equipment" data-entry-id="${esc(item.entryId)}">Rediger</button><button class="secondary-btn operation-danger" data-op-delete="equipment" data-entry-id="${esc(item.entryId)}" data-label="${esc(item.item || "utstyrsregistreringen")}">Slett</button></div></div>`, "Ingen utstyrsbruk registrert.");
       const materialRows = list(materials, (item) => `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(item.item)}</strong><p>${esc(item.quantity)} ${esc(item.unit || "stk")}${item.unitPrice != null ? ` · ${esc(money(Number(item.quantity) * Number(item.unitPrice)))}` : " · Pris ikke satt"}${item.billable === false ? " · Intern" : ""}</p></div><div class="operations-entry-actions"><button class="secondary-btn" data-op-edit="material" data-entry-id="${esc(item.entryId)}">Rediger</button><button class="secondary-btn operation-danger" data-op-delete="material" data-entry-id="${esc(item.entryId)}" data-label="${esc(item.item)}">Slett</button></div></div>`, "Ingen materialer registrert.");
       const noteRows = list(notes, (item) => `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(item.text)}</strong><p>${esc(dateValue(item.createdAt))}</p></div><div class="operations-entry-actions"><button class="secondary-btn" data-op-edit="note" data-entry-id="${esc(item.entryId)}">Rediger</button><button class="secondary-btn operation-danger" data-op-delete="note" data-entry-id="${esc(item.entryId)}" data-label="notatet">Slett</button></div></div>`, "Ingen notater registrert.");
-      return `<div class="customer-ops-actions" style="margin-bottom:18px"><button class="primary-btn" data-op-add-time>+ Tid</button><button class="secondary-btn" data-op-edit-project>Rediger prosjekt</button></div><div class="operations-manager-list"><section class="operations-manager-section"><h3>Tid</h3>${timeRows}</section><section class="operations-manager-section"><h3>Utgifter</h3>${expenseRows}</section><section class="operations-manager-section"><h3>Utstyr</h3>${equipmentRows}</section><section class="operations-manager-section"><h3>Materialer</h3>${materialRows}</section><section class="operations-manager-section"><h3>Notater</h3>${noteRows}</section></div>`;
+      return `<div class="customer-ops-actions" style="margin-bottom:18px"><button class="primary-btn" data-op-add-time>+ Tid</button><button class="secondary-btn" data-op-add-equipment>+ Utstyr</button><button class="secondary-btn" data-op-edit-project>Rediger prosjekt</button></div><div class="operations-manager-list"><section class="operations-manager-section"><h3>Tid</h3>${timeRows}</section><section class="operations-manager-section"><h3>Utgifter</h3>${expenseRows}</section><section class="operations-manager-section"><h3>Utstyr</h3>${equipmentRows}</section><section class="operations-manager-section"><h3>Materialer</h3>${materialRows}</section><section class="operations-manager-section"><h3>Notater</h3>${noteRows}</section></div>`;
     }
 
     async function openManager(orderId) {
@@ -353,6 +409,7 @@
         state.currentOrderId = orderId;
         showModal({ title: "Rediger registreringer", subtitle: `${order.customerSnapshot?.name || "Kunde"} · ${order.serviceName}`, wide: true, body: managerMarkup(order) });
         sheet.querySelector("[data-op-add-time]").addEventListener("click", () => openManualTime({ orderId, rate: order.hourlyRate }));
+        sheet.querySelector("[data-op-add-equipment]").addEventListener("click", () => openEquipmentAdd(orderId));
         sheet.querySelector("[data-op-edit-project]").addEventListener("click", () => openProjectEdit(orderId));
         sheet.onclick = async (event) => {
           const edit = event.target.closest("[data-op-edit]");
@@ -513,7 +570,7 @@
     enhanceHomeFocus();
     setTimeout(enhanceInvoiceDetail, 300);
 
-    window.SorgulenOperations = { api, openManualTime, openManager, openRegistration, refreshBadges: () => window.SorgulenAdminShell?.refreshBadges?.() };
+    window.SorgulenOperations = { api, openManualTime, openEquipmentAdd, openManager, openRegistration, refreshBadges: () => window.SorgulenAdminShell?.refreshBadges?.() };
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true });
