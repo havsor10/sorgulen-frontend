@@ -134,7 +134,7 @@
       });
     }
 
-    for (const entry of missingDescriptions(order)) {
+    for (const entry of missingDescriptions(order).filter((item) => !registrationBillingLock(order, "time", item.entryId)?.locked)) {
       items.push({
         key: `description-${entry.entryId}`,
         tone: "warning",
@@ -197,8 +197,25 @@
     return rows;
   }
 
+  function projectRegistrationsLocked(order) {
+    return order?.billingLocks?.projectLocked === true;
+  }
+
+  function registrationBillingLock(order, kind, entryId) {
+    if (!entryId) return null;
+    return order?.billingLocks?.entries?.[`${kind}:${entryId}`] || null;
+  }
+
+  function billingLockText(lock, fallback = "Registreringen er låst av en utstedt faktura.") {
+    if (!lock) return fallback;
+    const number = lock.invoiceNumber ? `faktura ${lock.invoiceNumber}` : "en utstedt faktura";
+    return `Låst – inngår i ${number}.`;
+  }
+
   function sessionMarkup(order, entry) {
     const seconds = intervalSeconds(entry);
+    const billingLock = registrationBillingLock(order, "time", entry.entryId);
+    const projectLocked = projectRegistrationsLocked(order);
     const missing = !String(entry.comment || "").trim();
     const open = !entry.endedAt;
     const zeroDuration = !open && seconds === 0;
@@ -226,9 +243,11 @@
         <div class="field-description${missing || zeroDuration ? " warn" : ""}">${zeroDuration ? "Denne økten har 0 minutter registrert. Hvis den ikke er reell, slett den her." : missing ? "Denne økten mangler en beskrivelse. Legg inn hva du gjorde mens du fortsatt husker det." : esc(entry.comment)}</div>
         ${open
           ? '<button class="field-edit-session" type="button" disabled>Pause eller stopp økten før du redigerer</button>'
-          : order.status === "cancelled"
-            ? '<p class="field-locked-note">Gjenåpne oppdraget før du endrer registreringer.</p>'
-            : `<div class="field-entry-actions"><button class="field-edit-session" type="button" data-field-edit-session="${esc(entry.entryId)}">${zeroDuration ? "Rediger" : missing ? "Legg inn hva eg gjorde" : "Rediger denne økten"}</button><button class="field-delete-entry${zeroDuration ? " zero-delete" : ""}" type="button" data-field-delete-registration="time" data-entry-id="${esc(entry.entryId)}" data-entry-label="${esc(zeroDuration ? "0-min økten" : entry.comment || "arbeidsøkten")}">${zeroDuration ? "Slett 0-min økt" : "Slett økt"}</button></div>`}
+          : projectLocked || billingLock?.locked
+            ? `<p class="field-locked-note">${esc(billingLockText(billingLock, "Oppdraget er låst av sluttfakturaen."))}</p>`
+            : order.status === "cancelled"
+              ? '<p class="field-locked-note">Gjenåpne oppdraget før du endrer registreringer.</p>'
+              : `<div class="field-entry-actions"><button class="field-edit-session" type="button" data-field-edit-session="${esc(entry.entryId)}">${zeroDuration ? "Rediger" : missing ? "Legg inn hva eg gjorde" : "Rediger denne økten"}</button><button class="field-delete-entry${zeroDuration ? " zero-delete" : ""}" type="button" data-field-delete-registration="time" data-entry-id="${esc(entry.entryId)}" data-entry-label="${esc(zeroDuration ? "0-min økten" : entry.comment || "arbeidsøkten")}">${zeroDuration ? "Slett 0-min økt" : "Slett økt"}</button></div>`}
       </div>
     </details>`;
   }
@@ -272,10 +291,17 @@
     const equipment = order.equipment || [];
     const materials = order.materials || [];
     const notes = order.projectNotes || [];
-    const editable = order.status !== "cancelled";
-    const actions = (kind, entryId, label) => editable
-      ? `<div class="field-register-actions"><button type="button" data-field-registration-edit="${esc(kind)}" data-entry-id="${esc(entryId)}">Rediger</button><button type="button" class="field-delete-entry" data-field-delete-registration="${esc(kind)}" data-entry-id="${esc(entryId)}" data-entry-label="${esc(label)}">Slett</button></div>`
-      : "";
+    const editable = order.status !== "cancelled" && !projectRegistrationsLocked(order);
+    const actions = (kind, entryId, label) => {
+      const lock = registrationBillingLock(order, kind, entryId);
+      if (!editable || lock?.locked) {
+        const text = projectRegistrationsLocked(order)
+          ? "Låst av sluttfaktura"
+          : lock?.locked ? billingLockText(lock) : "";
+        return text ? `<span class="field-locked-note">${esc(text)}</span>` : "";
+      }
+      return `<div class="field-register-actions"><button type="button" data-field-registration-edit="${esc(kind)}" data-entry-id="${esc(entryId)}">Rediger</button><button type="button" class="field-delete-entry" data-field-delete-registration="${esc(kind)}" data-entry-id="${esc(entryId)}" data-entry-label="${esc(label)}">Slett</button></div>`;
+    };
     const rows = (items, mapper, empty) => items.length ? `<div class="field-register-list">${items.map(mapper).join("")}</div>` : `<p class="muted">${esc(empty)}</p>`;
     return `<div class="field-registration-groups">
       <section class="field-register-group"><h4>Utgifter · ${expenses.length}</h4>${rows(expenses, (x) => `<div class="field-register-row"><div><strong>${esc(x.item)}</strong><span>${esc(dateTime(x.occurredAt))}${x.supplier ? ` · ${esc(x.supplier)}` : ""}</span></div><span>${esc(money(x.amount))}</span>${actions("expense", x.entryId, x.item || "utgiften")}</div>`, "Ingen utgifter")}</section>
@@ -306,7 +332,7 @@
   }
 
   function addMenuMarkup(order) {
-    const canAdd = order.status !== "cancelled";
+    const canAdd = order.status !== "cancelled" && !projectRegistrationsLocked(order);
     if (!canAdd) return "";
     return `<div class="field-action-row">
       <button type="button" class="field-add-main" data-field-add-toggle aria-expanded="false">+ Legg til registrering</button>
@@ -332,17 +358,39 @@
       return `<section class="field-status-workflow is-cancelled"><div><strong>Oppdraget er avbrutt</strong><span>Registreringene er bevart. Gjenåpne før du korrigerer, ferdigstiller eller fakturerer.</span></div><button type="button" data-field-recover-order>Gjenåpne for korrigering</button></section>`;
     }
     if (status !== "completed") {
-      const hasClosedWork = (order.workIntervals || []).some((entry) => entry.billable !== false && (entry.source === "manual" || entry.endedAt) && intervalSeconds(entry) > 0);
+      if (!order.customerId) return "";
+
+      const activeDraft = Object.values(order.billingLocks?.entries || {}).find((entry) => entry?.status === "draft" && entry?.invoiceId);
+      if (activeDraft) {
+        return `<section class="field-status-workflow"><div><strong>Fakturautkast finnes</strong><span>Åpne utkastet og oppdater fakturagrunnlaget hvis du har registrert mer arbeid.</span></div><a href="faktura-detalj.html?id=${encodeURIComponent(activeDraft.invoiceId)}">Åpne fakturautkast</a></section>`;
+      }
+
+      if (order.pricingMode === "fixed") return "";
+
+      const isUnbilled = (kind, entryId) => !registrationBillingLock(order, kind, entryId);
+      const hasClosedWork = (order.workIntervals || []).some((entry) =>
+        entry.billable !== false
+        && (entry.source === "manual" || entry.endedAt)
+        && intervalSeconds(entry) > 0
+        && isUnbilled("time", entry.entryId)
+      );
       const hasBillableRegistrations = hasClosedWork
-        || (order.additionalCosts || []).some((entry) => entry.billable !== false)
-        || (order.equipment || []).some((entry) => entry.billable !== false && Number(entry.amount) > 0)
-        || (order.materials || []).some((entry) => entry.billable !== false && entry.unitPrice != null);
-      if (!order.customerId || !hasBillableRegistrations) return "";
+        || (order.additionalCosts || []).some((entry) => entry.billable !== false && isUnbilled("expense", entry.entryId))
+        || (order.equipment || []).some((entry) => entry.billable !== false && Number(entry.amount) > 0 && isUnbilled("equipment", entry.entryId))
+        || (order.materials || []).some((entry) => entry.billable !== false && entry.unitPrice != null && isUnbilled("material", entry.entryId));
+      if (!hasBillableRegistrations) return "";
+
       const openTimer = Boolean(workflow.hasOpenTimer || (order.workIntervals || []).some((entry) => entry.source !== "manual" && !entry.endedAt));
-      return `<section class="field-status-workflow"><div><strong>Prosjektet pågår</strong><span>${openTimer ? "Pause eller stopp arbeidsøkten før du lager delfaktura." : "Du kan fakturere alt ikke-fakturert arbeid hittil og fortsette samme prosjekt etterpå."}</span></div><button type="button" data-field-invoice-now ${openTimer ? "disabled" : ""}>Fakturer arbeid hittil</button></section>`;
+      return `<section class="field-status-workflow"><div><strong>Prosjektet pågår</strong><span>${openTimer ? "Pause eller stopp arbeidsøkten før du lager delfaktura." : "Fakturer bare det som ikkje er fakturert fra før, og fortsett samme prosjekt etterpå."}</span></div><button type="button" data-field-invoice-now ${openTimer ? "disabled" : ""}>Fakturer arbeid hittil</button></section>`;
     }
     if (workflow.canOpenInvoice || order.invoiceId) {
-      return `<section class="field-status-workflow is-invoiced"><div><strong>Oppdraget er koblet til sluttfaktura</strong><span>Utkast kan fortsatt korrigeres. Når fakturaen er utstedt, låses registreringene som inngår i den.</span></div><a href="faktura-detalj.html?id=${encodeURIComponent(order.invoiceId)}">Åpne faktura</a></section>`;
+      const locked = projectRegistrationsLocked(order);
+      const number = order.billingLocks?.finalInvoiceNumber;
+      const title = number ? `Sluttfaktura ${number}` : "Sluttfaktura";
+      const message = locked
+        ? "Fakturaen er utstedt. Prosjektregistreringene er låst og korrigeres via kreditnota/korrigering."
+        : "Dette er fortsatt et utkast. Du kan korrigere registreringene og oppdatere fakturagrunnlaget før utstedelse.";
+      return `<section class="field-status-workflow is-invoiced"><div><strong>${esc(title)}</strong><span>${esc(message)}</span></div><a href="faktura-detalj.html?id=${encodeURIComponent(order.invoiceId)}">Åpne faktura</a></section>`;
     }
     if (workflow.canCreateInvoice === false) return "";
     return `<section class="field-status-workflow is-completed"><div><strong>Ferdigstilt – klar for sluttfaktura</strong><span>Du kan fortsatt korrigere tid, utgifter, utstyr, materialer og notater før fakturaen utstedes.</span></div><a href="faktura-ny.html?workOrderId=${encodeURIComponent(order._id)}">Opprett sluttfaktura</a></section>`;
@@ -482,6 +530,11 @@
 
   async function deleteRegistration(kind, entryId, label) {
     if (!currentOrder || currentOrder.status === "cancelled") return;
+    const lock = registrationBillingLock(currentOrder, kind, entryId);
+    if (projectRegistrationsLocked(currentOrder) || lock?.locked) {
+      alert(billingLockText(lock, "Oppdraget er låst av sluttfakturaen."));
+      return;
+    }
     const endpoint = registrationEndpoint(kind);
     if (!endpoint || !entryId) return;
     if (!confirm(`Slette ${label || "registreringen"}? Denne endringen lagres med en gang.`)) return;

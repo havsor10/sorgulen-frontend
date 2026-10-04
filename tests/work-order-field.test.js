@@ -12,9 +12,9 @@ const operations = fs.readFileSync(path.join(root, "admin/operations-ui.js"), "u
 
 test("oppdrag laster én operations-motor før den dedikerte feltvisningen", () => {
   assert.match(html, /operations\.css/);
-  assert.match(html, /operations-ui\.js\?v=20260918-workflow1/);
+  assert.match(html, /operations-ui\.js\?v=20261004-lock2/);
   assert.match(html, /work-order-field\.css\?v=20260919-zero1/);
-  assert.match(html, /work-order-field\.js\?v=20260919-zero1/);
+  assert.match(html, /work-order-field\.js\?v=20261004-lock2/);
   assert.doesNotMatch(html, /work-order-field-compat\.js/);
   assert.doesNotMatch(html, /work-order-description-edit\.js/);
   assert.doesNotMatch(html, /completed-work-order-flow\.js/);
@@ -44,7 +44,7 @@ test("fakturavarsler har direkte rettehandlinger", () => {
 });
 
 test("legg til-meny dekker alle prosjektregistreringer og lar backend håndheve fakturalås", () => {
-  assert.match(js, /const canAdd = order\.status !== "cancelled"/);
+  assert.match(js, /const canAdd = order\.status !== "cancelled" && !projectRegistrationsLocked\(order\)/);
   assert.match(js, /data-field-add-toggle/);
   assert.match(js, /data-field-add-time/);
   assert.match(js, /data-entry="expense"/);
@@ -72,6 +72,15 @@ test("statusflyt for delfaktura, sluttfaktura og avbrutt er eid av feltmotoren",
   assert.match(js, /Åpne faktura/);
   assert.match(js, /Gjenåpne for korrigering/);
   assert.match(css, /field-status-workflow/);
+});
+
+test("utstedt faktura skjuler ugyldige redigeringshandlinger", () => {
+  assert.match(js, /function projectRegistrationsLocked/);
+  assert.match(js, /function registrationBillingLock/);
+  assert.match(js, /billingLocks/);
+  assert.match(js, /lock\?\.locked/);
+  assert.match(operations, /assertRegistrationEditable/);
+  assert.match(operations, /billingLockMessage/);
 });
 
 test("mobil detalj er fullskjerm med store kontroller", () => {

@@ -103,9 +103,34 @@
       return ({ time: "time", expense: "expenses", equipment: "equipment", material: "materials", note: "notes" })[kind] || "";
     }
 
+    function projectRegistrationsLocked(order) {
+      return order?.billingLocks?.projectLocked === true;
+    }
+
+    function registrationBillingLock(order, kind, entryId) {
+      if (!entryId) return null;
+      return order?.billingLocks?.entries?.[`${kind}:${entryId}`] || null;
+    }
+
+    function billingLockMessage(lock, fallback = "Oppdraget er låst av en utstedt sluttfaktura.") {
+      if (!lock) return fallback;
+      return lock.invoiceNumber
+        ? `Registreringen er låst fordi den inngår i faktura ${lock.invoiceNumber}.`
+        : "Registreringen er låst fordi den inngår i en utstedt faktura.";
+    }
+
+    function assertRegistrationEditable(order, kind = "", entryId = "") {
+      const lock = registrationBillingLock(order, kind, entryId);
+      if (projectRegistrationsLocked(order) || lock?.locked) {
+        throw new Error(billingLockMessage(lock));
+      }
+    }
+
     async function deleteExistingRegistration({ kind, orderId, entryId, label = "registreringen" }) {
       const endpoint = registrationEndpoint(kind);
       if (!endpoint || !orderId || !entryId) throw new Error("Registreringen kunne ikke identifiseres.");
+      const order = await getOrder(orderId);
+      assertRegistrationEditable(order, kind, entryId);
       if (!confirm(`Slette ${label}? Denne endringen lagres med en gang.`)) return false;
       await api(`/admin/operations/work-orders/${encodeURIComponent(orderId)}/${endpoint}/${encodeURIComponent(entryId)}`, { method: "DELETE" });
       closeModal();
@@ -206,9 +231,10 @@
     async function openManualTime({ orderId = "", customerId = "", rate = null, entry = null } = {}) {
       try {
         let selectedRate = rate;
-        if (orderId && selectedRate == null) {
+        if (orderId) {
           const order = await getOrder(orderId);
-          selectedRate = entry?.hourlyRateSnapshot ?? order.hourlyRate;
+          assertRegistrationEditable(order, "time", entry?.entryId || "");
+          selectedRate = entry?.hourlyRateSnapshot ?? selectedRate ?? order.hourlyRate;
         }
         showModal({ title: entry ? "Rediger tid" : "Legg til arbeid", subtitle: entry?.source === "timer" ? "Takstameterøkt – korriger varighet ved behov" : "Dato, hva du gjorde og hvor lenge det tok", body: timeFormMarkup({ orderId, customerId, entry, rate: selectedRate ?? 850 }) });
         bindTimeForm({ orderId, customerId, entry });
@@ -250,6 +276,8 @@
 
     async function openEquipmentAdd(orderId) {
       try {
+        const order = await getOrder(orderId);
+        assertRegistrationEditable(order);
         const data = await api("/admin/rates");
         const rates = (data.rates || []).filter((rate) => rate.category === "Utstyr" && Number(rate.defaultRate) > 0);
         if (!rates.length) throw new Error("Ingen aktive utstyrssatser finnes. Legg til utstyrssats først.");
@@ -384,7 +412,19 @@
       const equipment = order.equipment || [];
       const materials = order.materials || [];
       const notes = order.projectNotes || [];
+      const projectLocked = projectRegistrationsLocked(order);
       const list = (items, mapper, empty) => items.length ? items.map(mapper).join("") : `<p class="empty-state">${esc(empty)}</p>`;
+      const lockedMarkup = (kind, entryId) => {
+        const lock = registrationBillingLock(order, kind, entryId);
+        if (!projectLocked && !lock?.locked) return "";
+        return `<span class="operation-source">${esc(billingLockMessage(lock, "Låst av sluttfaktura"))}</span>`;
+      };
+      const editActions = (kind, entryId, label) => {
+        const locked = lockedMarkup(kind, entryId);
+        if (locked) return locked;
+        return `<button class="secondary-btn" data-op-edit="${esc(kind)}" data-entry-id="${esc(entryId)}">Rediger</button><button class="secondary-btn operation-danger" data-op-delete="${esc(kind)}" data-entry-id="${esc(entryId)}" data-label="${esc(label)}">Slett</button>`;
+      };
+
       const timeRows = list(intervals, (entry) => {
         const seconds = intervalSeconds(entry);
         const rate = Number(entry.hourlyRateSnapshot ?? order.hourlyRate ?? 0);
@@ -392,14 +432,17 @@
         const openTimer = entry.source !== "manual" && !entry.endedAt;
         const actions = openTimer
           ? '<span class="operation-source">Pågår – stopp eller pause før redigering</span>'
-          : `<button class="secondary-btn" data-op-edit="time" data-entry-id="${esc(entry.entryId)}">Rediger</button><button class="secondary-btn operation-danger" data-op-delete="time" data-entry-id="${esc(entry.entryId)}" data-label="${esc(entry.comment || "tidsregistreringen")}">Slett</button>`;
+          : editActions("time", entry.entryId, entry.comment || "tidsregistreringen");
         return `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(entry.comment || categoryName(entry.category))}<span class="operation-source">${entry.source === "manual" ? "Manuell" : "Takstameter"}</span></strong><p>${esc(entry.workDate || dateValue(entry.startedAt))} · ${esc(durationText(seconds))} · ${esc(categoryName(entry.category))} · ${esc(money(rate))}/t · ${esc(money(amount))}${entry.billable === false ? " · Intern" : ""}</p></div><div class="operations-entry-actions">${actions}</div></div>`;
       }, "Ingen tid registrert.");
-      const expenseRows = list(expenses, (item) => `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(item.item)}</strong><p>${esc(dateValue(item.occurredAt))} · ${esc(money(item.amount))}${item.supplier ? ` · ${esc(item.supplier)}` : ""}${item.billable === false ? " · Intern" : ""}</p></div><div class="operations-entry-actions"><button class="secondary-btn" data-op-edit="expense" data-entry-id="${esc(item.entryId)}">Rediger</button><button class="secondary-btn operation-danger" data-op-delete="expense" data-entry-id="${esc(item.entryId)}" data-label="${esc(item.item)}">Slett</button></div></div>`, "Ingen utgifter registrert.");
-      const equipmentRows = list(equipment, (item) => `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(item.item || "Utstyr")}</strong><p>${esc(item.durationMinutes || 0)} min · ${esc(money(item.hourlyRateSnapshot || 0))}/t · ${esc(money(item.amount || 0))}${item.billable === false ? " · Intern" : ""}</p></div><div class="operations-entry-actions"><button class="secondary-btn" data-op-edit="equipment" data-entry-id="${esc(item.entryId)}">Rediger</button><button class="secondary-btn operation-danger" data-op-delete="equipment" data-entry-id="${esc(item.entryId)}" data-label="${esc(item.item || "utstyrsregistreringen")}">Slett</button></div></div>`, "Ingen utstyrsbruk registrert.");
-      const materialRows = list(materials, (item) => `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(item.item)}</strong><p>${esc(item.quantity)} ${esc(item.unit || "stk")}${item.unitPrice != null ? ` · ${esc(money(Number(item.quantity) * Number(item.unitPrice)))}` : " · Pris ikke satt"}${item.billable === false ? " · Intern" : ""}</p></div><div class="operations-entry-actions"><button class="secondary-btn" data-op-edit="material" data-entry-id="${esc(item.entryId)}">Rediger</button><button class="secondary-btn operation-danger" data-op-delete="material" data-entry-id="${esc(item.entryId)}" data-label="${esc(item.item)}">Slett</button></div></div>`, "Ingen materialer registrert.");
-      const noteRows = list(notes, (item) => `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(item.text)}</strong><p>${esc(dateValue(item.createdAt))}</p></div><div class="operations-entry-actions"><button class="secondary-btn" data-op-edit="note" data-entry-id="${esc(item.entryId)}">Rediger</button><button class="secondary-btn operation-danger" data-op-delete="note" data-entry-id="${esc(item.entryId)}" data-label="notatet">Slett</button></div></div>`, "Ingen notater registrert.");
-      return `<div class="customer-ops-actions" style="margin-bottom:18px"><button class="primary-btn" data-op-add-time>+ Tid</button><button class="secondary-btn" data-op-add-equipment>+ Utstyr</button><button class="secondary-btn" data-op-edit-project>Rediger prosjekt</button></div><div class="operations-manager-list"><section class="operations-manager-section"><h3>Tid</h3>${timeRows}</section><section class="operations-manager-section"><h3>Utgifter</h3>${expenseRows}</section><section class="operations-manager-section"><h3>Utstyr</h3>${equipmentRows}</section><section class="operations-manager-section"><h3>Materialer</h3>${materialRows}</section><section class="operations-manager-section"><h3>Notater</h3>${noteRows}</section></div>`;
+      const expenseRows = list(expenses, (item) => `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(item.item)}</strong><p>${esc(dateValue(item.occurredAt))} · ${esc(money(item.amount))}${item.supplier ? ` · ${esc(item.supplier)}` : ""}${item.billable === false ? " · Intern" : ""}</p></div><div class="operations-entry-actions">${editActions("expense", item.entryId, item.item)}</div></div>`, "Ingen utgifter registrert.");
+      const equipmentRows = list(equipment, (item) => `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(item.item || "Utstyr")}</strong><p>${esc(item.durationMinutes || 0)} min · ${esc(money(item.hourlyRateSnapshot || 0))}/t · ${esc(money(item.amount || 0))}${item.billable === false ? " · Intern" : ""}</p></div><div class="operations-entry-actions">${editActions("equipment", item.entryId, item.item || "utstyrsregistreringen")}</div></div>`, "Ingen utstyrsbruk registrert.");
+      const materialRows = list(materials, (item) => `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(item.item)}</strong><p>${esc(item.quantity)} ${esc(item.unit || "stk")}${item.unitPrice != null ? ` · ${esc(money(Number(item.quantity) * Number(item.unitPrice)))}` : " · Pris ikke satt"}${item.billable === false ? " · Intern" : ""}</p></div><div class="operations-entry-actions">${editActions("material", item.entryId, item.item)}</div></div>`, "Ingen materialer registrert.");
+      const noteRows = list(notes, (item) => `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(item.text)}</strong><p>${esc(dateValue(item.createdAt))}</p></div><div class="operations-entry-actions">${editActions("note", item.entryId, "notatet")}</div></div>`, "Ingen notater registrert.");
+      const topActions = projectLocked
+        ? '<span class="operation-source">Prosjektet er låst av utstedt sluttfaktura.</span>'
+        : '<button class="primary-btn" data-op-add-time>+ Tid</button><button class="secondary-btn" data-op-add-equipment>+ Utstyr</button><button class="secondary-btn" data-op-edit-project>Rediger prosjekt</button>';
+      return `<div class="customer-ops-actions" style="margin-bottom:18px">${topActions}</div><div class="operations-manager-list"><section class="operations-manager-section"><h3>Tid</h3>${timeRows}</section><section class="operations-manager-section"><h3>Utgifter</h3>${expenseRows}</section><section class="operations-manager-section"><h3>Utstyr</h3>${equipmentRows}</section><section class="operations-manager-section"><h3>Materialer</h3>${materialRows}</section><section class="operations-manager-section"><h3>Notater</h3>${noteRows}</section></div>`;
     }
 
     async function openManager(orderId) {
@@ -408,15 +451,17 @@
         state.currentOrder = order;
         state.currentOrderId = orderId;
         showModal({ title: "Rediger registreringer", subtitle: `${order.customerSnapshot?.name || "Kunde"} · ${order.serviceName}`, wide: true, body: managerMarkup(order) });
-        sheet.querySelector("[data-op-add-time]").addEventListener("click", () => openManualTime({ orderId, rate: order.hourlyRate }));
-        sheet.querySelector("[data-op-add-equipment]").addEventListener("click", () => openEquipmentAdd(orderId));
-        sheet.querySelector("[data-op-edit-project]").addEventListener("click", () => openProjectEdit(orderId));
+        sheet.querySelector("[data-op-add-time]")?.addEventListener("click", () => openManualTime({ orderId, rate: order.hourlyRate }));
+        sheet.querySelector("[data-op-add-equipment]")?.addEventListener("click", () => openEquipmentAdd(orderId));
+        sheet.querySelector("[data-op-edit-project]")?.addEventListener("click", () => openProjectEdit(orderId));
         sheet.onclick = async (event) => {
           const edit = event.target.closest("[data-op-edit]");
           const del = event.target.closest("[data-op-delete]");
           if (edit) {
             const kind = edit.dataset.opEdit;
             const id = edit.dataset.entryId;
+            try { assertRegistrationEditable(order, kind, id); }
+            catch (error) { alert(error.message); return; }
             if (kind === "time") {
               const item = (order.workIntervals || []).find((entry) => entry.entryId === id);
               if (item) openManualTime({ orderId, entry: item, rate: order.hourlyRate });
@@ -438,6 +483,8 @@
             const kind = del.dataset.opDelete;
             const id = del.dataset.entryId;
             const label = del.dataset.label || "registreringen";
+            try { assertRegistrationEditable(order, kind, id); }
+            catch (error) { alert(error.message); return; }
             if (!confirm(`Slette ${label}? Denne endringen lagres.`)) return;
             const endpoint = registrationEndpoint(kind);
             try {
@@ -454,6 +501,7 @@
     async function openRegistration({ orderId, kind, entryId }) {
       if (!orderId || !kind || !entryId) throw new Error("Registreringen kunne ikke identifiseres.");
       const order = await getOrder(orderId);
+      assertRegistrationEditable(order, kind, entryId);
       state.currentOrder = order;
       state.currentOrderId = orderId;
       if (kind === "time") {
