@@ -32,3 +32,16 @@ test("Fiken-siden viser Open Banking uten å eksponere credentials", () => {
   assert.doesNotMatch(js, /credentials\.json\s*=/i);
   assert.doesNotMatch(html, /privateKey/i);
 });
+
+test("Fiken-admin forklarer midlertidig nettfeil og viser automatisk retry", () => {
+  assert.match(js, /function friendlyFikenError/);
+  assert.match(js, /Fiken er midlertidig utilgjengelig/);
+  assert.match(js, /automatisk synk prøver igjen senere/);
+});
+
+test("manuell Fiken-synk viser både etterregistrerte og betalingskontrollerte fakturaer", () => {
+  assert.match(js, /data\.result\?\.registered/);
+  assert.match(js, /faktura\(er\) registrert i Fiken/);
+  assert.match(js, /koblede fakturaer kontrollert/);
+});
+
