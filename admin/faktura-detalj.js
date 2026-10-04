@@ -236,7 +236,11 @@
   function render(inv) {
     const linesRows = (inv.lines || []).map((line) => `
       <tr>
-        <td>${escapeHtml(line.item || "")}${line.description ? `<br><small>${escapeHtml(line.description)}</small>` : ""}</td>
+        <td>
+          ${escapeHtml(line.item || "")}
+          ${line.description ? `<br><small>${escapeHtml(line.description)}</small>` : ""}
+          ${line.receiptUrl ? `<br><a class="fd-receipt-link" href="${escapeHtml(line.receiptUrl)}" target="_blank" rel="noopener">🧾 Se innkjøpskvittering</a>` : ""}
+        </td>
         <td>${line.quantity != null && line.unitPrice != null ? `${quantity(line.quantity)} ${escapeHtml(line.unitLabel || "")} × ${money(line.unitPrice)}` : ""}</td>
         <td class="amt">${money(line.amount)}</td>
       </tr>`).join("");
@@ -280,6 +284,7 @@
           <table class="fd-lines"><tbody>${linesRows}</tbody></table>
           ${discountMarkup(inv)}
           ${inv.vatRegisteredSnapshot ? `<div class="fd-total" style="font-size:14px;color:#aab3bf">Delsum etter rabatt: ${money(inv.subtotal)} · MVA ${escapeHtml(inv.taxRate)} %: ${money(inv.taxAmount)}</div>` : `<p class="fd-info">Merverdiavgift er ikke beregnet.</p>`}
+          ${Math.abs(Number(inv.roundingAdjustment || 0)) >= 0.01 ? `<div class="fd-info">Øreavrunding: −${money(Math.abs(Number(inv.roundingAdjustment)))}</div>` : ""}
           <div class="fd-total">${inv.isCreditNote ? "Kreditert" : "Å betale"}: ${money(inv.amount)}</div>
         </div>
 
