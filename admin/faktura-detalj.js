@@ -69,6 +69,23 @@
   function latestFailedEmail(inv) {
     return [...(inv.emailLog || [])].reverse().find((entry) => entry.status === "failed") || null;
   }
+
+  function isTransientFikenMessage(value) {
+    const text = String(value || "").toUpperCase();
+    return [
+      "FETCH FAILED", "ECONNRESET", "ECONNREFUSED", "ENOTFOUND", "EAI_AGAIN",
+      "ETIMEDOUT", "UND_ERR_", "SOCKET HANG UP", "HTTP 502", "HTTP 503", "HTTP 504", "HTTP 429",
+    ].some((needle) => text.includes(needle));
+  }
+
+  function friendlyFikenError(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "Synkronisering med Fiken feilet.";
+    if (isTransientFikenMessage(raw)) {
+      return "Fiken er midlertidig utilgjengelig. Fakturaen er trygg i admin, og systemet prøver automatisk å synkronisere igjen.";
+    }
+    return raw;
+  }
   function validationParts(validation) {
     const warnings = Array.isArray(validation?.warnings) ? validation.warnings : [];
     const blockers = Array.isArray(validation?.blockers)
