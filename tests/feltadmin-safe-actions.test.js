@@ -14,9 +14,10 @@ test("start og fortsett krever eksplisitt popup-bekreftelse", () => {
   assert.doesNotMatch(css, /is-confirming/);
 });
 
-test("bookinger og prisforespørsler kan åpnes direkte fra Feltadmin", () => {
-  assert.match(js, /admin-dashboard\.html\?from=field/);
-  assert.match(js, /foresporsler\.html\?from=field/);
-  assert.match(js, /field-pulse-link/);
-  assert.match(css, /\.field-pulse-link/);
+test("bookinger og prisforespørsler blir direkte handlingskort i Feltadmin", () => {
+  assert.match(js, /fieldTaskHref/);
+  assert.match(js, /from=field/);
+  assert.match(js, /field-action-card/);
+  assert.match(js, /task\.href/);
+  assert.match(css, /\.field-action-card/);
 });
