@@ -76,6 +76,13 @@
     const unitPrice = details.unitPrice ?? amount ?? "";
     const tr = document.createElement("tr");
     tr.dataset.rateCode = details.rateCode || "";
+    tr.dataset.sourceType = details.sourceType || "manual";
+    tr.dataset.sourceEntryKey = details.sourceEntryKey || "";
+    tr.dataset.serviceDate = details.serviceDate || "";
+    tr.dataset.startedAt = details.startedAt || "";
+    tr.dataset.endedAt = details.endedAt || "";
+    tr.dataset.supplier = details.supplier || "";
+    tr.dataset.receiptUrl = details.receiptUrl || "";
     tr.innerHTML = `
       <td><input type="text" class="line-item" placeholder="Arbeid/beskrivelse" value="${esc(item)}"><input type="text" class="line-description" placeholder="Detaljer (valgfritt)" value="${esc(details.description || "")}" style="margin-top:5px"></td>
       <td><input type="number" class="line-quantity" min="0.01" step="0.01" inputmode="decimal" value="${esc(quantity)}"></td>
@@ -109,6 +116,13 @@
         unitPrice,
         amount: Math.round((quantity * unitPrice + Number.EPSILON) * 100) / 100,
         rateCode: tr.dataset.rateCode || "",
+        sourceType: tr.dataset.sourceType || "manual",
+        sourceEntryKey: tr.dataset.sourceEntryKey || "",
+        serviceDate: tr.dataset.serviceDate || "",
+        startedAt: tr.dataset.startedAt || null,
+        endedAt: tr.dataset.endedAt || null,
+        supplier: tr.dataset.supplier || "",
+        receiptUrl: tr.dataset.receiptUrl || "",
       };
     }).filter((line) => line.item);
   }
@@ -121,9 +135,13 @@
     }
     const subtotal = getLines().reduce((sum, line) => sum + line.amount, 0);
     const tax = Math.round((subtotal * vatRate / 100 + Number.EPSILON) * 100) / 100;
+    const beforeRounding = Math.round((subtotal + tax + Number.EPSILON) * 100) / 100;
+    const roundedTotal = beforeRounding > 0 ? Math.floor(beforeRounding) : beforeRounding;
+    const rounding = Math.round((roundedTotal - beforeRounding + Number.EPSILON) * 100) / 100;
+    const roundingText = Math.abs(rounding) >= 0.01 ? ` · Øreavrunding: −${money(Math.abs(rounding))}` : "";
     totalDisplay.textContent = vatRate
-      ? `Delsum: ${money(subtotal)} · MVA ${vatRate}%: ${money(tax)} · Total: ${money(subtotal + tax)}`
-      : `Total: ${money(subtotal)}`;
+      ? `Delsum: ${money(subtotal)} · MVA ${vatRate}%: ${money(tax)}${roundingText} · Å betale: ${money(roundedTotal)}`
+      : `Sum: ${money(subtotal)}${roundingText} · Å betale: ${money(roundedTotal)}`;
   }
 
   function fillCustomer(customer = {}) {
