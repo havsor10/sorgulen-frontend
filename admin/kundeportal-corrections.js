@@ -188,7 +188,7 @@
 
   async function enhance() {
     const workOrderId = selectedWorkOrderId();
-    if (!workOrderId) return;
+    if (!workOrderId || !editor.querySelector(".procurement-admin-card[data-procurement-card-id]")) return;
     currentWorkOrderId = workOrderId;
     try {
       const data = await api(`/admin/customer-portal/${encodeURIComponent(workOrderId)}`);
