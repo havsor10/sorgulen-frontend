@@ -50,7 +50,23 @@
   }
   function quantity(value) {
     const n = Number(value);
-    return new Intl.NumberFormat("nb-NO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number.isFinite(n) ? n : 0);
+    return new Intl.NumberFormat("nb-NO", { minimumFractionDigits: 0, maximumFractionDigits: 3 }).format(Number.isFinite(n) ? n : 0);
+  }
+  function lineQuantityText(line) {
+    const value = Number(line?.quantity);
+    if (line?.unit === "hour" && Number.isFinite(value) && value >= 0) {
+      let seconds = Math.round(value * 3600);
+      const hours = Math.floor(seconds / 3600);
+      seconds -= hours * 3600;
+      const minutes = Math.floor(seconds / 60);
+      seconds -= minutes * 60;
+      const parts = [];
+      if (hours) parts.push(`${hours} t`);
+      if (minutes || hours) parts.push(`${minutes} min`);
+      if (seconds) parts.push(`${seconds} sek`);
+      return parts.join(" ") || "0 min";
+    }
+    return `${quantity(value)} ${line?.unitLabel || ""}`.trim();
   }
   function documentName(inv) {
     if (!inv.invoiceNumber) return inv.isCreditNote ? "Kreditnotautkast" : "Fakturautkast";
@@ -265,7 +281,7 @@
           ${line.description ? `<br><small>${escapeHtml(line.description)}</small>` : ""}
           ${line.receiptUrl ? `<br><a class="fd-receipt-link" href="${escapeHtml(line.receiptUrl)}" target="_blank" rel="noopener">🧾 Se innkjøpskvittering</a>` : ""}
         </td>
-        <td>${line.quantity != null && line.unitPrice != null ? `${quantity(line.quantity)} ${escapeHtml(line.unitLabel || "")} × ${money(line.unitPrice)}` : ""}</td>
+        <td>${line.quantity != null && line.unitPrice != null ? `${escapeHtml(lineQuantityText(line))} × ${money(line.unitPrice)}` : ""}</td>
         <td class="amt">${money(line.amount)}</td>
       </tr>`).join("");
     const serviceDate = inv.serviceDateFrom
