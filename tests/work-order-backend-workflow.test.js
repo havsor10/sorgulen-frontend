@@ -21,7 +21,9 @@ test("Oppdrag bruker backend-status, mens registreringskontroller tillater korri
   assert.match(field, /order\.workflow\?\.status \|\| order\.status/);
   assert.match(field, /const canAdd = order\.status !== "cancelled" && !projectRegistrationsLocked\(order\)/);
   assert.match(field, /const editable = order\.status !== "cancelled" && !projectRegistrationsLocked\(order\)/);
-  assert.match(operations, /deleteExistingRegistration/);\n  assert.match(operations, /assertRegistrationEditable/);\n  assert.match(field, /registrationBillingLock/);
+  assert.match(operations, /deleteExistingRegistration/);
+  assert.match(operations, /assertRegistrationEditable/);
+  assert.match(field, /registrationBillingLock/);
 });
 
 test("legacy planlagt med manuell tid kan vises som mellom økter og ferdigstilles", () => {
