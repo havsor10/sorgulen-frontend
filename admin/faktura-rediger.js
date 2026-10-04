@@ -123,18 +123,6 @@
     }).filter((line) => line.item);
   }
 
-  function discountFor(gross) {
-    const type = discountType?.value || "none";
-    const rawValue = Number(discountValue?.value || 0);
-    if (type === "none" || !(rawValue > 0)) return { type: "none", value: 0, amount: 0, error: "" };
-    if (type === "percent") {
-      if (rawValue > 100) return { type, value: rawValue, amount: 0, error: "Prosent-rabatt kan ikke være over 100 %." };
-      return { type, value: rawValue, amount: Math.round((gross * rawValue / 100 + Number.EPSILON) * 100) / 100, error: "" };
-    }
-    if (rawValue > gross) return { type, value: rawValue, amount: 0, error: "Fast rabatt kan ikke være større enn summen før rabatt." };
-    return { type: "fixed", value: rawValue, amount: Math.round((rawValue + Number.EPSILON) * 100) / 100, error: "" };
-  }
-
   function updateDiscountInputs() {
     if (!discountType || !discountValue) return;
     const enabled = discountType.value !== "none";
@@ -151,42 +139,27 @@
       const p = Number(tr.querySelector(".line-price").value) || 0;
       tr.querySelector(".line-total").textContent = money(Math.round((q * p + Number.EPSILON) * 100) / 100);
     }
-    const gross = Math.round((getLines().reduce((sum, line) => sum + line.amount, 0) + Number.EPSILON) * 100) / 100;
-    const discount = discountFor(gross);
-    const subtotal = Math.round(((gross - discount.amount) + Number.EPSILON) * 100) / 100;
-    const tax = Math.round((subtotal * vatRate / 100 + Number.EPSILON) * 100) / 100;
-    const beforeRounding = Math.round((subtotal + tax + Number.EPSILON) * 100) / 100;
-    const total = beforeRounding > 0 ? Math.floor(beforeRounding) : beforeRounding;
-    const rounding = Math.round((total - beforeRounding + Number.EPSILON) * 100) / 100;
-    const saving = Math.round((discount.amount * (1 + vatRate / 100) - rounding + Number.EPSILON) * 100) / 100;
-
-    if (discount.error) {
-      discountPreview.hidden = false;
-      discountPreview.classList.add("is-error");
-      discountPreview.textContent = discount.error;
-    } else if (discount.type !== "none" && discount.amount > 0) {
-      discountPreview.hidden = false;
-      discountPreview.classList.remove("is-error");
-      const label = discountLabel.value.trim() || "Kunderabatt";
-      const suffix = discount.type === "percent" ? ` (${discount.value} %)` : "";
-      discountPreview.innerHTML = `
-        <strong>🎁 Kunden får rabatt</strong>
-        <span>Sum før rabatt: ${money(gross)}</span>
-        <span>${esc(label)}${suffix}: −${money(discount.amount)}</span>
-        <strong>Du sparer kunden ${money(saving)}</strong>`;
-    } else {
-      discountPreview.hidden = true;
-      discountPreview.classList.remove("is-error");
-      discountPreview.textContent = "";
-    }
-
-    const roundingText = Math.abs(rounding) >= 0.01 ? ` · Øreavrunding: −${money(Math.abs(rounding))}` : "";
-    totalDisplay.textContent = vatRate
-      ? `Sum før rabatt: ${money(gross)} · Rabatt: ${money(discount.amount)} · MVA ${vatRate}%: ${money(tax)}${roundingText} · Å betale: ${money(total)}`
-      : discount.amount > 0
-        ? `Sum før rabatt: ${money(gross)} · Rabatt: −${money(discount.amount)}${roundingText} · Å betale: ${money(total)}`
-        : `Sum: ${money(gross)}${roundingText} · Å betale: ${money(total)}`;
+    previewFinancials();
   }
+
+  const previewFinancials = window.createInvoiceFinancialPreview({
+    endpoint: `${API_BASE}/invoices/financial-preview`, headers,
+    payload: () => ({ invoiceId, lines: getLines(), discountType: discountType.value, discountValue: Number(discountValue.value) }),
+    pending: () => { totalDisplay.textContent = "Beregner fakturasum…"; discountPreview.hidden = true; },
+    error: (message) => { totalDisplay.textContent = message; discountPreview.hidden = false; discountPreview.classList.add("is-error"); discountPreview.textContent = message; },
+    render: (totals) => {
+      discountPreview.classList.remove("is-error");
+      if (totals.discountAmount > 0) {
+        discountPreview.hidden = false;
+        const label = discountLabel.value.trim() || "Kunderabatt";
+        const suffix = totals.discountType === "percent" ? ` (${totals.discountValue} %)` : "";
+        discountPreview.innerHTML = `<strong>🎁 Kunden får rabatt</strong><span>Sum før rabatt: ${money(totals.grossSubtotal)}</span><span>${esc(label)}${suffix}: −${money(totals.discountAmount)}</span><strong>Du sparer kunden ${money(totals.customerSavings)}</strong>`;
+      } else { discountPreview.hidden = true; discountPreview.textContent = ""; }
+      const rounding = totals.roundingAdjustment;
+      const roundingText = Math.abs(rounding) >= 0.01 ? ` · Øreavrunding: ${rounding < 0 ? "−" : "+"}${money(Math.abs(rounding))}` : "";
+      totalDisplay.textContent = `Sum før avrunding: ${money(totals.amountBeforeRounding)}${roundingText} · Å betale: ${money(totals.amount)}`;
+    },
+  });
 
   async function loadConfig() {
     try {
@@ -249,10 +222,8 @@
     if (lines.some((line) => !(line.quantity > 0) || line.unitPrice < 0)) { setMessage("Kontroller mengde og sats på fakturalinjene.", "error"); return; }
     const gross = lines.reduce((sum, line) => sum + line.amount, 0);
     if (!(gross > 0)) { setMessage("Totalbeløpet må være større enn 0.", "error"); return; }
-    const discount = discountFor(gross);
-    if (discount.error) { setMessage(discount.error, "error"); discountValue.focus(); return; }
-    if (discount.type !== "none" && !(discount.value > 0)) { setMessage("Skriv inn rabatten du vil gi.", "error"); discountValue.focus(); return; }
-    if (discount.amount >= gross) { setMessage("Rabatten kan ikke gjøre fakturaen til 0 kr. eller mindre.", "error"); discountValue.focus(); return; }
+    const discount = { type: discountType.value, value: Number(discountValue.value) };
+    if (discount.type !== "none" && (!Number.isFinite(discount.value) || !(discount.value > 0))) { setMessage("Skriv inn en gyldig rabatt.", "error"); discountValue.focus(); return; }
 
     saveBtn.disabled = true;
     setMessage("Lagrer endringer…");
