@@ -550,6 +550,13 @@
         openManualTime({ orderId: timeButton.dataset.id });
         return;
       }
+      const equipmentButton = event.target.closest('[data-quick="equipment"]');
+      if (equipmentButton) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        openEquipmentAdd(equipmentButton.dataset.id);
+        return;
+      }
       const customerTime = event.target.closest("[data-customer-time]");
       if (customerTime) {
         event.preventDefault();
