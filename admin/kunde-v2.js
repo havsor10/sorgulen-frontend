@@ -86,10 +86,11 @@
         });
       }
       for (const entry of order.additionalCosts || []) items.push({ at: entry.occurredAt || order.jobDate, order, type: "expense", entryId: entry.entryId, title: entry.item, meta: `${fmtMoney(entry.amount)}${entry.supplier ? ` · ${entry.supplier}` : ""} · Utgift`, billable: entry.billable !== false });
+      for (const entry of order.equipment || []) items.push({ at: entry.createdAt || order.jobDate, order, type: "equipment", entryId: entry.entryId, title: entry.item || "Utstyr", meta: `${entry.durationMinutes || 0} min · ${fmtMoney(entry.hourlyRateSnapshot || 0)}/t · ${fmtMoney(entry.amount || 0)} · Utstyr`, billable: entry.billable !== false });
       for (const entry of order.materials || []) items.push({ at: entry.createdAt || order.jobDate, order, type: "material", entryId: entry.entryId, title: entry.item, meta: `${entry.quantity} ${entry.unit || "stk"}${entry.unitPrice != null ? ` · ${fmtMoney(Number(entry.quantity) * Number(entry.unitPrice))}` : " · Pris ikke satt"} · Materiale`, billable: entry.billable !== false });
     }
     items.sort((a, b) => new Date(b.at) - new Date(a.at));
-    if (!items.length) return '<p class="empty-state">Ingen arbeid, utgifter eller materialer registrert ennå.</p>';
+    if (!items.length) return '<p class="empty-state">Ingen arbeid, utgifter, utstyr eller materialer registrert ennå.</p>';
     return `<div class="customer-registration-list">${items.map((item) => {
       const billing = useState(item.order, item.type, item.entryId);
       return `<div class="customer-registration"><div><strong>${esc(item.title)}</strong><p>${esc(fmtDate(item.at))} · ${esc(item.meta)} · ${esc(item.order.serviceName)}</p><button type="button" class="quiet-link" style="border:0;background:none;padding:7px 0 0;cursor:pointer" data-operations-manager="${esc(item.order._id)}">Rediger registrering</button></div>${stateBadge(billing, item.billable)}</div>`;
