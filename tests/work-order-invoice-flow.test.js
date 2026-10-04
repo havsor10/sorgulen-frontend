@@ -15,13 +15,16 @@ test("oppdrag bruker samlet feltmotor for ferdig oppdrag", () => {
   assert.doesNotMatch(oppdragHtml, /completed-work-order-flow\.js/);
 });
 
-test("ferdig ufakturert oppdrag forblir redigerbart og faktureres direkte på id", () => {
-  assert.match(field, /order\.workflow\?\.canAddRegistrations/);
+test("oppdrag kan korrigeres, delfaktureres og sluttfaktureres uten å miste registreringer", () => {
+  assert.match(field, /const canAdd = order\.status !== "cancelled"/);
   assert.match(field, /workflow\.canOpenInvoice \|\| order\.invoiceId/);
   assert.match(field, /faktura-ny\.html\?workOrderId=/);
-  assert.match(field, /Opprett faktura/);
+  assert.match(field, /Opprett sluttfaktura/);
+  assert.match(field, /Fakturer arbeid hittil/);
+  assert.match(field, /\/admin\/operations\/work-orders\/\$\{encodeURIComponent\(currentOrder\._id\)\}\/invoice-draft/);
   assert.match(field, /data-field-add-time/);
   assert.match(field, /data-entry="expense"/);
+  assert.match(field, /data-field-add-equipment/);
   assert.match(field, /data-entry="material"/);
   assert.match(field, /data-entry="note"/);
 });

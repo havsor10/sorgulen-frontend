@@ -16,11 +16,12 @@ test("manuell tid har ekte startklokkeslett i Oslo", () => {
   assert.match(operations, /overlapWarning/);
 });
 
-test("Oppdrag bruker workflow-status fra backend i stedet for å gjette raw status", () => {
+test("Oppdrag bruker backend-status, mens registreringskontroller tillater korrigering fram til backend låser faktura", () => {
   assert.match(oppdrag, /workOrder\?\.workflow\?\.status \|\| workOrder\?\.status/);
   assert.match(field, /order\.workflow\?\.status \|\| order\.status/);
-  assert.match(field, /order\.workflow\?\.canAddRegistrations/);
-  assert.match(field, /order\.workflow\?\.canEditRegistrations/);
+  assert.match(field, /const canAdd = order\.status !== "cancelled"/);
+  assert.match(field, /const editable = order\.status !== "cancelled"/);
+  assert.match(operations, /deleteExistingRegistration/);
 });
 
 test("legacy planlagt med manuell tid kan vises som mellom økter og ferdigstilles", () => {

@@ -43,11 +43,12 @@ test("fakturavarsler har direkte rettehandlinger", () => {
   assert.match(js, /refreshWorkspace/);
 });
 
-test("legg til-meny fungerer også etter ferdigstilling fram til faktura finnes", () => {
-  assert.match(js, /order\.workflow\?\.canAddRegistrations/);
+test("legg til-meny dekker alle prosjektregistreringer og lar backend håndheve fakturalås", () => {
+  assert.match(js, /const canAdd = order\.status !== "cancelled"/);
   assert.match(js, /data-field-add-toggle/);
   assert.match(js, /data-field-add-time/);
   assert.match(js, /data-entry="expense"/);
+  assert.match(js, /data-field-add-equipment/);
   assert.match(js, /data-entry="material"/);
   assert.match(js, /data-entry="note"/);
   assert.match(inventory, /data-entry=material/);
@@ -64,9 +65,10 @@ test("arbeidslogg åpner den reelle operations-editoren og kan slette økter", (
   assert.match(css, /field-entry-actions/);
 });
 
-test("statusflyt for ferdig, fakturert og avbrutt er eid av feltmotoren", () => {
+test("statusflyt for delfaktura, sluttfaktura og avbrutt er eid av feltmotoren", () => {
   assert.match(js, /function workflowMarkup/);
-  assert.match(js, /Opprett faktura/);
+  assert.match(js, /Fakturer arbeid hittil/);
+  assert.match(js, /Opprett sluttfaktura/);
   assert.match(js, /Åpne faktura/);
   assert.match(js, /Gjenåpne for korrigering/);
   assert.match(css, /field-status-workflow/);
