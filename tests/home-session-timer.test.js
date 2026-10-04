@@ -15,5 +15,5 @@ test("home live timer uses current session time, not project total", () => {
 
 test("home session timer assets are cache-busted", () => {
   assert.match(html, /work-order-time\.js\?v=20260918-session1/);
-  assert.match(html, /hjem\\.js\\?v=20261004-actions1/);
+  assert.match(html, /hjem\.js\?v=20261004-actions1/);
 });
