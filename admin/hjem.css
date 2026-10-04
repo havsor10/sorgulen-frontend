@@ -55,3 +55,15 @@ button,a { -webkit-tap-highlight-color:transparent; }
 .form-error { min-height:18px; color:#ffaaaa; font-size:13px; }
 @media(min-width:720px){ .home-modal{align-items:center}.main-actions .primary-action,.main-actions .secondary-action{min-width:150px} }
 @media(max-width:430px){ .home-main{padding-inline:12px}.focus-card{padding:17px}.task-action{padding:0 11px}.task-item{gap:9px;padding:14px 12px}.quick-action{min-width:90px}.main-actions>*{flex:1} }
+
+/* Hjem = handlingsflate. Hele kortet er handlingen, maks tre vises før "Vis alle". */
+.task-list{display:grid;gap:8px;overflow:visible;border:0;background:transparent}
+.task-item{width:100%;grid-template-columns:10px minmax(0,1fr) auto;border:1px solid #282e38;border-radius:13px;background:#14181e;text-align:left;font:inherit;cursor:pointer}
+.task-item:last-child{border-bottom:1px solid #282e38}
+.task-item:active{background:#1a2028;transform:scale(.995)}
+.task-item-button{color:inherit}
+.task-status{display:block;margin-bottom:4px;color:#c8a45f;font-size:10px;font-weight:900;letter-spacing:.06em}
+.task-go{align-self:center;color:#dfe5eb;font-size:12px;font-weight:850;white-space:nowrap}
+.task-more{min-height:46px;border:1px solid #303742;border-radius:11px;background:#171c22;color:#dce2e9;font:800 13px Arial,sans-serif;cursor:pointer}
+.task-more:active{background:#202731}
+@media(max-width:430px){.task-item{grid-template-columns:8px minmax(0,1fr);}.task-go{grid-column:2;justify-self:start;white-space:normal}}
