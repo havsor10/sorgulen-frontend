@@ -11,15 +11,14 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="../assets/logo.png">
   <link rel="stylesheet" href="admin.css?v=20260904-clickfix2">
-  <link rel="stylesheet" href="hjem.css?v=20260904-clickfix2">
+  <link rel="stylesheet" href="hjem.css?v=20261004-actions1">
   <link rel="stylesheet" href="admin-shell.css?v=20260904-clickfix2">
   <link rel="stylesheet" href="home-project-link.css?v=20260906-projectopen1">
-  <link rel="stylesheet" href="home-attention.css?v=20260918-activecustomers2">
   <link rel="stylesheet" href="home-active-customers.css?v=20260918-activecustomers2">
 </head>
 <body class="home-body">
   <div id="adminShell" data-page="home"></div>
-  <script src="admin-shell.js?v=20260920-overview1"></script>
+  <script src="admin-shell.js?v=20261004-actions1"></script>
 
   <main class="admin-main admin-main--narrow home-main">
     <header class="admin-page-header">
@@ -36,16 +35,11 @@
       <div id="ongoingProjects" class="booking-list"></div>
     </section>
 
-    <section aria-labelledby="tasksTitle">
+    <section id="handling" aria-labelledby="tasksTitle">
       <div class="section-title-row"><div><p class="eyebrow">Krever deg</p><h2 id="tasksTitle">Kontrollerer…</h2></div><button id="refreshBtn" class="icon-action" type="button" aria-label="Kontroller på nytt">↻</button></div>
-      <div id="aiSummary" class="ai-summary hidden"></div>
       <div id="taskList" class="task-list loading-card">Finner bare det du faktisk trenger å ta stilling til…</div>
     </section>
 
-    <section aria-labelledby="latestTitle">
-      <div class="section-title-row"><div><p class="eyebrow">Nylig</p><h2 id="latestTitle">Siste bookinger</h2></div><a href="admin-dashboard.html" class="quiet-link">Se alle</a></div>
-      <div id="latestBookings" class="booking-list loading-card">Henter bookinger…</div>
-    </section>
   </main>
 
   <div id="quickModal" class="home-modal hidden" role="dialog" aria-modal="true" aria-labelledby="quickTitle">
@@ -64,8 +58,7 @@
 
   <script src="../config.js?v=20260904-clickfix2"></script>
   <script src="work-order-time.js?v=20260918-session1"></script>
-  <script src="hjem.js?v=20260918-session1"></script>
+  <script src="hjem.js?v=20261004-actions1"></script>
   <script src="home-project-link.js?v=20260906-projectopen1"></script>
-  <script src="home-attention.js?v=20260918-activecustomers2"></script>
 </body>
 </html>
