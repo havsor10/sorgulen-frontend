@@ -269,9 +269,11 @@
 
   function actionableTasks() {
     const raw = Array.isArray(state.home?.overview?.tasks) ? state.home.overview.tasks : [];
+    const activeId = state.home?.activeWorkOrder?._id ? String(state.home.activeWorkOrder._id) : "";
     const seen = new Set();
     return raw.filter((task) => {
       if (!task?.href || !task?.actionLabel) return false;
+      if (activeId && task.priority !== "critical" && String(task.href).includes(activeId)) return false;
       const key = [task.href, task.actionLabel, task.title].join("|");
       if (seen.has(key)) return false;
       seen.add(key);
