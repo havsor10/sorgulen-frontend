@@ -16,42 +16,52 @@
   const modeParams = new URLSearchParams(window.location.search);
   if (modeParams.get("from") === "field") localStorage.setItem("sorgulen_admin_mode", "field");
   if (page === "home" && modeParams.get("from") !== "field") localStorage.setItem("sorgulen_admin_mode", "full");
+
   const fieldContext = modeParams.get("from") === "field" || localStorage.getItem("sorgulen_admin_mode") === "field";
   const adminHomeHref = fieldContext ? "felt.html" : "hjem.html";
   const modeSwitchHref = fieldContext ? "hjem.html" : "felt.html";
   const modeSwitchLabel = fieldContext ? "Komplett admin" : "Feltadmin";
   const modeSwitchMode = fieldContext ? "full" : "field";
-  ensureAsset("link", { rel: "stylesheet", href: "operations.css?v=20260904-snow1" });
+
+  ensureAsset("link", { rel: "stylesheet", href: "operations.css?v=20261004-actions1" });
   ensureAsset("link", { rel: "stylesheet", href: "ai-universal.css?v=20261002-u1" });
   if (page === "jobs") ensureAsset("link", { rel: "stylesheet", href: "ai-guide.css?v=20260917-project1" });
   ensureAsset("link", { rel: "manifest", href: "manifest.webmanifest" });
   ensureAsset("link", { rel: "apple-touch-icon", href: "../assets/logo.png" });
-  if (!["home", "overview", "inventory", "snow", "jobs"].includes(page)) ensureAsset("script", { src: "operations-ui.js?v=20261004-lock2" });
+  if (!["home", "inventory", "snow", "jobs"].includes(page)) ensureAsset("script", { src: "operations-ui.js?v=20261004-lock2" });
   if (page === "jobs") ensureAsset("script", { src: "inventory-material-edit.js?v=20260904-snow1" });
 
+  function groupForPage(value) {
+    if (["bookings", "requests", "mailbox"].includes(value)) return "incoming";
+    if (["invoices", "fiken"].includes(value)) return "economy";
+    return value;
+  }
+
+  const activeGroup = groupForPage(page);
   const navItems = [
     { key: "home", href: adminHomeHref, label: "Hjem" },
-    { key: "overview", href: "oversikt.html", label: "Oversikt" },
     { key: "jobs", href: "oppdrag.html", label: "Oppdrag" },
-    { key: "bookings", href: "admin-dashboard.html", label: "Bookinger" },
-    { key: "requests", href: "foresporsler.html", label: "Forespørsler" },
-    { key: "mailbox", href: "innboks.html", label: "Innboks" },
     { key: "customers", href: "kunder.html", label: "Kunder" },
-    { key: "invoices", href: "fakturaer.html", label: "Fakturaer" },
+    { key: "incoming", href: "foresporsler.html", label: "Innkommende" },
+    { key: "economy", href: "fakturaer.html", label: "Økonomi" },
   ];
-  const mobileItems = navItems.filter((item) => ["home", "overview", "jobs", "invoices"].includes(item.key));
-  const activeClass = (key) => key === page ? " is-active" : "";
-  const activeAttr = (key) => key === page ? ' aria-current="page"' : "";
+  const mobileItems = navItems.filter((item) => ["home", "jobs", "customers", "economy"].includes(item.key));
+  const activeClass = (key) => key === activeGroup ? " is-active" : "";
+  const activeAttr = (key) => key === activeGroup ? ' aria-current="page"' : "";
   const badge = (key) => `<span class="admin-nav-badge" data-admin-badge="${key}" hidden></span>`;
 
   function mobileIcon(key) {
-    return ({ home: "⌂", overview: "◈", jobs: "◷", customers: "◎", invoices: "▤" })[key] || "•";
+    return ({ home: "⌂", jobs: "◷", customers: "◎", incoming: "↘", economy: "▤" })[key] || "•";
   }
+
+  const secondaryPages = ["bookings", "requests", "mailbox", "inventory", "snow", "autopilot", "portal", "fiken", "website", "more"];
+  const moreIsActive = secondaryPages.includes(page);
 
   document.body.classList.add("admin-app");
   ensureAsset("script", { src: "ai-universal.js?v=20261002-u1" });
   if (page === "jobs") ensureAsset("script", { src: "ai-guide.js?v=20260917-project1" });
-  ensureAsset("script", { src: "actionable-warnings.js?v=20260914-a1" });
+  ensureAsset("script", { src: "actionable-warnings.js?v=20261004-actions1" });
+
   mount.innerHTML = `
     <header class="admin-app-header">
       <div class="admin-header-inner">
@@ -64,38 +74,52 @@
         </nav>
         <div class="admin-header-actions">
           <a class="admin-quiet-action" href="${modeSwitchHref}" data-admin-mode="${modeSwitchMode}"><span>${modeSwitchLabel}</span></a>
-          <a class="admin-quiet-action${activeClass("website")}" href="nettside.html"${activeAttr("website")}><span>Nettside</span></a>\n          <a class="admin-quiet-action${activeClass("portal")}" href="kundeportal.html"${activeAttr("portal")}><span>Kundeportal</span></a>
-          <a class="admin-quiet-action${activeClass("fiken")}" href="fiken.html"${activeAttr("fiken")}><span>Fiken</span></a>
-          <a class="admin-quiet-action${activeClass("snow")}" href="broyting.html"${activeAttr("snow")}><span>Brøyting</span>${badge("snow")}</a>
-          <a class="admin-quiet-action${activeClass("inventory")}" href="lager.html"${activeAttr("inventory")}><span>Lager</span>${badge("inventory")}</a>
-          <a class="admin-quiet-action${activeClass("autopilot")}" href="autopilot.html"${activeAttr("autopilot")}><span>Autopilot</span>${badge("autopilot")}</a>
-          <a class="admin-quiet-action${activeClass("notifications")}" href="varslinger.html"${activeAttr("notifications")}>Varslinger</a>
-          <a class="admin-quiet-action" href="statistikk.html">Statistikk</a>
-          <a class="admin-quiet-action" id="logoutBtn" href="login.html">Logg ut</a>
+          <button class="admin-quiet-action admin-more-desktop${moreIsActive ? " is-active" : ""}" id="adminMoreDesktopButton" type="button" aria-expanded="false" aria-controls="adminMoreMenu">Mer ${badge("more")}</button>
         </div>
       </div>
     </header>
+
     <nav class="admin-mobile-nav" aria-label="Mobilnavigasjon">
       ${mobileItems.map((item) => `<a class="admin-mobile-link${activeClass(item.key)}" href="${item.href}"${activeAttr(item.key)}><span class="admin-mobile-icon" aria-hidden="true">${mobileIcon(item.key)}</span><span class="admin-mobile-label">${item.label}</span>${badge(item.key)}</a>`).join("")}
-      <button class="admin-mobile-link${["bookings", "requests", "mailbox", "inventory", "snow", "autopilot", "notifications", "portal", "fiken", "website", "more"].includes(page) ? " is-active" : ""}" id="adminMoreButton" type="button" aria-expanded="false" aria-controls="adminMoreMenu">
+      <button class="admin-mobile-link${moreIsActive || activeGroup === "incoming" ? " is-active" : ""}" id="adminMoreButton" type="button" aria-expanded="false" aria-controls="adminMoreMenu">
         <span class="admin-mobile-icon" aria-hidden="true">•••</span><span class="admin-mobile-label">Mer</span>${badge("more")}
       </button>
     </nav>
+
     <div class="admin-menu-backdrop" id="adminMenuBackdrop" hidden></div>
     <aside class="admin-more-menu" id="adminMoreMenu" aria-label="Flere adminvalg" aria-hidden="true">
       <div class="admin-more-head"><strong>Mer</strong><button id="adminMoreClose" class="admin-icon-button" type="button" aria-label="Lukk meny">×</button></div>
-      <a class="admin-more-link" href="${modeSwitchHref}" data-admin-mode="${modeSwitchMode}"><span>${fieldContext ? "Komplett admin" : "Feltadmin"}</span><span aria-hidden="true">›</span></a>
-      <a class="admin-more-link${activeClass("website")}" href="nettside.html"${activeAttr("website")}><span>Nettside / priser</span><span aria-hidden="true">›</span></a>\n      <a class="admin-more-link${activeClass("portal")}" href="kundeportal.html"${activeAttr("portal")}><span>Kundeportal</span><span aria-hidden="true">›</span></a>
-      <a class="admin-more-link${activeClass("fiken")}" href="fiken.html"${activeAttr("fiken")}><span>Fiken / regnskap</span><span aria-hidden="true">›</span></a>
-      <a class="admin-more-link${activeClass("autopilot")}" href="autopilot.html"${activeAttr("autopilot")}><span>Autopilot</span><span class="admin-more-tail">${badge("autopilot")}<span aria-hidden="true">›</span></span></a>
-      <a class="admin-more-link${activeClass("snow")}" href="broyting.html"${activeAttr("snow")}><span>Brøyting</span><span class="admin-more-tail">${badge("snow")}<span aria-hidden="true">›</span></span></a>
-      <a class="admin-more-link${activeClass("bookings")}" href="admin-dashboard.html"${activeAttr("bookings")}><span>Bookinger</span><span class="admin-more-tail">${badge("bookings")}<span aria-hidden="true">›</span></span></a>
-      <a class="admin-more-link${activeClass("requests")}" href="foresporsler.html"${activeAttr("requests")}><span>Forespørsler</span><span class="admin-more-tail">${badge("requests")}<span aria-hidden="true">›</span></span></a>
-      <a class="admin-more-link${activeClass("mailbox")}" href="innboks.html"${activeAttr("mailbox")}><span>Innboks</span><span class="admin-more-tail">${badge("mailbox")}<span aria-hidden="true">›</span></span></a>
-      <a class="admin-more-link${activeClass("inventory")}" href="lager.html"${activeAttr("inventory")}><span>Lager</span><span class="admin-more-tail">${badge("inventory")}<span aria-hidden="true">›</span></span></a>
-      <a class="admin-more-link${activeClass("notifications")}" href="varslinger.html"${activeAttr("notifications")}><span>Varslinger</span><span aria-hidden="true">›</span></a>
-      <a class="admin-more-link${activeClass("more")}" href="statistikk.html"${activeAttr("more")}><span>Statistikk</span><span aria-hidden="true">›</span></a>
-      <button class="admin-more-link admin-menu-logout" id="adminMobileLogout" type="button"><span>Logg ut</span><span aria-hidden="true">›</span></button>
+
+      <a class="admin-more-link" href="${modeSwitchHref}" data-admin-mode="${modeSwitchMode}"><span>${modeSwitchLabel}</span><span aria-hidden="true">›</span></a>
+
+      <div class="admin-more-group">
+        <p class="admin-more-group-title">Innkommende</p>
+        <a class="admin-more-link${activeClass("bookings")}" href="admin-dashboard.html"><span>Bookinger</span><span class="admin-more-tail">${badge("bookings")}<span aria-hidden="true">›</span></span></a>
+        <a class="admin-more-link${activeClass("requests")}" href="foresporsler.html"><span>Prisforespørsler</span><span class="admin-more-tail">${badge("requests")}<span aria-hidden="true">›</span></span></a>
+        <a class="admin-more-link${activeClass("mailbox")}" href="innboks.html"><span>Innboks</span><span class="admin-more-tail">${badge("mailbox")}<span aria-hidden="true">›</span></span></a>
+      </div>
+
+      <div class="admin-more-group">
+        <p class="admin-more-group-title">Drift</p>
+        <a class="admin-more-link${activeClass("snow")}" href="broyting.html"><span>Brøyting</span><span class="admin-more-tail">${badge("snow")}<span aria-hidden="true">›</span></span></a>
+        <a class="admin-more-link${activeClass("inventory")}" href="lager.html"><span>Lager</span><span class="admin-more-tail">${badge("inventory")}<span aria-hidden="true">›</span></span></a>
+      </div>
+
+      <div class="admin-more-group">
+        <p class="admin-more-group-title">Økonomi</p>
+        <a class="admin-more-link${activeClass("economy")}" href="fakturaer.html"><span>Fakturaer</span><span class="admin-more-tail">${badge("economy")}<span aria-hidden="true">›</span></span></a>
+        <a class="admin-more-link${activeClass("fiken")}" href="fiken.html"><span>Fiken / regnskap</span><span aria-hidden="true">›</span></a>
+        <a class="admin-more-link" href="statistikk.html"><span>Statistikk</span><span aria-hidden="true">›</span></a>
+      </div>
+
+      <div class="admin-more-group">
+        <p class="admin-more-group-title">System</p>
+        <a class="admin-more-link${activeClass("website")}" href="nettside.html"><span>Nettside / priser</span><span aria-hidden="true">›</span></a>
+        <a class="admin-more-link${activeClass("portal")}" href="kundeportal.html"><span>Kundeportal</span><span aria-hidden="true">›</span></a>
+        <a class="admin-more-link${activeClass("autopilot")}" href="autopilot.html"><span>Autopilot</span><span class="admin-more-tail">${badge("autopilot")}<span aria-hidden="true">›</span></span></a>
+      </div>
+
+      <a class="admin-more-link admin-menu-logout" id="logoutBtn" href="login.html"><span>Logg ut</span><span aria-hidden="true">›</span></a>
     </aside>
   `;
 
@@ -107,12 +131,14 @@
   });
 
   const moreButton = document.getElementById("adminMoreButton");
+  const moreDesktopButton = document.getElementById("adminMoreDesktopButton");
   const moreMenu = document.getElementById("adminMoreMenu");
   const backdrop = document.getElementById("adminMenuBackdrop");
   const closeButton = document.getElementById("adminMoreClose");
 
   function setMenu(open) {
-    moreButton.setAttribute("aria-expanded", String(open));
+    moreButton?.setAttribute("aria-expanded", String(open));
+    moreDesktopButton?.setAttribute("aria-expanded", String(open));
     moreMenu.setAttribute("aria-hidden", String(!open));
     moreMenu.classList.toggle("is-open", open);
     backdrop.hidden = !open;
@@ -148,36 +174,42 @@
       fetchJson(`${apiBase}/admin/autopilot/inbox/summary`, adminKey),
       fetchJson(`${apiBase}/admin/mailbox/summary`, adminKey),
     ]);
+
     if (operations) {
       Object.entries(operations.badges || {}).forEach(([key, value]) => showBadge(key, value));
       window.dispatchEvent(new CustomEvent("sorgulen:notifications", { detail: operations }));
     }
+
     const inventoryCount = Math.max(0, Number(inventory?.lowStockCount) || 0);
     const snowCount = Math.max(0, Number(snow?.summary?.queued) || 0);
     const autopilotCount = Math.max(0, Number(autopilot?.inbox?.counts?.pending) || 0)
       + Math.max(0, Number(autopilot?.inbox?.counts?.revisionRequested) || 0);
     const mailboxCount = Math.max(0, Number(mailbox?.counts?.attention) || 0);
+    const bookingCount = Math.max(0, Number(operations?.badges?.bookings) || 0);
+    const requestCount = Math.max(0, Number(operations?.badges?.requests) || 0);
+    const invoiceCount = Math.max(0, Number(operations?.badges?.invoices) || 0);
+
     showBadge("inventory", inventoryCount);
     showBadge("snow", snowCount);
     showBadge("autopilot", autopilotCount);
     showBadge("mailbox", mailboxCount);
-    const operationAttention = Object.entries(operations?.badges || {}).filter(([key]) => key !== "more").reduce((sum, [, value]) => sum + Math.max(0, Number(value) || 0), 0);
-    showBadge("overview", operationAttention + autopilotCount + inventoryCount + snowCount + mailboxCount);
+    showBadge("incoming", bookingCount + requestCount + mailboxCount);
+    showBadge("economy", invoiceCount);
+
     const existingMore = Math.max(0, Number(operations?.badges?.more) || 0);
-    showBadge("more", existingMore + inventoryCount + snowCount + autopilotCount + mailboxCount);
+    showBadge("more", existingMore + inventoryCount + snowCount + autopilotCount);
   }
 
-  moreButton.addEventListener("click", () => setMenu(!moreMenu.classList.contains("is-open")));
+  const toggleMenu = () => setMenu(!moreMenu.classList.contains("is-open"));
+  moreButton?.addEventListener("click", toggleMenu);
+  moreDesktopButton?.addEventListener("click", toggleMenu);
   closeButton.addEventListener("click", () => setMenu(false));
   backdrop.addEventListener("click", () => setMenu(false));
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && moreMenu.classList.contains("is-open")) setMenu(false);
   });
-  document.getElementById("adminMobileLogout").addEventListener("click", () => {
-    localStorage.removeItem("sorgulen_admin_key");
-    window.location.href = "login.html";
-  });
-  document.getElementById("logoutBtn").addEventListener("click", () => {
+
+  document.getElementById("logoutBtn")?.addEventListener("click", () => {
     localStorage.removeItem("sorgulen_admin_key");
   });
 
