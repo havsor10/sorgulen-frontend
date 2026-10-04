@@ -11,12 +11,12 @@ const invoicePicker = fs.readFileSync(path.join(root, "admin/invoice-work-order-
 const invoiceJs = fs.readFileSync(path.join(root, "admin/faktura-ny.js"), "utf8");
 
 test("oppdrag bruker samlet feltmotor for ferdig oppdrag", () => {
-  assert.match(oppdragHtml, /field-ui-20260919-zero1/);
+  assert.match(oppdragHtml, /field-ui-20261004-lock2/);
   assert.doesNotMatch(oppdragHtml, /completed-work-order-flow\.js/);
 });
 
 test("oppdrag kan korrigeres, delfaktureres og sluttfaktureres uten å miste registreringer", () => {
-  assert.match(field, /const canAdd = order\.status !== "cancelled"/);
+  assert.match(field, /const canAdd = order\.status !== "cancelled" && !projectRegistrationsLocked\(order\)/);
   assert.match(field, /workflow\.canOpenInvoice \|\| order\.invoiceId/);
   assert.match(field, /faktura-ny\.html\?workOrderId=/);
   assert.match(field, /Opprett sluttfaktura/);
@@ -26,7 +26,7 @@ test("oppdrag kan korrigeres, delfaktureres og sluttfaktureres uten å miste reg
   assert.match(field, /data-entry="expense"/);
   assert.match(field, /data-field-add-equipment/);
   assert.match(field, /data-entry="material"/);
-  assert.match(field, /data-entry="note"/);
+  assert.match(field, /data-entry="note"/);\n  assert.match(field, /billingLocks/);\n  assert.match(field, /registrationBillingLock/);
 });
 
 test("ny faktura tilbyr ferdige oppdrag uten krav om referanse", () => {
