@@ -134,7 +134,7 @@
       });
     }
 
-    for (const entry of missingDescriptions(order)) {
+    for (const entry of missingDescriptions(order).filter((item) => !registrationBillingLock(order, "time", item.entryId)?.locked)) {
       items.push({
         key: `description-${entry.entryId}`,
         tone: "warning",
@@ -358,14 +358,30 @@
       return `<section class="field-status-workflow is-cancelled"><div><strong>Oppdraget er avbrutt</strong><span>Registreringene er bevart. Gjenåpne før du korrigerer, ferdigstiller eller fakturerer.</span></div><button type="button" data-field-recover-order>Gjenåpne for korrigering</button></section>`;
     }
     if (status !== "completed") {
-      const hasClosedWork = (order.workIntervals || []).some((entry) => entry.billable !== false && (entry.source === "manual" || entry.endedAt) && intervalSeconds(entry) > 0);
+      if (!order.customerId) return "";
+
+      const activeDraft = Object.values(order.billingLocks?.entries || {}).find((entry) => entry?.status === "draft" && entry?.invoiceId);
+      if (activeDraft) {
+        return `<section class="field-status-workflow"><div><strong>Fakturautkast finnes</strong><span>Åpne utkastet og oppdater fakturagrunnlaget hvis du har registrert mer arbeid.</span></div><a href="faktura-detalj.html?id=${encodeURIComponent(activeDraft.invoiceId)}">Åpne fakturautkast</a></section>`;
+      }
+
+      if (order.pricingMode === "fixed") return "";
+
+      const isUnbilled = (kind, entryId) => !registrationBillingLock(order, kind, entryId);
+      const hasClosedWork = (order.workIntervals || []).some((entry) =>
+        entry.billable !== false
+        && (entry.source === "manual" || entry.endedAt)
+        && intervalSeconds(entry) > 0
+        && isUnbilled("time", entry.entryId)
+      );
       const hasBillableRegistrations = hasClosedWork
-        || (order.additionalCosts || []).some((entry) => entry.billable !== false)
-        || (order.equipment || []).some((entry) => entry.billable !== false && Number(entry.amount) > 0)
-        || (order.materials || []).some((entry) => entry.billable !== false && entry.unitPrice != null);
-      if (!order.customerId || !hasBillableRegistrations) return "";
+        || (order.additionalCosts || []).some((entry) => entry.billable !== false && isUnbilled("expense", entry.entryId))
+        || (order.equipment || []).some((entry) => entry.billable !== false && Number(entry.amount) > 0 && isUnbilled("equipment", entry.entryId))
+        || (order.materials || []).some((entry) => entry.billable !== false && entry.unitPrice != null && isUnbilled("material", entry.entryId));
+      if (!hasBillableRegistrations) return "";
+
       const openTimer = Boolean(workflow.hasOpenTimer || (order.workIntervals || []).some((entry) => entry.source !== "manual" && !entry.endedAt));
-      return `<section class="field-status-workflow"><div><strong>Prosjektet pågår</strong><span>${openTimer ? "Pause eller stopp arbeidsøkten før du lager delfaktura." : "Du kan fakturere alt ikke-fakturert arbeid hittil og fortsette samme prosjekt etterpå."}</span></div><button type="button" data-field-invoice-now ${openTimer ? "disabled" : ""}>Fakturer arbeid hittil</button></section>`;
+      return `<section class="field-status-workflow"><div><strong>Prosjektet pågår</strong><span>${openTimer ? "Pause eller stopp arbeidsøkten før du lager delfaktura." : "Fakturer bare det som ikkje er fakturert fra før, og fortsett samme prosjekt etterpå."}</span></div><button type="button" data-field-invoice-now ${openTimer ? "disabled" : ""}>Fakturer arbeid hittil</button></section>`;
     }
     if (workflow.canOpenInvoice || order.invoiceId) {
       const locked = projectRegistrationsLocked(order);
