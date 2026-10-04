@@ -35,6 +35,8 @@ test("shared navigation is reduced to five primary destinations with grouped sec
   for (const group of ["Innkommende", "Drift", "Økonomi", "System"]) assert.match(shell, new RegExp(`admin-more-group-title">${group}`));
   assert.doesNotMatch(shell, /label: "Oversikt"/);
   assert.doesNotMatch(shell, />Varslinger</);
+  assert.doesNotMatch(shell, /href="autopilot\.html"/);
+  assert.doesNotMatch(shell, /admin\/autopilot\/inbox\/summary/);
   assert.match(shell, /id="logoutBtn"/);
 });
 

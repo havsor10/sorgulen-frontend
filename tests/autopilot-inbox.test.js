@@ -30,10 +30,10 @@ test("Autopilot refresh can run a controlled shadow scan", () => {
   assert.match(js, /load\(\{ sync: false \}\)/);
 });
 
-test("admin shell keeps Autopilot under More without running full inbox sync", () => {
-  assert.match(shell, /href="autopilot\.html"/);
-  assert.match(shell, /pageClass\("autopilot"\)/);
+test("Autopilot remains available internally but is hidden from shared admin navigation", () => {
+  assert.doesNotMatch(shell, /href="autopilot\.html"/);
+  assert.doesNotMatch(shell, /pageClass\("autopilot"\)/);
   assert.match(shell, /\["home", "jobs", "customers", "economy"\]/);
-  assert.match(shell, /\/admin\/autopilot\/inbox\/summary/);
+  assert.doesNotMatch(shell, /\/admin\/autopilot\/inbox\/summary/);
   assert.doesNotMatch(shell, /\/admin\/autopilot\/inbox\?state=all&limit=1/);
 });

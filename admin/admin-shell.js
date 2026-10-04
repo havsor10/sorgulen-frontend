@@ -55,7 +55,7 @@
     return ({ home: "⌂", jobs: "◷", customers: "◎", incoming: "↘", economy: "▤" })[key] || "•";
   }
 
-  const secondaryPages = ["bookings", "requests", "mailbox", "inventory", "snow", "autopilot", "notifications", "portal", "fiken", "website", "more"];
+  const secondaryPages = ["bookings", "requests", "mailbox", "inventory", "snow", "notifications", "portal", "fiken", "website", "more"];
   const moreIsActive = secondaryPages.includes(page);
 
   document.body.classList.add("admin-app");
@@ -117,7 +117,6 @@
         <p class="admin-more-group-title">System</p>
         <a class="admin-more-link${pageClass("website")}" href="nettside.html"><span>Nettside / priser</span><span aria-hidden="true">›</span></a>
         <a class="admin-more-link${pageClass("portal")}" href="kundeportal.html"><span>Kundeportal</span><span aria-hidden="true">›</span></a>
-        <a class="admin-more-link${pageClass("autopilot")}" href="autopilot.html"><span>Autopilot</span><span class="admin-more-tail">${badge("autopilot")}<span aria-hidden="true">›</span></span></a>
         <a class="admin-more-link${pageClass("notifications")}" href="varslinger.html"><span>Varslingsinnstillinger</span><span aria-hidden="true">›</span></a>
       </div>
 
@@ -169,11 +168,10 @@
     const adminKey = (localStorage.getItem("sorgulen_admin_key") || "").trim();
     if (!adminKey) return;
     const apiBase = (window.CONFIG && window.CONFIG.API_BASE_URL) || "https://sorgulen-backend-2.onrender.com/api";
-    const [operations, inventory, snow, autopilot, mailbox] = await Promise.all([
+    const [operations, inventory, snow, mailbox] = await Promise.all([
       fetchJson(`${apiBase}/admin/operations/notifications`, adminKey),
       fetchJson(`${apiBase}/admin/inventory/summary`, adminKey),
       fetchJson(`${apiBase}/admin/snow/state`, adminKey),
-      fetchJson(`${apiBase}/admin/autopilot/inbox/summary`, adminKey),
       fetchJson(`${apiBase}/admin/mailbox/summary`, adminKey),
     ]);
 
@@ -184,8 +182,6 @@
 
     const inventoryCount = Math.max(0, Number(inventory?.lowStockCount) || 0);
     const snowCount = Math.max(0, Number(snow?.summary?.queued) || 0);
-    const autopilotCount = Math.max(0, Number(autopilot?.inbox?.counts?.pending) || 0)
-      + Math.max(0, Number(autopilot?.inbox?.counts?.revisionRequested) || 0);
     const mailboxCount = Math.max(0, Number(mailbox?.counts?.attention) || 0);
     const bookingCount = Math.max(0, Number(operations?.badges?.bookings) || 0);
     const requestCount = Math.max(0, Number(operations?.badges?.requests) || 0);
@@ -193,13 +189,12 @@
 
     showBadge("inventory", inventoryCount);
     showBadge("snow", snowCount);
-    showBadge("autopilot", autopilotCount);
     showBadge("mailbox", mailboxCount);
     showBadge("incoming", bookingCount + requestCount + mailboxCount);
     showBadge("economy", invoiceCount);
 
     const existingMore = Math.max(0, Number(operations?.badges?.more) || 0);
-    showBadge("more", existingMore + inventoryCount + snowCount + autopilotCount);
+    showBadge("more", existingMore + inventoryCount + snowCount);
   }
 
   const toggleMenu = () => setMenu(!moreMenu.classList.contains("is-open"));
