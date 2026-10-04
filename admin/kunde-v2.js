@@ -75,13 +75,12 @@
     for (const order of workOrders || []) {
       for (const entry of order.workIntervals || []) {
         const seconds = intervalSeconds(entry);
-        if (!(seconds > 0)) continue;
         const rate = Number(entry.hourlyRateSnapshot ?? order.hourlyRate ?? 0);
         items.push({
           at: entry.workDate || entry.startedAt || order.jobDate,
           order, type: "time", entryId: entry.entryId,
           title: entry.comment || `${categoryText(entry.category)} – ${order.serviceName}`,
-          meta: `${fmtDuration(seconds)} · ${fmtMoney(rate)}/t · ${fmtMoney((seconds / 3600) * rate)} · ${entry.source === "manual" ? "Manuell" : "Takstameter"}`,
+          meta: `${fmtDuration(seconds)} · ${fmtMoney(rate)}/t · ${fmtMoney(window.SorgulenWorkOrderTime.calculateEstimatedAmount({ status: "stopped", hourlyRate: rate, workIntervals: [entry] }))} · ${entry.source === "manual" ? "Manuell" : "Takstameter"}${seconds <= 0 ? " · Kontroller nullminuttøkt" : ""}`,
           billable: entry.billable !== false,
         });
       }
