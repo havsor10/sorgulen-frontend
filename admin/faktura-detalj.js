@@ -46,7 +46,7 @@
   }
   function money(value) {
     const n = Number(value);
-    return `${new Intl.NumberFormat("nb-NO", { maximumFractionDigits: 2 }).format(Number.isFinite(n) ? n : 0)} kr`;
+    return `${new Intl.NumberFormat("nb-NO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number.isFinite(n) ? n : 0)} kr`;
   }
   function quantity(value) {
     const n = Number(value);
@@ -284,7 +284,8 @@
           <table class="fd-lines"><tbody>${linesRows}</tbody></table>
           ${discountMarkup(inv)}
           ${inv.vatRegisteredSnapshot ? `<div class="fd-total" style="font-size:14px;color:#aab3bf">Delsum etter rabatt: ${money(inv.subtotal)} · MVA ${escapeHtml(inv.taxRate)} %: ${money(inv.taxAmount)}</div>` : `<p class="fd-info">Merverdiavgift er ikke beregnet.</p>`}
-          ${Math.abs(Number(inv.roundingAdjustment || 0)) >= 0.01 ? `<div class="fd-info">Øreavrunding: −${money(Math.abs(Number(inv.roundingAdjustment)))}</div>` : ""}
+          ${inv.amountBeforeRounding != null && Math.abs(Number(inv.roundingAdjustment || 0)) >= 0.01 ? `<div class="fd-info">Sum før avrunding: ${money(inv.amountBeforeRounding)}</div>` : ""}
+          ${Math.abs(Number(inv.roundingAdjustment || 0)) >= 0.01 ? `<div class="fd-info">Øreavrunding: ${Number(inv.roundingAdjustment) < 0 ? "−" : "+"}${money(Math.abs(Number(inv.roundingAdjustment)))}</div>` : ""}
           <div class="fd-total">${inv.isCreditNote ? "Kreditert" : "Å betale"}: ${money(inv.amount)}</div>
         </div>
 

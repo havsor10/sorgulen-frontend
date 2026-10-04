@@ -49,7 +49,7 @@
 
   function fmtMoney(value) {
     const amount = Number(value);
-    return new Intl.NumberFormat("nb-NO", { maximumFractionDigits: 2 }).format(Number.isFinite(amount) ? amount : 0);
+    return new Intl.NumberFormat("nb-NO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number.isFinite(amount) ? amount : 0);
   }
 
   function renderSummary(invoices) {

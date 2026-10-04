@@ -392,4 +392,4 @@
 
   if (!adminKey()) location.href = "login.html";
   else loadItems();
-}());
+})();

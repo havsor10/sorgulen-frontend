@@ -56,7 +56,7 @@
   }
   function money(value) {
     const n = Number(value);
-    return `${new Intl.NumberFormat("nb-NO", { maximumFractionDigits: 2 }).format(Number.isFinite(n) ? n : 0)} kr`;
+    return `${new Intl.NumberFormat("nb-NO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number.isFinite(n) ? n : 0)} kr`;
   }
   function unitLabel(unit) {
     if (unit === "hour") return "time";
