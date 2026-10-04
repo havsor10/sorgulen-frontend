@@ -7,8 +7,9 @@ const html = fs.readFileSync("admin/innboks.html", "utf8");
 const js = fs.readFileSync("admin/innboks.js", "utf8");
 const push = fs.readFileSync("admin/varslinger.html", "utf8");
 
-test("firm mailbox is a first-class complete-admin destination", () => {
-  assert.match(shell, /key: "mailbox", href: "innboks\.html", label: "Innboks"/);
+test("firm mailbox is grouped under Innkommende in complete admin", () => {
+  assert.match(shell, /admin-more-group-title">Innkommende/);
+  assert.match(shell, /href="innboks\.html"><span>Innboks<\/span>/);
   assert.match(shell, /admin\/mailbox\/summary/);
   assert.match(shell, /showBadge\("mailbox", mailboxCount\)/);
   assert.match(html, /data-page="mailbox"/);
