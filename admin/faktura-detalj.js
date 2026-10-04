@@ -529,7 +529,12 @@
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || "E-postsending feilet. Fakturaen er fortsatt utstedt og kan prøves sendt igjen.");
-        setMessage("Dokumentet er sendt. ✓", "success");
+        setMessage(
+          data.fikenDeferred
+            ? "Dokumentet er sendt. Fiken var midlertidig utilgjengelig og synkroniseres automatisk senere. ✓"
+            : "Dokumentet er sendt. ✓",
+          "success"
+        );
         return load();
       }
 
