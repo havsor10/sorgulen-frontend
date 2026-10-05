@@ -265,11 +265,31 @@
       </div>`;
   }
 
+  function compactLifecycle(events) {
+    const compacted = [];
+    for (const event of events || []) {
+      const isFikenError = event?.type === "fiken_sync_error";
+      const previous = compacted[compacted.length - 1];
+      if (
+        isFikenError
+        && previous?.event?.type === "fiken_sync_error"
+        && String(previous.event.description || "") === String(event.description || "")
+      ) {
+        previous.event = event;
+        previous.count += 1;
+        continue;
+      }
+      compacted.push({ event, count: 1 });
+    }
+    return compacted;
+  }
+
   function lifecycle(inv) {
     if (!Array.isArray(inv.lifecycleLog) || !inv.lifecycleLog.length) return "";
-    const rows = inv.lifecycleLog.slice().reverse().slice(0, 12).map((event) =>
-      `<div style="padding:7px 0;border-bottom:1px solid #26303b"><strong>${escapeHtml(event.description || event.type)}</strong><br><small>${fmtDate(event.at)}</small></div>`
-    ).join("");
+    const rows = compactLifecycle(inv.lifecycleLog).reverse().slice(0, 12).map(({ event, count }) => {
+      const attempts = event.type === "fiken_sync_error" && count > 1 ? ` <small>(${count} like forsøk)</small>` : "";
+      return `<div style="padding:7px 0;border-bottom:1px solid #26303b"><strong>${escapeHtml(event.description || event.type)}</strong>${attempts}<br><small>${fmtDate(event.at)}</small></div>`;
+    }).join("");
     return `<div class="fd-section"><div class="fd-label">Historikk</div><div class="fd-value">${rows}</div></div>`;
   }
 
