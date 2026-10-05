@@ -65,12 +65,15 @@ test('AI-søk kan lese offentlig innhold og private flater er blokkert', () => {
   assert.match(robots, /Sitemap: https:\/\/sorgulen\.no\/sitemap\.xml/);
 });
 
-test('offentlig bedriftsinfo bruker offisiell identitet og gjeldende priser', () => {
+test('offentlig bedriftsinfo bruker serviceområdeprofil, offisiell identitet og gjeldende priser', () => {
   const index = read('index.html');
 
   assert.match(index, /935179580/);
-  assert.match(index, /Kleiva 91B/);
-  assert.match(index, /6906/);
+  assert.match(index, /"addressLocality": "Florø"/);
+  assert.match(index, /"addressRegion": "Vestland"/);
+  assert.match(index, /"areaServed":/);
+  assert.doesNotMatch(index, /Kleiva 91B/);
+  assert.doesNotMatch(index, /"postalCode": "6906"/);
   assert.match(index, /\+4740730187/);
   assert.match(index, /Brøyting fra 1 200 kr/);
   assert.doesNotMatch(index, /Brøyting fra 350 kr/);
