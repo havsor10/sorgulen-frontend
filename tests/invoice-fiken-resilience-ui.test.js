@@ -21,3 +21,11 @@ test("fakturasiden viser mengde med to desimaler i stedet for rå flyttall", () 
   assert.match(code, /minimumFractionDigits: 2, maximumFractionDigits: 2/);
 });
 
+
+
+test("gjentatte identiske Fiken-feil komprimeres i historikken", () => {
+  assert.match(code, /function compactLifecycle/);
+  assert.match(code, /event\?\.type === "fiken_sync_error"/);
+  assert.match(code, /previous\.count \+= 1/);
+  assert.match(code, /like forsøk/);
+});
