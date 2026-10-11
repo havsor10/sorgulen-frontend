@@ -13,6 +13,9 @@
   const questionFields = document.getElementById("peQuestionFields");
   const categoryEl = document.getElementById("peCategory");
   const summaryEl = document.getElementById("peSummary");
+  const pathChoice = document.getElementById("pePathChoice");
+  const pathButtons = Array.from(document.querySelectorAll("[data-followup]"));
+  const successText = document.getElementById("peSuccessText");
 
   let imageData = [];
   let uploadedImageUrls = [];
@@ -21,6 +24,8 @@
   let categoryLabel = "Annet oppdrag";
   let intakeSummary = "";
   let intakeComplete = false;
+  let followUpMode = "";
+  let pathStepShown = false;
   const questions = [];
   const answers = new Map();
 
@@ -86,6 +91,37 @@
       el.classList.toggle("done", index + 1 < step);
     });
   }
+
+  function showPathChoice() {
+    pathStepShown = true;
+    pathChoice.classList.remove("pe-hidden");
+    updateProgress(2);
+    submitBtn.disabled = !followUpMode;
+    submitBtn.classList.remove("pe-loading");
+    submitBtn.textContent = followUpMode === "questions"
+      ? "Fortsett til spørsmål"
+      : followUpMode === "call_visit"
+        ? "Send forespørsel"
+        : "Velg hvordan du vil fortsette";
+    pathChoice.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  function selectFollowUpMode(mode) {
+    followUpMode = mode;
+    pathButtons.forEach((button) => {
+      const selected = button.dataset.followup === mode;
+      button.classList.toggle("selected", selected);
+      button.setAttribute("aria-pressed", String(selected));
+    });
+    submitBtn.disabled = false;
+    submitBtn.textContent = mode === "questions" ? "Fortsett til spørsmål" : "Send forespørsel";
+    clearError();
+  }
+
+  pathButtons.forEach((button) => {
+    button.setAttribute("aria-pressed", "false");
+    button.addEventListener("click", () => selectFollowUpMode(button.dataset.followup));
+  });
 
   function validateBasics() {
     const required = [
@@ -272,8 +308,9 @@
       serviceCategory: category,
       serviceCategoryLabel: categoryLabel,
       intakeSummary,
-      intakeRounds: round,
-      intakeComplete: intakeComplete || round >= MAX_ROUNDS
+      intakeMethod: followUpMode || "questions",
+      intakeRounds: followUpMode === "questions" ? round : 0,
+      intakeComplete: followUpMode === "questions" ? (intakeComplete || round >= MAX_ROUNDS) : false
     };
     if (uploadedImageUrls.length) body.uploadedImageUrls = uploadedImageUrls;
     else body.images = imageData;
@@ -286,6 +323,11 @@
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || "Noe gikk galt. Prøv igjen.");
 
+    if (successText) {
+      successText.textContent = followUpMode === "call_visit"
+        ? "Vi kontakter deg på telefon for å avklare jobben, og avtaler befaring dersom det er den beste måten å vurdere oppdraget på."
+        : "Vi har fått både beskrivelsen og avklaringene dine. Det gir oss et bedre grunnlag for å vurdere jobben og prisen.";
+    }
     document.getElementById("peFormWrap").classList.add("pe-hidden");
     document.getElementById("peSuccess").classList.remove("pe-hidden");
     document.getElementById("peSuccess").scrollIntoView({ behavior: "smooth", block: "center" });
@@ -294,11 +336,37 @@
   submitBtn.addEventListener("click", async () => {
     clearError();
     if (!validateBasics()) return;
+
+    if (!pathStepShown) {
+      showPathChoice();
+      return;
+    }
+    if (!followUpMode) {
+      showError("Velg om du vil svare på noen spørsmål eller bli kontaktet for oppringing/befaring.");
+      pathChoice.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
+    if (followUpMode === "call_visit") {
+      submitBtn.disabled = true;
+      submitBtn.classList.add("pe-loading");
+      submitBtn.textContent = "Sender forespørsel";
+      try {
+        await sendRequest();
+      } catch (err) {
+        showError(err.message || "Noe gikk galt. Prøv igjen.");
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("pe-loading");
+        submitBtn.textContent = "Send forespørsel";
+      }
+      return;
+    }
+
     if (questions.length && !validateQuestions()) return;
 
     submitBtn.disabled = true;
     submitBtn.classList.add("pe-loading");
-    submitBtn.textContent = round === 0 ? "Analyserer jobben" : "Kontrollerer svar";
+    submitBtn.textContent = round === 0 ? "Finner riktige spørsmål" : "Kontrollerer svar";
 
     try {
       if (round < MAX_ROUNDS) {
@@ -323,7 +391,7 @@
       showError(err.message || "Noe gikk galt. Prøv igjen.");
       submitBtn.disabled = false;
       submitBtn.classList.remove("pe-loading");
-      submitBtn.textContent = round > 0 ? (round < MAX_ROUNDS ? "Kontroller svar" : "Send forespørsel") : "Fortsett";
+      submitBtn.textContent = round > 0 ? (round < MAX_ROUNDS ? "Kontroller svar" : "Send forespørsel") : "Fortsett til spørsmål";
     }
   });
 })();

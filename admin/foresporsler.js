@@ -83,7 +83,7 @@
       </div>`).join("");
 
     const category = r.serviceCategoryLabel || r.serviceCategory || "";
-    const status = r.intakeComplete ? '<span class="req-brief-complete">Komplett jobbbrief</span>' : "";
+    const status = r.intakeMethod === "call_visit" ? '<span class="req-brief-complete" style="background:#4a3820;color:#ffd88a;">Oppringing / befaring</span>' : (r.intakeComplete ? '<span class="req-brief-complete">Komplett jobbbrief</span>' : "");
     if (!r.customerAddress && !category && !rows) return "";
 
     return `<div class="req-brief">
@@ -97,6 +97,16 @@
   }
 
   function aiBlock(r) {
+    if (r.intakeMethod === "call_visit") {
+      const tel = String(r.customerPhone || "").replace(/[^0-9+]/g, "");
+      return `<div class="req-ai" style="border-left-color:#d6a95f;background:#241d12;">
+        <h4 style="color:#ffd88a;">Kunden ønsker kontakt</h4>
+        <div class="req-ai-row"><strong>Ikke AI-priset.</strong> Kunden har valgt oppringing / eventuell befaring i stedet for avklaringsspørsmål.</div>
+        <div class="req-ai-row" style="margin-top:10px;">
+          <a href="tel:${escapeHtml(tel)}" style="display:inline-flex;padding:10px 14px;border-radius:8px;background:#12c285;color:#06231a;text-decoration:none;font-weight:800;">Ring kunden</a>
+        </div>
+      </div>`;
+    }
     if (r.aiError) {
       return `<div class="req-ai req-ai-error">
         <h4>AI-analyse feilet</h4>
