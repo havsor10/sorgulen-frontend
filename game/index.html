@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#09131d">
+  <title>Sørgulen Industriservice | Brøytepatruljen</title>
+  <style>
+    :root {color-scheme:dark;--bg:#09131d;--panel:#101e2c;--edge:#273f50;--muted:#92aab9;--white:#f5fafc;--ice:#6bd5ed;--mint:#8bebba;--gold:#ffc778}
+    * {box-sizing:border-box}
+    html,body{margin:0;min-height:100%;background:var(--bg);color:var(--white);font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif}
+    body{background:radial-gradient(ellipse at 20% -10%,#1d4253 0,transparent 50%),radial-gradient(ellipse at 100% 80%,#183147 0,transparent 50%),#09131d}
+    button{font:inherit;touch-action:manipulation;cursor:pointer}
+    .shell{max-width:1170px;margin:auto;padding:22px 18px 35px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:19px}
+    .logo{display:flex;align-items:center;gap:13px}
+    .logo-mark{background:#ecfbff;color:#071722;border-radius:15px;width:52px;height:52px;display:grid;place-items:center;font-size:28px;box-shadow:0 9px 24px #030c15a0}
+    .brand{font-size:11px;letter-spacing:2.8px;font-weight:950;color:#a8dbeb}
+    h1{font-size:clamp(23px,3.5vw,34px);letter-spacing:-1.2px;line-height:1.1;margin:3px 0 0}
+    .tag{font-size:11px;letter-spacing:1px;color:#bfd0d8;border:1px solid #3a5663;border-radius:50px;padding:8px 12px;white-space:nowrap}
+    .sub{display:flex;align-items:center;justify-content:space-between;gap:9px;margin-bottom:15px;color:#b5c8d3;font-size:13px;flex-wrap:wrap}
+    .sub strong{color:#d7f9ff}
+    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px}
+    .stat{background:linear-gradient(135deg,#172c3b,#101f2c);border:1px solid #294354;border-radius:14px;padding:12px 16px;box-shadow:0 6px 24px #0002}
+    .stat-label{font-size:11px;font-weight:800;letter-spacing:1.4px;color:var(--muted);text-transform:uppercase;margin-bottom:3px}
+    .stat-num{font-size:clamp(18px,3vw,29px);font-weight:850;font-variant-numeric:tabular-nums;letter-spacing:-.8px}
+    .stat-num small{font-size:13px;color:var(--mint)}
+    .game-border{border-radius:18px;border:1px solid #3b5d6c;overflow:hidden;background:#1e384b;position:relative;box-shadow:0 22px 55px #0008}
+    .game-container{position:relative;height:min(55vw,520px);min-height:370px;overflow:hidden;isolation:isolate;touch-action:none}
+    canvas{display:block;width:100%;height:100%;touch-action:none}
+    .vignette{pointer-events:none;position:absolute;inset:0;box-shadow:inset 0 0 70px #0715217a;z-index:1}
+    .overlay{z-index:5;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:18px;background:linear-gradient(#06152287,#061422d6);backdrop-filter:blur(4px)}
+    .overlay[hidden]{display:none}
+    .menu{background:linear-gradient(150deg,#193144f8,#0c1a28fa);border:1px solid #567c8b;box-shadow:0 16px 55px #001019bb;border-radius:21px;max-width:480px;width:100%;padding:28px 27px 25px;text-align:center}
+    .eyebrow{color:#9fe6ed;font-size:11px;font-weight:900;letter-spacing:2px}
+    .menu h2{font-size:clamp(23px,5vw,34px);line-height:1.05;letter-spacing:-1.1px;margin:11px 0 13px}
+    .menu p{font-size:14px;color:#cadbe3;line-height:1.55;margin:0 0 19px}
+    .primary{background:#dcf9ff;border:1px solid #f2ffff;color:#08202b;font-weight:900;box-shadow:0 5px 22px #55cce955;border-radius:12px;padding:15px 24px;width:100%;transition:transform .15s}
+    .primary:active{transform:scale(.97)}
+    .secondary{background:#284656;color:#e3f9ff;border:1px solid #517487;border-radius:12px;padding:11px 14px;font-weight:750}
+    .hint{font-size:12px;color:#9cb8c6;margin-top:15px}
+    .toast{pointer-events:none;position:absolute;top:17px;left:50%;z-index:4;transform:translate(-50%,-15px);transition:opacity .2s,transform .2s;opacity:0;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid #8de2bb;background:#103b37f0;color:#c6ffdb;border-radius:50px;padding:10px 16px;font-weight:850;font-size:13px;white-space:nowrap}
+    .toast.show{opacity:1;transform:translate(-50%,0)}
+    .progress-wrap{display:flex;align-items:center;gap:12px;background:#142635;padding:12px 16px;border-top:1px solid #375769;font-size:11px;font-weight:850;letter-spacing:1px;color:#aec0ca}
+    .progress{flex:1;min-width:100px;height:9px;background:#07141f;border:1px solid #385464;border-radius:99px;overflow:hidden}
+    .fill{width:0%;height:100%;background:linear-gradient(90deg,#5db9dd,#a8ffe2);border-radius:99px;transition:width .2s}
+    .control-bar{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-top:15px}
+    .note{font-size:12px;line-height:1.65;color:#adc5cf;max-width:665px}
+    .note strong{color:#e1f7fb}
+    .sound{background:#122b39;border:1px solid #35596b;border-radius:10px;color:#d3eef5;padding:10px 13px;white-space:nowrap;font-size:12px}
+    #touchControls{position:absolute;z-index:3;bottom:16px;left:16px;right:16px;display:none;justify-content:space-between;align-items:end;pointer-events:none}
+    .pad{position:relative;width:138px;height:138px;border-radius:50%;background:#0b2334a8;border:1px solid #a7d8ed88;backdrop-filter:blur(3px);pointer-events:auto;touch-action:none;box-shadow:inset 0 0 22px #0004}
+    .pad:before,.pad:after{content:'';position:absolute;background:#8ab8c860;left:50%;top:50%;transform:translate(-50%,-50%)}
+    .pad:before{height:1px;width:90%}.pad:after{height:90%;width:1px}
+    .knob{position:absolute;top:50%;left:50%;height:62px;width:62px;border:2px solid #cefaff;background:radial-gradient(circle at 30% 25%,#a6e7f1,#3b849c);border-radius:50%;box-shadow:0 2px 12px #061524a6;transform:translate(-50%,-50%);pointer-events:none}
+    #boost{pointer-events:auto;background:linear-gradient(#f9ce88,#db9e4e);border:3px solid #ffe0a8;color:#2b1a02;box-shadow:0 3px 16px #0007;border-radius:50%;height:98px;width:98px;font-weight:1000;letter-spacing:.3px;font-size:13px;touch-action:none}
+    #boost:active,#boost.pressed{filter:brightness(1.17);transform:scale(.96)}
+    .shop{display:flex;gap:10px;text-align:left;margin:17px 0}
+    .upgrade{flex:1;padding:12px 10px;background:#142f3f;border:1px solid #456a78;border-radius:12px;color:#effcff;font-size:12px;line-height:1.45}
+    .upgrade b{display:block;font-size:13px;color:#d3faff;margin-bottom:4px}
+    .upgrade em{display:block;font-style:normal;color:var(--gold);font-weight:850;margin-top:7px}
+    .upgrade:disabled{opacity:.5;cursor:not-allowed}
+    .hide{display:none!important}
+    @media (max-width:680px){
+      .shell{padding:15px 10px 30px}header{margin-bottom:14px}.logo-mark{width:43px;height:43px;border-radius:12px;font-size:23px}.brand{font-size:9px;letter-spacing:1.7px}h1{font-size:25px}.tag{font-size:9px;padding:6px 8px}
+      .stats{gap:6px;margin-bottom:8px}.stat{padding:9px 7px;border-radius:10px}.stat-label{font-size:9px;letter-spacing:.55px}.stat-num{font-size:19px}.stat-num small{display:block;font-size:10px}.sub{font-size:11px;margin-bottom:10px}
+      .game-border{border-radius:12px}.game-container{height:min(114vw,560px);min-height:390px}.menu{padding:23px 18px}.menu p{font-size:13px}.progress-wrap{padding:12px 10px}.control-bar{margin-top:12px}.note{font-size:11px}
+      #touchControls{display:flex}.shop{flex-direction:column;max-height:160px;overflow:auto}.upgrade{padding:10px}
+    }
+  </style>
+</head>
+<body>
+<main class="shell">
+  <header><div class="logo"><div class="logo-mark">❄</div><div><div class="brand">SØRGULEN INDUSTRISERVICE</div><h1>Brøytepatruljen</h1></div></div><div class="tag">SPILLBAR PROTOTYPE · v0.1</div></header>
+  <div class="sub"><span id="missionName"><strong>FLORØ</strong> · Klar for vinteroppdrag?</span><span>ATV 4×4 <span aria-hidden="true">✦</span> Vinterdrift</span></div>
+  <section class="stats" aria-label="Spillstatus">
+    <div class="stat"><div class="stat-label">Tid igjen</div><div class="stat-num" id="timeLabel">01:30</div></div>
+    <div class="stat"><div class="stat-label">Brøytet</div><div class="stat-num" id="snowLabel">0 <small>/ 0</small></div></div>
+    <div class="stat"><div class="stat-label">Penger</div><div class="stat-num" id="moneyLabel">0 <small>kr</small></div></div>
+    <div class="stat"><div class="stat-label">Oppdrag</div><div class="stat-num" id="levelLabel">01 <small>/ 03</small></div></div>
+  </section>
+  <section class="game-border"><div class="game-container" id="gameArea">
+    <canvas id="world" aria-label="Spillkart med en ATV som du styrer for å fjerne snø"></canvas>
+    <div class="vignette"></div><div class="toast" id="toast"></div>
+    <div id="touchControls"><div class="pad" id="pad"><div class="knob" id="knob"></div></div><button id="boost" type="button">TURBO</button></div>
+    <div class="overlay" id="overlay"><div class="menu">
+      <div class="eyebrow" id="overlayKicker">ET SPILL FRA SØRGULEN INDUSTRISERVICE</div>
+      <h2 id="overlayTitle">Vinteren har kome til Florø.</h2>
+      <p id="overlayDesc">Start ATV-en, brøyt snøen før tida går ut, unngå parkerte bilar og tjen pengar. Bruk pengane på å oppgradere utstyret mellom oppdraga.</p>
+      <div id="shop" class="shop hide"></div>
+      <button class="primary" type="button" id="mainBtn">START BRØYTING</button>
+      <div class="hint" id="overlayHint">PC: piltastar/WASD + mellomrom for turbo. Mobil: styrespak + turbo.</div>
+    </div></div>
+  </div><div class="progress-wrap"><span>BRØYTEFRAMDRIFT</span><div class="progress"><div class="fill" id="progressFill"></div></div><span id="progressLabel">0 %</span></div></section>
+  <div class="control-bar"><div class="note"><strong>Mål:</strong> Fjern alle snøhaugane med plogskjæret framfor ATV-en. Unngå hindringar – kollisjonar kostar verdifull tid. Turbo gir ekstra fart, men har avgrensa kapasitet.</div><button class="sound" id="restart" type="button">↻ Start på nytt</button></div>
+</main>
+<script>
+'use strict';
+(() => {
+  const W=900,H=620,canvas=document.querySelector('#world'),ctx=canvas.getContext('2d');
+  const $=id=>document.getElementById(id);
+  const el={overlay:$('overlay'),kicker:$('overlayKicker'),title:$('overlayTitle'),desc:$('overlayDesc'),hint:$('overlayHint'),button:$('mainBtn'),shop:$('shop'),time:$('timeLabel'),snow:$('snowLabel'),money:$('moneyLabel'),level:$('levelLabel'),mission:$('missionName'),prog:$('progressFill'),pct:$('progressLabel'),toast:$('toast'),knob:$('knob'),pad:$('pad')};
+  const levels=[{name:'SENTRUM FLORØ',subtitle:'Rydd gatene før morgontrafikken',target:35,time:90,bonus:380,seed:11},{name:'INDUSTRIOMRÅDET',subtitle:'Brøyt framkomst for næringstransporten',target:45,time:100,bonus:610,seed:44},{name:'BUSTADFELTET',subtitle:'Nabolaget treng ein god vinterhelt',target:55,time:115,bonus:850,seed:95}];
+  let state='intro',level=0,money=0,plow=1,engine=1,boostPower=100,remaining=90,cleared=0,damaged=0,bumperCool=0,shake=0,flash=0,snows=[],particles=[],staticDust=[],homes=[],obstacles=[],total=0,clock=0,lastTime=0,toastTime=0,uiTick=0;
+  let atv={x:445,y:540,angle:-Math.PI/2,vx:0,vy:0};
+  let inputs={up:false,down:false,left:false,right:false,boost:false},joy={x:0,y:0},padPointer=null;
+  let rng=()=>Math.random();
+  function seeded(seed){let a=seed>>>0;return ()=>{a=(a*1664525+1013904223)>>>0;return a/4294967296;};}
+  function resetGame(){level=0;money=0;plow=1;engine=1;boostPower=100;startLevel();showIntro();}
+  function drawRoads(){
+    ctx.fillStyle='#c0dde7';ctx.fillRect(0,0,W,H);
+    const grass=ctx.createLinearGradient(0,0,W,H);grass.addColorStop(0,'#d2e6e7');grass.addColorStop(1,'#9fc7cf');ctx.fillStyle=grass;ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#627b8d';roundRect(80,192,740,185,35,true);roundRect(367,23,165,575,30,true);
+    ctx.fillStyle='#526e7e';roundRect(89,203,722,163,29,true);roundRect(377,32,145,556,23,true);
+    ctx.strokeStyle='#c2d7d8aa';ctx.lineWidth=3;ctx.setLineDash([31,26]);ctx.beginPath();ctx.moveTo(82,284);ctx.lineTo(820,284);ctx.moveTo(449,19);ctx.lineTo(449,599);ctx.stroke();ctx.setLineDash([]);
+    ctx.strokeStyle='#e6f6f8';ctx.lineWidth=3;ctx.strokeRect(79,192,741,185);
+    ctx.strokeStyle='#8bb5c27a';ctx.lineWidth=9;ctx.strokeRect(85,199,729,170);
+  }
+  function roundRect(x,y,w,h,r,fill){ctx.beginPath();ctx.roundRect(x,y,w,h,r);if(fill)ctx.fill();}
+  function drawHouse(h){
+    ctx.save();ctx.translate(h.x,h.y);ctx.rotate(h.angle||0);
+    ctx.fillStyle='#4b798393';roundRect(-h.w/2+6,-h.h/2+10,h.w,h.h,9,true);
+    ctx.fillStyle='#eefafa';roundRect(-h.w/2,-h.h/2,h.w,h.h,6,true);
+    ctx.fillStyle=h.color;roundRect(-h.w/2+7,-h.h/2+5,h.w-14,h.h-12,4,true);
+    ctx.fillStyle='#ffffff55';ctx.fillRect(-h.w/2+17,-h.h/2+17,16,10);ctx.fillRect(h.w/2-33,-h.h/2+17,16,10);
+    ctx.fillStyle='#f0f5ff';ctx.fillRect(-10,h.h/2-16,20,17);
+    ctx.restore();
+  }
+  function drawTree(t){ctx.fillStyle='#8aaebd';ctx.beginPath();ctx.ellipse(t.x+4,t.y+8,t.r+4,t.r+7,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#3c7780';ctx.beginPath();ctx.arc(t.x,t.y,t.r,0,7);ctx.fill();ctx.fillStyle='#ecf8f7';ctx.beginPath();ctx.arc(t.x-4,t.y-4,t.r*.75,Math.PI*1.12,Math.PI*1.97);ctx.strokeStyle='#f0ffff';ctx.lineWidth=5;ctx.stroke();}
+  function drawObstacle(o){ctx.save();ctx.translate(o.x,o.y);ctx.rotate(o.angle||0);if(o.type==='car'){ctx.fillStyle='#21394ba8';roundRect(-17,-30,39,64,9,true);ctx.fillStyle=o.color;roundRect(-18,-32,36,64,9,true);ctx.fillStyle='#94bdc9';roundRect(-15,-15,30,28,7,true);ctx.fillStyle='#d7eceb';ctx.fillRect(-17,-26,6,9);ctx.fillRect(11,-26,6,9);ctx.fillStyle='#d24f52';ctx.fillRect(-13,29,8,4);ctx.fillRect(5,29,8,4);}else{ctx.fillStyle='#a24b21';ctx.beginPath();ctx.moveTo(0,-16);ctx.lineTo(-13,14);ctx.lineTo(13,14);ctx.closePath();ctx.fill();ctx.strokeStyle='#f5e5ad';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-6,2);ctx.lineTo(6,2);ctx.stroke()}ctx.restore()}
+  function makeMap(seed){rng=seeded(seed);homes=[];obstacles=[];staticDust=[];
+    [[140,92,110,100,'#cb7470'],[270,99,90,110,'#5f9a9c'],[624,101,99,118,'#a9765d'],[770,91,92,104,'#7180aa'],[145,490,115,105,'#8d99b2'],[286,494,100,98,'#c08e60'],[622,501,105,97,'#8b9688'],[763,485,112,100,'#bd6e6a']].forEach(a=>homes.push({x:a[0],y:a[1],w:a[2],h:a[3],color:a[4],angle:0}));
+    let cars=[[166,247,-Math.PI/2,'#b86254'],[714,325,Math.PI/2,'#5d8f9a'],[408,100,0,'#8996af'],[495,462,Math.PI,'#aa8b5b']];if(level>0)cars.push([277,324,Math.PI/2,'#597893']);if(level>1)cars.push([615,237,-Math.PI/2,'#af717e']);
+    obstacles=cars.map(a=>({type:'car',x:a[0],y:a[1],angle:a[2],color:a[3],radius:27}));
+    obstacles.push({type:'cone',x:576,y:329,radius:15},{type:'cone',x:587,y:329,radius:15});
+    for(let i=0;i<95;i++){let x=rng()*W,y=rng()*H;let road=(y>190&&y<380&&x>78&&x<823)||(x>360&&x<538&&y>15&&y<600);if(!road)staticDust.push({x,y,r:1+rng()*3});}
+  }
+  function onRoad(x,y){return ((y>213&&y<354&&x>112&&x<792)||(x>393&&x<508&&y>54&&y<566));}
+  function startLevel(){const l=levels[level];atv={x:445,y:545,angle:-Math.PI/2,vx:0,vy:0};remaining=l.time;cleared=0;damaged=0;bumperCool=0;boostPower=100;flash=0;shake=0;snows=[];particles=[];makeMap(l.seed);rng=seeded(l.seed+37);
+    let tries=0;while(snows.length<l.target&&tries++<2500){const x=112+rng()*677,y=60+rng()*501;if(!onRoad(x,y))continue;if(Math.hypot(x-atv.x,y-atv.y)<87)continue;if(obstacles.some(o=>Math.hypot(x-o.x,y-o.y)<50))continue;if(snows.some(o=>Math.hypot(x-o.x,y-o.y)<25))continue;snows.push({x,y,r:12+rng()*8,pr:rng()*6,seed:rng()*10});}
+    total=snows.length;el.mission.innerHTML='<strong>'+l.name+'</strong> · '+l.subtitle;updateUI();
+  }
+  function showIntro(){state='intro';el.kicker.textContent='SØRGULEN INDUSTRISERVICE · ARCADE';el.title.textContent='Vinteren har kome til Florø.';el.desc.textContent='Køyr din eigen brøyte-ATV, rydd vegane, unngå hindringar og tjen pengar til betre utstyr. Klarer du alle tre oppdraga?';el.shop.classList.add('hide');el.button.textContent='START BRØYTING';el.hint.textContent='PC: WASD / piltastar + mellomrom. Mobil: styrespak + TURBO.';el.overlay.hidden=false;}
+  function startPlaying(){state='playing';el.overlay.hidden=true;inputs.boost=false;lastTime=performance.now();}
+  function result(success){state=success?'completed':'failed';inputs.boost=false;const l=levels[level];let prize=success?l.bonus+Math.max(0,Math.floor(remaining)*3):0;money+=prize;
+    if(success){el.kicker.textContent='OPPDRAG FULLFØRT';el.title.textContent=level===2?'Florø er brøyta!':'Sterkt køyrt!';el.desc.textContent='Du rydda '+cleared+' snøhaugar og fekk '+prize+' kr i oppdragsbonus. '+(level===2?'Alle oppdraga er fullført. Du kan starte heilt på nytt.':'Kjøp oppgraderingar til neste oppdrag.');}
+    else{el.kicker.textContent='TIDA GJEKK UT';el.title.textContent='Snøen vann denne runden.';el.desc.textContent='Du fekk rydda '+cleared+' av '+total+' snøhaugar. Pengane du tente så langt er dine. Prøv oppdraget igjen – gjerne med betre brøyterutstyr.';}
+    el.button.textContent=success?(level===2?'SPEL FRÅ START':'NESTE OPPDRAG'):'PRØV IGJEN';el.hint.textContent='Bruk tastatur eller mobilkontrollane når spelet startar.';
+    updateShop();el.overlay.hidden=false;updateUI();
+  }
+  function updateShop(){el.shop.innerHTML='';el.shop.classList.remove('hide');if(level===2&&state==='completed'){el.shop.classList.add('hide');return;}
+    let upgrades=[{name:'BREIARE PLOG',sub:'Brøyt meir snø samtidig',cost:plow*180,max:4,enabled:plow<4,buy:()=>plow++},{name:'STERKARE MOTOR',sub:'Høgare toppfart',cost:engine*190,max:4,enabled:engine<4,buy:()=>engine++}];
+    for(const u of upgrades){let b=document.createElement('button');b.type='button';b.className='upgrade';b.disabled=!u.enabled||money<u.cost;b.innerHTML='<b>'+u.name+'</b>'+u.sub+'<em>'+(u.enabled?u.cost+' kr':'MAKS NIVÅ')+'</em>';b.onclick=()=>{money-=u.cost;u.buy();updateUI();updateShop();toast('UTSTYRET ER OPPGRADERT!');};el.shop.appendChild(b);}
+  }
+  function toast(s){el.toast.textContent=s;toastTime=2.1;el.toast.classList.add('show');}
+  function updateUI(){el.time.textContent=String(Math.floor(Math.max(0,remaining)/60)).padStart(2,'0')+':'+String(Math.floor(Math.max(0,remaining)%60)).padStart(2,'0');el.time.style.color=remaining<16?'#ffc778':'#f5fafc';el.snow.innerHTML=cleared+' <small>/ '+total+'</small>';el.money.innerHTML=money.toLocaleString('nb-NO')+' <small>kr</small>';el.level.innerHTML='0'+(level+1)+' <small>/ 03</small>';let pct=total?Math.round(100*cleared/total):0;el.prog.style.width=pct+'%';el.pct.textContent=pct+' %';}
+  function snowParticle(x,y,n=7){for(let i=0;i<n;i++){let a=rng()*Math.PI*2,s=35+rng()*160;particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-25,t:.4+rng()*.55,r:2+rng()*4});}}
+  function update(dt){clock+=dt;toastTime=Math.max(0,toastTime-dt);if(toastTime===0)el.toast.classList.remove('show');particles=particles.filter(p=>p.t>0);for(let p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=Math.pow(.08,dt);p.vy*=Math.pow(.08,dt);p.t-=dt;}
+    if(state!=='playing')return;
+    remaining-=dt;if(remaining<=0){remaining=0;result(false);return;}
+    bumperCool=Math.max(0,bumperCool-dt);flash=Math.max(0,flash-dt);shake=Math.max(0,shake-dt*10);
+    let ax=(inputs.right?1:0)-(inputs.left?1:0)+joy.x,ay=(inputs.down?1:0)-(inputs.up?1:0)+joy.y;
+    let dist=Math.hypot(ax,ay);if(dist>1){ax/=dist;ay/=dist;}
+    const turbo=inputs.boost&&boostPower>0&&dist>.1;boostPower=Math.max(0,Math.min(100,boostPower+(turbo?-34:16)*dt));
+    const speed=(178+engine*22)*(turbo?1.60:1);
+    const ease=Math.min(1,dt*7);atv.vx+=(ax*speed-atv.vx)*ease;atv.vy+=(ay*speed-atv.vy)*ease;
+    if(dist>.15){let target=Math.atan2(ay,ax);let delta=Math.atan2(Math.sin(target-atv.angle),Math.cos(target-atv.angle));atv.angle+=delta*Math.min(1,dt*11);}
+    let nx=atv.x+atv.vx*dt,ny=atv.y+atv.vy*dt;nx=Math.max(34,Math.min(W-34,nx));ny=Math.max(33,Math.min(H-34,ny));
+    for(let o of obstacles){let d=Math.hypot(nx-o.x,ny-o.y);if(d<o.radius+20){let a=Math.atan2(ny-o.y,nx-o.x);nx=o.x+Math.cos(a)*(o.radius+20);ny=o.y+Math.sin(a)*(o.radius+20);atv.vx*=.12;atv.vy*=.12;shake=4;if(bumperCool<=0){remaining=Math.max(0,remaining-2);bumperCool=1;flash=.25;toast('KOLLISJON! −2 SEKUND');}}}
+    atv.x=nx;atv.y=ny;
+    let frontDist=29,px=atv.x+Math.cos(atv.angle)*frontDist,py=atv.y+Math.sin(atv.angle)*frontDist;
+    if(dist>.11){const width=22+(plow-1)*12;for(let i=snows.length-1;i>=0;i--){let s=snows[i];let dx=s.x-px,dy=s.y-py;let forward=dx*Math.cos(atv.angle)+dy*Math.sin(atv.angle),side=Math.abs(-dx*Math.sin(atv.angle)+dy*Math.cos(atv.angle));if(forward>-s.r&&forward<21+s.r&&side<width+s.r*.35){snowParticle(s.x,s.y);snows.splice(i,1);cleared++;money+=16;if(cleared%10===0)toast('+'+160+' KR · GODT ARBEID!');if(!snows.length){result(true);return;}}}}
+    uiTick+=dt;if(uiTick>.12){uiTick=0;updateUI();}
+  }
+  let vw=900,vh=620,cameraX=0,cameraY=0,scale=1,displayW=900,displayH=600;
+  function resize(){const box=$('gameArea').getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2);displayW=Math.max(150,box.width);displayH=Math.max(150,box.height);canvas.width=Math.round(displayW*dpr);canvas.height=Math.round(displayH*dpr);const aspect=displayW/displayH;if(aspect<1.12){vh=600;vw=600*aspect;}else{vw=900;vh=900/aspect;}scale=displayW/vw;ctx.setTransform(dpr,0,0,dpr,0,0);}
+  function labelBox(x,y,text){ctx.font='800 11px ui-sans-serif, system-ui';let mw=ctx.measureText(text).width;ctx.fillStyle='#0a2133b9';roundRect(x-mw/2-12,y-16,mw+24,24,7,true);ctx.fillStyle='#effaff';ctx.textAlign='center';ctx.fillText(text,x,y);ctx.textAlign='left';}
+  function drawSnow(s){ctx.save();ctx.translate(s.x,s.y);ctx.fillStyle='#314f6080';ctx.beginPath();ctx.ellipse(3,5,s.r+3,s.r*.63,0,0,7);ctx.fill();ctx.fillStyle='#e8faff';ctx.beginPath();ctx.ellipse(0,0,s.r*1.05,s.r*.75,s.seed,0,7);ctx.fill();ctx.fillStyle='#c5e8f0';ctx.beginPath();ctx.ellipse(-s.r*.17,-s.r*.09,s.r*.56,s.r*.5,0,0,7);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(-s.r*.26,-s.r*.2,s.r*.30,0,7);ctx.fill();ctx.restore()}
+  function drawAtv(){ctx.save();ctx.translate(atv.x,atv.y);ctx.rotate(atv.angle+Math.PI/2);
+    ctx.fillStyle='#06142299';roundRect(-17,-23,36,55,10,true);
+    ctx.fillStyle='#0f161d';roundRect(-22,-21,10,19,3,true);roundRect(12,-21,10,19,3,true);roundRect(-22,8,10,20,3,true);roundRect(12,8,10,20,3,true);
+    ctx.fillStyle='#272f38';roundRect(-16,-27,32,52,9,true);
+    ctx.fillStyle='#c54630';roundRect(-14,-24,28,25,8,true);roundRect(-12,10,24,15,5,true);
+    ctx.fillStyle='#253442';roundRect(-12,-5,24,19,5,true);
+    ctx.fillStyle='#2c4757';roundRect(-17,-18,34,5,2,true);
+    ctx.fillStyle='#f5f4ce';ctx.fillRect(-12,-24,8,4);ctx.fillRect(4,-24,8,4);
+    ctx.fillStyle='#ddfaff';ctx.shadowColor='#b4f2ff';ctx.shadowBlur=8;
+    ctx.beginPath();ctx.moveTo(-22-(plow-1)*6,-35);ctx.lineTo(22+(plow-1)*6,-35);ctx.lineTo(16+(plow-1)*6,-23);ctx.lineTo(-16-(plow-1)*6,-23);ctx.closePath();ctx.fill();ctx.shadowBlur=0;
+    ctx.fillStyle='#426c81';ctx.fillRect(-20-(plow-1)*6,-34,40+(plow-1)*12,4);
+    ctx.restore();}
+  function draw(){let dpr=Math.min(window.devicePixelRatio||1,2);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,displayW,displayH);
+    cameraX=Math.max(0,Math.min(W-vw,atv.x-vw/2));cameraY=Math.max(0,Math.min(H-vh,atv.y-vh/2));if(vw>=W)cameraX=-(vw-W)/2;if(vh>=H)cameraY=-(vh-H)/2;
+    ctx.save();ctx.translate(displayW/2,displayH/2);ctx.scale(scale,scale);ctx.translate(-vw/2-cameraX,-vh/2-cameraY);
+    if(shake){ctx.translate((rng()-.5)*shake,(rng()-.5)*shake);}
+    ctx.fillStyle='#aecbd4';ctx.fillRect(-300,-300,W+600,H+600);
+    drawRoads();
+    // Road-edge piles and tiny drift marks make the street feel lived-in.
+    for(let x=84;x<815;x+=47){for(let y of [188,380]){ctx.fillStyle='#d6f0f3';ctx.beginPath();ctx.ellipse(x+8,y,20,7,0,0,7);ctx.fill();}}
+    for(let y=65;y<620;y+=43){for(let x of [364,535]){ctx.fillStyle='#d8f1f4';ctx.beginPath();ctx.ellipse(x,y,6,15,0,0,7);ctx.fill();}}
+    for(const d of staticDust){ctx.fillStyle='#f0fcfdb5';ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,7);ctx.fill();}
+    for(const h of homes)drawHouse(h);
+    for(let i=0;i<28;i++){let x=30+((i*129)%835),y=36+((i*157)%570);if(!onRoad(x,y)&&homes.every(h=>Math.hypot(x-h.x,y-h.y)>80))drawTree({x,y,r:10+i%5});}
+    for(const o of obstacles)drawObstacle(o);
+    for(const s of snows)drawSnow(s);
+    if(state==='playing'&&Math.hypot(atv.vx,atv.vy)>40&&Math.random()<.33){ctx.fillStyle='#e4f9ff66';ctx.beginPath();ctx.arc(atv.x-Math.cos(atv.angle)*34,atv.y-Math.sin(atv.angle)*34,4,0,7);ctx.fill();}
+    for(let p of particles){ctx.globalAlpha=Math.max(0,Math.min(1,p.t*2));ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill();ctx.globalAlpha=1;}
+    drawAtv();
+    labelBox(160,46,'FLORØ');
+    if(state==='playing'){ctx.fillStyle='#071c2fc9';roundRect(16,16,173,14,7,true);ctx.fillStyle='#7ee7bb';roundRect(16,16,173*boostPower/100,14,7,true);ctx.font='800 11px ui-sans-serif,system-ui';ctx.fillStyle='#ffffff';ctx.fillText('TURBO',18,44);}
+    if(flash){ctx.fillStyle='rgba(255,80,70,'+(flash*.27)+')';ctx.fillRect(cameraX,cameraY,vw,vh);}
+    ctx.restore();
+  }
+  function frame(t){let dt=Math.min(.04,(t-(lastTime||t))/1000);lastTime=t;update(dt);draw();requestAnimationFrame(frame)}
+  document.addEventListener('keydown',e=>{const key=e.key.toLowerCase();let map={'arrowup':'up','w':'up','arrowdown':'down','s':'down','arrowleft':'left','a':'left','arrowright':'right','d':'right',' ':'boost'};if(map[key]){inputs[map[key]]=true;e.preventDefault();}});
+  document.addEventListener('keyup',e=>{const key=e.key.toLowerCase();let map={'arrowup':'up','w':'up','arrowdown':'down','s':'down','arrowleft':'left','a':'left','arrowright':'right','d':'right',' ':'boost'};if(map[key]){inputs[map[key]]=false;e.preventDefault();}});
+  window.addEventListener('blur',()=>{Object.keys(inputs).forEach(k=>inputs[k]=false);joy.x=joy.y=0;});
+  el.pad.addEventListener('pointerdown',e=>{padPointer=e.pointerId;el.pad.setPointerCapture(e.pointerId);setJoy(e);e.preventDefault()});
+  el.pad.addEventListener('pointermove',e=>{if(e.pointerId===padPointer){setJoy(e);e.preventDefault();}});
+  for(let ev of ['pointerup','pointercancel','lostpointercapture'])el.pad.addEventListener(ev,e=>{if(e.pointerId===padPointer){padPointer=null;joy.x=joy.y=0;el.knob.style.transform='translate(-50%,-50%)';}});
+  function setJoy(e){const r=el.pad.getBoundingClientRect();let dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);let m=Math.hypot(dx,dy),range=48;if(m>range){dx*=range/m;dy*=range/m;}joy.x=dx/range;joy.y=dy/range;el.knob.style.transform='translate(calc(-50% + '+dx+'px),calc(-50% + '+dy+'px))';}
+  $('boost').addEventListener('pointerdown',e=>{inputs.boost=true;$('boost').classList.add('pressed');e.preventDefault()});
+  for(let ev of ['pointerup','pointercancel','pointerleave'])$('boost').addEventListener(ev,()=>{inputs.boost=false;$('boost').classList.remove('pressed')});
+  el.button.onclick=()=>{if(state==='intro'){startLevel();startPlaying();}else if(state==='failed'){startLevel();startPlaying();}else if(state==='completed'&&level<2){level++;startLevel();startPlaying();}else{resetGame();startPlaying();}};
+  $('restart').onclick=()=>{resetGame();};
+  window.addEventListener('resize',resize);
+  resize();resetGame();requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
