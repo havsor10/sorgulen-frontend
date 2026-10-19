@@ -4,226 +4,768 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
   <meta name="theme-color" content="#09131d">
-  <title>Sørgulen Industriservice | Brøytepatruljen</title>
+  <title>Sørgulen Industriservice | ATV Brøytesimulator</title>
   <style>
-    :root {color-scheme:dark;--bg:#09131d;--panel:#101e2c;--edge:#273f50;--muted:#92aab9;--white:#f5fafc;--ice:#6bd5ed;--mint:#8bebba;--gold:#ffc778}
-    * {box-sizing:border-box}
-    html,body{margin:0;min-height:100%;background:var(--bg);color:var(--white);font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif}
-    body{background:radial-gradient(ellipse at 20% -10%,#1d4253 0,transparent 50%),radial-gradient(ellipse at 100% 80%,#183147 0,transparent 50%),#09131d}
-    button{font:inherit;touch-action:manipulation;cursor:pointer}
-    .shell{max-width:1170px;margin:auto;padding:22px 18px 35px}
-    header{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:19px}
-    .logo{display:flex;align-items:center;gap:13px}
-    .logo-mark{background:#ecfbff;color:#071722;border-radius:15px;width:52px;height:52px;display:grid;place-items:center;font-size:28px;box-shadow:0 9px 24px #030c15a0}
-    .brand{font-size:11px;letter-spacing:2.8px;font-weight:950;color:#a8dbeb}
-    h1{font-size:clamp(23px,3.5vw,34px);letter-spacing:-1.2px;line-height:1.1;margin:3px 0 0}
-    .tag{font-size:11px;letter-spacing:1px;color:#bfd0d8;border:1px solid #3a5663;border-radius:50px;padding:8px 12px;white-space:nowrap}
-    .sub{display:flex;align-items:center;justify-content:space-between;gap:9px;margin-bottom:15px;color:#b5c8d3;font-size:13px;flex-wrap:wrap}
-    .sub strong{color:#d7f9ff}
-    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px}
-    .stat{background:linear-gradient(135deg,#172c3b,#101f2c);border:1px solid #294354;border-radius:14px;padding:12px 16px;box-shadow:0 6px 24px #0002}
-    .stat-label{font-size:11px;font-weight:800;letter-spacing:1.4px;color:var(--muted);text-transform:uppercase;margin-bottom:3px}
-    .stat-num{font-size:clamp(18px,3vw,29px);font-weight:850;font-variant-numeric:tabular-nums;letter-spacing:-.8px}
-    .stat-num small{font-size:13px;color:var(--mint)}
-    .game-border{border-radius:18px;border:1px solid #3b5d6c;overflow:hidden;background:#1e384b;position:relative;box-shadow:0 22px 55px #0008}
-    .game-container{position:relative;height:min(55vw,520px);min-height:370px;overflow:hidden;isolation:isolate;touch-action:none}
-    canvas{display:block;width:100%;height:100%;touch-action:none}
-    .vignette{pointer-events:none;position:absolute;inset:0;box-shadow:inset 0 0 70px #0715217a;z-index:1}
-    .overlay{z-index:5;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:18px;background:linear-gradient(#06152287,#061422d6);backdrop-filter:blur(4px)}
+    :root{color-scheme:dark;--bg:#09131d;--panel:#101e2c;--edge:#2a4657;--muted:#9fb5c3;--white:#f4fbff;--ice:#81d8f4;--mint:#9cf1c8;--gold:#ffd38d;--red:#ff8c7a}
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;background:radial-gradient(ellipse at top,#14324a 0,transparent 45%),radial-gradient(ellipse at bottom right,#10283a 0,transparent 40%),#09131d;color:var(--white);font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif}
+    body{padding:0}
+    button{font:inherit;cursor:pointer;touch-action:manipulation}
+    .shell{max-width:1220px;margin:auto;padding:18px 14px 30px}
+    header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:14px;flex-wrap:wrap}
+    .brand-wrap{display:flex;align-items:center;gap:12px}
+    .mark{width:52px;height:52px;border-radius:15px;display:grid;place-items:center;background:#eefbff;color:#10283a;font-size:28px;box-shadow:0 14px 40px #0007}
+    .eyebrow{font-size:11px;font-weight:900;letter-spacing:2.6px;color:#b3deef}
+    h1{font-size:clamp(25px,4vw,37px);letter-spacing:-1.4px;margin:2px 0 0;line-height:1.05}
+    .tag{border:1px solid #355567;border-radius:999px;padding:9px 13px;color:#cce4ee;font-size:11px;font-weight:800;letter-spacing:1.1px;white-space:nowrap}
+    .sub{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:#b9ced9;margin-bottom:12px}
+    .sub strong{color:#e7fbff}
+    .stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin-bottom:12px}
+    .stat{background:linear-gradient(180deg,#122535,#0f1d2b);border:1px solid #294454;border-radius:14px;padding:12px 14px;box-shadow:0 14px 30px #0004}
+    .stat-label{font-size:10px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+    .stat-value{font-size:clamp(18px,2.6vw,29px);font-weight:900;letter-spacing:-.8px;font-variant-numeric:tabular-nums}
+    .stat-value small{display:block;font-size:11px;color:#9ef0c4;letter-spacing:.2px;margin-top:2px}
+    .game-border{position:relative;border-radius:20px;overflow:hidden;border:1px solid #37586a;background:#0d1721;box-shadow:0 28px 70px #0008}
+    .game-wrap{position:relative;height:min(60vw,690px);min-height:430px;background:#0b1520;overflow:hidden;touch-action:none}
+    canvas{display:block;width:100%;height:100%}
+    .hud-top{position:absolute;inset:14px 14px auto 14px;display:flex;justify-content:space-between;gap:10px;z-index:3;pointer-events:none}
+    .chip-group{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{background:#082235d6;border:1px solid #3b6276;border-radius:999px;padding:8px 12px;font-size:11px;font-weight:900;letter-spacing:.8px;color:#e9faff;backdrop-filter:blur(6px)}
+    .chip strong{color:#98e0ff}
+    .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:linear-gradient(#05111d7a,#05111de8);backdrop-filter:blur(4px);z-index:5}
     .overlay[hidden]{display:none}
-    .menu{background:linear-gradient(150deg,#193144f8,#0c1a28fa);border:1px solid #567c8b;box-shadow:0 16px 55px #001019bb;border-radius:21px;max-width:480px;width:100%;padding:28px 27px 25px;text-align:center}
-    .eyebrow{color:#9fe6ed;font-size:11px;font-weight:900;letter-spacing:2px}
-    .menu h2{font-size:clamp(23px,5vw,34px);line-height:1.05;letter-spacing:-1.1px;margin:11px 0 13px}
-    .menu p{font-size:14px;color:#cadbe3;line-height:1.55;margin:0 0 19px}
-    .primary{background:#dcf9ff;border:1px solid #f2ffff;color:#08202b;font-weight:900;box-shadow:0 5px 22px #55cce955;border-radius:12px;padding:15px 24px;width:100%;transition:transform .15s}
-    .primary:active{transform:scale(.97)}
-    .secondary{background:#284656;color:#e3f9ff;border:1px solid #517487;border-radius:12px;padding:11px 14px;font-weight:750}
-    .hint{font-size:12px;color:#9cb8c6;margin-top:15px}
-    .toast{pointer-events:none;position:absolute;top:17px;left:50%;z-index:4;transform:translate(-50%,-15px);transition:opacity .2s,transform .2s;opacity:0;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid #8de2bb;background:#103b37f0;color:#c6ffdb;border-radius:50px;padding:10px 16px;font-weight:850;font-size:13px;white-space:nowrap}
-    .toast.show{opacity:1;transform:translate(-50%,0)}
-    .progress-wrap{display:flex;align-items:center;gap:12px;background:#142635;padding:12px 16px;border-top:1px solid #375769;font-size:11px;font-weight:850;letter-spacing:1px;color:#aec0ca}
-    .progress{flex:1;min-width:100px;height:9px;background:#07141f;border:1px solid #385464;border-radius:99px;overflow:hidden}
-    .fill{width:0%;height:100%;background:linear-gradient(90deg,#5db9dd,#a8ffe2);border-radius:99px;transition:width .2s}
-    .control-bar{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-top:15px}
-    .note{font-size:12px;line-height:1.65;color:#adc5cf;max-width:665px}
-    .note strong{color:#e1f7fb}
-    .sound{background:#122b39;border:1px solid #35596b;border-radius:10px;color:#d3eef5;padding:10px 13px;white-space:nowrap;font-size:12px}
-    #touchControls{position:absolute;z-index:3;bottom:16px;left:16px;right:16px;display:none;justify-content:space-between;align-items:end;pointer-events:none}
-    .pad{position:relative;width:138px;height:138px;border-radius:50%;background:#0b2334a8;border:1px solid #a7d8ed88;backdrop-filter:blur(3px);pointer-events:auto;touch-action:none;box-shadow:inset 0 0 22px #0004}
-    .pad:before,.pad:after{content:'';position:absolute;background:#8ab8c860;left:50%;top:50%;transform:translate(-50%,-50%)}
-    .pad:before{height:1px;width:90%}.pad:after{height:90%;width:1px}
-    .knob{position:absolute;top:50%;left:50%;height:62px;width:62px;border:2px solid #cefaff;background:radial-gradient(circle at 30% 25%,#a6e7f1,#3b849c);border-radius:50%;box-shadow:0 2px 12px #061524a6;transform:translate(-50%,-50%);pointer-events:none}
-    #boost{pointer-events:auto;background:linear-gradient(#f9ce88,#db9e4e);border:3px solid #ffe0a8;color:#2b1a02;box-shadow:0 3px 16px #0007;border-radius:50%;height:98px;width:98px;font-weight:1000;letter-spacing:.3px;font-size:13px;touch-action:none}
-    #boost:active,#boost.pressed{filter:brightness(1.17);transform:scale(.96)}
-    .shop{display:flex;gap:10px;text-align:left;margin:17px 0}
-    .upgrade{flex:1;padding:12px 10px;background:#142f3f;border:1px solid #456a78;border-radius:12px;color:#effcff;font-size:12px;line-height:1.45}
-    .upgrade b{display:block;font-size:13px;color:#d3faff;margin-bottom:4px}
-    .upgrade em{display:block;font-style:normal;color:var(--gold);font-weight:850;margin-top:7px}
-    .upgrade:disabled{opacity:.5;cursor:not-allowed}
-    .hide{display:none!important}
-    @media (max-width:680px){
-      .shell{padding:15px 10px 30px}header{margin-bottom:14px}.logo-mark{width:43px;height:43px;border-radius:12px;font-size:23px}.brand{font-size:9px;letter-spacing:1.7px}h1{font-size:25px}.tag{font-size:9px;padding:6px 8px}
-      .stats{gap:6px;margin-bottom:8px}.stat{padding:9px 7px;border-radius:10px}.stat-label{font-size:9px;letter-spacing:.55px}.stat-num{font-size:19px}.stat-num small{display:block;font-size:10px}.sub{font-size:11px;margin-bottom:10px}
-      .game-border{border-radius:12px}.game-container{height:min(114vw,560px);min-height:390px}.menu{padding:23px 18px}.menu p{font-size:13px}.progress-wrap{padding:12px 10px}.control-bar{margin-top:12px}.note{font-size:11px}
-      #touchControls{display:flex}.shop{flex-direction:column;max-height:160px;overflow:auto}.upgrade{padding:10px}
+    .panel{width:min(530px,100%);background:linear-gradient(180deg,#13283af2,#0c1825f2);border:1px solid #577a8b;border-radius:24px;padding:28px 24px 22px;box-shadow:0 18px 60px #000a;text-align:center}
+    .panel h2{font-size:clamp(26px,6vw,38px);margin:10px 0 13px;line-height:1.02;letter-spacing:-1.2px}
+    .panel p{font-size:14px;line-height:1.6;color:#d1e0e7;margin:0 0 18px}
+    .primary{width:100%;padding:16px 20px;border:1px solid #e8fdff;background:#dffaff;color:#071e29;border-radius:14px;font-weight:1000;font-size:15px;box-shadow:0 10px 26px #69d6f95b}
+    .hint{font-size:12px;color:#9ab8c7;margin-top:14px;line-height:1.5}
+    .controls{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:end;margin-top:14px}
+    .pad{display:grid;grid-template-columns:repeat(2,78px);gap:10px;pointer-events:auto}
+    .pad button,.center-col button{min-height:68px;border-radius:16px;border:1px solid #4d6f80;background:#102c40e0;color:#edfbff;font-weight:900;box-shadow:0 8px 24px #0005}
+    .center-col{display:grid;gap:10px}
+    .pad button:active,.center-col button:active{transform:scale(.97);filter:brightness(1.08)}
+    .throttle{background:linear-gradient(180deg,#ffe0a6,#e2aa4f)!important;color:#2c1a00!important;border-color:#ffd08a!important}
+    .camera-btn{background:#1c3343e0!important}
+    .footer{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:13px 14px;background:#10202e;border-top:1px solid #365467;font-size:12px;color:#acc2cf}
+    .progress{flex:1;min-width:160px;height:10px;background:#08151e;border:1px solid #365265;border-radius:999px;overflow:hidden}
+    .fill{height:100%;width:0;background:linear-gradient(90deg,#6ec4e1,#abffd2);border-radius:999px}
+    .legend{max-width:750px;line-height:1.7}
+    .notice{display:inline-flex;align-items:center;gap:7px;border:1px solid #426678;background:#132c3c;border-radius:12px;padding:9px 11px;color:#e4f7fd;white-space:nowrap}
+    .bottom-note{margin-top:14px;font-size:13px;line-height:1.75;color:#abc2cf}
+    .bottom-note strong{color:#eafcff}
+    .desktop-only{display:inline}
+    .mobile-only{display:none}
+    @media (max-width:720px){
+      .shell{padding:12px 10px 24px}
+      .mark{width:44px;height:44px;border-radius:12px;font-size:24px}
+      .eyebrow{font-size:9px;letter-spacing:1.8px}
+      h1{font-size:27px}.tag{font-size:9px;padding:7px 10px}
+      .sub{font-size:11px}.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.stat{padding:10px}.stat-value{font-size:20px}
+      .game-wrap{height:min(138vw,720px);min-height:500px}
+      .panel{padding:24px 17px 19px}.panel p{font-size:13px}
+      .controls{grid-template-columns:1fr;justify-items:center}.pad{grid-template-columns:repeat(2,70px)}.pad button,.center-col button{min-height:62px;font-size:12px}
+      .footer{padding:12px 10px;font-size:11px}.legend{font-size:11px}
+      .desktop-only{display:none}.mobile-only{display:inline}
     }
   </style>
 </head>
 <body>
 <main class="shell">
-  <header><div class="logo"><div class="logo-mark">❄</div><div><div class="brand">SØRGULEN INDUSTRISERVICE</div><h1>Brøytepatruljen</h1></div></div><div class="tag">SPILLBAR PROTOTYPE · v0.1</div></header>
-  <div class="sub"><span id="missionName"><strong>FLORØ</strong> · Klar for vinteroppdrag?</span><span>ATV 4×4 <span aria-hidden="true">✦</span> Vinterdrift</span></div>
-  <section class="stats" aria-label="Spillstatus">
-    <div class="stat"><div class="stat-label">Tid igjen</div><div class="stat-num" id="timeLabel">01:30</div></div>
-    <div class="stat"><div class="stat-label">Brøytet</div><div class="stat-num" id="snowLabel">0 <small>/ 0</small></div></div>
-    <div class="stat"><div class="stat-label">Penger</div><div class="stat-num" id="moneyLabel">0 <small>kr</small></div></div>
-    <div class="stat"><div class="stat-label">Oppdrag</div><div class="stat-num" id="levelLabel">01 <small>/ 03</small></div></div>
+  <header>
+    <div class="brand-wrap">
+      <div class="mark">❄</div>
+      <div>
+        <div class="eyebrow">SØRGULEN INDUSTRISERVICE</div>
+        <h1>ATV Brøytesimulator</h1>
+      </div>
+    </div>
+    <div class="tag">REALISTISK PROTOTYPE · v0.2</div>
+  </header>
+
+  <div class="sub">
+    <span id="missionLine"><strong>FLORØ</strong> · Kjør til kunden og rydd tunet</span>
+    <span>ATV 4×4 <span aria-hidden="true">✦</span> Bakfra / framfra / styrekamera</span>
+  </div>
+
+  <section class="stats">
+    <div class="stat"><div class="stat-label">Fase</div><div class="stat-value" id="phaseLabel">Til kunde<small>Start frå basen</small></div></div>
+    <div class="stat"><div class="stat-label">Kamera</div><div class="stat-value" id="cameraLabel">Bakfra<small>Trykk C</small></div></div>
+    <div class="stat"><div class="stat-label">Fart</div><div class="stat-value" id="speedLabel">0 <small>km/t</small></div></div>
+    <div class="stat"><div class="stat-label">Brøytet</div><div class="stat-value" id="snowLabel">0 <small>/ 100 %</small></div></div>
+    <div class="stat"><div class="stat-label">Tid</div><div class="stat-value" id="timeLabel">04:30<small>Ferdig innan tida går ut</small></div></div>
   </section>
-  <section class="game-border"><div class="game-container" id="gameArea">
-    <canvas id="world" aria-label="Spillkart med en ATV som du styrer for å fjerne snø"></canvas>
-    <div class="vignette"></div><div class="toast" id="toast"></div>
-    <div id="touchControls"><div class="pad" id="pad"><div class="knob" id="knob"></div></div><button id="boost" type="button">TURBO</button></div>
-    <div class="overlay" id="overlay"><div class="menu">
-      <div class="eyebrow" id="overlayKicker">ET SPILL FRA SØRGULEN INDUSTRISERVICE</div>
-      <h2 id="overlayTitle">Vinteren har kome til Florø.</h2>
-      <p id="overlayDesc">Start ATV-en, brøyt snøen før tida går ut, unngå parkerte bilar og tjen pengar. Bruk pengane på å oppgradere utstyret mellom oppdraga.</p>
-      <div id="shop" class="shop hide"></div>
-      <button class="primary" type="button" id="mainBtn">START BRØYTING</button>
-      <div class="hint" id="overlayHint">PC: piltastar/WASD + mellomrom for turbo. Mobil: styrespak + turbo.</div>
-    </div></div>
-  </div><div class="progress-wrap"><span>BRØYTEFRAMDRIFT</span><div class="progress"><div class="fill" id="progressFill"></div></div><span id="progressLabel">0 %</span></div></section>
-  <div class="control-bar"><div class="note"><strong>Mål:</strong> Fjern alle snøhaugane med plogskjæret framfor ATV-en. Unngå hindringar – kollisjonar kostar verdifull tid. Turbo gir ekstra fart, men har avgrensa kapasitet.</div><button class="sound" id="restart" type="button">↻ Start på nytt</button></div>
+
+  <section class="game-border">
+    <div class="game-wrap" id="gameWrap">
+      <canvas id="gameCanvas" aria-label="ATV-brøytesimulator"></canvas>
+      <div class="hud-top">
+        <div class="chip-group">
+          <div class="chip">OPPDRAG: <strong id="objectiveChip">KJØR TIL KUNDEN</strong></div>
+          <div class="chip">STATUS: <strong id="statusChip">På vei frå basen</strong></div>
+        </div>
+        <div class="chip-group">
+          <div class="chip">KAMERA: <strong id="cameraChip">BAKFRA</strong></div>
+        </div>
+      </div>
+
+      <div class="overlay" id="overlay">
+        <div class="panel">
+          <div class="eyebrow" id="overlayEyebrow">ET SPILL FRA SØRGULEN INDUSTRISERVICE</div>
+          <h2 id="overlayTitle">Klar for vinteroppdrag?</h2>
+          <p id="overlayText">I denne nye versjonen kjører du ein meir realistisk ATV frå basen og bort til kunden. Når du kjem fram, svinger du inn på tunet og brøyter felt for felt på ein vanleg måte. Bytt kamera mellom bakfrå, framfrå og styret for å finne favoritten din.</p>
+          <button id="startButton" class="primary" type="button">START OPPDRAG</button>
+          <div class="hint"><span class="desktop-only">PC: W/S for gass og brems, A/D for styring, C for kamerabyte. </span><span class="mobile-only">Mobil: bruk knappane nede på skjermen. </span>Du må først køyre til kunden, deretter rydde tunet heilt ferdig.</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="pad">
+          <button id="leftBtn" type="button">◀<br>VENSTRE</button>
+          <button id="rightBtn" type="button">▶<br>HØGRE</button>
+        </div>
+        <div class="center-col">
+          <button id="camBtn" type="button" class="camera-btn">BYTT<br>KAMERA</button>
+          <button id="resetBtn" type="button">START<br>PÅ NYTT</button>
+        </div>
+        <div class="pad">
+          <button id="brakeBtn" type="button">BREMS<br>/ REVERS</button>
+          <button id="throttleBtn" type="button" class="throttle">GASS</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="legend">MÅL: Kjør frå basen langs vintervegen til kunden, finn innkøyringa og brøyt tunet systematisk. Rydd alle brøytefelta for å fullføre oppdraget.</div>
+      <div class="progress" aria-label="Brøyteframdrift"><div id="progressFill" class="fill"></div></div>
+      <div class="notice"><span>❄</span><strong id="progressText">0 % ferdig</strong></div>
+    </div>
+  </section>
+
+  <p class="bottom-note"><strong>Dette er første realistiske prototype.</strong> Eg har prioritert kjensla av å faktisk køyre ATV til kunden og brøyte eit tun frå fleire kameravinklar. Etterpå kan eg bygge vidare med endå meir ekte ATV-modell, meir detaljert tun, lyd, betre kollisjonar, mørkekøyring, fleire kundar og eit større Florø-miljø.</p>
 </main>
+
 <script>
-'use strict';
 (() => {
-  const W=900,H=620,canvas=document.querySelector('#world'),ctx=canvas.getContext('2d');
-  const $=id=>document.getElementById(id);
-  const el={overlay:$('overlay'),kicker:$('overlayKicker'),title:$('overlayTitle'),desc:$('overlayDesc'),hint:$('overlayHint'),button:$('mainBtn'),shop:$('shop'),time:$('timeLabel'),snow:$('snowLabel'),money:$('moneyLabel'),level:$('levelLabel'),mission:$('missionName'),prog:$('progressFill'),pct:$('progressLabel'),toast:$('toast'),knob:$('knob'),pad:$('pad')};
-  const levels=[{name:'SENTRUM FLORØ',subtitle:'Rydd gatene før morgontrafikken',target:35,time:90,bonus:380,seed:11},{name:'INDUSTRIOMRÅDET',subtitle:'Brøyt framkomst for næringstransporten',target:45,time:100,bonus:610,seed:44},{name:'BUSTADFELTET',subtitle:'Nabolaget treng ein god vinterhelt',target:55,time:115,bonus:850,seed:95}];
-  let state='intro',level=0,money=0,plow=1,engine=1,boostPower=100,remaining=90,cleared=0,damaged=0,bumperCool=0,shake=0,flash=0,snows=[],particles=[],staticDust=[],homes=[],obstacles=[],total=0,clock=0,lastTime=0,toastTime=0,uiTick=0;
-  let atv={x:445,y:540,angle:-Math.PI/2,vx:0,vy:0};
-  let inputs={up:false,down:false,left:false,right:false,boost:false},joy={x:0,y:0},padPointer=null;
-  let rng=()=>Math.random();
-  function seeded(seed){let a=seed>>>0;return ()=>{a=(a*1664525+1013904223)>>>0;return a/4294967296;};}
-  function resetGame(){level=0;money=0;plow=1;engine=1;boostPower=100;startLevel();showIntro();}
-  function drawRoads(){
-    ctx.fillStyle='#c0dde7';ctx.fillRect(0,0,W,H);
-    const grass=ctx.createLinearGradient(0,0,W,H);grass.addColorStop(0,'#d2e6e7');grass.addColorStop(1,'#9fc7cf');ctx.fillStyle=grass;ctx.fillRect(0,0,W,H);
-    ctx.fillStyle='#627b8d';roundRect(80,192,740,185,35,true);roundRect(367,23,165,575,30,true);
-    ctx.fillStyle='#526e7e';roundRect(89,203,722,163,29,true);roundRect(377,32,145,556,23,true);
-    ctx.strokeStyle='#c2d7d8aa';ctx.lineWidth=3;ctx.setLineDash([31,26]);ctx.beginPath();ctx.moveTo(82,284);ctx.lineTo(820,284);ctx.moveTo(449,19);ctx.lineTo(449,599);ctx.stroke();ctx.setLineDash([]);
-    ctx.strokeStyle='#e6f6f8';ctx.lineWidth=3;ctx.strokeRect(79,192,741,185);
-    ctx.strokeStyle='#8bb5c27a';ctx.lineWidth=9;ctx.strokeRect(85,199,729,170);
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const $ = id => document.getElementById(id);
+
+  const ui = {
+    missionLine: $('missionLine'), phase: $('phaseLabel'), camera: $('cameraLabel'), speed: $('speedLabel'), snow: $('snowLabel'), time: $('timeLabel'),
+    objective: $('objectiveChip'), status: $('statusChip'), cameraChip: $('cameraChip'), overlay: $('overlay'), overlayEyebrow: $('overlayEyebrow'), overlayTitle: $('overlayTitle'), overlayText: $('overlayText'),
+    progressFill: $('progressFill'), progressText: $('progressText'), startButton: $('startButton')
+  };
+
+  const controls = { throttle:false, brake:false, left:false, right:false };
+  const keyMap = { 'w':'throttle', 'arrowup':'throttle', 's':'brake', 'arrowdown':'brake', 'a':'left', 'arrowleft':'left', 'd':'right', 'arrowright':'right' };
+
+  const state = {
+    mode:'intro',
+    phase:'drive',
+    camera:'behind',
+    time:270,
+    worldTime:0,
+    progress:0,
+    message:'På vei frå basen',
+    vehicle:{x:0,z:-70,yaw:0,speed:0,steer:0},
+    particles:[],
+    snowPatches:[],
+    completedPatches:0,
+    totalPatchUnits:0,
+    donePatchUnits:0
+  };
+
+  const world = {
+    roadHalf:4.8,
+    roadStart:-110,
+    roadEnd:165,
+    yard:{x:0,z:235,w:50,d:44},
+    driveway:{x:0,z:185,w:9,d:52},
+    customerGate:{x:0,z:165},
+    house:{x:-17,z:252,w:19,d:14,h:9},
+    garage:{x:18,z:250,w:14,d:11,h:6},
+    fence:[],
+    trees:[],
+    poles:[],
+    parkedCars:[
+      {x:-2.8,z:38,w:2.1,d:4.3,color:'#6f7e8f'},
+      {x:2.4,z:90,w:2.2,d:4.7,color:'#42576d'},
+      {x:-2.2,z:140,w:2.3,d:4.4,color:'#886d57'}
+    ],
+    outHouses:[]
+  };
+
+  function buildWorld(){
+    world.trees=[]; world.poles=[]; world.fence=[]; world.outHouses=[];
+    for(let z=-100; z<170; z+=22){
+      world.trees.push({x:-14-Math.sin(z*0.13)*3,z,h:4+((z+100)%4),r:1.7+((z+50)%3)*0.22});
+      world.trees.push({x:14+Math.cos(z*0.09)*2.6,z,h:4+((z+70)%5),r:1.6+((z+10)%4)*0.2});
+      if(z<140){ world.poles.push({x:7.6,z,h:4.8}); }
+    }
+    for(let x=-world.yard.w/2-1; x<=world.yard.w/2+1; x+=4){
+      world.fence.push({x, z:world.yard.z-world.yard.d/2-2, vertical:false});
+      world.fence.push({x, z:world.yard.z+world.yard.d/2+2, vertical:false});
+    }
+    for(let z=world.yard.z-world.yard.d/2-2; z<=world.yard.z+world.yard.d/2+2; z+=4){
+      if(Math.abs(z-world.yard.z)>6){
+        world.fence.push({x:-world.yard.w/2-2,z, vertical:true});
+        world.fence.push({x:world.yard.w/2+2,z, vertical:true});
+      }
+    }
+    for(let i=0;i<7;i++) world.outHouses.push({x:-24-(i%2)*7,z:-70+i*38,w:11+(i%2)*2,d:10,h:7,color:i%2?'#ab3f34':'#8f6d52'});
+    for(let i=0;i<7;i++) world.outHouses.push({x:25+(i%2)*6,z:-55+i*36,w:10+(i%3),d:9,h:6.5,color:i%2?'#876148':'#a1473b'});
   }
-  function roundRect(x,y,w,h,r,fill){ctx.beginPath();ctx.roundRect(x,y,w,h,r);if(fill)ctx.fill();}
-  function drawHouse(h){
-    ctx.save();ctx.translate(h.x,h.y);ctx.rotate(h.angle||0);
-    ctx.fillStyle='#4b798393';roundRect(-h.w/2+6,-h.h/2+10,h.w,h.h,9,true);
-    ctx.fillStyle='#eefafa';roundRect(-h.w/2,-h.h/2,h.w,h.h,6,true);
-    ctx.fillStyle=h.color;roundRect(-h.w/2+7,-h.h/2+5,h.w-14,h.h-12,4,true);
-    ctx.fillStyle='#ffffff55';ctx.fillRect(-h.w/2+17,-h.h/2+17,16,10);ctx.fillRect(h.w/2-33,-h.h/2+17,16,10);
-    ctx.fillStyle='#f0f5ff';ctx.fillRect(-10,h.h/2-16,20,17);
-    ctx.restore();
+
+  function buildSnowPatches(){
+    const patches = [
+      {x:-12,z:216,w:11,d:16},
+      {x:0,z:216,w:11,d:16},
+      {x:12,z:216,w:11,d:16},
+      {x:-12,z:236,w:11,d:16},
+      {x:0,z:236,w:11,d:16},
+      {x:12,z:236,w:11,d:16},
+      {x:-12,z:256,w:11,d:14},
+      {x:0,z:256,w:11,d:14},
+      {x:12,z:256,w:11,d:14}
+    ];
+    state.snowPatches = patches.map((p,i)=>({...p,remaining:1,id:i}));
+    state.totalPatchUnits = state.snowPatches.length;
+    state.donePatchUnits = 0;
+    state.completedPatches = 0;
   }
-  function drawTree(t){ctx.fillStyle='#8aaebd';ctx.beginPath();ctx.ellipse(t.x+4,t.y+8,t.r+4,t.r+7,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#3c7780';ctx.beginPath();ctx.arc(t.x,t.y,t.r,0,7);ctx.fill();ctx.fillStyle='#ecf8f7';ctx.beginPath();ctx.arc(t.x-4,t.y-4,t.r*.75,Math.PI*1.12,Math.PI*1.97);ctx.strokeStyle='#f0ffff';ctx.lineWidth=5;ctx.stroke();}
-  function drawObstacle(o){ctx.save();ctx.translate(o.x,o.y);ctx.rotate(o.angle||0);if(o.type==='car'){ctx.fillStyle='#21394ba8';roundRect(-17,-30,39,64,9,true);ctx.fillStyle=o.color;roundRect(-18,-32,36,64,9,true);ctx.fillStyle='#94bdc9';roundRect(-15,-15,30,28,7,true);ctx.fillStyle='#d7eceb';ctx.fillRect(-17,-26,6,9);ctx.fillRect(11,-26,6,9);ctx.fillStyle='#d24f52';ctx.fillRect(-13,29,8,4);ctx.fillRect(5,29,8,4);}else{ctx.fillStyle='#a24b21';ctx.beginPath();ctx.moveTo(0,-16);ctx.lineTo(-13,14);ctx.lineTo(13,14);ctx.closePath();ctx.fill();ctx.strokeStyle='#f5e5ad';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-6,2);ctx.lineTo(6,2);ctx.stroke()}ctx.restore()}
-  function makeMap(seed){rng=seeded(seed);homes=[];obstacles=[];staticDust=[];
-    [[140,92,110,100,'#cb7470'],[270,99,90,110,'#5f9a9c'],[624,101,99,118,'#a9765d'],[770,91,92,104,'#7180aa'],[145,490,115,105,'#8d99b2'],[286,494,100,98,'#c08e60'],[622,501,105,97,'#8b9688'],[763,485,112,100,'#bd6e6a']].forEach(a=>homes.push({x:a[0],y:a[1],w:a[2],h:a[3],color:a[4],angle:0}));
-    let cars=[[166,247,-Math.PI/2,'#b86254'],[714,325,Math.PI/2,'#5d8f9a'],[408,100,0,'#8996af'],[495,462,Math.PI,'#aa8b5b']];if(level>0)cars.push([277,324,Math.PI/2,'#597893']);if(level>1)cars.push([615,237,-Math.PI/2,'#af717e']);
-    obstacles=cars.map(a=>({type:'car',x:a[0],y:a[1],angle:a[2],color:a[3],radius:27}));
-    obstacles.push({type:'cone',x:576,y:329,radius:15},{type:'cone',x:587,y:329,radius:15});
-    for(let i=0;i<95;i++){let x=rng()*W,y=rng()*H;let road=(y>190&&y<380&&x>78&&x<823)||(x>360&&x<538&&y>15&&y<600);if(!road)staticDust.push({x,y,r:1+rng()*3});}
+
+  buildWorld();
+  buildSnowPatches();
+
+  function resetMission(){
+    state.mode='intro';
+    state.phase='drive';
+    state.camera='behind';
+    state.time=270;
+    state.worldTime=0;
+    state.progress=0;
+    state.message='På vei frå basen';
+    state.vehicle={x:0,z:-70,yaw:0,speed:0,steer:0};
+    state.particles=[];
+    buildSnowPatches();
+    updateUI();
+    showIntro();
   }
-  function onRoad(x,y){return ((y>213&&y<354&&x>112&&x<792)||(x>393&&x<508&&y>54&&y<566));}
-  function startLevel(){const l=levels[level];atv={x:445,y:545,angle:-Math.PI/2,vx:0,vy:0};remaining=l.time;cleared=0;damaged=0;bumperCool=0;boostPower=100;flash=0;shake=0;snows=[];particles=[];makeMap(l.seed);rng=seeded(l.seed+37);
-    let tries=0;while(snows.length<l.target&&tries++<2500){const x=112+rng()*677,y=60+rng()*501;if(!onRoad(x,y))continue;if(Math.hypot(x-atv.x,y-atv.y)<87)continue;if(obstacles.some(o=>Math.hypot(x-o.x,y-o.y)<50))continue;if(snows.some(o=>Math.hypot(x-o.x,y-o.y)<25))continue;snows.push({x,y,r:12+rng()*8,pr:rng()*6,seed:rng()*10});}
-    total=snows.length;el.mission.innerHTML='<strong>'+l.name+'</strong> · '+l.subtitle;updateUI();
+
+  function startMission(){
+    state.mode='playing';
+    ui.overlay.hidden = true;
   }
-  function showIntro(){state='intro';el.kicker.textContent='SØRGULEN INDUSTRISERVICE · ARCADE';el.title.textContent='Vinteren har kome til Florø.';el.desc.textContent='Køyr din eigen brøyte-ATV, rydd vegane, unngå hindringar og tjen pengar til betre utstyr. Klarer du alle tre oppdraga?';el.shop.classList.add('hide');el.button.textContent='START BRØYTING';el.hint.textContent='PC: WASD / piltastar + mellomrom. Mobil: styrespak + TURBO.';el.overlay.hidden=false;}
-  function startPlaying(){state='playing';el.overlay.hidden=true;inputs.boost=false;lastTime=performance.now();}
-  function result(success){state=success?'completed':'failed';inputs.boost=false;const l=levels[level];let prize=success?l.bonus+Math.max(0,Math.floor(remaining)*3):0;money+=prize;
-    if(success){el.kicker.textContent='OPPDRAG FULLFØRT';el.title.textContent=level===2?'Florø er brøyta!':'Sterkt køyrt!';el.desc.textContent='Du rydda '+cleared+' snøhaugar og fekk '+prize+' kr i oppdragsbonus. '+(level===2?'Alle oppdraga er fullført. Du kan starte heilt på nytt.':'Kjøp oppgraderingar til neste oppdrag.');}
-    else{el.kicker.textContent='TIDA GJEKK UT';el.title.textContent='Snøen vann denne runden.';el.desc.textContent='Du fekk rydda '+cleared+' av '+total+' snøhaugar. Pengane du tente så langt er dine. Prøv oppdraget igjen – gjerne med betre brøyterutstyr.';}
-    el.button.textContent=success?(level===2?'SPEL FRÅ START':'NESTE OPPDRAG'):'PRØV IGJEN';el.hint.textContent='Bruk tastatur eller mobilkontrollane når spelet startar.';
-    updateShop();el.overlay.hidden=false;updateUI();
+
+  function showIntro(){
+    ui.overlay.hidden = false;
+    ui.overlayEyebrow.textContent = 'ET SPILL FRA SØRGULEN INDUSTRISERVICE';
+    ui.overlayTitle.textContent = 'Klar for vinteroppdrag?';
+    ui.overlayText.textContent = 'Kjør ATV-en frå basen og bort til kunden. Når du kjem fram, køyrer du inn på tunet og rydder snøen i baner på vanleg måte. Du kan bytte mellom kamera bakfrå, framfrå og frå styret medan du køyrer.';
+    ui.startButton.textContent = 'START OPPDRAG';
   }
-  function updateShop(){el.shop.innerHTML='';el.shop.classList.remove('hide');if(level===2&&state==='completed'){el.shop.classList.add('hide');return;}
-    let upgrades=[{name:'BREIARE PLOG',sub:'Brøyt meir snø samtidig',cost:plow*180,max:4,enabled:plow<4,buy:()=>plow++},{name:'STERKARE MOTOR',sub:'Høgare toppfart',cost:engine*190,max:4,enabled:engine<4,buy:()=>engine++}];
-    for(const u of upgrades){let b=document.createElement('button');b.type='button';b.className='upgrade';b.disabled=!u.enabled||money<u.cost;b.innerHTML='<b>'+u.name+'</b>'+u.sub+'<em>'+(u.enabled?u.cost+' kr':'MAKS NIVÅ')+'</em>';b.onclick=()=>{money-=u.cost;u.buy();updateUI();updateShop();toast('UTSTYRET ER OPPGRADERT!');};el.shop.appendChild(b);}
+
+  function showResult(success){
+    state.mode='done';
+    ui.overlay.hidden = false;
+    ui.overlayEyebrow.textContent = success ? 'OPPDRAG FULLFØRT' : 'TIDA GJEKK UT';
+    ui.overlayTitle.textContent = success ? 'Tunet er rydda.' : 'Du rakk ikkje heilt fram.';
+    ui.overlayText.textContent = success
+      ? 'Du køyrde til kunden og brøyta tunet ferdig. Dette er grunnlaget for ein mykje meir realistisk Sørgulen-simulator.'
+      : 'Du fekk rydda ' + Math.round(state.progress) + '% av tunet. Start på nytt og prøv å køyre rolegare og meir systematisk.';
+    ui.startButton.textContent = success ? 'KØYR OPPDRAGET PÅ NYTT' : 'PRØV IGJEN';
   }
-  function toast(s){el.toast.textContent=s;toastTime=2.1;el.toast.classList.add('show');}
-  function updateUI(){el.time.textContent=String(Math.floor(Math.max(0,remaining)/60)).padStart(2,'0')+':'+String(Math.floor(Math.max(0,remaining)%60)).padStart(2,'0');el.time.style.color=remaining<16?'#ffc778':'#f5fafc';el.snow.innerHTML=cleared+' <small>/ '+total+'</small>';el.money.innerHTML=money.toLocaleString('nb-NO')+' <small>kr</small>';el.level.innerHTML='0'+(level+1)+' <small>/ 03</small>';let pct=total?Math.round(100*cleared/total):0;el.prog.style.width=pct+'%';el.pct.textContent=pct+' %';}
-  function snowParticle(x,y,n=7){for(let i=0;i<n;i++){let a=rng()*Math.PI*2,s=35+rng()*160;particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-25,t:.4+rng()*.55,r:2+rng()*4});}}
-  function update(dt){clock+=dt;toastTime=Math.max(0,toastTime-dt);if(toastTime===0)el.toast.classList.remove('show');particles=particles.filter(p=>p.t>0);for(let p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=Math.pow(.08,dt);p.vy*=Math.pow(.08,dt);p.t-=dt;}
-    if(state!=='playing')return;
-    remaining-=dt;if(remaining<=0){remaining=0;result(false);return;}
-    bumperCool=Math.max(0,bumperCool-dt);flash=Math.max(0,flash-dt);shake=Math.max(0,shake-dt*10);
-    let ax=(inputs.right?1:0)-(inputs.left?1:0)+joy.x,ay=(inputs.down?1:0)-(inputs.up?1:0)+joy.y;
-    let dist=Math.hypot(ax,ay);if(dist>1){ax/=dist;ay/=dist;}
-    const turbo=inputs.boost&&boostPower>0&&dist>.1;boostPower=Math.max(0,Math.min(100,boostPower+(turbo?-34:16)*dt));
-    const speed=(178+engine*22)*(turbo?1.60:1);
-    const ease=Math.min(1,dt*7);atv.vx+=(ax*speed-atv.vx)*ease;atv.vy+=(ay*speed-atv.vy)*ease;
-    if(dist>.15){let target=Math.atan2(ay,ax);let delta=Math.atan2(Math.sin(target-atv.angle),Math.cos(target-atv.angle));atv.angle+=delta*Math.min(1,dt*11);}
-    let nx=atv.x+atv.vx*dt,ny=atv.y+atv.vy*dt;nx=Math.max(34,Math.min(W-34,nx));ny=Math.max(33,Math.min(H-34,ny));
-    for(let o of obstacles){let d=Math.hypot(nx-o.x,ny-o.y);if(d<o.radius+20){let a=Math.atan2(ny-o.y,nx-o.x);nx=o.x+Math.cos(a)*(o.radius+20);ny=o.y+Math.sin(a)*(o.radius+20);atv.vx*=.12;atv.vy*=.12;shake=4;if(bumperCool<=0){remaining=Math.max(0,remaining-2);bumperCool=1;flash=.25;toast('KOLLISJON! −2 SEKUND');}}}
-    atv.x=nx;atv.y=ny;
-    let frontDist=29,px=atv.x+Math.cos(atv.angle)*frontDist,py=atv.y+Math.sin(atv.angle)*frontDist;
-    if(dist>.11){const width=22+(plow-1)*12;for(let i=snows.length-1;i>=0;i--){let s=snows[i];let dx=s.x-px,dy=s.y-py;let forward=dx*Math.cos(atv.angle)+dy*Math.sin(atv.angle),side=Math.abs(-dx*Math.sin(atv.angle)+dy*Math.cos(atv.angle));if(forward>-s.r&&forward<21+s.r&&side<width+s.r*.35){snowParticle(s.x,s.y);snows.splice(i,1);cleared++;money+=16;if(cleared%10===0)toast('+'+160+' KR · GODT ARBEID!');if(!snows.length){result(true);return;}}}}
-    uiTick+=dt;if(uiTick>.12){uiTick=0;updateUI();}
+
+  function cycleCamera(){
+    state.camera = state.camera === 'behind' ? 'front' : state.camera === 'front' ? 'handlebar' : 'behind';
+    updateUI();
   }
-  let vw=900,vh=620,cameraX=0,cameraY=0,scale=1,displayW=900,displayH=600;
-  function resize(){const box=$('gameArea').getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2);displayW=Math.max(150,box.width);displayH=Math.max(150,box.height);canvas.width=Math.round(displayW*dpr);canvas.height=Math.round(displayH*dpr);const aspect=displayW/displayH;if(aspect<1.12){vh=600;vw=600*aspect;}else{vw=900;vh=900/aspect;}scale=displayW/vw;ctx.setTransform(dpr,0,0,dpr,0,0);}
-  function labelBox(x,y,text){ctx.font='800 11px ui-sans-serif, system-ui';let mw=ctx.measureText(text).width;ctx.fillStyle='#0a2133b9';roundRect(x-mw/2-12,y-16,mw+24,24,7,true);ctx.fillStyle='#effaff';ctx.textAlign='center';ctx.fillText(text,x,y);ctx.textAlign='left';}
-  function drawSnow(s){ctx.save();ctx.translate(s.x,s.y);ctx.fillStyle='#314f6080';ctx.beginPath();ctx.ellipse(3,5,s.r+3,s.r*.63,0,0,7);ctx.fill();ctx.fillStyle='#e8faff';ctx.beginPath();ctx.ellipse(0,0,s.r*1.05,s.r*.75,s.seed,0,7);ctx.fill();ctx.fillStyle='#c5e8f0';ctx.beginPath();ctx.ellipse(-s.r*.17,-s.r*.09,s.r*.56,s.r*.5,0,0,7);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(-s.r*.26,-s.r*.2,s.r*.30,0,7);ctx.fill();ctx.restore()}
-  function drawAtv(){ctx.save();ctx.translate(atv.x,atv.y);ctx.rotate(atv.angle+Math.PI/2);
-    ctx.fillStyle='#06142299';roundRect(-17,-23,36,55,10,true);
-    ctx.fillStyle='#0f161d';roundRect(-22,-21,10,19,3,true);roundRect(12,-21,10,19,3,true);roundRect(-22,8,10,20,3,true);roundRect(12,8,10,20,3,true);
-    ctx.fillStyle='#272f38';roundRect(-16,-27,32,52,9,true);
-    ctx.fillStyle='#c54630';roundRect(-14,-24,28,25,8,true);roundRect(-12,10,24,15,5,true);
-    ctx.fillStyle='#253442';roundRect(-12,-5,24,19,5,true);
-    ctx.fillStyle='#2c4757';roundRect(-17,-18,34,5,2,true);
-    ctx.fillStyle='#f5f4ce';ctx.fillRect(-12,-24,8,4);ctx.fillRect(4,-24,8,4);
-    ctx.fillStyle='#ddfaff';ctx.shadowColor='#b4f2ff';ctx.shadowBlur=8;
-    ctx.beginPath();ctx.moveTo(-22-(plow-1)*6,-35);ctx.lineTo(22+(plow-1)*6,-35);ctx.lineTo(16+(plow-1)*6,-23);ctx.lineTo(-16-(plow-1)*6,-23);ctx.closePath();ctx.fill();ctx.shadowBlur=0;
-    ctx.fillStyle='#426c81';ctx.fillRect(-20-(plow-1)*6,-34,40+(plow-1)*12,4);
-    ctx.restore();}
-  function draw(){let dpr=Math.min(window.devicePixelRatio||1,2);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,displayW,displayH);
-    cameraX=Math.max(0,Math.min(W-vw,atv.x-vw/2));cameraY=Math.max(0,Math.min(H-vh,atv.y-vh/2));if(vw>=W)cameraX=-(vw-W)/2;if(vh>=H)cameraY=-(vh-H)/2;
-    ctx.save();ctx.translate(displayW/2,displayH/2);ctx.scale(scale,scale);ctx.translate(-vw/2-cameraX,-vh/2-cameraY);
-    if(shake){ctx.translate((rng()-.5)*shake,(rng()-.5)*shake);}
-    ctx.fillStyle='#aecbd4';ctx.fillRect(-300,-300,W+600,H+600);
-    drawRoads();
-    // Road-edge piles and tiny drift marks make the street feel lived-in.
-    for(let x=84;x<815;x+=47){for(let y of [188,380]){ctx.fillStyle='#d6f0f3';ctx.beginPath();ctx.ellipse(x+8,y,20,7,0,0,7);ctx.fill();}}
-    for(let y=65;y<620;y+=43){for(let x of [364,535]){ctx.fillStyle='#d8f1f4';ctx.beginPath();ctx.ellipse(x,y,6,15,0,0,7);ctx.fill();}}
-    for(const d of staticDust){ctx.fillStyle='#f0fcfdb5';ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,7);ctx.fill();}
-    for(const h of homes)drawHouse(h);
-    for(let i=0;i<28;i++){let x=30+((i*129)%835),y=36+((i*157)%570);if(!onRoad(x,y)&&homes.every(h=>Math.hypot(x-h.x,y-h.y)>80))drawTree({x,y,r:10+i%5});}
-    for(const o of obstacles)drawObstacle(o);
-    for(const s of snows)drawSnow(s);
-    if(state==='playing'&&Math.hypot(atv.vx,atv.vy)>40&&Math.random()<.33){ctx.fillStyle='#e4f9ff66';ctx.beginPath();ctx.arc(atv.x-Math.cos(atv.angle)*34,atv.y-Math.sin(atv.angle)*34,4,0,7);ctx.fill();}
-    for(let p of particles){ctx.globalAlpha=Math.max(0,Math.min(1,p.t*2));ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill();ctx.globalAlpha=1;}
-    drawAtv();
-    labelBox(160,46,'FLORØ');
-    if(state==='playing'){ctx.fillStyle='#071c2fc9';roundRect(16,16,173,14,7,true);ctx.fillStyle='#7ee7bb';roundRect(16,16,173*boostPower/100,14,7,true);ctx.font='800 11px ui-sans-serif,system-ui';ctx.fillStyle='#ffffff';ctx.fillText('TURBO',18,44);}
-    if(flash){ctx.fillStyle='rgba(255,80,70,'+(flash*.27)+')';ctx.fillRect(cameraX,cameraY,vw,vh);}
-    ctx.restore();
+
+  function clamp(v,min,max){ return Math.max(min,Math.min(max,v)); }
+  function lerp(a,b,t){ return a + (b-a)*t; }
+  function fmtTime(s){ s=Math.max(0,Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
+
+  function updateUI(){
+    const camName = state.camera === 'behind' ? 'Bakfra' : state.camera === 'front' ? 'Framfra' : 'Styret';
+    const phaseName = state.phase === 'drive' ? 'Til kunde' : 'Brøyting';
+    ui.camera.textContent = camName;
+    ui.camera.innerHTML = camName + '<small>Trykk C</small>';
+    ui.phase.innerHTML = phaseName + (state.phase === 'drive' ? '<small>Start frå basen</small>' : '<small>Rydd heile tunet</small>');
+    ui.speed.innerHTML = Math.round(Math.abs(state.vehicle.speed)*3.6) + ' <small>km/t</small>';
+    ui.snow.innerHTML = Math.round(state.progress) + ' <small>/ 100 %</small>';
+    ui.time.innerHTML = fmtTime(state.time) + '<small>Ferdig innan tida går ut</small>';
+    ui.objective.textContent = state.phase === 'drive' ? 'KJØR TIL KUNDEN' : 'BRØYT TUNET';
+    ui.status.textContent = state.message.toUpperCase();
+    ui.cameraChip.textContent = camName.toUpperCase();
+    ui.progressFill.style.width = state.progress + '%';
+    ui.progressText.textContent = Math.round(state.progress) + ' % ferdig';
+    ui.missionLine.innerHTML = state.phase === 'drive'
+      ? '<strong>FLORØ</strong> · Kjør til kunden og finn innkøyringa'
+      : '<strong>KUNDENS TUN</strong> · Brøyt alle felta på ein vanleg måte';
   }
-  function frame(t){let dt=Math.min(.04,(t-(lastTime||t))/1000);lastTime=t;update(dt);draw();requestAnimationFrame(frame)}
-  document.addEventListener('keydown',e=>{const key=e.key.toLowerCase();let map={'arrowup':'up','w':'up','arrowdown':'down','s':'down','arrowleft':'left','a':'left','arrowright':'right','d':'right',' ':'boost'};if(map[key]){inputs[map[key]]=true;e.preventDefault();}});
-  document.addEventListener('keyup',e=>{const key=e.key.toLowerCase();let map={'arrowup':'up','w':'up','arrowdown':'down','s':'down','arrowleft':'left','a':'left','arrowright':'right','d':'right',' ':'boost'};if(map[key]){inputs[map[key]]=false;e.preventDefault();}});
-  window.addEventListener('blur',()=>{Object.keys(inputs).forEach(k=>inputs[k]=false);joy.x=joy.y=0;});
-  el.pad.addEventListener('pointerdown',e=>{padPointer=e.pointerId;el.pad.setPointerCapture(e.pointerId);setJoy(e);e.preventDefault()});
-  el.pad.addEventListener('pointermove',e=>{if(e.pointerId===padPointer){setJoy(e);e.preventDefault();}});
-  for(let ev of ['pointerup','pointercancel','lostpointercapture'])el.pad.addEventListener(ev,e=>{if(e.pointerId===padPointer){padPointer=null;joy.x=joy.y=0;el.knob.style.transform='translate(-50%,-50%)';}});
-  function setJoy(e){const r=el.pad.getBoundingClientRect();let dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);let m=Math.hypot(dx,dy),range=48;if(m>range){dx*=range/m;dy*=range/m;}joy.x=dx/range;joy.y=dy/range;el.knob.style.transform='translate(calc(-50% + '+dx+'px),calc(-50% + '+dy+'px))';}
-  $('boost').addEventListener('pointerdown',e=>{inputs.boost=true;$('boost').classList.add('pressed');e.preventDefault()});
-  for(let ev of ['pointerup','pointercancel','pointerleave'])$('boost').addEventListener(ev,()=>{inputs.boost=false;$('boost').classList.remove('pressed')});
-  el.button.onclick=()=>{if(state==='intro'){startLevel();startPlaying();}else if(state==='failed'){startLevel();startPlaying();}else if(state==='completed'&&level<2){level++;startLevel();startPlaying();}else{resetGame();startPlaying();}};
-  $('restart').onclick=()=>{resetGame();};
-  window.addEventListener('resize',resize);
-  resize();resetGame();requestAnimationFrame(frame);
+
+  function setBtnHold(id, field){
+    const el = $(id);
+    const on = e => { controls[field]=true; e.preventDefault(); };
+    const off = e => { controls[field]=false; e.preventDefault(); };
+    el.addEventListener('pointerdown', on);
+    el.addEventListener('pointerup', off);
+    el.addEventListener('pointercancel', off);
+    el.addEventListener('pointerleave', off);
+  }
+
+  setBtnHold('leftBtn','left');
+  setBtnHold('rightBtn','right');
+  setBtnHold('throttleBtn','throttle');
+  setBtnHold('brakeBtn','brake');
+  $('camBtn').addEventListener('click', cycleCamera);
+  $('resetBtn').addEventListener('click', () => resetMission());
+  ui.startButton.addEventListener('click', () => {
+    if(state.mode === 'done') resetMission();
+    startMission();
+  });
+
+  document.addEventListener('keydown', e => {
+    const k = e.key.toLowerCase();
+    if(k === 'c'){ cycleCamera(); e.preventDefault(); return; }
+    if(keyMap[k]){ controls[keyMap[k]] = true; e.preventDefault(); }
+  });
+  document.addEventListener('keyup', e => {
+    const k = e.key.toLowerCase();
+    if(keyMap[k]){ controls[keyMap[k]] = false; e.preventDefault(); }
+  });
+  window.addEventListener('blur', () => Object.keys(controls).forEach(k => controls[k]=false));
+
+  let W = 0, H = 0, DPR = 1;
+  function resize(){
+    const r = canvas.getBoundingClientRect();
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = Math.max(280, r.width); H = Math.max(280, r.height);
+    canvas.width = Math.round(W*DPR); canvas.height = Math.round(H*DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function update(dt){
+    state.worldTime += dt;
+    if(state.mode !== 'playing') return;
+    state.time -= dt;
+    if(state.time <= 0){ state.time = 0; updateUI(); showResult(false); return; }
+
+    const v = state.vehicle;
+    const accel = controls.throttle ? 8.8 : 0;
+    const reverse = controls.brake ? -6.2 : 0;
+    const drag = v.speed > 0 ? 2.2 : 1.8;
+    v.speed += (accel + reverse - Math.sign(v.speed)*drag) * dt;
+    if(!controls.throttle && !controls.brake && Math.abs(v.speed) < 0.35) v.speed = 0;
+    v.speed = clamp(v.speed, -4.5, state.phase==='drive' ? 15 : 9.5);
+
+    const steerInput = (controls.right?1:0) - (controls.left?1:0);
+    v.steer = lerp(v.steer, steerInput, clamp(dt*7,0,1));
+    const steerStrength = (state.phase==='drive' ? 1.35 : 1.8) * clamp(Math.abs(v.speed)/3, 0.2, 1.25);
+    v.yaw += -v.steer * steerStrength * dt;
+    v.x += Math.sin(v.yaw) * v.speed * dt;
+    v.z += Math.cos(v.yaw) * v.speed * dt;
+
+    constrainVehicle(v, dt);
+    spawnTrack(v, dt);
+
+    if(state.phase === 'drive'){
+      state.message = v.z < 80 ? 'På vei langs vintervegen' : v.z < 160 ? 'Kunden er like framme' : 'Sving inn på tunet';
+      const dx = v.x - world.customerGate.x;
+      const dz = v.z - world.customerGate.z;
+      if(Math.hypot(dx,dz) < 9 && v.z > 158){
+        state.phase = 'plow';
+        state.message = 'Du er framme – rydd tunet';
+      }
+    } else {
+      state.message = 'Brøyt felta systematisk';
+      updatePlowing(dt);
+      if(state.progress >= 100){ state.progress = 100; updateUI(); showResult(true); }
+    }
+
+    updateUI();
+  }
+
+  function constrainVehicle(v, dt){
+    if(state.phase === 'drive'){
+      const onDriveway = v.z > 150 && Math.abs(v.x) < world.driveway.w/2 + 1.2;
+      const laneLimit = onDriveway ? world.driveway.w/2 + 1.8 : world.roadHalf + 0.9;
+      if(v.z < world.roadStart){ v.z = world.roadStart; if(v.speed < 0) v.speed *= -0.25; }
+      if(v.z > 175 && !onDriveway){ v.z = 175; v.speed *= 0.35; }
+      if(!onDriveway && Math.abs(v.x) > laneLimit){
+        v.x = clamp(v.x, -laneLimit, laneLimit);
+        v.speed *= 0.65;
+      }
+      if(onDriveway){
+        v.x = clamp(v.x, -world.driveway.w/2 - 1.3, world.driveway.w/2 + 1.3);
+      }
+      for(const car of world.parkedCars){
+        if(hitBox(v.x,v.z,1.2,2.2,car.x,car.z,car.w,car.d)){
+          v.speed *= -0.2;
+          const push = Math.sign(v.x-car.x)||1;
+          v.x += push*dt*9;
+        }
+      }
+    } else {
+      const halfW = world.yard.w/2 - 1.2, halfD = world.yard.d/2 - 1.2;
+      v.x = clamp(v.x, -halfW, halfW);
+      v.z = clamp(v.z, world.yard.z-halfD, world.yard.z+halfD);
+      if(hitBox(v.x,v.z,1.4,2.2,world.house.x,world.house.z,world.house.w/2+1,world.house.d/2+1) ||
+         hitBox(v.x,v.z,1.4,2.2,world.garage.x,world.garage.z,world.garage.w/2+1,world.garage.d/2+1)){
+        v.speed *= -0.15;
+      }
+    }
+  }
+
+  function updatePlowing(dt){
+    const v = state.vehicle;
+    const bladeX = v.x + Math.sin(v.yaw)*2.5;
+    const bladeZ = v.z + Math.cos(v.yaw)*2.5;
+    const effective = Math.abs(v.speed) > 0.8;
+    for(const p of state.snowPatches){
+      if(p.remaining <= 0) continue;
+      if(pointInRect(bladeX, bladeZ, p.x, p.z, p.w/2+1.4, p.d/2+1.2) && effective){
+        p.remaining = Math.max(0, p.remaining - dt*0.46);
+        for(let i=0;i<2;i++) state.particles.push({x:bladeX+(Math.random()-0.5)*1.2,z:bladeZ+(Math.random()-0.5)*1.2,life:0.55+Math.random()*0.25,vy:1.4+Math.random()*0.8,vx:(Math.random()-0.5)*0.5});
+      }
+    }
+    state.donePatchUnits = state.snowPatches.reduce((a,p)=>a+(1-p.remaining),0);
+    state.completedPatches = state.snowPatches.filter(p=>p.remaining<=0).length;
+    state.progress = clamp(100 * state.donePatchUnits / state.totalPatchUnits, 0, 100);
+    state.particles = state.particles.filter(p=> (p.life-=dt) > 0 );
+  }
+
+  function hitBox(ax,az,aw,ad,bx,bz,bw,bd){
+    return Math.abs(ax-bx) < aw+bw && Math.abs(az-bz) < ad+bd;
+  }
+  function pointInRect(x,z,cx,cz,hw,hd){
+    return Math.abs(x-cx) <= hw && Math.abs(z-cz) <= hd;
+  }
+  function spawnTrack(v, dt){
+    if(Math.abs(v.speed) < 0.5 || Math.random() > 0.22) return;
+    state.particles.push({x:v.x - Math.sin(v.yaw)*1.1 + (Math.random()-0.5)*0.6,z:v.z - Math.cos(v.yaw)*1.1 + (Math.random()-0.5)*0.6,life:0.9,vy:0.2,vx:0});
+  }
+
+  function cameraSetup(){
+    const v = state.vehicle;
+    if(state.camera === 'behind'){
+      return { x:v.x - Math.sin(v.yaw)*5.4, y:2.65, z:v.z - Math.cos(v.yaw)*5.4, yaw:v.yaw, pitch:-0.12 };
+    }
+    if(state.camera === 'front'){
+      return { x:v.x + Math.sin(v.yaw)*6.0, y:2.2, z:v.z + Math.cos(v.yaw)*6.0, yaw:v.yaw+Math.PI, pitch:-0.05 };
+    }
+    return { x:v.x + Math.sin(v.yaw)*0.45, y:1.72, z:v.z + Math.cos(v.yaw)*0.45, yaw:v.yaw, pitch:-0.02 };
+  }
+
+  function project(pt, cam){
+    let dx = pt.x - cam.x;
+    let dy = pt.y - cam.y;
+    let dz = pt.z - cam.z;
+
+    const sy = Math.sin(-cam.yaw), cy = Math.cos(-cam.yaw);
+    let x1 = dx*cy - dz*sy;
+    let z1 = dx*sy + dz*cy;
+
+    const sp = Math.sin(-cam.pitch), cp = Math.cos(-cam.pitch);
+    let y2 = dy*cp - z1*sp;
+    let z2 = dy*sp + z1*cp;
+
+    if(z2 <= 0.2) return null;
+    const f = Math.min(W,H)*0.95;
+    return { x: W/2 + x1/z2*f, y: H/2 - y2/z2*f, z: z2 };
+  }
+
+  function poly(points, fill, stroke){
+    if(points.length < 3) return;
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for(let i=1;i<points.length;i++) ctx.lineTo(points[i].x, points[i].y);
+    ctx.closePath();
+    if(fill){ ctx.fillStyle = fill; ctx.fill(); }
+    if(stroke){ ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
+  }
+
+  function drawBox(cam, cx, cz, w, d, h, colors){
+    const x0 = cx-w/2, x1 = cx+w/2, z0 = cz-d/2, z1 = cz+d/2;
+    const pts = {
+      a: project({x:x0,y:0,z:z0},cam), b: project({x:x1,y:0,z:z0},cam), c: project({x:x1,y:0,z:z1},cam), d: project({x:x0,y:0,z:z1},cam),
+      A: project({x:x0,y:h,z:z0},cam), B: project({x:x1,y:h,z:z0},cam), C: project({x:x1,y:h,z:z1},cam), D: project({x:x0,y:h,z:z1},cam)
+    };
+    if(!pts.a && !pts.b && !pts.c && !pts.d && !pts.A && !pts.B && !pts.C && !pts.D) return;
+    const faces = [
+      {avg:(z0+z1)/2, arr:[pts.a,pts.b,pts.B,pts.A], fill:colors.side1},
+      {avg:(z0+z1)/2, arr:[pts.b,pts.c,pts.C,pts.B], fill:colors.side2},
+      {avg:(z0+z1)/2, arr:[pts.d,pts.a,pts.A,pts.D], fill:colors.side2},
+      {avg:(z0+z1)/2, arr:[pts.A,pts.B,pts.C,pts.D], fill:colors.top}
+    ];
+    faces.sort((m,n)=>n.avg-m.avg);
+    for(const f of faces){ const arr=f.arr.filter(Boolean); if(arr.length===4) poly(arr,f.fill); }
+  }
+
+  function drawGround(cam){
+    const sky = ctx.createLinearGradient(0,0,0,H);
+    sky.addColorStop(0,'#557f9e'); sky.addColorStop(0.45,'#b9d9ea'); sky.addColorStop(1,'#edf7fb');
+    ctx.fillStyle = sky; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#dbeff4'; ctx.fillRect(0,H*0.55,W,H*0.45);
+
+    // distant hills
+    ctx.fillStyle = '#8aa7b8';
+    ctx.beginPath(); ctx.moveTo(0,H*0.58);
+    for(let i=0;i<=10;i++){ const x=i/10*W, y=H*0.47 + Math.sin(i*0.75+0.5)*24 + (i%2?16:0); ctx.lineTo(x,y); }
+    ctx.lineTo(W,H*0.58); ctx.closePath(); ctx.fill();
+
+    // Draw the entire road, including the section where the ATV starts.
+    // Short world-space quads avoid projection failures when road endpoints
+    // pass behind the camera (common with close chase cameras).
+    for (let z = world.roadEnd; z > world.roadStart; z -= 5) {
+      const za = Math.max(world.roadStart, z - 5);
+      const strip = [
+        project({x:-world.roadHalf,y:0.025,z:za},cam),
+        project({x: world.roadHalf,y:0.025,z:za},cam),
+        project({x: world.roadHalf,y:0.025,z:z},cam),
+        project({x:-world.roadHalf,y:0.025,z:z},cam)
+      ];
+      if(strip.every(Boolean)) poly(strip, Math.floor(z/5)%3===0?'#87939b':'#8c989f');
+      // Compacted snowbanks on either side of the road.
+      for (let side of [-1,1]) {
+        const x = side * world.roadHalf;
+        const bank = [
+          project({x,y:0.06,z:za},cam),
+          project({x:x+side*1.05,y:0.06,z:za},cam),
+          project({x:x+side*1.05,y:0.06,z:z},cam),
+          project({x,y:0.06,z:z},cam)
+        ];
+        if(bank.every(Boolean)) poly(bank,'#e5f7fc');
+      }
+      if(Math.floor(z/5)%4<2){
+        const stripe = [
+          project({x:-0.11,y:0.045,z:za},cam),
+          project({x: 0.11,y:0.045,z:za},cam),
+          project({x: 0.11,y:0.045,z:z},cam),
+          project({x:-0.11,y:0.045,z:z},cam)
+        ];
+        if(stripe.every(Boolean)) poly(stripe,'#faf0c8');
+      }
+    }
+
+    // driveway and yard
+    const y = world.yard;
+    const drv = world.driveway;
+    const drivewayPoly = [
+      project({x:drv.x-drv.w/2,y:0.01,z:drv.z-drv.d/2},cam),
+      project({x:drv.x+drv.w/2,y:0.01,z:drv.z-drv.d/2},cam),
+      project({x:drv.x+drv.w/2,y:0.01,z:drv.z+drv.d/2},cam),
+      project({x:drv.x-drv.w/2,y:0.01,z:drv.z+drv.d/2},cam)
+    ].filter(Boolean);
+    if(drivewayPoly.length===4) poly(drivewayPoly,'#a3abb1');
+    const yardPoly = [
+      project({x:y.x-y.w/2,y:0.01,z:y.z-y.d/2},cam),
+      project({x:y.x+y.w/2,y:0.01,z:y.z-y.d/2},cam),
+      project({x:y.x+y.w/2,y:0.01,z:y.z+y.d/2},cam),
+      project({x:y.x-y.w/2,y:0.01,z:y.z+y.d/2},cam)
+    ].filter(Boolean);
+    if(yardPoly.length===4) poly(yardPoly,'#bcc6ca');
+
+    // plow stripes guide on yard
+    if(state.phase === 'plow' || state.mode==='done'){
+      for(let i=-2;i<=2;i++){
+        const line = [project({x:i*6,y:0.03,z:y.z-y.d/2},cam), project({x:i*6,y:0.03,z:y.z+y.d/2},cam)].filter(Boolean);
+        if(line.length===2){ ctx.strokeStyle = 'rgba(75,120,150,0.25)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(line[0].x,line[0].y); ctx.lineTo(line[1].x,line[1].y); ctx.stroke(); }
+      }
+    }
+  }
+
+  function drawSnowPatches(cam){
+    for(const p of state.snowPatches){
+      if(p.remaining <= 0) continue;
+      const alpha = clamp(0.22 + p.remaining*0.78, 0.16, 1);
+      const pts = [
+        project({x:p.x-p.w/2,y:0.03,z:p.z-p.d/2},cam),
+        project({x:p.x+p.w/2,y:0.03,z:p.z-p.d/2},cam),
+        project({x:p.x+p.w/2,y:0.03,z:p.z+p.d/2},cam),
+        project({x:p.x-p.w/2,y:0.03,z:p.z+p.d/2},cam)
+      ];
+      if(pts.every(Boolean)) poly(pts, `rgba(245,251,255,${alpha})`, 'rgba(200,225,236,0.65)');
+      const crest = [
+        project({x:p.x-p.w/2,y:0.18*p.remaining,z:p.z-p.d/3},cam),
+        project({x:p.x+p.w/2,y:0.18*p.remaining,z:p.z-p.d/3},cam),
+        project({x:p.x+p.w/2,y:0.18*p.remaining,z:p.z+p.d/3},cam),
+        project({x:p.x-p.w/2,y:0.18*p.remaining,z:p.z+p.d/3},cam)
+      ];
+      if(crest.every(Boolean)) poly(crest, `rgba(255,255,255,${0.9*alpha})`);
+    }
+  }
+
+  function drawVehicle(cam){
+    if(state.camera === 'handlebar') return;
+    const v = state.vehicle;
+    const yaw = v.yaw;
+    const bodyPts = [
+      {x:-0.95,y:0,z:-1.35},{x:0.95,y:0,z:-1.35},{x:0.95,y:0,z:1.35},{x:-0.95,y:0,z:1.35},
+      {x:-0.9,y:0.72,z:-1.15},{x:0.9,y:0.72,z:-1.15},{x:0.9,y:0.72,z:1.15},{x:-0.9,y:0.72,z:1.15}
+    ].map(p => worldFromVehicle(v, p.x,p.y,p.z,yaw));
+    const pr = bodyPts.map(p => project(p,cam));
+    if(pr.some(Boolean)){
+      const [a,b,c,d,A,B,C,D]=pr;
+      if(a&&b&&B&&A) poly([a,b,B,A],'#c14532');
+      if(b&&c&&C&&B) poly([b,c,C,B],'#b13f2e');
+      if(d&&a&&A&&D) poly([d,a,A,D],'#992f22');
+      if(A&&B&&C&&D) poly([A,B,C,D],'#d4503d');
+      if(a&&b&&c&&d) poly([a,b,c,d],'#1f2b36');
+    }
+    // seat
+    drawBox(cam, v.x, v.z, 1.0, 1.1, 0.35, {top:'#233849',side1:'#1a2a37',side2:'#16232d'});
+    // wheels
+    const wheelOffsets = [[-1.15,-1.1],[1.15,-1.1],[-1.15,1.1],[1.15,1.1]];
+    for(const [ox,oz] of wheelOffsets){
+      const p = worldFromVehicle(v, ox,0,oz,yaw);
+      drawBox(cam,p.x,p.z,0.52,0.66,0.46,{top:'#161d23',side1:'#12181e',side2:'#0b1015'});
+    }
+    // plow
+    const plow = [
+      worldFromVehicle(v,-1.6,0.15,-1.7,yaw), worldFromVehicle(v,1.6,0.15,-1.7,yaw), worldFromVehicle(v,1.2,0.65,-1.15,yaw), worldFromVehicle(v,-1.2,0.65,-1.15,yaw)
+    ].map(p=>project(p,cam));
+    if(plow.every(Boolean)) poly(plow,'#d9edf5','#8eb0bf');
+  }
+
+  function worldFromVehicle(v, ox, oy, oz, yaw){
+    return { x:v.x + ox*Math.cos(yaw) + oz*Math.sin(yaw), y:oy, z:v.z - ox*Math.sin(yaw) + oz*Math.cos(yaw) };
+  }
+
+  function drawTrees(cam){
+    for(const t of world.trees){
+      drawBox(cam,t.x,t.z,0.34,0.34,2.4,{top:'#72503d',side1:'#644735',side2:'#5a3d2d'});
+      drawBox(cam,t.x,t.z,2.8+t.r,2.8+t.r,2.4+t.h*0.26,{top:'#365a43',side1:'#2c4b37',side2:'#223d2c'});
+    }
+  }
+
+  function drawPoles(cam){
+    for(const p of world.poles){
+      drawBox(cam,p.x,p.z,0.18,0.18,p.h,{top:'#8e9189',side1:'#767a73',side2:'#696d66'});
+      const a = project({x:p.x,y:p.h-0.15,z:p.z},cam), b=project({x:p.x-0.18,y:p.h-0.15,z:p.z+2.4},cam);
+      if(a&&b){ ctx.strokeStyle='#3d3d42'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); }
+    }
+  }
+
+  function drawFences(cam){
+    for(const f of world.fence){
+      if(f.vertical){ drawBox(cam,f.x,f.z,0.18,2.2,0.9,{top:'#d9d0c5',side1:'#c8beb3',side2:'#b8aea5'}); }
+      else{ drawBox(cam,f.x,f.z,2.2,0.18,0.9,{top:'#ddd5cb',side1:'#c9c0b6',side2:'#b8aea5'}); }
+    }
+  }
+
+  function drawHouses(cam){
+    for(const h of world.outHouses){
+      drawBox(cam,h.x,h.z,h.w,h.d,h.h,{top:'#efe7df',side1:h.color,side2:shade(h.color,-18)});
+      drawRoof(cam,h.x,h.z,h.w+1,h.d+0.4,h.h+1.4,'#48525d');
+    }
+    drawBox(cam,world.house.x,world.house.z,world.house.w,world.house.d,world.house.h,{top:'#f7efe6',side1:'#8f523f',side2:'#7b4334'});
+    drawRoof(cam,world.house.x,world.house.z,world.house.w+1.2,world.house.d+0.8,world.house.h+1.8,'#4d5b69');
+    drawBox(cam,world.garage.x,world.garage.z,world.garage.w,world.garage.d,world.garage.h,{top:'#e9e6de',side1:'#8a7c6a',side2:'#7b6c5a'});
+    drawRoof(cam,world.garage.x,world.garage.z,world.garage.w+0.8,world.garage.d+0.5,world.garage.h+1.0,'#565d64');
+  }
+
+  function drawRoof(cam,cx,cz,w,d,h,color){
+    const pts = [
+      project({x:cx-w/2,y:h,z:cz-d/2},cam),
+      project({x:cx+w/2,y:h,z:cz-d/2},cam),
+      project({x:cx,y:h+1.35,z:cz},cam),
+      project({x:cx+w/2,y:h,z:cz+d/2},cam),
+      project({x:cx-w/2,y:h,z:cz+d/2},cam)
+    ];
+    if(pts[0]&&pts[1]&&pts[2]) poly([pts[0],pts[1],pts[2]],color);
+    if(pts[2]&&pts[3]&&pts[4]) poly([pts[2],pts[3],pts[4]],shade(color,-12));
+  }
+
+  function shade(hex, amt){
+    const n = hex.replace('#','');
+    const num = parseInt(n,16);
+    const r = clamp(((num>>16)&255)+amt,0,255), g=clamp(((num>>8)&255)+amt,0,255), b=clamp((num&255)+amt,0,255);
+    return `rgb(${r},${g},${b})`;
+  }
+
+  function drawCars(cam){
+    for(const car of world.parkedCars){
+      drawBox(cam,car.x,car.z,car.w,car.d,1.2,{top:'#dce4ea',side1:car.color,side2:shade(car.color,-14)});
+    }
+  }
+
+  function drawGateMarker(cam){
+    if(state.phase !== 'drive') return;
+    const x=world.customerGate.x, z=world.customerGate.z;
+    const base = [
+      project({x:x-3.5,y:0.02,z:z},cam), project({x:x+3.5,y:0.02,z:z},cam), project({x:x+3.0,y:0.02,z:z+4.2},cam), project({x:x-3.0,y:0.02,z:z+4.2},cam)
+    ];
+    if(base.every(Boolean)) poly(base,'rgba(117,208,239,0.25)','rgba(117,208,239,0.75)');
+    const p1 = project({x:x-3.9,y:0,z:z},cam), p2=project({x:x-3.9,y:3.2,z:z},cam), p3=project({x:x+3.9,y:0,z:z},cam), p4=project({x:x+3.9,y:3.2,z:z},cam);
+    if(p1&&p2){ ctx.strokeStyle='#a8ecff'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke(); }
+    if(p3&&p4){ ctx.strokeStyle='#a8ecff'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(p3.x,p3.y); ctx.lineTo(p4.x,p4.y); ctx.stroke(); }
+  }
+
+  function drawTracks(cam){
+    for(const p of state.particles){
+      const scr = project({x:p.x,y:0.06+p.vy*0.06,z:p.z}, cam);
+      if(!scr) continue;
+      const s = clamp(11/scr.z, 0.4, 5);
+      ctx.fillStyle = p.vy > 1 ? `rgba(255,255,255,${clamp(p.life,0,1)})` : `rgba(170,198,210,${0.18*p.life})`;
+      ctx.beginPath(); ctx.arc(scr.x,scr.y,s,p.vy>1?0:0,Math.PI*2); ctx.fill();
+    }
+  }
+
+  function drawDashboard(cam){
+    if(state.camera !== 'handlebar') return;
+    const grad = ctx.createLinearGradient(0,H*0.72,0,H);
+    grad.addColorStop(0,'rgba(0,0,0,0)'); grad.addColorStop(1,'rgba(5,10,16,0.88)');
+    ctx.fillStyle = grad; ctx.fillRect(0,H*0.66,W,H*0.34);
+    ctx.strokeStyle = '#2d4758'; ctx.lineWidth = 8;
+    ctx.beginPath(); ctx.moveTo(W*0.22,H*0.92); ctx.quadraticCurveTo(W*0.34,H*0.63, W*0.5,H*0.63); ctx.quadraticCurveTo(W*0.66,H*0.63, W*0.78,H*0.92); ctx.stroke();
+    ctx.fillStyle = '#101a24'; ctx.beginPath(); ctx.arc(W*0.5,H*0.84,56,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#52748a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(W*0.5,H*0.84,46,0,Math.PI*2); ctx.stroke();
+    ctx.fillStyle='#e4f8ff'; ctx.font='900 18px Inter, system-ui'; ctx.textAlign='center'; ctx.fillText(Math.round(Math.abs(state.vehicle.speed)*3.6), W*0.5, H*0.845); ctx.font='700 10px Inter, system-ui'; ctx.fillText('km/t', W*0.5, H*0.865);
+    ctx.textAlign='left';
+  }
+
+  function draw(){
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    ctx.clearRect(0,0,W,H);
+    const cam = cameraSetup();
+    drawGround(cam);
+    drawTrees(cam);
+    drawPoles(cam);
+    drawHouses(cam);
+    drawFences(cam);
+    drawCars(cam);
+    drawSnowPatches(cam);
+    drawGateMarker(cam);
+    drawVehicle(cam);
+    drawTracks(cam);
+    drawDashboard(cam);
+
+    // minimap-like direction bar at bottom left
+    ctx.fillStyle='rgba(8,21,30,0.75)'; ctx.fillRect(16,H-58,170,38); ctx.strokeStyle='rgba(111,160,180,0.7)'; ctx.strokeRect(16,H-58,170,38);
+    ctx.fillStyle='#e8fbff'; ctx.font='800 12px Inter, system-ui'; ctx.fillText(state.phase==='drive' ? 'Rute til kunde' : 'Tun under arbeid', 26, H-36);
+    ctx.fillStyle='#8cd7ee'; ctx.fillRect(25,H-28,150,6);
+    if(state.phase==='drive'){
+      const pos = clamp((state.vehicle.z+70)/(165+70), 0, 1);
+      ctx.fillStyle='#ffd28d'; ctx.beginPath(); ctx.arc(25+pos*150,H-25,8,0,Math.PI*2); ctx.fill();
+    } else {
+      ctx.fillStyle='#9ef0c4'; ctx.fillRect(25,H-28,150*(state.progress/100),6);
+    }
+  }
+
+  let last=0;
+  function frame(ts){
+    const dt = Math.min(0.033, (ts-last||16)/1000);
+    last = ts;
+    update(dt);
+    draw();
+    requestAnimationFrame(frame);
+  }
+
+  resetMission();
+  requestAnimationFrame(frame);
 })();
 </script>
 </body>
