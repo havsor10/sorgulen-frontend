@@ -1,21 +1,9 @@
-// Velkomstoverlay + anonym besøkssporing for Sørgulen Industriservice.
+// Offentlig bootstrap + anonym besøkssporing for Sørgulen Industriservice.
 //
-// Denne filen lastes på alle offentlige sider. Derfor brukes den også som
-// bootstrap for site-consistency.js, som holder offentlig kontaktinformasjon
-// og eldre standardtekster konsekvente på tvers av nettsiden.
-//
-// Overlayet vises første gang en besøkende kommer inn på en av sidene.
-// Når besøkende klikker "Fortsett":
-//   1) Overlayet fjernes og huskes i localStorage (vises ikke igjen på enheten)
-//   2) Vi registrerer ETT besøk i backend – helt anonymt.
-//
-// Personvern: vi lagrer ingen persondata. "visitorId" er en tilfeldig generert
-// streng som kun brukes til å skille unike enheter fra gjentakende besøk.
-// Ingen IP, ingen navn, ingen cookies. Derfor kreves heller ikke cookie-banner.
+// Filen lastes på offentlige sider og starter site-consistency.js.
+// Det finnes ikke lenger noe velkomstoverlay: besøkende skal gå rett inn på nettsiden.
 
 (function () {
-  // Last felles offentlig nettstedskonfigurasjon fra samme mappe som denne filen.
-  // Dette skjer før eventuell tidlig retur for velkomstoverlayet.
   try {
     var ownSrc = document.currentScript && document.currentScript.src;
     if (ownSrc && !document.querySelector('script[data-sorgulen-site-consistency]')) {
@@ -46,11 +34,10 @@
 
   function registerVisit() {
     try {
-      var body = JSON.stringify({ visitorId: getVisitorId() });
       fetch(API_BASE + "/stats/visit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: body,
+        body: JSON.stringify({ visitorId: getVisitorId() }),
         keepalive: true,
       }).catch(function () {});
     } catch (e) {}
@@ -81,39 +68,15 @@
     durationSent = true;
     sendDuration();
   }
+
   window.addEventListener("pagehide", onLeave);
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "hidden") onLeave();
   });
 
-  if (localStorage.getItem("sorgulen_welcome_shown") === "1") return;
-
-  function buildOverlay() {
-    var overlay = document.createElement("div");
-    overlay.id = "maint-overlay";
-    overlay.innerHTML =
-      '<div id="maint-card">' +
-        "<h1>Velkommen til Sørgulen Industriservice</h1>" +
-        "<p>Nettsiden er nå klar til bruk. Vi gleder oss til å hjelpe Flor\u00f8\u2011folket med mindre og varierte oppdrag.</p>" +
-        '<div id="maint-actions">' +
-          '<button id="welcomeContinue" class="cta">Fortsett</button>' +
-        "</div>" +
-      "</div>";
-    return overlay;
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", registerVisit, { once: true });
+  } else {
+    registerVisit();
   }
-
-  document.addEventListener("DOMContentLoaded", function () {
-    var overlay = buildOverlay();
-    document.body.appendChild(overlay);
-  });
-
-  document.addEventListener("click", function (e) {
-    if (e.target && e.target.id === "welcomeContinue") {
-      var overlay = document.getElementById("maint-overlay");
-      if (overlay) overlay.remove();
-      try { localStorage.setItem("sorgulen_welcome_shown", "1"); } catch (er) {}
-      visitStart = Date.now();
-      registerVisit();
-    }
-  });
 })();
