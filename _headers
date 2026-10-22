@@ -25,3 +25,7 @@
 
 /tjenester/dunkvask-pris-info.html
   Link: <https://sorgulen.no/tjenester/dunkvask-pris-info.html>; rel="canonical"
+
+
+/maintenance.js
+  Cache-Control: no-store, max-age=0
