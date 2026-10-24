@@ -643,7 +643,7 @@
         '<div class="field-inline-two"><label class="field-field"><span>Beløp</span><input class="field-input" name="amount" type="number" min="0.01" step="0.01" inputmode="decimal" required autofocus></label>' +
         '<label class="field-field"><span>Leverandør</span><input class="field-input" name="supplier" maxlength="160" placeholder="Valgfritt"></label></div>' +
         '<label class="field-field"><span>Hva kjøpte du?</span><input class="field-input" name="description" maxlength="500" required placeholder="F.eks. fugesand"></label>' +
-        '<label class="field-field"><span>Kvittering <small>valgfritt</small></span><input class="field-input" name="receipt" type="file" accept="image/jpeg,image/png,image/webp,image/heic" capture="environment"></label>' +
+        '<label class="field-field"><span>Kvittering <small>valgfritt</small></span><input class="field-input" name="receipt" type="file" accept="image/*"><small class="field-help">Velg et eksisterende bilde fra mobilen eller ta et nytt bilde.</small></label>' +
         '<label class="field-check"><input name="billable" type="checkbox" checked> Skal kunden belastes for dette</label></div>';
     } else if (type === "customer-note") {
       kicker.textContent = "Kundelogg";
