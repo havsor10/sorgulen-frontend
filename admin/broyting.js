@@ -85,6 +85,11 @@
     const hours = Math.floor(minutes / 60);
     return minutes % 60 ? `${hours} t ${minutes % 60} min` : `${hours} t`;
   }
+  function formatMoney(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return "–";
+    return `${new Intl.NumberFormat("nb-NO", { minimumFractionDigits: Number.isInteger(number) ? 0 : 2, maximumFractionDigits: 2 }).format(number)} kr`;
+  }
   function sourceLabel(value) { return ({ website: "Nett", phone: "Telefon", sms: "SMS", manual: "Manuell", recurring: "Fast kunde" })[value] || "Manuell"; }
   function priorityLabel(value) { return ({ urgent: "HASTER", high: "Høy", normal: "Normal", low: "Lav" })[value] || "Normal"; }
   function navigationUrl(address) {
@@ -171,7 +176,10 @@
     els.queue.innerHTML = laterQueue.map(queueMarkup).join("");
     els.deferredSection.classList.toggle("hidden", !(data.deferred || []).length);
     els.deferred.innerHTML = (data.deferred || []).map((job) => `<article class="snow-queue-item"><span class="snow-queue-number">–</span><div class="snow-queue-main"><strong>${esc(job.customerSnapshot?.name || "Kunde")}</strong><p>${esc(job.customerSnapshot?.address || "")}</p></div><div class="snow-queue-actions"><button class="snow-mini" type="button" data-restore-job="${esc(job._id)}">↩</button></div></article>`).join("");
-    els.done.innerHTML = (data.done || []).length ? data.done.map((job) => `<div class="snow-done-item"><strong>${esc(job.customerSnapshot?.name || "Kunde")}</strong><span>${job.finishedAt ? new Intl.DateTimeFormat("no-NO", { timeZone: "Europe/Oslo", hour: "2-digit", minute: "2-digit" }).format(new Date(job.finishedAt)) : "Ferdig"}</span></div>`).join("") : '<p class="snow-muted">Ingen ferdige ennå.</p>';
+    els.done.innerHTML = (data.done || []).length ? data.done.map((job) => `<div class="snow-done-item">
+      <div><strong>${esc(job.customerSnapshot?.name || "Kunde")}</strong><span>${job.finishedAt ? new Intl.DateTimeFormat("no-NO", { timeZone: "Europe/Oslo", hour: "2-digit", minute: "2-digit" }).format(new Date(job.finishedAt)) : "Ferdig"}</span></div>
+      ${job.workOrderId ? `<button class="snow-done-billing" type="button" data-billing-job="${esc(job._id)}">Pris / faktura</button>` : ""}
+    </div>`).join("") : '<p class="snow-muted">Ingen ferdige ennå.</p>';
     els.sumQueued.textContent = data.summary?.queued ?? 0;
     els.sumDone.textContent = data.summary?.done ?? 0;
     els.sumRemaining.textContent = formatMinutes(data.summary?.estimatedMinutesRemaining || 0);
@@ -233,10 +241,17 @@
   }
 
   async function criticalMutation(path, body, optimistic) {
-    try { render(await api(path, { method: "POST", body: JSON.stringify(body) })); return; }
-    catch (error) {
-      if (isNetworkError(error)) { queueOffline(path, body, optimistic); return; }
+    try {
+      const data = await api(path, { method: "POST", body: JSON.stringify(body) });
+      render(data);
+      return { data, offline: false };
+    } catch (error) {
+      if (isNetworkError(error)) {
+        queueOffline(path, body, optimistic);
+        return { data: null, offline: true };
+      }
       showNotice(error.message, "error");
+      return { data: null, offline: false, error };
     }
   }
 
@@ -265,10 +280,67 @@
     const body = { clientStartedAt, operationId: uuid("snow-start") };
     await criticalMutation(`/admin/snow/jobs/${encodeURIComponent(id)}/start`, body, () => optimisticStart(id, clientStartedAt));
   }
+  async function openBillingSummary(job) {
+    const workOrderId = job?.workOrderId;
+    if (!workOrderId) {
+      showNotice("Oppdraget mangler fakturakobling.", "error", 4500);
+      return;
+    }
+
+    openModal("Pris etter brøyting", '<div class="snow-billing-loading">Regner ut endelig pris…</div>', "Ferdig");
+    try {
+      const preview = await api(`/invoices/work-order/${encodeURIComponent(workOrderId)}`);
+      const total = Number(preview.totals?.amount);
+      const beforeRounding = Number(preview.totals?.amountBeforeRounding);
+      const customer = preview.customer?.name || job.customerSnapshot?.name || "Kunde";
+      const lineSummary = (preview.lines || []).slice(0, 4).map((line) =>
+        `<div class="snow-billing-line"><span>${esc(line.item || "Arbeid")}</span><strong>${formatMoney(line.amount)}</strong></div>`
+      ).join("");
+      const rounding = Number(preview.totals?.roundingAdjustment || 0);
+
+      openModal("Ferdig hos " + customer, `
+        <div class="snow-billing-summary">
+          <p class="snow-billing-label">KUNDEN SKAL BETALE</p>
+          <div class="snow-billing-total">${formatMoney(total)}</div>
+          ${Number.isFinite(beforeRounding) && Math.abs(rounding) >= 0.01 ? `<p class="snow-billing-rounding">Før øreavrunding: ${formatMoney(beforeRounding)} · avrunding ${formatMoney(rounding)}</p>` : ""}
+          <div class="snow-billing-lines">${lineSummary || '<p class="snow-muted">Fakturagrunnlaget er klart.</p>'}</div>
+          <p class="snow-billing-help">Hvis kunden vil betale med en gang, er dette beløpet du oppgir. Betalingen registreres etter at fakturaen er opprettet og levert.</p>
+          <div class="snow-billing-actions">
+            <a class="snow-primary snow-xl" href="faktura-ny.html?workOrderId=${encodeURIComponent(workOrderId)}&from=snow">OPPRETT FAKTURA</a>
+            <button class="snow-secondary" type="button" data-close-snow-billing>Fakturer senere</button>
+          </div>
+        </div>
+      `, "Ferdig");
+    } catch (error) {
+      const invoiceId = error.data?.invoiceId;
+      if (invoiceId) {
+        openModal("Faktura finnes", `
+          <div class="snow-billing-summary">
+            <p>Denne brøytingen er allerede koblet til en faktura.</p>
+            <a class="snow-primary snow-xl" href="faktura-detalj.html?id=${encodeURIComponent(invoiceId)}&from=snow">ÅPNE FAKTURA</a>
+            <button class="snow-secondary" type="button" data-close-snow-billing>Lukk</button>
+          </div>
+        `, "Ferdig");
+        return;
+      }
+      openModal("Kunne ikke hente pris", `<div class="snow-billing-summary"><p class="snow-error">${esc(error.message)}</p><a class="snow-secondary" href="oppdrag.html?from=field">Åpne oppdrag</a></div>`, "Ferdig");
+    }
+  }
+
   async function finishJob(id) {
+    const activeJob = state.data?.activeJob && String(state.data.activeJob._id) === String(id)
+      ? structuredClone(state.data.activeJob)
+      : null;
     const clientFinishedAt = new Date().toISOString();
     const body = { clientFinishedAt, operationId: uuid("snow-finish") };
-    await criticalMutation(`/admin/snow/jobs/${encodeURIComponent(id)}/finish`, body, () => optimisticFinish(id, clientFinishedAt));
+    const result = await criticalMutation(`/admin/snow/jobs/${encodeURIComponent(id)}/finish`, body, () => optimisticFinish(id, clientFinishedAt));
+    if (result?.offline) {
+      showNotice("Ferdig lagret offline. Pris og faktura blir tilgjengelig når registreringen er synkronisert.", "warning", 6500);
+      return;
+    }
+    if (!result?.data) return;
+    const finishedJob = (result.data.done || []).find((job) => String(job._id) === String(id)) || activeJob;
+    if (finishedJob?.workOrderId) await openBillingSummary(finishedJob);
   }
 
   async function reorder(queue) {
@@ -430,6 +502,16 @@
 
     const finish = event.target.closest("[data-finish-job]");
     if (finish) { finish.disabled = true; await finishJob(finish.dataset.finishJob); return; }
+
+    const billing = event.target.closest("[data-billing-job]");
+    if (billing) {
+      const job = (state.data?.done || []).find((item) => String(item._id) === String(billing.dataset.billingJob));
+      if (job) await openBillingSummary(job);
+      return;
+    }
+
+    const closeBilling = event.target.closest("[data-close-snow-billing]");
+    if (closeBilling) { closeModal(); return; }
 
     const manage = event.target.closest("[data-manage-job]");
     if (manage) { openQueueJobMenu(manage.dataset.manageJob); return; }
