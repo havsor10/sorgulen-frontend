@@ -294,10 +294,12 @@
     ratesModal.classList.add("hidden");
   });
   saveBtn.addEventListener("click", save);
-  cancelBtn.addEventListener("click", () => { window.location.href = "fakturaer.html"; });
+  const pageParams = new URLSearchParams(location.search);
+  const returnToSnow = pageParams.get("from") === "snow";
+  cancelBtn.addEventListener("click", () => { window.location.href = returnToSnow ? "broyting.html" : "fakturaer.html"; });
 
   loadConfig();
-  const workOrderId = new URLSearchParams(location.search).get("workOrderId");
+  const workOrderId = pageParams.get("workOrderId");
   if (workOrderId) loadWorkOrder(workOrderId);
   else addLine();
 })();
