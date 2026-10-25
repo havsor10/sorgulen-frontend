@@ -15,7 +15,7 @@
   const els = {
     noRound: $("#noRound"), activeRound: $("#activeRound"), notice: $("#snowNotice"), connection: $("#snowConnection"),
     activeJob: $("#activeJobCard"), nextJob: $("#nextJobCard"), queue: $("#snowQueue"), deferred: $("#snowDeferred"), done: $("#snowDone"),
-    deferredSection: $("#deferredSection"), sumQueued: $("#sumQueued"), sumDone: $("#sumDone"), sumRemaining: $("#sumRemaining"), queueCount: $("#queueCount"),
+    queueSection: $("#queueSection"), deferredSection: $("#deferredSection"), sumQueued: $("#sumQueued"), sumDone: $("#sumDone"), sumRemaining: $("#sumRemaining"), queueCount: $("#queueCount"),
     modal: $("#snowModal"), modalTitle: $("#snowModalTitle"), modalEyebrow: $("#snowModalEyebrow"), modalBody: $("#snowModalBody"), subline: $("#snowSubline"),
   };
 
@@ -111,9 +111,39 @@
     const travel = job.estimatedTravelMinutes != null ? ` · ca. ${job.estimatedTravelMinutes} min kjøring` : "";
     return `<div class="snow-focus-kicker"><span>NESTE</span><span>${badges(job)}</span></div><h2>${esc(job.customerSnapshot?.name || "Kunde")}</h2><p class="snow-address">${esc(job.customerSnapshot?.address || "Adresse mangler")}${esc(travel)}</p>${job.note ? `<div class="snow-note">${esc(job.note)}</div>` : ""}<div class="snow-focus-actions"><a class="snow-secondary" href="${navigationUrl(job.customerSnapshot?.address)}" target="_blank" rel="noopener">NAVIGER</a><button class="snow-primary snow-xl" type="button" data-start-job="${esc(job._id)}">START BRØYTING</button></div>`;
   }
-  function queueMarkup(job, index, total) {
-    const travel = job.estimatedTravelMinutes != null ? ` · ~${job.estimatedTravelMinutes} min` : "";
-    return `<article class="snow-queue-item"><span class="snow-queue-number">${index + 1}</span><div class="snow-queue-main"><strong>${esc(job.customerSnapshot?.name || "Kunde")}</strong><p>${esc(job.customerSnapshot?.address || "Adresse mangler")}${esc(travel)}</p><div class="snow-queue-meta">${badges(job)}${job.note ? `<span class="snow-muted">${esc(job.note)}</span>` : ""}</div></div><div class="snow-queue-actions"><button class="snow-mini" type="button" data-move-up="${esc(job._id)}" ${index === 0 ? "disabled" : ""}>↑</button><button class="snow-mini" type="button" data-move-down="${esc(job._id)}" ${index === total - 1 ? "disabled" : ""}>↓</button><button class="snow-mini" type="button" data-priority-job="${esc(job._id)}">!</button><button class="snow-mini" type="button" data-defer-job="${esc(job._id)}">→</button></div></article>`;
+  function queueMarkup(job, index) {
+    const travel = job.estimatedTravelMinutes != null ? ` · ca. ${job.estimatedTravelMinutes} min kjøring` : "";
+    return `<button class="snow-queue-item snow-queue-open" type="button" data-manage-job="${esc(job._id)}">
+      <span class="snow-queue-number">${index + 2}</span>
+      <span class="snow-queue-main">
+        <strong>${esc(job.customerSnapshot?.name || "Kunde")}</strong>
+        <span class="snow-queue-address">${esc(job.customerSnapshot?.address || "Adresse mangler")}${esc(travel)}</span>
+        <span class="snow-queue-meta">${badges(job)}${job.note ? `<span class="snow-muted">${esc(job.note)}</span>` : ""}</span>
+      </span>
+      <span class="snow-queue-manage">Endre ›</span>
+    </button>`;
+  }
+
+  function openQueueJobMenu(id) {
+    const queue = state.data?.queue || [];
+    const job = queue.find((item) => String(item._id) === String(id));
+    if (!job) return;
+    const index = queue.findIndex((item) => String(item._id) === String(id));
+    openModal("Kunde i kø", `
+      <div class="snow-manage-job">
+        <div class="snow-manage-customer">
+          <strong>${esc(job.customerSnapshot?.name || "Kunde")}</strong>
+          <span>${esc(job.customerSnapshot?.address || "Adresse mangler")}</span>
+          ${job.note ? `<p>${esc(job.note)}</p>` : ""}
+        </div>
+        <div class="snow-manage-actions">
+          <button class="snow-secondary" type="button" data-queue-action="up" data-job-id="${esc(job._id)}" ${index <= 0 ? "disabled" : ""}>Flytt én plass opp</button>
+          <button class="snow-secondary" type="button" data-queue-action="down" data-job-id="${esc(job._id)}" ${index >= queue.length - 1 ? "disabled" : ""}>Flytt én plass ned</button>
+          <button class="snow-secondary" type="button" data-queue-action="priority" data-job-id="${esc(job._id)}">${job.priority === "urgent" ? "Fjern HASTER" : "Merk HASTER"}</button>
+          <button class="snow-secondary" type="button" data-queue-action="defer" data-job-id="${esc(job._id)}">Utsett til senere</button>
+        </div>
+      </div>
+    `, "Kø");
   }
 
   function render(data, { fromServer = true } = {}) {
@@ -134,14 +164,18 @@
     els.activeJob.classList.toggle("hidden", !data.activeJob);
     els.activeJob.innerHTML = activeMarkup(data.activeJob);
     els.nextJob.innerHTML = data.activeJob ? `<div class="snow-focus-kicker"><span>NESTE ETTER DENNE</span></div>${data.nextJob ? `<h2>${esc(data.nextJob.customerSnapshot?.name || "Kunde")}</h2><p class="snow-address">${esc(data.nextJob.customerSnapshot?.address || "")}</p>` : "<h2>Køen er tom</h2>"}` : nextMarkup(data.nextJob);
-    els.queue.innerHTML = (data.queue || []).length ? data.queue.map(queueMarkup).join("") : '<div class="snow-empty">Ingen kunder venter.</div>';
+
+    const nextId = data.nextJob?._id ? String(data.nextJob._id) : "";
+    const laterQueue = (data.queue || []).filter((job) => String(job._id) !== nextId);
+    els.queueSection.classList.toggle("hidden", laterQueue.length === 0);
+    els.queue.innerHTML = laterQueue.map(queueMarkup).join("");
     els.deferredSection.classList.toggle("hidden", !(data.deferred || []).length);
     els.deferred.innerHTML = (data.deferred || []).map((job) => `<article class="snow-queue-item"><span class="snow-queue-number">–</span><div class="snow-queue-main"><strong>${esc(job.customerSnapshot?.name || "Kunde")}</strong><p>${esc(job.customerSnapshot?.address || "")}</p></div><div class="snow-queue-actions"><button class="snow-mini" type="button" data-restore-job="${esc(job._id)}">↩</button></div></article>`).join("");
     els.done.innerHTML = (data.done || []).length ? data.done.map((job) => `<div class="snow-done-item"><strong>${esc(job.customerSnapshot?.name || "Kunde")}</strong><span>${job.finishedAt ? new Intl.DateTimeFormat("no-NO", { timeZone: "Europe/Oslo", hour: "2-digit", minute: "2-digit" }).format(new Date(job.finishedAt)) : "Ferdig"}</span></div>`).join("") : '<p class="snow-muted">Ingen ferdige ennå.</p>';
     els.sumQueued.textContent = data.summary?.queued ?? 0;
     els.sumDone.textContent = data.summary?.done ?? 0;
     els.sumRemaining.textContent = formatMinutes(data.summary?.estimatedMinutesRemaining || 0);
-    els.queueCount.textContent = data.summary?.queued ?? 0;
+    els.queueCount.textContent = laterQueue.length;
     restartClock();
   }
 
@@ -384,17 +418,38 @@
   });
 
   document.addEventListener("click", async (event) => {
-    const start = event.target.closest("[data-start-job]"); if (start) { start.disabled = true; await startJob(start.dataset.startJob); return; }
-    const finish = event.target.closest("[data-finish-job]"); if (finish) { finish.disabled = true; await finishJob(finish.dataset.finishJob); return; }
-    const up = event.target.closest("[data-move-up]"); if (up) { await moveJob(up.dataset.moveUp, -1); return; }
-    const down = event.target.closest("[data-move-down]"); if (down) { await moveJob(down.dataset.moveDown, 1); return; }
-    const defer = event.target.closest("[data-defer-job]"); if (defer) { await patchJob(defer.dataset.deferJob, { status: "deferred" }); return; }
-    const restore = event.target.closest("[data-restore-job]"); if (restore) { await patchJob(restore.dataset.restoreJob, { status: "queued" }); return; }
-    const priorityButton = event.target.closest("[data-priority-job]");
-    if (priorityButton) {
-      const job = (state.data?.queue || []).find((item) => String(item._id) === String(priorityButton.dataset.priorityJob));
-      if (job) await patchJob(job._id, { priority: job.priority === "urgent" ? "normal" : "urgent" });
+    const start = event.target.closest("[data-start-job]");
+    if (start) {
+      const job = state.data?.nextJob;
+      const name = job?.customerSnapshot?.name || "kunden";
+      if (!confirm(`Ønsker du å starte en ny arbeidsøkt hos ${name}?`)) return;
+      start.disabled = true;
+      await startJob(start.dataset.startJob);
+      return;
     }
+
+    const finish = event.target.closest("[data-finish-job]");
+    if (finish) { finish.disabled = true; await finishJob(finish.dataset.finishJob); return; }
+
+    const manage = event.target.closest("[data-manage-job]");
+    if (manage) { openQueueJobMenu(manage.dataset.manageJob); return; }
+
+    const queueAction = event.target.closest("[data-queue-action]");
+    if (queueAction) {
+      const id = queueAction.dataset.jobId;
+      const action = queueAction.dataset.queueAction;
+      closeModal();
+      if (action === "up") await moveJob(id, -1);
+      else if (action === "down") await moveJob(id, 1);
+      else if (action === "defer") await patchJob(id, { status: "deferred" });
+      else if (action === "priority") {
+        const job = (state.data?.queue || []).find((item) => String(item._id) === String(id));
+        if (job) await patchJob(id, { priority: job.priority === "urgent" ? "normal" : "urgent" });
+      }
+      return;
+    }
+
+    const restore = event.target.closest("[data-restore-job]"); if (restore) { await patchJob(restore.dataset.restoreJob, { status: "queued" }); return; }
   });
 
   $("#snowModalClose").addEventListener("click", closeModal);
