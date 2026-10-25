@@ -30,3 +30,9 @@ test("fakturaflyt kan returnere til Brøytemodus", () => {
   assert.match(invoice, /pageParams\.get\("from"\) === "snow"/);
   assert.match(invoice, /returnToSnow \? "broyting\.html" : "fakturaer\.html"/);
 });
+
+
+test("ferdige kunder kan åpne samme pris/fakturaflyt senere", () => {
+  assert.match(snow, /data-billing-job/);
+  assert.match(snow, /openBillingSummary\(job\)/);
+});
