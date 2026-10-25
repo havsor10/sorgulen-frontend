@@ -12,7 +12,7 @@ test("snow mode is a dedicated mobile admin page in the shared shell", () => {
   const shell = read("admin/admin-shell.js");
   assert.match(html, /data-page="snow"/);
   assert.match(html, /START BRØYTERUNDE/);
-  assert.match(html, /\+ NY BRØYTING/);
+  assert.match(html, /\+ Legg til kunde/);
   assert.match(shell, /href="broyting\.html"/);
   assert.match(shell, /data-admin-badge="\$\{key\}"/);
   assert.match(shell, /admin\/snow\/state/);
@@ -44,4 +44,32 @@ test("admin headers allow same-origin geolocation for snow route assistance", ()
   assert.match(headers, /Permissions-Policy: geolocation=\(self\)/);
   assert.match(headers, /\/admin\/\*/);
   assert.match(headers, /Cache-Control: no-store/);
+});
+
+
+test("snow main screen avoids duplicate next-customer cards and hides admin tools behind one section", () => {
+  const html = read("admin/broyting.html");
+  const js = read("admin/broyting.js");
+  assert.match(html, /Administrer brøyterunden/);
+  assert.match(html, /Resten av køen/);
+  assert.match(js, /const laterQueue = \(data\.queue \|\| \[\]\)\.filter/);
+  assert.match(js, /String\(job\._id\) !== nextId/);
+  assert.match(js, /queueSection\.classList\.toggle\("hidden", laterQueue\.length === 0\)/);
+});
+
+test("snow queue uses understandable labelled management instead of unexplained icon buttons", () => {
+  const js = read("admin/broyting.js");
+  assert.match(js, /data-manage-job/);
+  assert.match(js, /Flytt én plass opp/);
+  assert.match(js, /Flytt én plass ned/);
+  assert.match(js, /Merk HASTER/);
+  assert.match(js, /Utsett til senere/);
+  assert.doesNotMatch(js, />↑<\/button>/);
+  assert.doesNotMatch(js, />!<\/button>/);
+});
+
+test("starting snow work requires explicit confirmation", () => {
+  const js = read("admin/broyting.js");
+  assert.match(js, /Ønsker du å starte en ny arbeidsøkt hos/);
+  assert.match(js, /if \(!confirm/);
 });
