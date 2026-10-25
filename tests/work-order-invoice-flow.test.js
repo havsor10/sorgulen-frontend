@@ -40,7 +40,8 @@ test("ny faktura tilbyr ferdige oppdrag uten krav om referanse", () => {
 });
 
 test("work-order fakturaflyt henter kunde og linjer fra backend", () => {
-  assert.match(invoiceJs, /new URLSearchParams\(location\.search\)\.get\("workOrderId"\)/);
+  assert.match(invoiceJs, /const pageParams = new URLSearchParams\(location\.search\)/);
+  assert.match(invoiceJs, /pageParams\.get\("workOrderId"\)/);
   assert.match(invoiceJs, /\/invoices\/work-order\//);
   assert.match(invoiceJs, /fillCustomer\(data\.customer/);
   assert.match(invoiceJs, /\(data\.lines \|\| \[\]\)\.forEach/);
