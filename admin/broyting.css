@@ -37,3 +37,20 @@
   .snow-summary strong{font-size:1rem}
   .snow-queue-manage{font-size:.74rem}
 }
+
+.snow-done-item{align-items:center}
+.snow-done-item>div{display:grid;gap:3px;min-width:0}
+.snow-done-item>div strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.snow-done-billing{appearance:none;border:1px solid rgba(91,166,255,.34);border-radius:10px;background:rgba(91,166,255,.09);color:#b8d8ff;min-height:40px;padding:8px 11px;font:inherit;font-size:.78rem;font-weight:900;cursor:pointer}
+.snow-billing-loading{padding:24px;text-align:center;color:var(--admin-muted);font-weight:800}
+.snow-billing-summary{display:grid;gap:14px}
+.snow-billing-label{margin:0;text-align:center;color:var(--admin-muted);font-size:.72rem;font-weight:950;letter-spacing:.09em}
+.snow-billing-total{text-align:center;font-size:clamp(2.5rem,12vw,4.4rem);font-weight:950;letter-spacing:-.04em;color:#8ce1b5}
+.snow-billing-rounding{margin:-8px 0 0;text-align:center;color:var(--admin-muted);font-size:.8rem}
+.snow-billing-lines{display:grid;gap:0;border:1px solid var(--admin-border);border-radius:13px;overflow:hidden}
+.snow-billing-line{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:11px 12px;background:var(--admin-surface-2,#131922)}
+.snow-billing-line+.snow-billing-line{border-top:1px solid var(--admin-border-soft)}
+.snow-billing-line span{color:var(--admin-muted)}
+.snow-billing-help{margin:0;color:var(--admin-muted);font-size:.86rem;line-height:1.45}
+.snow-billing-actions{display:grid;gap:9px}
+.snow-billing-actions a{text-decoration:none;display:flex;align-items:center;justify-content:center}
