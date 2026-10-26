@@ -28,12 +28,13 @@ test("offentlig nettside henter hele tjenestekatalogen dynamisk", () => {
   assert.match(booking, /requestedServiceKey/);
 });
 
-test("prisestimat samler adresse og kjører inntil to spørsmålsrunder", () => {
+test("prisestimat samler adresse og bruker én kort spørsmålsrunde", () => {
   const html = read("prisestimat.html");
   const js = read("prisestimat.js");
   assert.match(html, /id="peAddress"/);
   assert.match(html, /id="peTiming"/);
-  assert.match(js, /MAX_ROUNDS\s*=\s*2/);
+  assert.match(js, /MAX_ROUNDS\s*=\s*1/);
+  assert.match(js, /MAX_FOLLOW_UP_QUESTIONS\s*=\s*3/);
   assert.match(js, /customerAddress/);
   assert.match(js, /serviceCategory/);
   assert.match(js, /validateQuestions/);
