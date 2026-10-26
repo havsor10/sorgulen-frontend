@@ -26,3 +26,11 @@ test("admin viser direkte ringehandling i stedet for falsk AI-pris", () => {
   assert.match(admin, /href="tel:/);
   assert.match(admin, /Ring kunden/);
 });
+
+
+test("spørsmålsløpet har én runde og maks tre spørsmål", () => {
+  assert.match(js, /const MAX_ROUNDS = 1/);
+  assert.match(js, /const MAX_FOLLOW_UP_QUESTIONS = 3/);
+  assert.match(js, /slice\(0, MAX_FOLLOW_UP_QUESTIONS\)/);
+  assert.match(html, /maks 3/i);
+});
