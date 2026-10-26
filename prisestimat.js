@@ -2,7 +2,8 @@
   "use strict";
   const BACKEND_URL = (window.CONFIG && window.CONFIG.API_BASE_URL) || "https://sorgulen-backend-2.onrender.com/api";
   const MAX_IMAGES = 4;
-  const MAX_ROUNDS = 2;
+  const MAX_ROUNDS = 1;
+  const MAX_FOLLOW_UP_QUESTIONS = 3;
 
   const imagesWrap = document.getElementById("peImages");
   const addBtn = document.getElementById("peAdd");
@@ -250,7 +251,8 @@
   function addQuestions(incoming) {
     const known = new Set(questions.map((q) => q.id));
     let added = 0;
-    (Array.isArray(incoming) ? incoming : []).forEach((q) => {
+    (Array.isArray(incoming) ? incoming : []).slice(0, MAX_FOLLOW_UP_QUESTIONS).forEach((q) => {
+      if (questions.length >= MAX_FOLLOW_UP_QUESTIONS) return;
       if (!q || !q.id || known.has(q.id) || answers.has(q.id)) return;
       known.add(q.id);
       questions.push(q);
