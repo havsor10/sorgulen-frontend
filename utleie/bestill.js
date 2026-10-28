@@ -79,7 +79,7 @@
       const row = document.createElement("div");
       row.className = "rental-price-row";
       const label = document.createElement("span");
-      label.textContent = pair[1];
+      label.textContent = pair[1] + (product.variants && product.variants.length ? " frå (1 drill)" : "");
       const value = document.createElement("strong");
       value.textContent = currency(price);
       row.append(label, value);
