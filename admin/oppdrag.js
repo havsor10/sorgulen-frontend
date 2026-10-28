@@ -326,14 +326,7 @@
           </div>
         </div>
 
-        ${status === "stopped" ? `
-          <div class="stopped-summary">
-            <h4>Kontroller før ferdigstilling</h4>
-            ${renderIntervals(openWorkOrder)}
-            <p><strong>Start:</strong> ${escapeHtml(formatDateTime(openWorkOrder.startedAt))}</p>
-            <p><strong>Stopp:</strong> ${escapeHtml(formatDateTime(openWorkOrder.stoppedAt))}</p>
-            <p><strong>Notater:</strong> ${escapeHtml(openWorkOrder.notes || "Ingen notater")}</p>
-          </div>` : ""}
+        ${status === "stopped" ? '<p class="meter-stopped-note">Arbeidsøkten er avsluttet. Åpne detaljer for arbeidslogg, registreringer og ferdigstilling.</p>' : ""}
 
         <div class="meter-controls">${workOrderControls(openWorkOrder)}</div>
       </article>`;
@@ -369,29 +362,19 @@
       const amountEstimated = !["completed", "stopped"].includes(effectiveStatus(workOrder));
 
       return `
-        <article class="work-history-card status-${escapeHtml(effectiveStatus(workOrder))}">
-          <div class="history-date">
-            <span>Dato</span>
-            <strong>${escapeHtml(formatDate(workOrder.jobDate))}</strong>
-          </div>
-          <div class="history-main">
-            <h3>${escapeHtml(customer.name || "Ukjent kunde")} ${workOrder.isTest ? '<span class="work-status-badge" style="margin-left:6px;color:#f4bd67;border-color:rgba(244,189,103,.35)">TEST</span>' : ""}</h3>
-            <p>${escapeHtml(workOrder.serviceName)}</p>
-          </div>
-          <div class="history-metric">
-            <span>Arbeidstid</span>
-            <strong>${effectiveStatus(workOrder) === "planned" ? "–" : escapeHtml(formatDuration(seconds))}</strong>
-          </div>
-          <div class="history-metric">
-            <span>Beløp</span>
-            <strong>${showAmount ? escapeHtml(formatCurrency(amount, amountEstimated)) : "–"}</strong>
-          </div>
-          <div class="history-status">
-            <span class="work-status-badge status-${escapeHtml(effectiveStatus(workOrder))}">${escapeHtml(statusLabels[effectiveStatus(workOrder)] || effectiveStatus(workOrder))}</span>
-          </div>
-          <div class="history-action">
-            <button type="button" class="details-link open-job-detail" data-id="${escapeHtml(workOrder._id)}">Åpne</button>
-          </div>
+        <article class="work-history-card work-history-card-simple status-${escapeHtml(effectiveStatus(workOrder))}">
+          <button type="button" class="work-history-open open-job-detail" data-id="${escapeHtml(workOrder._id)}">
+            <span class="history-main">
+              <strong>${escapeHtml(customer.name || "Ukjent kunde")} ${workOrder.isTest ? '<span class="work-status-badge history-test">TEST</span>' : ""}</strong>
+              <span>${escapeHtml(workOrder.serviceName)}</span>
+            </span>
+            <span class="history-summary">
+              <span>${escapeHtml(formatDate(workOrder.jobDate))}</span>
+              ${effectiveStatus(workOrder) === "planned" ? "" : `<span>${escapeHtml(formatDuration(seconds))}</span>`}
+              ${showAmount ? `<span>${escapeHtml(formatCurrency(amount, amountEstimated))}</span>` : ""}
+            </span>
+            <span class="history-tail"><span class="work-status-badge status-${escapeHtml(effectiveStatus(workOrder))}">${escapeHtml(statusLabels[effectiveStatus(workOrder)] || effectiveStatus(workOrder))}</span><b aria-hidden="true">›</b></span>
+          </button>
         </article>`;
     };
 

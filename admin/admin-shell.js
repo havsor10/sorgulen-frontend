@@ -45,7 +45,8 @@
     { key: "incoming", href: "foresporsler.html", label: "Innkommende" },
     { key: "economy", href: "fakturaer.html", label: "Økonomi" },
   ];
-  const mobileItems = navItems.filter((item) => ["home", "jobs", "customers", "economy"].includes(item.key));
+  const primaryNavItems = navItems.filter((item) => ["home", "jobs", "customers", "economy"].includes(item.key));
+  const mobileItems = primaryNavItems;
   const activeClass = (key) => key === activeGroup ? " is-active" : "";
   const activeAttr = (key) => key === activeGroup ? ' aria-current="page"' : "";
   const pageClass = (key) => key === page ? " is-active" : "";
@@ -71,7 +72,7 @@
           <strong>Admin</strong>
         </a>
         <nav class="admin-desktop-nav" aria-label="Hovednavigasjon">
-          ${navItems.map((item) => `<a class="admin-nav-link${activeClass(item.key)}" href="${item.href}"${activeAttr(item.key)}><span>${item.label}</span>${badge(item.key)}</a>`).join("")}
+          ${primaryNavItems.map((item) => `<a class="admin-nav-link${activeClass(item.key)}" href="${item.href}"${activeAttr(item.key)}><span>${item.label}</span>${badge(item.key)}</a>`).join("")}
         </nav>
         <div class="admin-header-actions">
           <a class="admin-quiet-action" href="${modeSwitchHref}" data-admin-mode="${modeSwitchMode}"><span>${modeSwitchLabel}</span></a>
@@ -91,13 +92,12 @@
     <aside class="admin-more-menu" id="adminMoreMenu" aria-label="Flere adminvalg" aria-hidden="true">
       <div class="admin-more-head"><strong>Mer</strong><button id="adminMoreClose" class="admin-icon-button" type="button" aria-label="Lukk meny">×</button></div>
 
-      <a class="admin-more-link" href="${modeSwitchHref}" data-admin-mode="${modeSwitchMode}"><span>${modeSwitchLabel}</span><span aria-hidden="true">›</span></a>
+      <a class="admin-more-link admin-more-mode" href="${modeSwitchHref}" data-admin-mode="${modeSwitchMode}"><span>${modeSwitchLabel}</span><span aria-hidden="true">›</span></a>
 
-      <div class="admin-more-group">
-        <p class="admin-more-group-title">Innkommende</p>
-        <a class="admin-more-link${pageClass("bookings")}" href="admin-dashboard.html"><span>Bookinger</span><span class="admin-more-tail">${badge("bookings")}<span aria-hidden="true">›</span></span></a>
-        <a class="admin-more-link${pageClass("rental-bookings")}" href="utleie-bestillinger.html"><span>Utleiebestillinger</span><span aria-hidden="true">›</span></a>
+      <div class="admin-more-group admin-more-group-primary">
+        <p class="admin-more-group-title">Må håndteres</p>
         <a class="admin-more-link${pageClass("requests")}" href="foresporsler.html"><span>Prisforespørsler</span><span class="admin-more-tail">${badge("requests")}<span aria-hidden="true">›</span></span></a>
+        <a class="admin-more-link${pageClass("bookings")}" href="admin-dashboard.html"><span>Bookinger</span><span class="admin-more-tail">${badge("bookings")}<span aria-hidden="true">›</span></span></a>
         <a class="admin-more-link${pageClass("mailbox")}" href="innboks.html"><span>Innboks</span><span class="admin-more-tail">${badge("mailbox")}<span aria-hidden="true">›</span></span></a>
       </div>
 
@@ -111,15 +111,18 @@
         <p class="admin-more-group-title">Økonomi</p>
         <a class="admin-more-link${activeClass("economy")}" href="fakturaer.html"><span>Fakturaer</span><span class="admin-more-tail">${badge("economy")}<span aria-hidden="true">›</span></span></a>
         <a class="admin-more-link${pageClass("fiken")}" href="fiken.html"><span>Fiken / regnskap</span><span aria-hidden="true">›</span></a>
-        <a class="admin-more-link" href="statistikk.html"><span>Statistikk</span><span aria-hidden="true">›</span></a>
       </div>
 
-      <div class="admin-more-group">
-        <p class="admin-more-group-title">System</p>
-        <a class="admin-more-link${pageClass("website")}" href="nettside.html"><span>Nettside / priser</span><span aria-hidden="true">›</span></a>
-        <a class="admin-more-link${pageClass("portal")}" href="kundeportal.html"><span>Kundeportal</span><span aria-hidden="true">›</span></a>
-        <a class="admin-more-link${pageClass("notifications")}" href="varslinger.html"><span>Varslingsinnstillinger</span><span aria-hidden="true">›</span></a>
-      </div>
+      <details class="admin-more-advanced">
+        <summary>System og sjeldnere valg <span aria-hidden="true">⌄</span></summary>
+        <div class="admin-more-advanced-body">
+          <a class="admin-more-link${pageClass("rental-bookings")}" href="utleie-bestillinger.html"><span>Utleiebestillinger</span><span aria-hidden="true">›</span></a>
+          <a class="admin-more-link" href="statistikk.html"><span>Statistikk</span><span aria-hidden="true">›</span></a>
+          <a class="admin-more-link${pageClass("website")}" href="nettside.html"><span>Nettside / priser</span><span aria-hidden="true">›</span></a>
+          <a class="admin-more-link${pageClass("portal")}" href="kundeportal.html"><span>Kundeportal</span><span aria-hidden="true">›</span></a>
+          <a class="admin-more-link${pageClass("notifications")}" href="varslinger.html"><span>Varslingsinnstillinger</span><span aria-hidden="true">›</span></a>
+        </div>
+      </details>
 
       <a class="admin-more-link admin-menu-logout" id="logoutBtn" href="login.html"><span>Logg ut</span><span aria-hidden="true">›</span></a>
     </aside>

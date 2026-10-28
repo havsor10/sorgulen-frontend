@@ -32,7 +32,9 @@ test("every primary and related admin page mounts the same shell", () => {
 test("shared navigation is reduced to five primary destinations with grouped secondary tools", () => {
   const shell = read("admin/admin-shell.js");
   for (const label of ["Hjem", "Oppdrag", "Kunder", "Innkommende", "Økonomi"]) assert.match(shell, new RegExp(`label: "${label}"`));
-  for (const group of ["Innkommende", "Drift", "Økonomi", "System"]) assert.match(shell, new RegExp(`admin-more-group-title">${group}`));
+  for (const group of ["Må håndteres", "Drift", "Økonomi"]) assert.match(shell, new RegExp(`admin-more-group-title">${group}`));
+  assert.match(shell, /System og sjeldnere valg/);
+  assert.match(shell, /admin-more-advanced/);
   assert.doesNotMatch(shell, /label: "Oversikt"/);
   assert.doesNotMatch(shell, />Varslinger</);
   assert.doesNotMatch(shell, /href="autopilot\.html"/);

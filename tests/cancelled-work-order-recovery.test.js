@@ -9,7 +9,7 @@ const field = fs.readFileSync(path.join(root, "admin/work-order-field.js"), "utf
 
 test("oppdrag bruker den samlede feltvisningen for lukkede oppdrag", () => {
   assert.match(html, /field-ui-20261004-lock2/);
-  assert.match(html, /work-order-field\.js\?v=20261004-lock2/);
+  assert.match(html, /work-order-field\.js\?v=20261028-simple1/);
   assert.doesNotMatch(html, /completed-work-order-flow\.js/);
 });
 

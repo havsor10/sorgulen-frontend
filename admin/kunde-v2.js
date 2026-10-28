@@ -115,68 +115,133 @@
     const schedule = customer.billingSchedule || { mode: "manual", intervalDays: 14, anchorDate: "" };
 
     document.getElementById("pageTitle").textContent = customer.name;
+    const primaryProject = activeProjects[0] || null;
+    const historyCount = previousProjects.length + (data.invoices || []).length + (data.bookings || []).length + (data.requests || []).length;
     detail.innerHTML = `
-      <section class="customer-section customer-ops-hero">
-        <div class="customer-heading"><div><p class="eyebrow">Kunde</p><h2>${esc(customer.name)}</h2><p style="margin:5px 0 0;color:var(--admin-muted)">${esc([customer.phone, customer.email, customer.address].filter(Boolean).join(" · ") || "Ingen kontaktinformasjon")}</p></div></div>
-        <div class="customer-ops-summary">
-          <div class="customer-ops-stat"><span>Ikke fakturert tid</span><strong>${esc(fmtDuration(basis.timeSeconds || 0))}</strong></div>
-          <div class="customer-ops-stat"><span>Ikke fakturerte poster</span><strong>${esc(basis.count || 0)}</strong></div>
-          <div class="customer-ops-stat"><span>Foreløpig grunnlag</span><strong>${esc(fmtMoney(basis.total || 0))}</strong></div>
+      <section class="customer-section customer-ops-hero customer-ops-hero-simple">
+        <div class="customer-heading">
+          <div>
+            <p class="eyebrow">Kunde</p>
+            <h2>${esc(customer.name)}</h2>
+            <p class="customer-contact-line">${esc([customer.phone, customer.email, customer.address].filter(Boolean).join(" · ") || "Ingen kontaktinformasjon")}</p>
+          </div>
         </div>
-        ${due.due ? `<div class="billing-ready"><strong>Klar for periodisk fakturering.</strong> Det finnes ${esc(basis.count)} ikke-fakturerte poster.</div>` : ""}
-        ${draftChanges.map((draft) => `<div class="billing-draft-warning"><strong>Fakturagrunnlaget er endret etter at utkastet ble laget.</strong><span>${draft.added?.length || 0} nye, ${draft.removed?.length || 0} fjernede og ${draft.modified?.length || 0} endrede poster.</span><p style="margin:8px 0 0"><a href="faktura-detalj.html?id=${encodeURIComponent(draft.invoiceId)}">Åpne fakturautkast</a></p></div>`).join("")}
-        <div class="customer-ops-actions">
-          <button type="button" class="primary-btn" data-customer-time="${esc(customer._id)}" data-rate="${esc(rate)}">+ Legg til arbeid</button>
-          <a class="secondary-btn" href="oppdrag.html?customerId=${encodeURIComponent(customer._id)}${fieldQuerySuffix}">Nytt prosjekt</a>
-          <button type="button" class="secondary-btn" id="toggleInvoicePanel" ${basis.count ? "" : "disabled"}>Opprett faktura</button>
+
+        <div class="customer-ops-summary customer-ops-summary-core">
+          <div class="customer-ops-stat"><span>Aktive oppdrag</span><strong>${esc(activeProjects.length)}</strong></div>
+          <div class="customer-ops-stat"><span>Ikke fakturert</span><strong>${esc(fmtMoney(basis.total || 0))}</strong></div>
+        </div>
+
+        ${due.due ? `<div class="billing-ready"><strong>Klar for fakturering.</strong> ${esc(basis.count)} poster ligger klare.</div>` : ""}
+        ${draftChanges.map((draft) => `<div class="billing-draft-warning"><strong>Fakturautkast må oppdateres.</strong><span>${draft.added?.length || 0} nye, ${draft.removed?.length || 0} fjernede og ${draft.modified?.length || 0} endrede poster.</span><a href="faktura-detalj.html?id=${encodeURIComponent(draft.invoiceId)}">Åpne utkast</a></div>`).join("")}
+
+        <div class="customer-primary-actions">
+          ${primaryProject
+            ? `<a class="primary-btn" href="oppdrag.html?open=${encodeURIComponent(primaryProject._id)}${fieldQuerySuffix}">Åpne aktivt oppdrag</a>`
+            : `<a class="primary-btn" href="oppdrag.html?customerId=${encodeURIComponent(customer._id)}${fieldQuerySuffix}">+ Nytt oppdrag</a>`}
+          <details class="customer-action-more">
+            <summary>Mer</summary>
+            <div class="customer-action-more-menu">
+              <button type="button" data-customer-time="${esc(customer._id)}" data-rate="${esc(rate)}">Registrer arbeid</button>
+              ${primaryProject ? `<a href="oppdrag.html?customerId=${encodeURIComponent(customer._id)}${fieldQuerySuffix}">Nytt oppdrag</a>` : ""}
+              ${basis.count ? '<button type="button" data-open-customer-billing>Opprett faktura</button>' : ""}
+            </div>
+          </details>
         </div>
       </section>
 
-      <section id="customerInvoicePanel" class="customer-section hidden">
-        <h2>Opprett samlet fakturautkast</h2>
-        <p style="color:var(--admin-muted);margin-top:0">Standard er alle ikke-fakturerte poster. Begrens perioden bare hvis du trenger det.</p>
-        <form id="customerInvoiceForm" class="customer-form-grid">
-          <label>Fra dato (valgfritt)<input name="from" type="date"></label>
-          <label>Til dato (valgfritt)<input name="to" type="date"></label>
-          <p id="customerInvoiceError" class="error-text wide"></p>
-          <button class="primary-btn" type="submit">Lag fakturautkast</button>
-        </form>
-      </section>
+      ${activeProjects.length ? `
+        <section class="customer-section customer-active-projects">
+          <div class="customer-heading"><div><p class="eyebrow">Pågår</p><h2>Aktive oppdrag</h2></div></div>
+          ${rows(activeProjects, (item) => `<a class="customer-row customer-row-primary" href="oppdrag.html?open=${encodeURIComponent(item._id)}${fieldQuerySuffix}"><div><strong>${esc(item.serviceName)}</strong><p>${esc(statusText[item.status] || item.status)} · ${esc(item.jobDate)}</p></div><span>›</span></a>`)}
+        </section>` : ""}
 
-      <section class="customer-section">
-        <div class="customer-heading"><div><p class="eyebrow">Fakturering</p><h2>Faktureringsrytme</h2><p style="margin:5px 0 0;color:var(--admin-muted)">Nå: ${esc(scheduleLabel(schedule))}. Dette sender aldri faktura automatisk.</p></div></div>
-        <form id="billingSettingsForm" class="billing-settings" style="margin-top:14px">
-          <label class="operation-field">Rytme<select name="mode" id="billingMode"><option value="manual" ${schedule.mode === "manual" ? "selected" : ""}>Manuell</option><option value="interval" ${schedule.mode === "interval" ? "selected" : ""}>Hver X dag</option><option value="monthly" ${schedule.mode === "monthly" ? "selected" : ""}>Månedlig</option></select></label>
-          <label class="operation-field" id="billingDaysField">Antall dager<input name="intervalDays" type="number" min="1" max="365" value="${esc(schedule.intervalDays || 14)}"></label>
-          <label class="operation-field wide">Startdato / anker (valgfritt)<input name="anchorDate" type="date" value="${esc(schedule.anchorDate || "")}"></label>
-          <p id="billingSettingsError" class="error-text wide"></p>
-          <button class="secondary-btn" type="submit">Lagre faktureringsrytme</button>
-        </form>
-      </section>
+      <details id="customerBillingSection" class="customer-section customer-collapse">
+        <summary><span><strong>Fakturering</strong><small>${basis.count ? `${esc(basis.count)} poster · ${esc(fmtMoney(basis.total || 0))}` : "Ingen poster klare"}</small></span><b>›</b></summary>
+        <div class="customer-collapse-body">
+          <div class="customer-billing-overview">
+            <div><span>Ikke fakturert tid</span><strong>${esc(fmtDuration(basis.timeSeconds || 0))}</strong></div>
+            <div><span>Poster</span><strong>${esc(basis.count || 0)}</strong></div>
+            <div><span>Grunnlag</span><strong>${esc(fmtMoney(basis.total || 0))}</strong></div>
+          </div>
+          <button type="button" class="primary-btn" id="toggleInvoicePanel" ${basis.count ? "" : "disabled"}>Opprett fakturautkast</button>
+          <section id="customerInvoicePanel" class="customer-inline-panel hidden">
+            <h3>Samlet fakturautkast</h3>
+            <p>Standard er alle ikke-fakturerte poster.</p>
+            <form id="customerInvoiceForm" class="customer-form-grid">
+              <label>Fra dato (valgfritt)<input name="from" type="date"></label>
+              <label>Til dato (valgfritt)<input name="to" type="date"></label>
+              <p id="customerInvoiceError" class="error-text wide"></p>
+              <button class="primary-btn" type="submit">Lag fakturautkast</button>
+            </form>
+          </section>
 
-      <section class="customer-section"><div class="customer-heading"><div><p class="eyebrow">Arbeidslogg</p><h2>Registreringer</h2></div></div>${registrationRows(workOrders)}</section>
+          <details class="customer-subcollapse">
+            <summary>Faktureringsrytme · ${esc(scheduleLabel(schedule))}</summary>
+            <form id="billingSettingsForm" class="billing-settings">
+              <label class="operation-field">Rytme<select name="mode" id="billingMode"><option value="manual" ${schedule.mode === "manual" ? "selected" : ""}>Manuell</option><option value="interval" ${schedule.mode === "interval" ? "selected" : ""}>Hver X dag</option><option value="monthly" ${schedule.mode === "monthly" ? "selected" : ""}>Månedlig</option></select></label>
+              <label class="operation-field" id="billingDaysField">Antall dager<input name="intervalDays" type="number" min="1" max="365" value="${esc(schedule.intervalDays || 14)}"></label>
+              <label class="operation-field wide">Startdato / anker (valgfritt)<input name="anchorDate" type="date" value="${esc(schedule.anchorDate || "")}"></label>
+              <p id="billingSettingsError" class="error-text wide"></p>
+              <button class="secondary-btn" type="submit">Lagre rytme</button>
+            </form>
+          </details>
+        </div>
+      </details>
 
-      <section class="customer-section">
-        <h2>Kundeopplysninger</h2>
-        <form id="customerEditForm" class="customer-form-grid">
-          <label>Navn<input name="name" value="${esc(customer.name)}" required maxlength="160"></label>
-          <label>Telefon<input name="phone" type="tel" value="${esc(customer.phone)}"></label>
-          <label>E-post<input name="email" type="email" value="${esc(customer.email)}"></label>
-          <label class="wide">Gateadresse<input name="address" value="${esc(customer.address)}" maxlength="220" autocomplete="street-address" placeholder="F.eks. Vestnesvegen 7"></label>
-          <label>Postnummer<input name="postalCode" value="${esc(customer.postalCode)}" maxlength="20" inputmode="numeric" autocomplete="postal-code" placeholder="6906"></label>
-          <label>Poststed<input name="city" value="${esc(customer.city)}" maxlength="100" autocomplete="address-level2" placeholder="Florø"></label>
-          <label class="wide">Organisasjonsnummer<input name="organizationNumber" value="${esc(customer.organizationNumber)}" maxlength="30" inputmode="numeric" placeholder="Kun for bedriftskunde"></label>
-          <p id="customerEditError" class="error-text wide"></p><button class="secondary-btn" type="submit">Lagre kundeopplysninger</button>
-        </form>
-      </section>
+      <details class="customer-section customer-collapse">
+        <summary><span><strong>Arbeid og registreringer</strong><small>${esc(basis.count || 0)} ikke-fakturerte poster</small></span><b>›</b></summary>
+        <div class="customer-collapse-body">${registrationRows(workOrders)}</div>
+      </details>
 
-      <section class="customer-section"><h2>Aktive prosjekter</h2>${rows(activeProjects, (item) => `<a class="customer-row" href="oppdrag.html?open=${encodeURIComponent(item._id)}${fieldQuerySuffix}"><div><strong>${esc(item.serviceName)}</strong><p>${esc(statusText[item.status] || item.status)} · ${esc(item.jobDate)}</p></div><span>Åpne</span></a>`)}</section>
-      <section class="customer-section"><h2>Tidligere prosjekter</h2>${rows(previousProjects, (item) => `<a class="customer-row" href="oppdrag.html?open=${encodeURIComponent(item._id)}${fieldQuerySuffix}"><div><strong>${esc(item.serviceName)}</strong><p>${esc(statusText[item.status] || item.status)} · ${esc(item.jobDate)}</p></div><span>Åpne</span></a>`)}</section>
-      <section class="customer-section"><h2>Fakturaer</h2>${rows(data.invoices || [], (item) => `<a class="customer-row" href="faktura-detalj.html?id=${encodeURIComponent(item._id)}"><div><strong>${item.invoiceNumber ? `${item.isCreditNote ? "Kreditnota" : "Faktura"} ${esc(item.invoiceNumber)}` : "Fakturautkast"}</strong><p>${esc(fmtMoney(item.amount))} · ${esc(statusText[item.status] || item.status)}</p></div><span>Åpne</span></a>`)}</section>
-      <section class="customer-section"><h2>Bookinger</h2>${rows(data.bookings || [], (item) => `<a class="customer-row" href="order-detail.html?id=${encodeURIComponent(item._id)}"><div><strong>${esc(item.serviceName || "Booking")}</strong><p>${esc(item.date || fmtDate(item.createdAt))} · ${esc(item.status || "")}</p></div><span>Åpne</span></a>`)}</section>
-      <section class="customer-section"><h2>Prisforespørsler</h2>${rows(data.requests || [], (item) => `<a class="customer-row" href="foresporsler.html?open=${encodeURIComponent(item._id)}"><div><strong>${esc(item.description || "Prisforespørsel")}</strong><p>${fmtDate(item.createdAt)} · ${esc(item.status || "")}</p></div><span>Åpne</span></a>`)}</section>
-      <section class="customer-section"><h2>Notater</h2>${rows([...(customer.notes || [])].reverse(), (note) => `<div class="customer-note"><time>${fmtDate(note.createdAt)}</time><p>${esc(note.text)}</p></div>`, "Ingen kundenotater.")}<form id="customerNoteForm" class="customer-note-form"><label for="customerNote">Nytt internt kundenotat</label><textarea id="customerNote" name="note" maxlength="2000" required></textarea><p id="customerNoteError" class="error-text"></p><button class="secondary-btn" type="submit">Lagre notat</button></form></section>`;
+      <details class="customer-section customer-collapse">
+        <summary><span><strong>Kundeopplysninger</strong><small>Telefon, e-post og adresse</small></span><b>›</b></summary>
+        <div class="customer-collapse-body">
+          <form id="customerEditForm" class="customer-form-grid">
+            <label>Navn<input name="name" value="${esc(customer.name)}" required maxlength="160"></label>
+            <label>Telefon<input name="phone" type="tel" value="${esc(customer.phone)}"></label>
+            <label>E-post<input name="email" type="email" value="${esc(customer.email)}"></label>
+            <label class="wide">Gateadresse<input name="address" value="${esc(customer.address)}" maxlength="220" autocomplete="street-address"></label>
+            <label>Postnummer<input name="postalCode" value="${esc(customer.postalCode)}" maxlength="20" inputmode="numeric"></label>
+            <label>Poststed<input name="city" value="${esc(customer.city)}" maxlength="100"></label>
+            <label class="wide">Organisasjonsnummer<input name="organizationNumber" value="${esc(customer.organizationNumber)}" maxlength="30" inputmode="numeric"></label>
+            <p id="customerEditError" class="error-text wide"></p>
+            <button class="secondary-btn" type="submit">Lagre kundeopplysninger</button>
+          </form>
+        </div>
+      </details>
 
+      <details class="customer-section customer-collapse">
+        <summary><span><strong>Historikk</strong><small>${esc(historyCount)} elementer</small></span><b>›</b></summary>
+        <div class="customer-collapse-body customer-history-groups">
+          <section><h3>Tidligere oppdrag</h3>${rows(previousProjects, (item) => `<a class="customer-row" href="oppdrag.html?open=${encodeURIComponent(item._id)}${fieldQuerySuffix}"><div><strong>${esc(item.serviceName)}</strong><p>${esc(statusText[item.status] || item.status)} · ${esc(item.jobDate)}</p></div><span>›</span></a>`)}</section>
+          <section><h3>Fakturaer</h3>${rows(data.invoices || [], (item) => `<a class="customer-row" href="faktura-detalj.html?id=${encodeURIComponent(item._id)}"><div><strong>${item.invoiceNumber ? `${item.isCreditNote ? "Kreditnota" : "Faktura"} ${esc(item.invoiceNumber)}` : "Fakturautkast"}</strong><p>${esc(fmtMoney(item.amount))} · ${esc(statusText[item.status] || item.status)}</p></div><span>›</span></a>`)}</section>
+          <section><h3>Bookinger</h3>${rows(data.bookings || [], (item) => `<a class="customer-row" href="order-detail.html?id=${encodeURIComponent(item._id)}"><div><strong>${esc(item.serviceName || "Booking")}</strong><p>${esc(item.date || fmtDate(item.createdAt))} · ${esc(item.status || "")}</p></div><span>›</span></a>`)}</section>
+          <section><h3>Prisforespørsler</h3>${rows(data.requests || [], (item) => `<a class="customer-row" href="foresporsler.html?open=${encodeURIComponent(item._id)}"><div><strong>${esc(item.description || "Prisforespørsel")}</strong><p>${fmtDate(item.createdAt)} · ${esc(item.status || "")}</p></div><span>›</span></a>`)}</section>
+        </div>
+      </details>
+
+      <details class="customer-section customer-collapse">
+        <summary><span><strong>Notater</strong><small>${esc((customer.notes || []).length)} notater</small></span><b>›</b></summary>
+        <div class="customer-collapse-body">
+          ${rows([...(customer.notes || [])].reverse(), (note) => `<div class="customer-note"><time>${fmtDate(note.createdAt)}</time><p>${esc(note.text)}</p></div>`, "Ingen kundenotater.")}
+          <form id="customerNoteForm" class="customer-note-form">
+            <label for="customerNote">Nytt internt kundenotat</label>
+            <textarea id="customerNote" name="note" maxlength="2000" required></textarea>
+            <p id="customerNoteError" class="error-text"></p>
+            <button class="secondary-btn" type="submit">Lagre notat</button>
+          </form>
+        </div>
+      </details>`;
+
+    document.querySelector("[data-open-customer-billing]")?.addEventListener("click", () => {
+      const section = document.getElementById("customerBillingSection");
+      if (section) {
+        section.open = true;
+        section.scrollIntoView({ behavior: "smooth", block: "start" });
+        window.setTimeout(() => document.getElementById("toggleInvoicePanel")?.click(), 150);
+      }
+    });
     document.getElementById("customerEditForm").addEventListener("submit", saveCustomer);
     document.getElementById("customerNoteForm").addEventListener("submit", saveNote);
     document.getElementById("billingSettingsForm").addEventListener("submit", saveBillingSettings);

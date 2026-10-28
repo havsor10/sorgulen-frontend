@@ -7,8 +7,8 @@ const html = fs.readFileSync("admin/innboks.html", "utf8");
 const js = fs.readFileSync("admin/innboks.js", "utf8");
 const push = fs.readFileSync("admin/varslinger.html", "utf8");
 
-test("firm mailbox is grouped under Innkommende in complete admin", () => {
-  assert.match(shell, /admin-more-group-title">Innkommende/);
+test("firm mailbox is grouped under Må håndteres in complete admin", () => {
+  assert.match(shell, /admin-more-group-title">Må håndteres/);
   assert.match(shell, /href="innboks\.html"><span>Innboks<\/span>/);
   assert.match(shell, /admin\/mailbox\/summary/);
   assert.match(shell, /showBadge\("mailbox", mailboxCount\)/);
