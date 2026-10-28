@@ -15,6 +15,43 @@
     message: byId("rentalFormMessage"), consent: byId("rentalConsent"),
     success: byId("rentalSuccess"), successText: byId("rentalSuccessText"),
   };
+  // Design-forhåndsvisning på Netlifys PR-domene; kan aldri sende ekte forespørsler.
+  const demoMode = /^deploy-preview-\d+--/.test(location.hostname) &&
+    new URLSearchParams(location.search).get("demo") === "1";
+
+  async function demoProductFromPage() {
+    const response = await fetch("/utleie/" + encodeURIComponent(slug) + ".html");
+    if (!response.ok) throw new Error("Kunne ikkje hente produkt for førehandsvising.");
+    const html = await response.text();
+    const page = new DOMParser().parseFromString(html, "text/html");
+    const name = page.querySelector(".product-panel h1");
+    if (!name) throw new Error("Dette produktet har ikkje ei fast produktside.");
+    function price(text) {
+      const numbers = String(text || "").replace(/[^0-9]/g, "");
+      return numbers ? Number(numbers) : null;
+    }
+    const titles = { Dagleie: "day", Helgeleie: "weekend", Ukesleie: "week" };
+    const prices = {};
+    page.querySelectorAll(".price-card").forEach(function (card) {
+      const key = titles[card.querySelector("small")?.textContent.trim()];
+      if (key) prices[key] = price(card.querySelector("strong")?.textContent);
+    });
+    const variants = Array.from(page.querySelectorAll(".variant-price-table tbody tr")).map(function (tr, index) {
+      const cells = Array.from(tr.querySelectorAll("td"));
+      if (cells.length < 4) return null;
+      return { quantity: index + 1,
+        prices: { day: price(cells[1].textContent), weekend: price(cells[2].textContent), week: price(cells[3].textContent) } };
+    }).filter(Boolean);
+    if (variants.length) Object.assign(prices, variants[0].prices);
+    const image = page.querySelector(".product-main-image")?.getAttribute("src");
+    const imageUrl = image ? new URL(image, new URL("/utleie/" + slug + ".html", location.origin)).pathname : "/assets/logo.png";
+    return {
+      slug: slug, title: name.textContent.trim(), capacity: variants.length || 1,
+      prices: prices, variants: variants, imageUrl: imageUrl,
+      productUrl: "/utleie/" + slug + ".html",
+    };
+  }
+
   let product = null;
   let available = false;
   let checking = 0;
@@ -126,6 +163,12 @@
       (type === "week" && days === 7) || (type === "weekend" && days === 3 && dayOfWeek(start) === 5);
   }
   async function checkAvailability() {
+    if (demoMode) {
+      available = false;
+      lockSend();
+      updateQuote();
+      return;
+    }
     const current = ++checking;
     available = false;
     lockSend();
@@ -160,10 +203,14 @@
 
   async function loadProduct() {
     if (!/^[a-z0-9-]{1,160}$/.test(slug)) throw new Error("Du må velje eit utleigeprodukt.");
-    const response = await fetch(API_BASE + "/rentals/" + encodeURIComponent(slug));
-    const data = await response.json().catch(function () { return {}; });
-    if (!response.ok || !data.product) throw new Error(data.error || "Produktet er ikkje tilgjengeleg.");
-    product = data.product;
+    if (demoMode) {
+      product = await demoProductFromPage();
+    } else {
+      const response = await fetch(API_BASE + "/rentals/" + encodeURIComponent(slug));
+      const data = await response.json().catch(function () { return {}; });
+      if (!response.ok || !data.product) throw new Error(data.error || "Produktet er ikkje tilgjengeleg.");
+      product = data.product;
+    }
     el.loading.hidden = true;
     el.layout.hidden = false;
     el.heading.textContent = "Bestill " + product.title;
@@ -176,6 +223,13 @@
     showPrices();
     if (!el.start.value) el.start.value = osloToday();
     adjustDates();
+    if (demoMode) {
+      el.heading.textContent = "Førehandsvising – " + product.title;
+      setCalendar("FØREHANDSVISING: Dette viser berre utforming, datoar og prisar. Kalender, innsending og e-post er ikkje aktive i demoen.");
+      el.submit.textContent = "Kun førehandsvising – innsending deaktivert";
+      el.submit.disabled = true;
+      return;
+    }
     checkAvailability();
   }
 
@@ -196,7 +250,7 @@
   });
   el.form.addEventListener("submit", async function (event) {
     event.preventDefault();
-    if (sending || !product) return;
+    if (demoMode || sending || !product) return;
     if (!datesValid() || !available) {
       setMessage("Vel gyldige og ledige datoar først.");
       return;
