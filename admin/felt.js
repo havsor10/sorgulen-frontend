@@ -303,11 +303,11 @@
     const tasks = actionableTasks();
     if (!tasks.length) { node.hidden = true; node.innerHTML = ""; return; }
 
-    const visible = state.actionExpanded ? tasks : tasks.slice(0, 3);
+    const visible = state.actionExpanded ? tasks : tasks.slice(0, 2);
     node.hidden = false;
     node.innerHTML =
-      '<div class="field-action-queue-head"><div><p class="field-kicker">Krever handling</p><h2>' + tasks.length + ' ting å ordne</h2></div>' +
-        (tasks.length > 3 ? '<button class="field-text-btn" type="button" data-toggle-field-actions>' + (state.actionExpanded ? "Vis færre" : "Vis alle (" + tasks.length + ")") + '</button>' : '') +
+      '<div class="field-action-queue-head"><div><p class="field-kicker">Viktig nå</p><h2>' + tasks.length + ' ting å ordne</h2></div>' +
+        (tasks.length > 2 ? '<button class="field-text-btn" type="button" data-toggle-field-actions>' + (state.actionExpanded ? "Vis færre" : "Vis alle (" + tasks.length + ")") + '</button>' : '') +
       '</div>' +
       '<div class="field-action-queue">' +
         visible.map((task, index) => {
@@ -378,12 +378,8 @@
       '<div class="field-timer-label">' + (isRunning ? "Denne arbeidsøkta" : "Registrert arbeidstid") + '</div>' +
       '<div class="field-job-meta"><span>' + (job.hourlyRate ? esc(fmtMoney(job.hourlyRate)) + '/t' : "Timesats mangler") + '</span><span>' + esc(fmtMoney(expenses)) + ' utgifter</span><span>' + esc(fmtMoney(equipmentAmount)) + ' utstyr</span><span>' + ((job.projectNotes || []).length) + ' notat</span></div>' +
       '<div class="field-main-actions">' + activeActionButtons(job) + '</div>' +
-      '<div class="field-quick-row">' +
-        '<button type="button" data-open="expense" data-job-id="' + esc(job._id) + '">+ Utgift</button>' +
-        '<button type="button" data-open="job-note" data-job-id="' + esc(job._id) + '">+ Notat</button>' +
-        '<button type="button" data-open="time" data-job-id="' + esc(job._id) + '">+ Tid</button>' +
-        '<button type="button" data-open="equipment" data-job-id="' + esc(job._id) + '">+ Utstyr</button>' +
-        '<button type="button" data-open="material" data-job-id="' + esc(job._id) + '">+ Materiale</button>' +
+      '<div class="field-quick-row field-quick-row-simple">' +
+        '<button type="button" data-field-quick-register>+ Registrer på oppdrag</button>' +
       '</div>';
     bindDynamic(card);
   }
@@ -395,11 +391,9 @@
     return '<article class="field-job-card">' +
       '<div class="field-job-card-head"><div><h3>' + esc(customerName(job)) + '</h3><p>' + esc(meta) + '</p></div><span class="field-state ' + esc(job.status) + '">' + esc(STATUS_LABEL[job.status] || job.status) + '</span></div>' +
       (compact ? "" : '<div class="field-job-meta"><span>' + fmtDuration(currentSeconds(job)) + ' tid</span><span>' + (job.projectNotes || []).length + ' notat</span></div>') +
-      '<div class="field-job-card-actions">' +
+      '<div class="field-job-card-actions field-job-card-actions-simple">' +
         (primaryAction ? '<button class="primary" type="button" data-job-action="' + primaryAction + '" data-id="' + esc(job._id) + '">' + primaryLabel + '</button>' : "") +
-        '<button type="button" data-open="expense" data-job-id="' + esc(job._id) + '">+ Utgift</button>' +
-        '<button type="button" data-open="job-note" data-job-id="' + esc(job._id) + '">+ Notat</button>' +
-        '<a href="oppdrag.html?open=' + encodeURIComponent(job._id) + '&from=field">Åpne</a>' +
+        '<a href="oppdrag.html?open=' + encodeURIComponent(job._id) + '&from=field">Åpne detaljer</a>' +
       '</div></article>';
   }
 
@@ -1157,6 +1151,11 @@
       if (button.dataset.fieldBound) return;
       button.dataset.fieldBound = "1";
       button.addEventListener("click", () => requestSafeJobAction(button));
+    });
+    root.querySelectorAll("[data-field-quick-register]").forEach((button) => {
+      if (button.dataset.fieldBound) return;
+      button.dataset.fieldBound = "1";
+      button.addEventListener("click", showActionSheet);
     });
   }
 
