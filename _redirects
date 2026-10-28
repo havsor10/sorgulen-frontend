@@ -1,3 +1,6 @@
+# Egen booking-URL for kvart utleigeprodukt
+/utleie/bestill/:slug /utleie/bestill.html 200
+
 # Rene offentlige URL-er
 # Brøytingsinnholdet ligger fortsatt i den gamle undermappen internt, men eksponeres
 # på én ren offentlig URL. Direkte besøk til gammel URL sendes permanent til den rene.
