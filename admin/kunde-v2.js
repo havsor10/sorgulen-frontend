@@ -143,7 +143,7 @@
             <summary>Mer</summary>
             <div class="customer-action-more-menu">
               <button type="button" data-customer-time="${esc(customer._id)}" data-rate="${esc(rate)}">Registrer arbeid</button>
-              <a href="oppdrag.html?customerId=${encodeURIComponent(customer._id)}${fieldQuerySuffix}">Nytt oppdrag</a>
+              ${primaryProject ? `<a href="oppdrag.html?customerId=${encodeURIComponent(customer._id)}${fieldQuerySuffix}">Nytt oppdrag</a>` : ""}
               ${basis.count ? '<button type="button" data-open-customer-billing>Opprett faktura</button>' : ""}
             </div>
           </details>
