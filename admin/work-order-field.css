@@ -48,3 +48,37 @@ body.field-add-open{overflow:hidden}
 .field-session.zero-duration .field-session-main strong{color:#ffc7cd}
 .field-session.zero-duration .field-session-duration{color:#ffb9c1}
 .field-entry-actions .field-delete-entry.zero-delete{min-height:44px;background:#4a2027;border-color:#a4515c;color:#fff;font-weight:900}
+
+
+/* Oppdragsvisning hierarchy rev 2026-10-28 */
+.field-metrics-core{grid-template-columns:repeat(2,minmax(0,1fr))}
+.field-work-controls-top{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr) auto;gap:9px;align-items:stretch;margin-top:2px}
+.field-work-controls-top>.work-btn{min-height:52px}
+.field-work-controls-top>.work-btn:first-child{font-weight:950}
+.field-work-controls-top .work-btn-ghost{width:100%;min-height:44px;background:#171d25!important;color:#aeb9c6!important;border-color:#303a46!important}
+.field-control-more{position:relative}
+.field-control-more>summary{display:grid;place-items:center;min-width:62px;height:52px;border:1px solid #344252;border-radius:11px;background:#121a23;color:#9caaba;font-size:12px;font-weight:850;cursor:pointer;list-style:none}
+.field-control-more>summary::-webkit-details-marker{display:none}
+.field-control-more[open]>summary{background:#1a2530;color:#e3eaf1}
+.field-control-more>.work-btn{position:absolute;z-index:30;right:0;top:58px;width:190px;box-shadow:0 16px 45px rgba(0,0,0,.45)}
+.field-more .field-collapse-body{gap:18px}
+.field-more-section{display:grid;gap:10px}
+.field-more-section+.field-more-section{padding-top:16px;border-top:1px solid #263345}
+.field-more-section>h4{margin:0;color:#dce5ee;font-size:13px}
+.field-more-section.field-notes textarea{min-height:110px}
+.field-more-section.field-notes .secondary-btn{justify-self:start}
+.field-hero .field-readiness{margin-top:0}
+.field-status-workflow{margin-top:0!important}
+.field-action-row{margin-top:2px}
+@media(max-width:620px){
+  .field-metrics-core{grid-template-columns:1fr 1fr}
+  .field-work-controls-top{grid-template-columns:1fr 1fr}
+  .field-control-more{grid-column:1/-1}
+  .field-control-more>summary{height:44px}
+  .field-control-more>.work-btn{position:static;width:100%;margin-top:7px;box-shadow:none}
+}
+@media(max-width:390px){
+  .field-metrics-core{grid-template-columns:1fr}
+  .field-work-controls-top{grid-template-columns:1fr}
+  .field-control-more{grid-column:auto}
+}
