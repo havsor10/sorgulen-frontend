@@ -29,7 +29,7 @@ test("feltvisning starter med kunde, jobb, tid og pris mens sekundærinfo er skj
   assert.match(js, /Kundeoppdrag/);
   assert.match(js, /Arbeidstid/);
   assert.match(js, /Pris hittil/);
-  assert.match(js, /Fakturagrunnlag/);
+  assert.match(js, /Mer om oppdraget/);
   assert.match(js, /completion-check/);
   assert.match(js, /missingDescriptions/);
 });
