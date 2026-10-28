@@ -70,3 +70,19 @@ body.admin-app .create-form .primary-btn{background:var(--admin-action);color:#1
   .admin-more-link{display:flex;align-items:center;justify-content:space-between;min-height:46px;padding:0 12px;border:0;border-top:1px solid var(--admin-border-soft);background:transparent;color:var(--admin-text-soft);text-decoration:none;text-align:left;font-weight:650}
   .admin-more-link.is-active{color:var(--admin-text);background:var(--admin-hover)}
 }
+
+
+/* Admin hierarchy rev 2026-10-28: frequent actions first, system choices folded away. */
+.admin-more-mode{margin-bottom:4px;border:1px solid var(--admin-border)!important;border-radius:10px;background:var(--admin-panel)!important}
+.admin-more-group-primary{border-top:0;margin-top:4px}
+.admin-more-advanced{margin-top:10px;border-top:1px solid var(--admin-border-soft)}
+.admin-more-advanced>summary{display:flex;align-items:center;justify-content:space-between;min-height:48px;padding:0 12px;color:var(--admin-muted);font-size:12px;font-weight:750;cursor:pointer;list-style:none}
+.admin-more-advanced>summary::-webkit-details-marker{display:none}
+.admin-more-advanced[open]>summary{color:var(--admin-text)}
+.admin-more-advanced-body{display:grid;padding-bottom:4px}
+.admin-more-advanced .admin-more-link{min-height:44px;color:var(--admin-muted)}
+.admin-menu-logout{margin-top:10px;color:var(--admin-subtle)!important}
+@media(min-width:721px){
+  .admin-desktop-nav{gap:6px}
+  .admin-nav-link{padding-inline:14px}
+}
