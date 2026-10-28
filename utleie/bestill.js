@@ -191,7 +191,7 @@
   });
   el.end.addEventListener("change", checkAvailability);
   el.quantity.addEventListener("change", function () {
-    showPrices();
+    updateQuote();
     checkAvailability();
   });
   el.form.addEventListener("submit", async function (event) {
