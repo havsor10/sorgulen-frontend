@@ -844,3 +844,23 @@ button,.btn{min-height:44px;touch-action:manipulation;}
   .interval-list li { grid-template-columns: 1fr; gap: 3px; }
   .interval-list span:last-child { text-align: left; }
 }
+
+
+/* Oppdragsliste hierarchy rev 2026-10-28 */
+.meter-stopped-note{margin:16px 0 0;padding:11px 12px;border-radius:10px;background:#111923;color:#9eacbb;font-size:13px;line-height:1.45}
+.work-history-card-simple{display:block!important;padding:0!important;border-left-width:3px!important;overflow:hidden}
+.work-history-open{display:grid;width:100%;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"main tail" "summary tail";gap:6px 12px;align-items:center;padding:14px 15px;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer}
+.work-history-open:active{background:#1a2027}
+.work-history-open .history-main{grid-area:main;display:grid;gap:3px;min-width:0}
+.work-history-open .history-main>strong{font-size:16px;color:#f2f5f8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.work-history-open .history-main>span{font-size:13px;color:#a5b0bd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.work-history-open .history-summary{grid-area:summary;display:flex;gap:10px;flex-wrap:wrap;color:#7f8b99;font-size:11px}
+.work-history-open .history-summary span+span::before{content:"·";margin-right:10px;color:#46515e}
+.work-history-open .history-tail{grid-area:tail;display:flex;align-items:center;gap:9px}
+.work-history-open .history-tail>b{font-size:22px;color:#7f8b99}
+.history-test{margin-left:6px;color:#f4bd67!important;border:1px solid rgba(244,189,103,.35);background:rgba(244,189,103,.08)!important}
+@media(max-width:620px){
+  .work-history-open{grid-template-columns:minmax(0,1fr) auto;gap:7px 8px;padding:13px}
+  .work-history-open .history-summary{gap:7px;font-size:10px}
+  .work-history-open .history-tail .work-status-badge{font-size:10px;padding:4px 7px}
+}
