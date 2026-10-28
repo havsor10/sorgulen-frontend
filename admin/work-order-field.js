@@ -11,7 +11,6 @@
   let enhancing = false;
   let currentOrder = null;
   let currentCompletionCheck = {};
-  let currentControls = "";
   let lastOpenedOrderId = new URLSearchParams(location.search).get("open") || "";
 
   const statusNames = { planned: "Planlagt", active: "Aktiv", paused: "Pauset", stopped: "Mellom økter", completed: "Ferdigstilt", cancelled: "Avbrutt" };
@@ -405,6 +404,42 @@
     document.body.classList.add("field-add-open");
   }
 
+  function compactWorkControls(order) {
+    const status = order.workflow?.status || order.status;
+    const id = esc(order._id);
+    if (status === "planned") {
+      return '<div class="field-work-controls field-work-controls-top"><button class="work-btn work-btn-start" type="button" data-work-action="start" data-id="' + id + '">START OPPDRAG</button><details class="field-control-more"><summary>Mer</summary><button class="work-btn work-btn-ghost" type="button" data-work-action="cancel" data-id="' + id + '">Forkast oppdrag</button></details></div>';
+    }
+    if (status === "active") {
+      return '<div class="field-work-controls field-work-controls-top"><button class="work-btn work-btn-pause" type="button" data-work-action="pause" data-id="' + id + '">PAUSE</button><button class="work-btn work-btn-stop" type="button" data-work-action="stop" data-id="' + id + '">AVSLUTT ØKT</button><details class="field-control-more"><summary>Mer</summary><button class="work-btn work-btn-ghost" type="button" data-work-action="cancel" data-id="' + id + '">Avbryt oppdrag</button></details></div>';
+    }
+    if (status === "paused") {
+      return '<div class="field-work-controls field-work-controls-top"><button class="work-btn work-btn-start" type="button" data-work-action="resume" data-id="' + id + '">FORTSETT</button><button class="work-btn work-btn-stop" type="button" data-work-action="stop" data-id="' + id + '">AVSLUTT ØKT</button><details class="field-control-more"><summary>Mer</summary><button class="work-btn work-btn-ghost" type="button" data-work-action="cancel" data-id="' + id + '">Avbryt oppdrag</button></details></div>';
+    }
+    if (status === "stopped") {
+      return '<div class="field-work-controls field-work-controls-top"><button class="work-btn work-btn-start" type="button" data-work-action="resume" data-id="' + id + '">FORTSETT ARBEID</button><button class="work-btn work-btn-complete" type="button" data-work-action="complete" data-id="' + id + '">FERDIGSTILL</button><details class="field-control-more"><summary>Mer</summary><button class="work-btn work-btn-ghost" type="button" data-work-action="cancel" data-id="' + id + '">Forkast / avbryt</button></details></div>';
+    }
+    return "";
+  }
+
+  function moreProjectMarkup(order, customer, contact) {
+    const registrationCount = (order.additionalCosts || []).length + (order.equipment || []).length + (order.materials || []).length + (order.projectNotes || []).length;
+    return '<details id="fieldMore" class="field-collapse field-more">' +
+      '<summary>Mer om oppdraget <span>' + registrationCount + ' registreringer</span></summary>' +
+      '<div class="field-collapse-body">' +
+        '<section class="field-more-section"><h4>Kunde og prosjekt</h4><div class="field-info-grid">' +
+          '<div><span>Kunde</span><strong>' + esc(customer.name || "–") + '</strong></div>' +
+          '<div><span>Kontakt</span><strong>' + esc(contact) + '</strong></div>' +
+          '<div><span>Oppdrag</span><strong>' + esc(order.serviceName) + '</strong></div>' +
+          '<div><span>Oppdragsdato</span><strong>' + esc(order.jobDate || "–") + '</strong></div>' +
+          '<div><span>Pris</span><strong>' + esc(pricingLabel(order)) + '</strong></div>' +
+          '<div><span>Kilde</span><strong>' + esc(order.customerSourceType || "Manuell") + (order.sourceRefNumber ? ' · #' + esc(order.sourceRefNumber) : '') + '</strong></div>' +
+        '</div></section>' +
+        '<section class="field-more-section"><h4>Utgifter, utstyr, materialer og notater</h4>' + registrationsMarkup(order) + '</section>' +
+        '<section class="field-more-section field-notes"><h4>Prosjektbeskrivelse</h4><textarea id="detailNotes" maxlength="5000" placeholder="Avtaler, omfang eller annen viktig prosjektinfo">' + esc(order.notes || "") + '</textarea><button id="saveDetailNotes" type="button" class="secondary-btn">Lagre prosjektbeskrivelse</button></section>' +
+      '</div></details>';
+  }
+
   function render(order, completionCheck) {
     closeAddMenu();
     currentOrder = order;
@@ -416,31 +451,25 @@
     const contact = [customer.phone, customer.email, customer.address].filter(Boolean).join(" · ") || "Ingen kontaktinformasjon registrert";
     if (title) title.textContent = customer.name || "Oppdrag";
 
-    detail.innerHTML = `<div class="field-workspace" data-field-workspace data-order-id="${esc(order._id)}">
-      <section class="field-hero">
-        <div class="field-hero-top"><div class="field-identity"><p class="field-kicker">Kundeoppdrag</p><h2>${esc(customer.name || "Ukjent kunde")}</h2><p class="field-service">${esc(order.serviceName)}</p></div><span class="field-status ${esc(displayStatus)}">${esc(statusNames[displayStatus] || displayStatus)}</span></div>
-        <div class="field-metrics">
-          <div class="field-metric"><span>Arbeidstid</span><strong data-field-total-time>${esc(durationText(totalSeconds(order)))}</strong><small>Alle registrerte økter</small></div>
-          <div class="field-metric"><span>Pris hittil</span><strong data-field-total-price>${esc(money(projectedTotal(order)))}</strong><small>${missingPrice ? "Foreløpig – materiale mangler pris" : "Fakturerbart registrert"}</small></div>
-          <div class="field-metric"><span>Fakturagrunnlag</span><strong>${issues.count ? `${issues.count} mangler` : "Klar ✓"}</strong><small>${issues.count ? "Trykk og ordne direkte" : "Alt viktig er registrert"}</small></div>
-        </div>
-        <button type="button" class="field-readiness${issues.count ? "" : " ready"}" data-field-readiness-jump><span class="field-readiness-icon">${issues.count ? "!" : "✓"}</span><span class="field-readiness-copy"><strong>${issues.count ? "Fakturagrunnlaget trenger kontroll" : "Fakturagrunnlaget ser bra ut"}</strong><span>${issues.count ? `${issues.count} ting kan ordnes herfra` : "Ingen manglende opplysninger funnet"}</span></span><span class="field-readiness-tail">›</span></button>
-        ${workflowMarkup(order)}
-        ${addMenuMarkup(order)}
-      </section>
+    detail.innerHTML = '<div class="field-workspace" data-field-workspace data-order-id="' + esc(order._id) + '">' +
+      '<section class="field-hero">' +
+        '<div class="field-hero-top"><div class="field-identity"><p class="field-kicker">Kundeoppdrag</p><h2>' + esc(customer.name || "Ukjent kunde") + '</h2><p class="field-service">' + esc(order.serviceName) + '</p></div><span class="field-status ' + esc(displayStatus) + '">' + esc(statusNames[displayStatus] || displayStatus) + '</span></div>' +
+        '<div class="field-metrics field-metrics-core">' +
+          '<div class="field-metric"><span>Arbeidstid</span><strong data-field-total-time>' + esc(durationText(totalSeconds(order))) + '</strong><small>Registrert totalt</small></div>' +
+          '<div class="field-metric"><span>Pris hittil</span><strong data-field-total-price>' + esc(money(projectedTotal(order))) + '</strong><small>' + (missingPrice ? "Foreløpig – pris mangler" : "Fakturerbart registrert") + '</small></div>' +
+        '</div>' +
+        compactWorkControls(order) +
+        (issues.count ? '<button type="button" class="field-readiness" data-field-readiness-jump><span class="field-readiness-icon">!</span><span class="field-readiness-copy"><strong>' + issues.count + ' ting må ordnes før faktura</strong><span>Trykk for å gå rett til det som mangler</span></span><span class="field-readiness-tail">›</span></button>' : '') +
+        workflowMarkup(order) +
+        addMenuMarkup(order) +
+      '</section>' +
 
-      <section class="field-section"><div class="field-section-head"><div><h3>Arbeidslogg</h3><p>Dato, klokkeslett, pauser og hva som ble gjort.</p></div></div><div class="field-log">${dailyLogMarkup(order)}</div></section>
+      '<section class="field-section"><div class="field-section-head"><div><h3>Arbeidslogg</h3><p>Det som faktisk er gjort, dag for dag.</p></div></div><div class="field-log">' + dailyLogMarkup(order) + '</div></section>' +
 
-      <details id="fieldReadiness" class="field-collapse" ${issues.count ? "open" : ""}><summary>Fakturakontroll <span>${issues.count ? `${issues.count} ting å ordne` : "Klar"}</span></summary><div class="field-collapse-body">${issues.count ? `<ul class="field-issue-list">${issues.items.map((issue) => issueMarkup(issue, order)).join("")}</ul>` : '<p class="field-clear-note">Kunden, prisgrunnlaget og registreringene har opplysningene systemet krever akkurat nå.</p>'}</div></details>
+      (issues.count ? '<details id="fieldReadiness" class="field-collapse" open><summary>Må ordnes før faktura <span>' + issues.count + ' ting</span></summary><div class="field-collapse-body"><ul class="field-issue-list">' + issues.items.map((issue) => issueMarkup(issue, order)).join("") + '</ul></div></details>' : '') +
 
-      <details id="fieldProjectInfo" class="field-collapse"><summary>Kunde og prosjektinfo <span>${esc(pricingLabel(order))}</span></summary><div class="field-collapse-body"><div class="field-info-grid"><div><span>Kunde</span><strong>${esc(customer.name || "–")}</strong></div><div><span>Kontakt</span><strong>${esc(contact)}</strong></div><div><span>Oppdrag</span><strong>${esc(order.serviceName)}</strong></div><div><span>Oppdragsdato</span><strong>${esc(order.jobDate || "–")}</strong></div><div><span>Pris</span><strong>${esc(pricingLabel(order))}</strong></div><div><span>Kilde</span><strong>${esc(order.customerSourceType || "Manuell")}${order.sourceRefNumber ? ` · #${esc(order.sourceRefNumber)}` : ""}</strong></div></div></div></details>
-
-      <details class="field-collapse"><summary>Utgifter, utstyr, materialer og notater <span>${(order.additionalCosts || []).length + (order.equipment || []).length + (order.materials || []).length + (order.projectNotes || []).length} registreringer</span></summary><div class="field-collapse-body">${registrationsMarkup(order)}</div></details>
-
-      <details class="field-collapse field-notes"><summary>Prosjektbeskrivelse <span>${order.notes ? "Registrert" : "Tom"}</span></summary><div class="field-collapse-body"><textarea id="detailNotes" maxlength="5000" placeholder="Avtaler, omfang eller annen viktig prosjektinfo">${esc(order.notes || "")}</textarea><button id="saveDetailNotes" type="button" class="secondary-btn">Lagre prosjektbeskrivelse</button></div></details>
-
-      ${currentControls && !["completed", "cancelled"].includes(displayStatus) ? `<div class="field-work-controls">${currentControls}</div>` : ""}
-    </div>`;
+      moreProjectMarkup(order, customer, contact) +
+    '</div>';
   }
 
   function orderIdFromLegacy() {
@@ -448,11 +477,6 @@
       || detail.querySelector("[data-entry][data-id]")?.dataset.id
       || lastOpenedOrderId
       || "";
-  }
-
-  function captureLegacyActions() {
-    const controlParent = [...detail.querySelectorAll(".detail-controls")].find((node) => node.querySelector("[data-work-action]"));
-    currentControls = controlParent ? [...controlParent.children].map((x) => x.outerHTML).join("") : "";
   }
 
   async function refreshWorkspace(orderId = currentOrder?._id) {
@@ -480,7 +504,6 @@
     const id = orderIdFromLegacy();
     if (!id) return;
     enhancing = true;
-    captureLegacyActions();
     try {
       await refreshWorkspace(id);
     } catch (error) {
