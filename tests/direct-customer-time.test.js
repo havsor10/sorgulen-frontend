@@ -6,6 +6,6 @@ const customer = fs.readFileSync(path.join(__dirname, "..", "admin", "kunde-v2.j
 const operations = fs.readFileSync(path.join(__dirname, "..", "admin", "operations-ui.js"), "utf8");
 
 test("customer page can add work without starting taximeter", () => {
-  assert.match(customer, /\+ Legg til arbeid/);
+  assert.match(customer, /Registrer arbeid/);
   assert.match(operations, /admin\/operations\/customers/);
 });
