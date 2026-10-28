@@ -12,6 +12,6 @@ test("kvittering kan velges fra eksisterende bilder på mobil", () => {
 });
 
 test("Feltadmin laster ny kvitteringsversjon uten gammel cache", () => {
-  assert.match(html, /felt\.js\?v=20261024-receipt1/);
-  assert.match(html, /felt\.css\?v=20261024-receipt1/);
+  assert.match(html, /felt\.js\?v=20261028-override1/);
+  assert.match(html, /felt\.css\?v=20261028-override1/);
 });

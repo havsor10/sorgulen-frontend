@@ -267,6 +267,23 @@
     return value + (value.includes("?") ? "&" : "?") + "from=field";
   }
 
+  function taskWorkOrderId(task) {
+    const href = String(task?.href || "").trim();
+    if (!href) return "";
+    try {
+      const url = new URL(href, location.href);
+      return url.searchParams.get("workOrderId") || url.searchParams.get("open") || "";
+    } catch (_) {
+      return "";
+    }
+  }
+
+  function taskWorkOrder(task) {
+    const id = taskWorkOrderId(task);
+    if (!id) return null;
+    return state.workOrders.find((order) => String(order._id) === String(id)) || null;
+  }
+
   function actionableTasks() {
     const raw = Array.isArray(state.home?.overview?.tasks) ? state.home.overview.tasks : [];
     const activeId = state.home?.activeWorkOrder?._id ? String(state.home.activeWorkOrder._id) : "";
@@ -293,19 +310,30 @@
         (tasks.length > 3 ? '<button class="field-text-btn" type="button" data-toggle-field-actions>' + (state.actionExpanded ? "Vis færre" : "Vis alle (" + tasks.length + ")") + '</button>' : '') +
       '</div>' +
       '<div class="field-action-queue">' +
-        visible.map((task) =>
-          '<a class="field-action-card ' + esc(task.priority || "medium") + '" href="' + esc(fieldTaskHref(task.href)) + '">' +
-            '<span class="field-action-status">' + esc(task.statusLabel || "KREVER HANDLING") + '</span>' +
-            '<strong>' + esc(task.title || "Krever handling") + '</strong>' +
-            (task.detail ? '<span class="field-action-detail">' + esc(task.detail) + '</span>' : '') +
-            '<span class="field-action-go">' + esc(task.actionLabel) + ' <b aria-hidden="true">›</b></span>' +
-          '</a>'
-        ).join("") +
+        visible.map((task, index) => {
+          const workOrder = taskWorkOrder(task);
+          return '<div class="field-action-row">' +
+            '<a class="field-action-card ' + esc(task.priority || "medium") + '" href="' + esc(fieldTaskHref(task.href)) + '">' +
+              '<span class="field-action-status">' + esc(task.statusLabel || "KREVER HANDLING") + '</span>' +
+              '<strong>' + esc(task.title || "Krever handling") + '</strong>' +
+              (task.detail ? '<span class="field-action-detail">' + esc(task.detail) + '</span>' : '') +
+              '<span class="field-action-go">' + esc(task.actionLabel) + ' <b aria-hidden="true">›</b></span>' +
+            '</a>' +
+            (workOrder ? '<button class="field-action-override" type="button" data-override-task="' + index + '">Overstyr</button>' : '') +
+          '</div>';
+        }).join("") +
       '</div>';
 
     node.querySelector("[data-toggle-field-actions]")?.addEventListener("click", () => {
       state.actionExpanded = !state.actionExpanded;
       renderPulse();
+    });
+    node.querySelectorAll("[data-override-task]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const task = visible[Number(button.dataset.overrideTask)];
+        const workOrder = taskWorkOrder(task);
+        if (workOrder) openModal("override-work-order", { task, workOrder });
+      });
     });
   }
 
@@ -624,6 +652,7 @@
     const title = el("fieldModalTitle");
     const kicker = el("fieldModalKicker");
     const save = el("fieldFormSave");
+    save.hidden = false;
     el("fieldFormError").textContent = "";
 
     if (type === "new-job") {
@@ -700,6 +729,26 @@
         '<label class="field-field"><span>Kundepris/stk</span><input class="field-input" name="unitPrice" type="number" min="0" step="0.01"></label></div>' +
         '<label class="field-field"><span>Kommentar <small>valgfritt</small></span><input class="field-input" name="comment" maxlength="500"></label>' +
         '<label class="field-check"><input name="billable" type="checkbox" checked> Skal med på kundens fakturagrunnlag</label></div>';
+    } else if (type === "override-work-order") {
+      const order = context.workOrder;
+      kicker.textContent = "ADMIN · OVERSTYR";
+      title.textContent = customerName(order);
+      save.hidden = true;
+      const canRemove = !order.invoiceId && !["active", "paused"].includes(order.status);
+      const canComplete = !["completed", "cancelled"].includes(order.status);
+      body.innerHTML =
+        '<div class="field-override-summary"><strong>' + esc(order.serviceName || "Oppdrag") + '</strong><span>' + esc(STATUS_LABEL[order.status] || order.status) + '</span></div>' +
+        '<p class="field-override-help">Dette er admin-overstyring. Handlingene oppdaterer systemet med en gang og fjerner varsler når årsaken til varslet er borte.</p>' +
+        '<div class="field-override-grid">' +
+          '<a href="oppdrag.html?open=' + encodeURIComponent(order._id) + '&from=field" class="field-override-btn">Åpne oppdrag</a>' +
+          (canComplete ? '<button type="button" class="field-override-btn" data-override-action="complete">Marker ferdig · skal faktureres</button>' : '') +
+          (canComplete && !order.invoiceId ? '<button type="button" class="field-override-btn" data-override-action="complete-no-invoice">Marker ferdig · ingen faktura</button>' : '') +
+          (order.status === "completed" && order.billingRequired !== false && !order.invoiceId ? '<button type="button" class="field-override-btn" data-override-action="no-invoice">Ingen faktura nødvendig</button>' : '') +
+          (!order.invoiceId && !order.isTest ? '<button type="button" class="field-override-btn" data-override-action="test">Marker som test · fjern varsler</button>' : '') +
+          (canRemove ? '<button type="button" class="field-override-btn danger" data-override-action="trash">Flytt til papirkurv</button>' : '') +
+          (canRemove ? '<button type="button" class="field-override-btn danger" data-override-action="delete-test">Slett testoppdrag permanent</button>' : '') +
+        '</div>';
+      bindOverrideWorkOrderActions(order);
     }
 
     el("fieldModal").hidden = false;
@@ -745,6 +794,84 @@
     rate?.addEventListener("input", updateEquipmentPreview);
     minutes?.addEventListener("input", updateEquipmentPreview);
     updateEquipmentPreview();
+  }
+
+  async function runOverrideAction(order, action) {
+    if (state.busy || navigator.onLine === false) {
+      if (navigator.onLine === false) setStatus("Admin-overstyring krever nett.", "error");
+      return;
+    }
+
+    const name = customerName(order);
+    let confirmText = "";
+    if (action === "complete") confirmText = "Markere oppdraget for " + name + " som FERDIG?\n\nDet skal fortsatt faktureres.";
+    if (action === "complete-no-invoice") confirmText = "Markere oppdraget som FERDIG og samtidig registrere at INGEN FAKTURA skal lages?";
+    if (action === "no-invoice") confirmText = "Fjerne fakturabehovet for dette oppdraget?\n\nBruk dette bare når oppdraget faktisk ikke skal faktureres.";
+    if (action === "test") confirmText = "Markere dette som TESTOPPDRAG?\n\nDet forsvinner fra varslinger, økonomioversikt og AI.";
+    if (action === "trash") confirmText = "Flytte dette oppdraget til papirkurven?\n\nKunden beholdes, og oppdraget kan gjenopprettes.";
+    if (action === "delete-test") confirmText = "Slette dette TESTOPPDRAGET permanent?\n\nDette kan ikke angres. Kunden beholdes.";
+    if (!window.confirm(confirmText)) return;
+
+    state.busy = true;
+    const errorEl = el("fieldFormError");
+    errorEl.textContent = "";
+    try {
+      const id = encodeURIComponent(order._id);
+      if (action === "complete" || action === "complete-no-invoice") {
+        await api("/admin/work-orders/" + id + "/admin-override", {
+          method: "POST",
+          body: JSON.stringify({ action: "complete", reason: "Ferdigstilt fra Feltadmin-overstyring" }),
+        });
+        if (action === "complete-no-invoice") {
+          await api("/admin/work-orders/" + id + "/admin-override", {
+            method: "POST",
+            body: JSON.stringify({ action: "no_invoice", reason: "Ingen faktura valgt fra Feltadmin-overstyring" }),
+          });
+        }
+      } else if (action === "no-invoice") {
+        await api("/admin/work-orders/" + id + "/admin-override", {
+          method: "POST",
+          body: JSON.stringify({ action: "no_invoice", reason: "Ingen faktura valgt fra Feltadmin-overstyring" }),
+        });
+      } else if (action === "test") {
+        await api("/admin/work-orders/" + id + "/test", {
+          method: "POST",
+          body: JSON.stringify({ isTest: true }),
+        });
+      } else if (action === "trash") {
+        await api("/admin/work-orders/" + id + "/trash", {
+          method: "POST",
+          body: JSON.stringify({ reason: "Ryddet bort fra Feltadmin-overstyring" }),
+        });
+      } else if (action === "delete-test") {
+        await api("/admin/work-orders/" + id + "/test", {
+          method: "POST",
+          body: JSON.stringify({ isTest: true }),
+        });
+        await api("/admin/work-orders/" + id + "/trash", {
+          method: "POST",
+          body: JSON.stringify({ reason: "Testoppdrag slettes permanent fra Feltadmin" }),
+        });
+        await api("/admin/work-orders/" + id + "/permanent", {
+          method: "DELETE",
+          body: JSON.stringify({ confirmation: "SLETT" }),
+        });
+      }
+      closeModal();
+      await loadField(false);
+      setStatus(action === "delete-test" ? "Testoppdraget er slettet permanent." : "Oppdraget er oppdatert. Varsellisten er ryddet.", "success");
+    } catch (error) {
+      errorEl.textContent = error.message || "Kunne ikke overstyre oppdraget.";
+    } finally {
+      state.busy = false;
+    }
+  }
+
+  function bindOverrideWorkOrderActions(order) {
+    const body = el("fieldFormBody");
+    body.querySelectorAll("[data-override-action]").forEach((button) => {
+      button.addEventListener("click", () => runOverrideAction(order, button.dataset.overrideAction));
+    });
   }
 
   function closeModal() {
