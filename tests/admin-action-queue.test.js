@@ -12,8 +12,8 @@ test("Feltadmin viser bare handlingsbare varsler", () => {
   assert.match(js, /fieldTaskHref/);
 });
 
-test("Feltadmin viser tre handlinger før Vis alle", () => {
-  assert.match(js, /tasks\.slice\(0, 3\)/);
+test("Feltadmin viser bare to handlinger før Vis alle", () => {
+  assert.match(js, /tasks\.slice\(0, 2\)/);
   assert.match(js, /Vis alle/);
   assert.match(js, /data-toggle-field-actions/);
 });
