@@ -32,7 +32,7 @@
   if (page === "jobs") ensureAsset("script", { src: "inventory-material-edit.js?v=20260904-snow1" });
 
   function groupForPage(value) {
-    if (["bookings", "requests", "mailbox"].includes(value)) return "incoming";
+    if (["bookings", "rental-bookings", "requests", "mailbox"].includes(value)) return "incoming";
     if (["invoices", "fiken"].includes(value)) return "economy";
     return value;
   }
@@ -55,7 +55,7 @@
     return ({ home: "⌂", jobs: "◷", customers: "◎", incoming: "↘", economy: "▤" })[key] || "•";
   }
 
-  const secondaryPages = ["bookings", "requests", "mailbox", "inventory", "snow", "notifications", "portal", "fiken", "website", "more"];
+  const secondaryPages = ["bookings", "rental-bookings", "requests", "mailbox", "inventory", "snow", "notifications", "portal", "fiken", "website", "more"];
   const moreIsActive = secondaryPages.includes(page);
 
   document.body.classList.add("admin-app");
@@ -96,6 +96,7 @@
       <div class="admin-more-group">
         <p class="admin-more-group-title">Innkommende</p>
         <a class="admin-more-link${pageClass("bookings")}" href="admin-dashboard.html"><span>Bookinger</span><span class="admin-more-tail">${badge("bookings")}<span aria-hidden="true">›</span></span></a>
+        <a class="admin-more-link${pageClass("rental-bookings")}" href="utleie-bestillinger.html"><span>Utleiebestillinger</span><span aria-hidden="true">›</span></a>
         <a class="admin-more-link${pageClass("requests")}" href="foresporsler.html"><span>Prisforespørsler</span><span class="admin-more-tail">${badge("requests")}<span aria-hidden="true">›</span></span></a>
         <a class="admin-more-link${pageClass("mailbox")}" href="innboks.html"><span>Innboks</span><span class="admin-more-tail">${badge("mailbox")}<span aria-hidden="true">›</span></span></a>
       </div>

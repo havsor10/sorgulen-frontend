@@ -1,0 +1,33 @@
+.rental-admin{max-width:1100px;margin:0 auto}
+.rental-admin-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}
+.rental-admin-stats>div{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.055);border-radius:16px;padding:18px}
+.rental-admin-stats strong{display:block;font-size:2rem;color:#5ce9b1}
+.rental-admin-stats span{color:#b9c6d5;font-size:.85rem}
+.rental-admin-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:20px 0}
+.rental-admin-toolbar label{font-size:.85rem;color:#c6d3df}
+.rental-admin-toolbar input,.rental-admin-toolbar select{background:#121d2a;color:#fff;border:1px solid #455263;border-radius:9px;padding:12px;font-size:16px}
+.rental-admin-toolbar input{flex:1;min-width:160px}
+.rental-admin-message{color:#b9cce0;min-height:28px;margin:14px 0}
+.rental-admin-message.error{color:#ffb7a8}
+.rental-admin-message.success{color:#7de1b2}
+.rental-admin-list{display:grid;gap:15px}
+.rental-admin-card{border:1px solid rgba(255,255,255,.14);background:linear-gradient(145deg,#172130,#101823);border-radius:17px;padding:20px;color:#e8f2fc}
+.rental-admin-card-head{display:flex;justify-content:space-between;gap:20px;align-items:start;margin-bottom:12px}
+.rental-admin-card h2{font-size:1.12rem;margin:0 0 7px;overflow-wrap:anywhere}
+.rental-admin-card small{color:#aebfd0}
+.rental-admin-status{display:inline-flex;white-space:nowrap;font-size:.77rem;padding:7px 10px;font-weight:800;border-radius:999px;background:#30465b;color:#e3ecf8}
+.rental-admin-status[data-status="pending"]{background:#4d341e;color:#ffe4a0}
+.rental-admin-status[data-status="confirmed"]{background:#143f33;color:#9bf0c8}
+.rental-admin-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:18px 0}
+.rental-admin-detail-grid div{padding:11px;background:rgba(255,255,255,.055);border-radius:10px}
+.rental-admin-detail-grid span{display:block;color:#9eb3c7;font-size:.77rem;margin-bottom:4px}
+.rental-admin-detail-grid strong{display:block;font-size:.93rem;overflow-wrap:anywhere}
+.rental-admin-detail-grid a{color:#87c5ff}
+.rental-admin-note{border-left:3px solid #4cc995;padding:9px 12px;background:rgba(55,173,118,.1);color:#d5ecdf;line-height:1.5;white-space:pre-wrap}
+.rental-admin-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.rental-admin-actions button{border:1px solid #546477;background:#1d2b3a;color:#fff;padding:12px 14px;border-radius:10px;cursor:pointer;font-weight:700}
+.rental-admin-actions button.primary{background:#36c98f;border-color:#36c98f;color:#052014}
+.rental-admin-actions button.danger{background:#3c2226;border-color:#a35058;color:#ffc4c4}
+.rental-admin-actions button:disabled{opacity:.45;cursor:wait}
+.rental-admin-empty{padding:30px;text-align:center;color:#adbed0;border:1px dashed #455263;border-radius:12px}
+@media(max-width:620px){.rental-admin-stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.rental-admin-stats>div{padding:12px 9px}.rental-admin-stats strong{font-size:1.5rem}.rental-admin-stats span{font-size:.72rem}.rental-admin-card{padding:15px}.rental-admin-card-head{display:block}.rental-admin-status{margin-top:7px}.rental-admin-detail-grid{grid-template-columns:1fr}}

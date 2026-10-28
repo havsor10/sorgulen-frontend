@@ -331,7 +331,8 @@ document.querySelectorAll('.book-service-btn').forEach((btn) => {
         article.dataset.aiContent = item.slug || "";
         article.innerHTML = '<div class="media">' + image + '<span class="price-badge">' + esc(priceText(item)) + '</span></div>' +
           '<div class="content"><h3>' + esc(item.title) + '</h3><div class="meta">' + esc(item.summary || item.description || "") + '</div>' +
-          '<div class="mini-specs">' + specs + '</div><div class="actions"><a href="produkt.html?slug=' + encodeURIComponent(item.slug || "") + '" class="btn primary">Se pris og info</a></div></div>';
+          '<div class="mini-specs">' + specs + '</div><div class="actions"><a href="produkt.html?slug=' + encodeURIComponent(item.slug || "") + '" class="btn primary">Se pris og info</a>' +
+          '<a href="/utleie/bestill/' + encodeURIComponent(item.slug || "") + '" class="btn">Bestill</a></div></div>';
         grid.appendChild(article);
       });
     });
@@ -448,7 +449,8 @@ document.querySelectorAll('.book-service-btn').forEach((btn) => {
       '<aside class="ai-detail-panel">' + (item.badgeLabel ? '<span class="ai-content-badge">' + esc(item.badgeLabel) + "</span>" : "") +
       "<h1>" + esc(item.title) + "</h1><p>" + esc(item.summary || "") + "</p>" +
       '<div class="ai-detail-price">' + esc(priceText(item)) + '</div><div class="ai-detail-description">' + esc(item.description || "") + '</div>' +
-      '<a class="btn primary" href="' + esc(safeHref(item.cta && item.cta.url, fallback)) + '">' + esc((item.cta && item.cta.label) || "Send forespørsel") + "</a></aside></div>";
+      '<a class="btn primary" href="' + (kind === "rental" ? "/utleie/bestill/" + encodeURIComponent(item.slug || "") : esc(safeHref(item.cta && item.cta.url, fallback))) + '">' + (kind === "rental" ? "Velg dato og bestill" : esc((item.cta && item.cta.label) || "Send forespørsel")) + '</a>' +
+      (kind === "rental" ? ' <a class="btn" href="' + esc(safeHref(item.cta && item.cta.url, fallback)) + '">Still spørsmål</a>' : '') + "</aside></div>";
     document.title = (item.seo && item.seo.title) || item.title + " | Sørgulen Industriservice";
     var meta = document.querySelector('meta[name="description"]');
     if (meta && item.seo && item.seo.description) meta.setAttribute("content", item.seo.description);
@@ -484,4 +486,45 @@ document.querySelectorAll('.book-service-btn').forEach((btn) => {
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", runDynamicContent, { once: true });
   else runDynamicContent();
+}());
+
+
+// Produktspesifikke leieknapper på de faste HTML-produktsidene.
+// Fallback uten JS er den gamle kontaktlenken (progressive enhancement).
+(function () {
+  "use strict";
+  const known = new Set([
+    "arbeidslampe-led-2x50w", "ava-evolution-p60-medium-bundle", "ava-teleskoplanse",
+    "bajonettsag", "batteridrevet-skralle", "buskrydder-gresstrimmer-43cc",
+    "gaupen-a1325-varehenger", "kellen-kapp-gjaeringssag-1700w", "kemppi-minarcmig-adaptive-150",
+    "multisliper", "multiverktoy", "ryobi-drill-r18dd4", "samsung-freestyle-2nd-gen",
+    "sirkelsag-18v-150mm", "soundboks-gen-3", "spenningsomformer",
+    "stihl-ms-231-motorsag", "vinkelsliper-18v-125mm",
+  ]);
+  function enhanceRentals() {
+    const match = location.pathname.match(/\/utleie\/([a-z0-9-]+)(?:\.html)?\/?$/i);
+    if (match && known.has(match[1])) {
+      const main = document.querySelector(".product-panel .btn-group a.btn.primary");
+      if (main) {
+        main.href = "/utleie/bestill/" + match[1];
+        main.textContent = "Velg dato og bestill";
+      }
+    }
+    document.querySelectorAll(".rental-grid .rental-card").forEach(function (card) {
+      if (card.querySelector(".rental-book-direct")) return;
+      const info = card.querySelector(".actions a[href]");
+      if (!info) return;
+      let url;
+      try { url = new URL(info.href, location.href); } catch (_) { return; }
+      const file = url.pathname.match(/\/utleie\/([a-z0-9-]+)\.html$/i);
+      if (!file || !known.has(file[1])) return;
+      const book = document.createElement("a");
+      book.className = "btn rental-book-direct";
+      book.href = "/utleie/bestill/" + file[1];
+      book.textContent = "Bestill";
+      info.parentElement.appendChild(book);
+    });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", enhanceRentals, { once: true });
+  else enhanceRentals();
 }());
