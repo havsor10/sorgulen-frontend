@@ -45,3 +45,19 @@
 .field-override-btn:active{background:#1a2732}
 .field-override-btn.danger{border-color:rgba(239,107,115,.42);color:#ffc0c4;background:rgba(93,31,37,.22)}
 @media(max-width:390px){.field-action-row{grid-template-columns:1fr}.field-action-override{min-height:40px}}
+
+
+/* Feltadmin hierarchy rev 2026-10-28 */
+.field-active-card{border-color:#32475a;background:linear-gradient(145deg,#17212a,#10171e)}
+.field-pulse{margin-top:16px!important}
+.field-action-queue-head h2{font-size:17px}
+.field-action-card{min-height:78px;padding:12px 13px;background:#0f151c}
+.field-action-card:not(.critical):not(.high){border-color:#26313c;opacity:.88}
+.field-quick-row-simple{grid-template-columns:1fr!important}
+.field-quick-row-simple button{min-height:46px;background:#111923!important;border:1px solid #30404e!important;color:#c7d1dc!important}
+.field-job-card-actions-simple{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
+.field-job-card-actions-simple a{display:grid;place-items:center;min-height:44px;border:1px solid var(--field-line);border-radius:11px;background:#111923;color:#cbd6df;text-decoration:none;font-size:12px;font-weight:850}
+.field-job-card-actions-simple .primary{background:var(--field-accent)!important;color:#07120d!important;border-color:var(--field-accent)!important}
+@media(max-width:390px){
+  .field-job-card-actions-simple{grid-template-columns:1fr!important}
+}
