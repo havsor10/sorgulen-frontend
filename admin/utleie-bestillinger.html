@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b0f13">
+  <title>Utleiebestillinger – Sørgulen Admin</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin-shell.css">
+  <link rel="stylesheet" href="admin-pages.css">
+  <link rel="stylesheet" href="utleie-bestillinger.css">
+</head>
+<body>
+  <div id="adminShell" data-page="rental-bookings"></div>
+  <script src="admin-shell.js"></script>
+  <main class="admin-main rental-admin">
+    <header class="admin-page-header">
+      <div><p class="admin-eyebrow">Utleige · Kalender</p><h1>Utleiebestillinger</h1>
+      <p>Behandle forespørsler, stadfest leieperiodar og unngå dobbelbooking.</p></div>
+      <div class="admin-page-actions"><button id="rentalAdminRefresh" class="primary-btn" type="button">Oppdater</button></div>
+    </header>
+    <section class="rental-admin-stats" aria-label="Samandrag">
+      <div><strong id="rentalPendingCount">–</strong><span>Venter på svar</span></div>
+      <div><strong id="rentalConfirmedCount">–</strong><span>Stadfesta</span></div>
+      <div><strong id="rentalTotalCount">–</strong><span>Totalt</span></div>
+    </section>
+    <div class="rental-admin-toolbar">
+      <label for="rentalAdminFilter">Vis</label>
+      <select id="rentalAdminFilter"><option value="pending">Ventar</option><option value="all">Alle</option><option value="confirmed">Stadfesta</option><option value="completed">Fullførte</option><option value="declined">Avslåtte</option><option value="cancelled">Kansellerte</option></select>
+      <label for="rentalAdminSearch">Søk</label>
+      <input id="rentalAdminSearch" type="search" placeholder="Produkt, namn, referanse …">
+    </div>
+    <div id="rentalAdminMessage" class="rental-admin-message" role="status" aria-live="polite">Hentar utleigebestillingar …</div>
+    <section id="rentalAdminList" class="rental-admin-list" aria-label="Utleieforespørsler"></section>
+  </main>
+  <script src="../config.js"></script>
+  <script src="utleie-bestillinger.js"></script>
+</body>
+</html>
