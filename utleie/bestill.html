@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0a0f18">
+  <meta name="robots" content="noindex,follow">
+  <title>Bestill utleie | Sørgulen Industriservice</title>
+  <meta name="description" content="Velg utleieprodukt, leieperiode og send forespørsel til Sørgulen Industriservice i Florø.">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/utleie/bestill.css">
+  <link rel="stylesheet" href="/maintenance.css">
+  <script src="/maintenance.js" defer></script>
+  <script src="/config.js" defer></script>
+  <script src="/app.js" defer></script>
+  <script src="/utleie/bestill.js" defer></script>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <a href="/" class="logo"><img src="/assets/logo.png" alt="" width="34" height="34"><b>Sørgulen&nbsp;Industriservice</b></a>
+      <nav aria-label="Hovedmeny"><a href="/">Hjem</a><a href="/utleie/" class="active">Utleie</a><a href="/kontakt.html">Kontakt</a></nav>
+      <button class="hamburger" id="hamburger" aria-label="Meny" aria-controls="menuPanel" aria-expanded="false">☰</button>
+    </div>
+    <div class="menu-panel" id="menuPanel"><a href="/">Hjem</a><a href="/utleie/">Utleie</a><a href="/kontakt.html">Kontakt</a></div>
+  </header>
+  <main class="rental-booking-main">
+    <nav class="rental-crumb" aria-label="Brødsmulesti"><a href="/">Hjem</a><span>/</span><a href="/utleie/">Utleie</a><span>/</span><span>Leieforespørsel</span></nav>
+    <div class="rental-head">
+      <div><span class="rental-eyebrow">Sørgulen Industriservice · Florø</span><h1 id="rentalHeading">Lei utstyr på nett</h1>
+        <p>Velg periode, kontroller om utstyret er ledig og send inn forespørselen. Du får svar når vi har behandlet bestillingen.</p></div>
+      <span class="rental-process-tag">Ingen forskuddsbetaling</span>
+    </div>
+    <div id="rentalLoading" class="rental-info" role="status">Henter produktinformasjon …</div>
+    <div id="rentalError" class="rental-info rental-error" role="alert" hidden></div>
+    <div id="rentalLayout" class="rental-booking-layout" hidden>
+      <aside class="rental-product-card">
+        <div class="rental-product-photo"><img id="rentalImage" src="/assets/logo.png" alt=""></div>
+        <div class="rental-product-body">
+          <span class="rental-eyebrow">Valgt utleieprodukt</span>
+          <h2 id="rentalProductName">Utstyr</h2>
+          <p class="rental-muted">Priser og utlevering avtales før leieperioden blir endelig bekreftet.</p>
+          <div id="rentalPrices" class="rental-price-list"></div>
+          <a id="rentalProductLink" class="rental-back-link" href="/utleie/">Se produktdetaljer</a>
+        </div>
+      </aside>
+      <section class="rental-form-card" aria-labelledby="rentalFormTitle">
+        <div class="rental-form-top"><span class="rental-step">1</span><div><h2 id="rentalFormTitle">Velg leieperiode</h2><p>Dato og utstyr blir kontrollert mot kalenderen.</p></div></div>
+        <form id="rentalForm" novalidate>
+          <fieldset class="rental-period-fieldset">
+            <legend>Type leie</legend>
+            <div class="rental-period-grid">
+              <label class="rental-period-option"><input type="radio" name="periodType" value="day" checked><span>Dag</span><small>1 dag</small></label>
+              <label class="rental-period-option"><input type="radio" name="periodType" value="weekend"><span>Helg</span><small>Fre.–søn.</small></label>
+              <label class="rental-period-option"><input type="radio" name="periodType" value="week"><span>Uke</span><small>7 dager</small></label>
+              <label class="rental-period-option"><input type="radio" name="periodType" value="other"><span>Annet</span><small>Etter avtale</small></label>
+            </div>
+          </fieldset>
+          <div class="rental-fields">
+            <label for="rentalStart">Fra dato<input id="rentalStart" type="date" required></label>
+            <label for="rentalEnd">Til dato<input id="rentalEnd" type="date" required></label>
+            <label for="rentalQuantity" id="rentalQuantityLabel" hidden>Antall driller<select id="rentalQuantity"><option value="1">1 drill</option><option value="2">2 driller</option><option value="3">3 driller</option></select></label>
+          </div>
+          <div id="rentalCalendarStatus" class="rental-info" aria-live="polite">Velg dato for å se om utstyret er ledig.</div>
+          <div class="rental-summary" aria-live="polite"><span>Veiledende pris for valgt pakke</span><strong id="rentalQuote">Velg periode</strong><small id="rentalQuoteNote">Endelig pris og utlevering avtalast før bekreftelse.</small></div>
+          <div class="rental-form-top rental-second-step"><span class="rental-step">2</span><div><h2>Dine kontaktopplysninger</h2><p>Vi bruker opplysningene for å følge opp utleien.</p></div></div>
+          <div class="rental-fields">
+            <label for="rentalCustomerName">Fullt navn<input id="rentalCustomerName" autocomplete="name" maxlength="120" required placeholder="Ditt navn"></label>
+            <label for="rentalPhone">Mobilnummer<input id="rentalPhone" type="tel" autocomplete="tel" maxlength="40" required placeholder="Telefonnummer"></label>
+            <label for="rentalEmail">E-post<input id="rentalEmail" type="email" autocomplete="email" maxlength="254" required placeholder="navn@eksempel.no"></label>
+            <label class="rental-full" for="rentalNote">Kommentar (valgfritt)<textarea id="rentalNote" rows="3" maxlength="1000" placeholder="Spørsmål eller ønske om henting/levering"></textarea></label>
+          </div>
+          <label class="rental-consent"><input id="rentalConsent" type="checkbox" required><span>Eg har lese <a href="/vilkar.html" target="_blank" rel="noopener">vilkåra</a> og forstår at dette er ei førespurnad som må stadfestast av Sørgulen Industriservice. <a href="/personvern.html" target="_blank" rel="noopener">Personvern</a>.</span></label>
+          <div id="rentalFormMessage" role="alert" class="rental-info rental-error" hidden></div>
+          <button id="rentalSubmit" class="rental-submit" type="submit" disabled>Send leieforespørsel</button>
+          <p class="rental-small-print">Ingen betaling no. Du får e-post når førespurnaden er mottatt, og ei ny melding når leieperioden er avklart.</p>
+        </form>
+      </section>
+    </div>
+    <section id="rentalSuccess" class="rental-success" role="status" aria-live="polite" hidden>
+      <span class="rental-success-mark">✓</span>
+      <h2>Førespurnaden er mottatt!</h2>
+      <p id="rentalSuccessText"></p>
+      <p>Utstyret er ikkje reservert før leigeperioden er stadfesta. Du får svar på e-post.</p>
+      <a class="rental-submit rental-success-link" href="/utleie/">Tilbake til utleigeoversikta</a>
+    </section>
+    <p class="rental-help">Har du spørsmål? <a href="/kontakt.html">Kontakt Sørgulen Industriservice</a>.</p>
+  </main>
+</body>
+</html>
