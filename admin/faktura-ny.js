@@ -191,7 +191,7 @@
     const lines = getLines();
     if (!lines.length) { setMessage("Legg til minst én fakturalinje.", "error"); return; }
     if (lines.some((line) => !(line.quantity > 0) || line.unitPrice < 0)) { setMessage("Kontroller mengde og sats på fakturalinjene.", "error"); return; }
-    const amount = lines.reduce((sum, line) => sum + line.amount, 0);
+    const amount = Math.round(lines.reduce((sum, line) => sum + (line.quantity * line.unitPrice), 0) * 100) / 100;
     if (!(amount > 0)) { setMessage("Totalbeløpet må være større enn 0.", "error"); return; }
 
     saveBtn.disabled = true;

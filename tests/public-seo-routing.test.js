@@ -51,7 +51,7 @@ test('tilgjengelighetssiden skiller bookingvindu fra åpningstider', () => {
 
 
 test('AI-søk kan lese offentlig innhold og private flater er blokkert', () => {
-  const robots = read('robots.txt');
+  const robots = read('robots.txt').replace(/\r\n/g, '\n');
 
   assert.match(robots, /User-agent: OAI-SearchBot\nAllow: \//);
   assert.match(robots, /User-agent: ChatGPT-User\nAllow: \//);

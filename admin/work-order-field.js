@@ -408,7 +408,10 @@
     const status = order.workflow?.status || order.status;
     const id = esc(order._id);
     if (status === "planned") {
-      return '<div class="field-work-controls field-work-controls-top"><button class="work-btn work-btn-start" type="button" data-work-action="start" data-id="' + id + '">START OPPDRAG</button><details class="field-control-more"><summary>Mer</summary><button class="work-btn work-btn-ghost" type="button" data-work-action="cancel" data-id="' + id + '">Forkast oppdrag</button></details></div>';
+      const ready = order.workflow?.canComplete === true;
+      const fixed = order.pricingMode === "fixed";
+      const finish = ready ? '<button class="work-btn work-btn-complete" type="button" data-work-action="complete" data-id="' + id + '">' + (fixed ? "FERDIGSTILL FASTPRIS" : "FERDIGSTILL OPPDRAG") + '</button>' : "";
+      return '<div class="field-work-controls field-work-controls-top">' + finish + '<button class="work-btn work-btn-start" type="button" data-work-action="start" data-id="' + id + '">' + (ready ? "START TIDTAKING" : "START OPPDRAG") + '</button><details class="field-control-more"><summary>Mer</summary><button class="work-btn work-btn-ghost" type="button" data-work-action="cancel" data-id="' + id + '">Forkast oppdrag</button></details></div>';
     }
     if (status === "active") {
       return '<div class="field-work-controls field-work-controls-top"><button class="work-btn work-btn-pause" type="button" data-work-action="pause" data-id="' + id + '">PAUSE</button><button class="work-btn work-btn-stop" type="button" data-work-action="stop" data-id="' + id + '">AVSLUTT ØKT</button><details class="field-control-more"><summary>Mer</summary><button class="work-btn work-btn-ghost" type="button" data-work-action="cancel" data-id="' + id + '">Avbryt oppdrag</button></details></div>';

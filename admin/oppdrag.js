@@ -252,8 +252,11 @@
     const disabledByOtherOpen = effectiveStatus(workOrder) === "planned" && openWorkOrder && openWorkOrder._id !== workOrder._id;
 
     if (effectiveStatus(workOrder) === "planned") {
+      const ready = workOrder.workflow?.canComplete === true;
+      const fixed = workOrder.pricingMode === "fixed";
       return `
-        <button class="work-btn work-btn-start" type="button" data-work-action="start" data-id="${id}" ${disabledByOtherOpen ? "disabled" : ""}>START</button>
+        ${ready ? `<button class="work-btn work-btn-complete" type="button" data-work-action="complete" data-id="${id}">${fixed ? "FERDIGSTILL FASTPRIS" : "FERDIGSTILL OPPDRAG"}</button>` : ""}
+        <button class="work-btn work-btn-start" type="button" data-work-action="start" data-id="${id}" ${disabledByOtherOpen ? "disabled" : ""}>${ready ? "START TIDTAKING" : "START"}</button>
         <button class="work-btn work-btn-ghost" type="button" data-work-action="cancel" data-id="${id}">Forkast</button>`;
     }
     if (effectiveStatus(workOrder) === "active") {

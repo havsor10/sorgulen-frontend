@@ -14,7 +14,7 @@ test("oppdrag laster én operations-motor før den dedikerte feltvisningen", () 
   assert.match(html, /operations\.css/);
   assert.match(html, /operations-ui\.js\?v=20261004-lock2/);
   assert.match(html, /work-order-field\.css\?v=20261028-simple1/);
-  assert.match(html, /work-order-field\.js\?v=20261028-simple1/);
+  assert.match(html, /work-order-field\.js\?v=20261030-fixedprice1/);
   assert.doesNotMatch(html, /work-order-field-compat\.js/);
   assert.doesNotMatch(html, /work-order-description-edit\.js/);
   assert.doesNotMatch(html, /completed-work-order-flow\.js/);
