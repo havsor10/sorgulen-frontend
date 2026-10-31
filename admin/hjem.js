@@ -47,10 +47,14 @@
     const status=task.statusLabel||(priority==="critical"?"MÅ GJØRES NÅ":"KREVER HANDLING");
     const content=`<span class="priority-dot ${escapeHtml(priority)}"></span><div><span class="task-status">${escapeHtml(status)}</span><h3>${escapeHtml(task.title||"Krever handling")}</h3><p>${escapeHtml(task.detail||"")}${task.ageDays?` · ${task.ageDays} dager`:""}</p></div><span class="task-go">${escapeHtml(task.actionLabel||"Åpne")} ›</span>`;
     const action=task.assistantAction;
-    if(action?.kind==="publish_next_work"&&action.workOrderId){
-      return `<button type="button" class="task-item task-item-button" data-assistant-action="publish_next_work" data-work-order-id="${escapeHtml(action.workOrderId)}" data-start="${escapeHtml(action.start||"")}" data-end="${escapeHtml(action.end||action.start||"")}" data-customer="${escapeHtml(action.customerName||"kunden")}" data-message="${escapeHtml(action.customerMessage||"")}">${content}</button>`;
-    }
-    return `<a class="task-item" href="${escapeHtml(task.href||"hjem.html")}">${content}</a>`;
+    const main=action?.kind==="publish_next_work"&&action.workOrderId
+      ? `<button type="button" class="task-item task-item-button" data-assistant-action="publish_next_work" data-work-order-id="${escapeHtml(action.workOrderId)}" data-start="${escapeHtml(action.start||"")}" data-end="${escapeHtml(action.end||action.start||"")}" data-customer="${escapeHtml(action.customerName||"kunden")}" data-message="${escapeHtml(action.customerMessage||"")}">${content}</button>`
+      : `<a class="task-item" href="${escapeHtml(task.href||"hjem.html")}">${content}</a>`;
+    // Separate kontroller: ingen knapper inni lenker, og ingen utilsiktet navigering.
+    const controls=task.id
+      ? `<div class="task-row-actions"><button type="button" data-resolve-task="${escapeHtml(task.id)}" data-disposition="handled">✓ Ordnet</button><button type="button" data-resolve-task="${escapeHtml(task.id)}" data-disposition="dismissed">× Fjern varsel</button></div>`
+      : "";
+    return `<article class="task-row ${escapeHtml(priority)}">${main}${controls}</article>`;
   }
 
   function renderTasks(){
@@ -61,8 +65,46 @@
     const visible=tasksExpanded?tasks:tasks.slice(0,3);
     taskList.innerHTML=visible.map(taskMarkup).join("")+(tasks.length>3?`<button type="button" class="task-more" data-task-more>${tasksExpanded?"Vis færre":"Vis alle ("+tasks.length+")"}</button>`:"");
   }
+  async function loadResolvedTasks(){
+    const container=el("resolvedTaskList"),count=el("resolvedTaskCount");
+    if(!container||!count)return;
+    try{
+      const result=await api("/admin/assistant/tasks/resolved");
+      const rows=result.tasks||[];
+      count.textContent=String(rows.length);
+      container.innerHTML=rows.length?rows.map(item=>`<div class="resolved-task">
+        <div><strong>${escapeHtml(item.title||"Varsel")}</strong><small>${item.disposition==="handled"?"Markert ordnet":"Fjernet"} ${item.resolvedAt?escapeHtml(new Date(item.resolvedAt).toLocaleDateString("no-NO")):""}</small></div>
+        <button type="button" data-restore-task="${escapeHtml(item.taskId)}">Angre</button>
+      </div>`).join(""):'<p class="empty-home">Ingen varsler er fjernet.</p>';
+    }catch(error){container.textContent="Kunne ikke hente skjulte varsler: "+error.message;}
+  }
+  async function resolveTask(button){
+    if(busy||button.disabled)return;
+    const taskId=button.dataset.resolveTask,disposition=button.dataset.disposition;
+    const task=home?.overview?.tasks?.find(item=>item.id===taskId);
+    if(!task||!["handled","dismissed"].includes(disposition))return;
+    if(disposition==="handled"&&task.type==="email"&&!confirm("Markere e-posten som behandlet i innboksen?"))return;
+    if(disposition==="handled"&&task.statusLabel==="KLAR FOR FAKTURA"&&!confirm("Dette markerer bare varselet som håndtert. Det opprettes INGEN faktura. Vil du fortsette?"))return;
+    busy=true;button.disabled=true;
+    try{
+      await api("/admin/assistant/tasks/"+encodeURIComponent(taskId)+"/resolve",{method:"POST",body:JSON.stringify({disposition})});
+      await load(false);
+      setStatus(disposition==="handled"?"Varsel markert ordnet.":"Varsel fjernet. Du kan angre under Skjulte varsler.");
+    }catch(error){setStatus(error.message,"error");}
+    finally{busy=false;button.disabled=false;}
+  }
+  async function restoreTask(button){
+    if(busy||button.disabled)return;
+    busy=true;button.disabled=true;
+    try{
+      await api("/admin/assistant/tasks/resolved/"+encodeURIComponent(button.dataset.restoreTask),{method:"DELETE"});
+      await load(false);
+      setStatus("Varslet er gjenåpnet hvis det fortsatt er aktuelt.");
+    }catch(error){setStatus(error.message,"error");}
+    finally{busy=false;button.disabled=false;}
+  }
   function renderOngoing(){const list=(home.ongoingProjects||[]).filter(item=>item._id!==home.activeWorkOrder?._id);ongoingSection.classList.toggle("hidden",!list.length);ongoingProjects.innerHTML=list.map(item=>{const stopped=item.status==="stopped";const hasTime=currentSeconds(item)>0;const action=stopped?"resume":"start";const actionLabel=stopped?"Fortsett / ny økt":hasTime?"Start ny økt":"Start takstameter";const stateLabel=stopped?"Mellom økter":"Planlagt";return `<article class="booking-item home-active-project"><a class="home-active-project-main" href="oppdrag.html?open=${encodeURIComponent(item._id)}"><div><h3>${escapeHtml(item.customerSnapshot?.name||"Ukjent kunde")}</h3><p>${escapeHtml(item.serviceName)} · ${fmtDuration(currentSeconds(item))} · ${stateLabel}</p></div></a><div class="home-active-project-actions"><button class="primary-action home-active-start" type="button" data-action="${action}" data-session="work" data-id="${escapeHtml(item._id)}">${actionLabel}</button><a class="secondary-action home-active-open" href="oppdrag.html?open=${encodeURIComponent(item._id)}">Åpne</a></div></article>`;}).join("");}
-  async function load(show=true){if(show)setStatus("Henter dagens oversikt…");home=await api("/admin/assistant/home");renderFocus();renderTasks();renderOngoing();setStatus("");}
+  async function load(show=true){if(show)setStatus("Henter dagens oversikt…");home=await api("/admin/assistant/home");renderFocus();renderTasks();renderOngoing();setStatus("");await loadResolvedTasks();}
 
   async function publishNextWork(button){
     if(busy||button.disabled)return;
@@ -89,6 +131,10 @@
   el("quickForm").addEventListener("submit",async(e)=>{e.preventDefault();if(busy||!quickType)return;const form=new FormData(e.currentTarget),type=quickType.type;let payload=Object.fromEntries(form.entries());delete payload.receipt;if(type!=="note")payload.billable=form.has("billable");if(type==="time"){payload.startedAt=new Date(payload.startedAt).toISOString();payload.endedAt=new Date(payload.endedAt).toISOString();}try{busy=true;el("quickSave").disabled=true;el("quickError").textContent="";if(type==="expense"){const file=el("qReceipt")?.files?.[0];if(file&&file.size>12*1024*1024)throw new Error("Kvitteringsbildet er for stort (maks 12 MB).");payload.receiptImage=await fileData(file);}const endpoint=type==="time"?"time-entries":type==="expense"?"expenses":type==="material"?"materials":"notes";const saved=await api(`/admin/work-orders/${encodeURIComponent(quickType.id)}/${endpoint}`,{method:"POST",body:JSON.stringify(payload)});el("quickModal").classList.add("hidden");e.currentTarget.reset();await load(false);if(saved.overlapWarning)setStatus(saved.overlapWarning,"error");}catch(err){el("quickError").textContent=err.message;}finally{busy=false;el("quickSave").disabled=false;}});
   document.addEventListener("click",async(e)=>{const complete=e.target.closest('[data-confirm="complete"]');if(!complete)return;e.stopImmediatePropagation();try{setStatus("Kontrollerer prosjektet…");const data=await api(`/admin/work-orders/${encodeURIComponent(complete.dataset.id)}/completion-check`);const check=data.completionCheck||{blocking:[],warnings:[]};if(check.blocking.length){setStatus(check.blocking.join(" "),"error");return;}const project=data.workOrder||{},basis=data.invoiceBasis||{};const summary=`Registrert tid: ${fmtDuration(currentSeconds(project))}. Utgifter: ${(project.additionalCosts||[]).length}. Materialer: ${(project.materials||[]).length}. Notater: ${(project.projectNotes||[]).length}. Fakturagrunnlag: ${(basis.lines||[]).length} linjer.`;const warnings=check.warnings.length?` Kontroller: ${check.warnings.join(" ")}`:"";confirmRun=()=>action(complete.dataset.id,"complete");el("confirmTitle").textContent="Fullføre prosjektet?";el("confirmText").textContent=`${summary}${warnings} All historikk bevares.`;el("confirmModal").classList.remove("hidden");setStatus("");}catch(error){setStatus(error.message,"error");}},true);
   document.addEventListener("click",(e)=>{
+    const resolver=e.target.closest("[data-resolve-task]");
+    if(resolver){e.preventDefault();resolveTask(resolver);return;}
+    const restore=e.target.closest("[data-restore-task]");
+    if(restore){e.preventDefault();restoreTask(restore);return;}
     const more=e.target.closest("[data-task-more]");
     if(more){tasksExpanded=!tasksExpanded;renderTasks();return;}
     const assistant=e.target.closest('[data-assistant-action="publish_next_work"]');
