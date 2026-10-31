@@ -34,6 +34,6 @@ test("legacy planlagt med manuell tid kan vises som mellom økter og ferdigstill
 
 test("workflow-cache er bustet på Oppdrag", () => {
   assert.match(html, /operations-ui\.js\?v=20261004-lock2/);
-  assert.match(html, /work-order-field\.js\?v=20261030-fixedprice1/);
+  assert.match(html, /work-order-field\.js\?v=20261031-editclock1/);
   assert.match(html, /field-ui-20261004-lock2/);
 });
