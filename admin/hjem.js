@@ -62,7 +62,23 @@
     taskList.innerHTML=visible.map(taskMarkup).join("")+(tasks.length>3?`<button type="button" class="task-more" data-task-more>${tasksExpanded?"Vis færre":"Vis alle ("+tasks.length+")"}</button>`:"");
   }
   function renderOngoing(){const list=(home.ongoingProjects||[]).filter(item=>item._id!==home.activeWorkOrder?._id);ongoingSection.classList.toggle("hidden",!list.length);ongoingProjects.innerHTML=list.map(item=>{const stopped=item.status==="stopped";const hasTime=currentSeconds(item)>0;const action=stopped?"resume":"start";const actionLabel=stopped?"Fortsett / ny økt":hasTime?"Start ny økt":"Start takstameter";const stateLabel=stopped?"Mellom økter":"Planlagt";return `<article class="booking-item home-active-project"><a class="home-active-project-main" href="oppdrag.html?open=${encodeURIComponent(item._id)}"><div><h3>${escapeHtml(item.customerSnapshot?.name||"Ukjent kunde")}</h3><p>${escapeHtml(item.serviceName)} · ${fmtDuration(currentSeconds(item))} · ${stateLabel}</p></div></a><div class="home-active-project-actions"><button class="primary-action home-active-start" type="button" data-action="${action}" data-session="work" data-id="${escapeHtml(item._id)}">${actionLabel}</button><a class="secondary-action home-active-open" href="oppdrag.html?open=${encodeURIComponent(item._id)}">Åpne</a></div></article>`;}).join("");}
-  async function load(show=true){if(show)setStatus("Henter dagens oversikt…");home=await api("/admin/assistant/home");renderFocus();renderTasks();renderOngoing();setStatus("");}
+  function renderPulse(){
+    const target=el("homePulse");
+    if(!target)return;
+    const counts=home?.overview?.counts;
+    if(!counts){target.textContent="Status er foreløpig utilgjengelig.";return;}
+    const n=(value)=>Math.max(0,Math.floor(Number(value)||0));
+    const tiles=[
+      ["Aktive prosjekter",n(counts.openWorkOrders)+n(counts.ongoingProjects),"oppdrag.html"],
+      ["Nye bookinger",n(counts.pendingBookings),"admin-dashboard.html"],
+      ["Prisforespørsler",n(counts.pendingRequests),"foresporsler.html"],
+      ["Fakturautkast",n(counts.draftInvoices),"fakturaer.html"],
+      ["Forfalte fakturaer",n(counts.overdueInvoices),"fakturaer.html"],
+      ["Viktig e-post",n(counts.emailAttention),"innboks.html"]
+    ];
+    target.innerHTML=tiles.map(([label,count,href])=>`<a href="${href}" class="home-pulse-card"><strong>${count}</strong><span>${label}</span></a>`).join("");
+  }
+  async function load(show=true){if(show)setStatus("Henter dagens oversikt…");home=await api("/admin/assistant/home");renderFocus();renderTasks();renderOngoing();renderPulse();setStatus("");}
 
   async function publishNextWork(button){
     if(busy||button.disabled)return;

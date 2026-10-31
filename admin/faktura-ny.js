@@ -171,6 +171,9 @@
 
       fillCustomer(data.customer);
       source = { sourceType: data.sourceType, sourceRef: data.sourceRef, sourceId: data.sourceId, customerId: data.customerId || null };
+      window.invoiceSelectedCustomerId = null;
+      window.invoiceSourceCustomerId = source.customerId;
+      window.dispatchEvent(new Event("invoice-source-customer"));
       invoiceDescription.value = data.description || "";
       serviceDateFrom.value = data.serviceDateFrom || "";
       serviceDateTo.value = data.serviceDateTo && data.serviceDateTo !== data.serviceDateFrom ? data.serviceDateTo : "";
@@ -187,6 +190,12 @@
 
   async function save() {
     const name = f.name.value.trim();
+    const isFastPrice = new URLSearchParams(location.search).get("mode") === "fastpris";
+    if (isFastPrice && !source.customerId && !window.invoiceSelectedCustomerId) {
+      setMessage("Velg eller opprett kundekort før du lagrer fastprisfakturaen.", "error");
+      document.getElementById("invoiceCustomerSearch")?.focus();
+      return;
+    }
     if (!name) { setMessage("Kundenavn er påkrevd.", "error"); f.name.focus(); return; }
     const lines = getLines();
     if (!lines.length) { setMessage("Legg til minst én fakturalinje.", "error"); return; }
@@ -217,7 +226,7 @@
           sourceType: source.sourceType,
           sourceRef: source.sourceRef,
           sourceId: source.sourceId,
-          customerId: source.customerId,
+          customerId: source.customerId || window.invoiceSelectedCustomerId || null,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -270,6 +279,9 @@
       serviceDateTo.value = data.serviceDateTo && data.serviceDateTo !== data.serviceDateFrom ? data.serviceDateTo : "";
       serviceLocation.value = data.serviceLocation || data.customer?.address || "";
       source = { sourceType: data.sourceType, sourceRef: data.sourceRef, sourceId: data.sourceId, customerId: data.customerId || null };
+      window.invoiceSelectedCustomerId = null;
+      window.invoiceSourceCustomerId = source.customerId;
+      window.dispatchEvent(new Event("invoice-source-customer"));
       linesBody.innerHTML = "";
       (data.lines || []).forEach((line) => addLine(line.item, line.amount, line));
       if (!linesBody.children.length) addLine();
@@ -301,5 +313,13 @@
   loadConfig();
   const workOrderId = pageParams.get("workOrderId");
   if (workOrderId) loadWorkOrder(workOrderId);
-  else addLine();
+  else if (pageParams.get("mode") === "fastpris") {
+    const title = document.querySelector(".admin-page-header h1");
+    if (title) title.textContent = "Fastprisfaktura";
+    const today = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Europe/Oslo", year: "numeric", month: "2-digit", day: "2-digit"
+    }).format(new Date());
+    serviceDateFrom.value = today;
+    addLine("Fastpris – utført oppdrag", "", { quantity: 1, unit: "fixed" });
+  } else addLine();
 })();

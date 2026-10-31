@@ -1,0 +1,13 @@
+.invoice-customer-picker{display:grid;gap:12px;margin:14px 0 20px;padding:16px;border-radius:14px;background:#121a22;border:1px solid #344354}
+.invoice-customer-picker label{display:block;margin-bottom:7px;color:#dce5ed;font-weight:700;font-size:14px}
+.invoice-customer-picker input{width:100%;min-height:45px;padding:11px 13px;background:#0b1119;border:1px solid #455365;border-radius:9px;color:#f5f7fa;font-size:16px}
+.invoice-customer-picker .invoice-customer-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.invoice-customer-picker button{cursor:pointer;min-height:42px;border-radius:9px;border:1px solid #526172;padding:9px 14px;background:#283645;color:white;font-weight:700}
+.invoice-customer-picker button:disabled{opacity:.5;cursor:wait}
+.invoice-customer-picker .invoice-customer-results{display:grid;gap:6px}
+.invoice-customer-picker .invoice-customer-result{display:flex;flex-direction:column;align-items:start;gap:3px;text-align:left;width:100%;background:#192633}
+.invoice-customer-result span{font-size:12px;font-weight:400;color:#afc0cf}
+.invoice-customer-picker .invoice-customer-state{font-size:13px;color:#a8c4da;margin:0;line-height:1.4}
+.invoice-customer-picker .invoice-customer-state.is-error{color:#ffb4b4}
+.invoice-customer-picker.has-customer{border-color:#478878}
+@media(max-width:550px){.invoice-customer-picker{padding:12px}.invoice-customer-picker .invoice-customer-actions button{width:100%}}

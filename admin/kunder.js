@@ -6,6 +6,7 @@
   function render(list){content.innerHTML=list.length?list.map((customer)=>`<a class="customer-card" href="kunde.html?id=${encodeURIComponent(customer._id)}"><div><h2>${esc(customer.name)}</h2><p>${esc([customer.phone,customer.email,customer.address].filter(Boolean).join(" · ")||"Ingen kontaktinformasjon")}</p></div><span>Åpne</span></a>`).join(""):'<p class="empty-state">Ingen kunder funnet.</p>';}
   async function load(){status.textContent="Laster…";try{const data=await api(`/admin/customers?q=${encodeURIComponent(search.value.trim())}`);render(data.customers||[]);status.textContent="";}catch(error){status.textContent=error.message;status.className="status-message error";}}
   search.addEventListener("input",()=>{clearTimeout(timer);timer=setTimeout(load,250);});el("newCustomerBtn").onclick=()=>modal.classList.remove("hidden");el("closeCustomerModal").onclick=()=>modal.classList.add("hidden");
+  if(new URLSearchParams(location.search).get("new")==="1")el("newCustomerBtn").click();
   form.addEventListener("submit",async(event)=>{event.preventDefault();const button=form.querySelector("button[type=submit]");button.disabled=true;el("customerError").textContent="";try{const data=await api("/admin/customers",{method:"POST",body:JSON.stringify(Object.fromEntries(new FormData(form)))});location.href=`kunde.html?id=${encodeURIComponent(data.customer._id)}`;}catch(error){el("customerError").textContent=error.message;}finally{button.disabled=false;}});
   el("logoutBtn").onclick=()=>localStorage.removeItem(KEY);load();
 })();
