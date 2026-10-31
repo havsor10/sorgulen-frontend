@@ -86,3 +86,42 @@ button,a { -webkit-tap-highlight-color:transparent; }
 @media(max-width:520px){
   .main-actions{grid-template-columns:1fr}
 }
+
+/* Varsler kan avsluttes uavhengig av oppdragets økonomiske status. */
+.task-row{border:1px solid #29323c;border-radius:14px;background:#121820;margin-bottom:10px;overflow:hidden}
+.task-row .task-item{margin:0;border:0!important;border-radius:0;background:transparent!important}
+.task-row .task-item:active{background:#202a35!important}
+.task-row-actions{display:flex;gap:8px;padding:0 14px 12px 30px}
+.task-row-actions button,.resolved-task button{min-height:42px;padding:8px 14px;border:1px solid #3e5060;border-radius:9px;background:#202e36;color:#eff8fa;font:700 14px Arial,sans-serif;cursor:pointer}
+.task-row-actions button:last-child{background:#1c222b;border-color:#343f4b;color:#b9c7d3}
+.task-row-actions button:disabled,.resolved-task button:disabled{opacity:.5;cursor:wait}
+.resolved-tasks-panel{margin-top:16px;border:1px solid #303944;border-radius:12px;padding:13px 15px;background:#151c23}
+.resolved-tasks-panel summary{cursor:pointer;color:#d4dfe8;font-size:14px;font-weight:800;min-height:34px;display:list-item;align-content:center}
+.resolved-task{display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid #303944;padding:14px 0}
+.resolved-task:first-child{margin-top:12px}
+.resolved-task strong{display:block;font-size:14px;line-height:1.4;overflow-wrap:anywhere}
+.resolved-task small{display:block;color:#9fb0bd;margin-top:4px;font-size:12px}
+.resolved-task button{flex-shrink:0}
+@media(max-width:430px){.task-row-actions{padding-left:14px}.task-row-actions button{flex:1;font-size:13px}}
+
+/* Sørgulen driftsoversikt: prioriterte handlinger og faktiske tall fra admin-API. */
+.home-command{display:grid;gap:14px}
+.home-command-head{display:flex;align-items:end;justify-content:space-between;gap:12px}
+.home-command-head h2{font-size:clamp(22px,4vw,28px);margin:6px 0 0;letter-spacing:-.025em}
+.home-command-sub{font-size:12px;color:#8d9baa}
+.home-command-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.home-command-actions a{display:flex;flex-direction:column;justify-content:center;gap:6px;min-height:92px;padding:17px;border:1px solid #343e4b;border-radius:14px;background:#1a222b;color:#f3f7fa;text-decoration:none;transition:background .15s,border-color .15s}
+.home-command-actions a:first-child{background:#dcece7;color:#0d2620;border-color:#8fc1ad}
+.home-command-actions a:first-child span{color:#2b5145}
+.home-command-actions a:hover,.home-command-actions a:focus-visible{border-color:#81adbc;background:#24323d}
+.home-command-actions a:first-child:hover,.home-command-actions a:first-child:focus-visible{background:#eaf6f1}
+.home-command-actions strong{font-size:16px;letter-spacing:-.01em}
+.home-command-actions span{color:#a7b7c5;font-size:12px}
+.home-pulse{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.home-pulse>p{margin:0;color:#9ba9b8;font-size:13px}
+.home-pulse-card{display:grid;gap:5px;padding:14px 12px;background:#121820;border:1px solid #283441;border-radius:13px;text-decoration:none;color:#f4f7fa}
+.home-pulse-card strong{font-size:26px;line-height:1.1;font-variant-numeric:tabular-nums}
+.home-pulse-card span{font-size:12px;color:#aebbc8;line-height:1.35}
+.home-pulse-card:hover,.home-pulse-card:focus-visible{border-color:#6e97a7}
+@media(max-width:720px){.home-pulse{grid-template-columns:repeat(2,minmax(0,1fr))}.home-command-sub{display:none}}
+@media(max-width:390px){.home-command-actions{grid-template-columns:1fr}.home-command-actions a{min-height:74px}.home-pulse-card strong{font-size:23px}}

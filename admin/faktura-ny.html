@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="admin.css">
   <link rel="stylesheet" href="admin-shell.css?v=20261028-simple1">
   <link rel="stylesheet" href="admin-pages.css">
+  <link rel="stylesheet" href="invoice-customer-picker.css?v=20261031-v1">
 </head>
 <body>
   <div id="adminShell" data-page="invoices"></div>
@@ -33,6 +34,12 @@
 
     <section class="nf-card">
       <h3>Faktura til</h3>
+      <div id="invoiceCustomerPicker" class="invoice-customer-picker" aria-label="Koble fakturaen til et kundekort">
+        <div><label for="invoiceCustomerSearch">Finn eksisterende kunde</label><input type="search" id="invoiceCustomerSearch" autocomplete="off" placeholder="Søk på navn, telefon eller e-post"></div>
+        <div id="invoiceCustomerResults" class="invoice-customer-results" aria-live="polite"></div>
+        <div class="invoice-customer-actions"><button id="invoiceCreateCustomer" type="button">Opprett kundekort fra feltene nedenfor</button></div>
+        <p id="invoiceCustomerState" class="invoice-customer-state" role="status">Velg eksisterende kunde, eller fyll inn feltene og opprett et kundekort. Da knyttes fakturaen til kundehistorikken.</p>
+      </div>
       <div class="nf-row">
         <div class="nf-field"><label for="custName">Navn / firmanavn *</label><input type="text" id="custName" required></div>
         <div class="nf-field"><label for="custOrg">Org.nr. (bedriftskunde)</label><input type="text" id="custOrg" inputmode="numeric"></div>
@@ -92,7 +99,8 @@
 
   <script src="../config.js"></script>
   <script src="invoice-financial-preview.js?v=20261004-audit2"></script>
-  <script src="faktura-ny.js?v=20261030-fixedprice1"></script>
+  <script src="faktura-ny.js?v=20261031-customer1"></script>
+  <script src="invoice-customer-picker.js?v=20261031-v1"></script>
   <script src="invoice-work-order-picker.js?v=20260915-flow1"></script>
 </body>
 </html>
