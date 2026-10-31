@@ -443,6 +443,15 @@
       '</div></details>';
   }
 
+  function timeCorrectionMarkup(order) {
+    const editable = (order.workIntervals || []).some((entry) =>
+      entry.entryId && (entry.source === "manual" || entry.endedAt)
+      && !registrationBillingLock(order, "time", entry.entryId)?.locked
+    );
+    if (order.status === "cancelled" || projectRegistrationsLocked(order) || !editable) return "";
+    return '<button class="field-correct-time" type="button" data-field-correct-time>Korriger arbeidstid</button>';
+  }
+
   function render(order, completionCheck) {
     closeAddMenu();
     currentOrder = order;
@@ -458,7 +467,7 @@
       '<section class="field-hero">' +
         '<div class="field-hero-top"><div class="field-identity"><p class="field-kicker">Kundeoppdrag</p><h2>' + esc(customer.name || "Ukjent kunde") + '</h2><p class="field-service">' + esc(order.serviceName) + '</p></div><span class="field-status ' + esc(displayStatus) + '">' + esc(statusNames[displayStatus] || displayStatus) + '</span></div>' +
         '<div class="field-metrics field-metrics-core">' +
-          '<div class="field-metric"><span>Arbeidstid</span><strong data-field-total-time>' + esc(durationText(totalSeconds(order))) + '</strong><small>Registrert totalt</small></div>' +
+          '<div class="field-metric"><span>Arbeidstid</span><strong data-field-total-time>' + esc(durationText(totalSeconds(order))) + '</strong><small>Registrert totalt</small>' + timeCorrectionMarkup(order) + '</div>' +
           '<div class="field-metric"><span>Pris hittil</span><strong data-field-total-price>' + esc(money(projectedTotal(order))) + '</strong><small>' + (missingPrice ? "Foreløpig – pris mangler" : "Fakturerbart registrert") + '</small></div>' +
         '</div>' +
         compactWorkControls(order) +
@@ -514,6 +523,28 @@
     } finally {
       enhancing = false;
     }
+  }
+
+  function openTimeCorrection() {
+    if (!currentOrder) return;
+    const candidates = (currentOrder.workIntervals || []).filter((entry) =>
+      entry.entryId && (entry.source === "manual" || entry.endedAt)
+      && !registrationBillingLock(currentOrder, "time", entry.entryId)?.locked
+    );
+    if (currentOrder.status === "cancelled" || projectRegistrationsLocked(currentOrder) || !candidates.length) return;
+    if (candidates.length === 1) {
+      openSessionEditor(candidates[0].entryId);
+      return;
+    }
+    // Når det finnes flere økter, lar vi brukeren velge riktig registrering.
+    // Vi endrer aldri den siste økten automatisk ut fra totalsummen.
+    if (window.SorgulenOperations?.openManager) {
+      window.SorgulenOperations.openManager(currentOrder._id);
+      return;
+    }
+    const log = detail.querySelector(".field-log");
+    log?.querySelectorAll(".field-day").forEach((day) => { day.open = true; });
+    log?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function openSessionEditor(entryId) {
@@ -653,6 +684,13 @@
     if (readiness) {
       const target = document.getElementById("fieldReadiness");
       if (target) { target.open = true; target.scrollIntoView({ behavior: "smooth", block: "center" }); }
+      return;
+    }
+
+    const correction = event.target.closest("[data-field-correct-time]");
+    if (correction) {
+      event.preventDefault();
+      openTimeCorrection();
       return;
     }
 
