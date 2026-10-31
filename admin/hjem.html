@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="../assets/logo.png">
   <link rel="stylesheet" href="admin.css?v=20260904-clickfix2">
-  <link rel="stylesheet" href="hjem.css?v=20261028-simple1">
+  <link rel="stylesheet" href="hjem.css?v=20261031-dismissals1">
   <link rel="stylesheet" href="admin-shell.css?v=20261028-simple1">
   <link rel="stylesheet" href="home-project-link.css?v=20260906-projectopen1">
   <link rel="stylesheet" href="home-active-customers.css?v=20260918-activecustomers2">
@@ -38,6 +38,10 @@
     <section id="handling" aria-labelledby="tasksTitle">
       <div class="section-title-row"><div><p class="eyebrow">Krever deg</p><h2 id="tasksTitle">Kontrollerer…</h2></div><button id="refreshBtn" class="icon-action" type="button" aria-label="Kontroller på nytt">↻</button></div>
       <div id="taskList" class="task-list loading-card">Finner bare det du faktisk trenger å ta stilling til…</div>
+      <details class="resolved-tasks-panel" id="resolvedTaskPanel">
+        <summary>Skjulte varsler (<span id="resolvedTaskCount">0</span>) – vis og angre</summary>
+        <div id="resolvedTaskList"><p class="empty-home">Henter skjulte varsler …</p></div>
+      </details>
     </section>
 
   </main>
@@ -58,7 +62,7 @@
 
   <script src="../config.js?v=20260904-clickfix2"></script>
   <script src="work-order-time.js?v=20260918-session1"></script>
-  <script src="hjem.js?v=20261028-simple1"></script>
+  <script src="hjem.js?v=20261031-dismissals1"></script>
   <script src="home-project-link.js?v=20260906-projectopen1"></script>
 </body>
 </html>
