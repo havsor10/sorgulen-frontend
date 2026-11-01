@@ -28,7 +28,7 @@ test("feltvisning starter med kunde, jobb, tid og pris mens sekundærinfo er skj
   assert.match(js, /data-field-workspace/);
   assert.match(js, /Kundeoppdrag/);
   assert.match(js, /Arbeidstid/);
-  assert.match(js, /Sum registrert \\(anslag\\)/);
+  assert.match(js, /Sum registrert \(anslag\)/);
   assert.match(js, /Kunde og oppdragsinfo/);
   assert.match(js, /completion-check/);
   assert.match(js, /missingDescriptions/);
