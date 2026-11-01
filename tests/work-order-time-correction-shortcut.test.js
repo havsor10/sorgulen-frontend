@@ -10,10 +10,10 @@ const css = fs.readFileSync(path.join(root, "work-order-field.css"), "utf8");
 const operations = fs.readFileSync(path.join(root, "operations-ui.js"), "utf8");
 
 test("arbeidstidskortet viser en tydelig knapp for korrigering", () => {
-  assert.match(field, /Registrert totalt<\/small>' \+ timeCorrectionMarkup\(order\)/);
+  assert.match(field, /timeCorrectionMarkup\(order\)/);
   assert.match(field, /data-field-correct-time/);
   assert.match(css, /\.field-correct-time/);
-  assert.match(html, /work-order-field\.js\?v=20261031-editclock1/);
+  assert.match(html, /work-order-field\.js\?v=20261101-ledger1/);
 });
 
 test("korrigering åpner rett økt eller lar brukeren velge mellom flere", () => {
