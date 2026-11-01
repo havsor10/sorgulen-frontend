@@ -24,8 +24,8 @@
   const modeSwitchMode = fieldContext ? "full" : "field";
 
   ensureAsset("link", { rel: "stylesheet", href: "operations.css?v=20261004-actions1" });
-  ensureAsset("link", { rel: "stylesheet", href: "ai-universal.css?v=20261002-u1" });
-  if (page === "jobs") ensureAsset("link", { rel: "stylesheet", href: "ai-guide.css?v=20260917-project1" });
+  // Oppdrag og kunderegister utan AI-bobler og sekundære sidepanel.
+  if (!["jobs", "customers"].includes(page)) ensureAsset("link", { rel: "stylesheet", href: "ai-universal.css?v=20261002-u1" });
   ensureAsset("link", { rel: "manifest", href: "manifest.webmanifest" });
   ensureAsset("link", { rel: "apple-touch-icon", href: "../assets/logo.png" });
   if (!["home", "inventory", "snow", "jobs"].includes(page)) ensureAsset("script", { src: "operations-ui.js?v=20261004-lock2" });
@@ -60,8 +60,7 @@
   const moreIsActive = secondaryPages.includes(page);
 
   document.body.classList.add("admin-app");
-  ensureAsset("script", { src: "ai-universal.js?v=20261002-u1" });
-  if (page === "jobs") ensureAsset("script", { src: "ai-guide.js?v=20260917-project1" });
+  if (!["jobs", "customers"].includes(page)) ensureAsset("script", { src: "ai-universal.js?v=20261002-u1" });
   ensureAsset("script", { src: "actionable-warnings.js?v=20261004-actions1" });
 
   mount.innerHTML = `
