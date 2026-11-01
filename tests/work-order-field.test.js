@@ -14,7 +14,7 @@ test("oppdrag laster én operations-motor før den dedikerte feltvisningen", () 
   assert.match(html, /operations\.css/);
   assert.match(html, /operations-ui\.js\?v=20261004-lock2/);
   assert.match(html, /work-order-field\.css\?v=20261031-editclock1/);
-  assert.match(html, /work-order-field\.js\?v=20261031-editclock1/);
+  assert.match(html, /work-order-field\.js\?v=20261101-ledger1/);
   assert.doesNotMatch(html, /work-order-field-compat\.js/);
   assert.doesNotMatch(html, /work-order-description-edit\.js/);
   assert.doesNotMatch(html, /completed-work-order-flow\.js/);
@@ -28,8 +28,8 @@ test("feltvisning starter med kunde, jobb, tid og pris mens sekundærinfo er skj
   assert.match(js, /data-field-workspace/);
   assert.match(js, /Kundeoppdrag/);
   assert.match(js, /Arbeidstid/);
-  assert.match(js, /Pris hittil/);
-  assert.match(js, /Mer om oppdraget/);
+  assert.match(js, /Sum registrert \\(anslag\\)/);
+  assert.match(js, /Kunde og oppdragsinfo/);
   assert.match(js, /completion-check/);
   assert.match(js, /missingDescriptions/);
 });
@@ -89,4 +89,14 @@ test("mobil detalj er fullskjerm med store kontroller", () => {
   assert.match(css, /min-height:48px/);
   assert.match(css, /safe-area-inset-bottom/);
   assert.doesNotMatch(css, /sai-launcher/);
+});
+
+test("alle registreringar og summer er synlege, ikkje gøymde under meir", () => {
+  assert.match(js, /id="fieldLedger"/);
+  assert.match(js, /timeRegistrationsMarkup/);
+  assert.match(js, /ledgerBreakdownMarkup/);
+  assert.match(js, /registrationsMarkup\(order\)/);
+  assert.match(js, /data-field-delete-registration="time"/);
+  assert.match(html, /customer-ledger-ui\.css/);
+  assert.doesNotMatch(html, /work-order-ai\.js/);
 });
