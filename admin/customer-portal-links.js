@@ -38,7 +38,9 @@
 
   function injectDetailLink() {
     const content = document.getElementById("detailModalContent");
-    if (!content || content.querySelector(".customer-portal-detail-link")) return;
+    // Den nye oppdragsvisinga har ei lita lenkje i toppteksten.
+    // Ikkje legg til den gamle, store knappen over heile oppdraget.
+    if (!content || content.querySelector("[data-field-workspace]") || content.querySelector(".customer-portal-detail-link")) return;
     const idSource = content.querySelector("[data-work-action][data-id], [data-entry][data-id]");
     if (!idSource?.dataset.id) return;
     const link = document.createElement("a");

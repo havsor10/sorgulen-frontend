@@ -29,3 +29,15 @@ test("customer editor exposes the complete structured invoice address", () => {
   assert.match(code, /Gateadresse/);
 });
 
+
+test("kundeoversikt viser alle registreringar med eksakt rediger og slett", () => {
+  const code = read("admin/kunde-v2.js");
+  assert.match(code, /SorgulenCustomerLedger\.summarizeCustomer/);
+  assert.match(code, /data-customer-edit-entry/);
+  assert.match(code, /data-customer-delete-entry/);
+  assert.match(code, /registrationLocked/);
+  assert.match(code, /SorgulenOperations\.openRegistration/);
+  assert.match(code, /\/admin\/operations\/work-orders\//);
+  assert.match(code, /id="customerRegistrations"/);
+  assert.match(code, /Ledig fakturagrunnlag/);
+});

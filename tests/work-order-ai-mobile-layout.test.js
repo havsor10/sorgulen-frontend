@@ -14,6 +14,7 @@ test("AI image modal cannot overflow horizontally on mobile", () => {
   assert.match(css, /\.work-ai-billable\{[^}]*overflow-wrap:anywhere/s);
 });
 
-test("oppdrag busts the AI stylesheet cache after mobile layout fix", () => {
-  assert.match(html, /work-order-ai\.css\?v=20260917-mobile1/);
+test("oppdrag brukar den nye, enkle registreringsstilen utan AI", () => {
+  assert.match(html, /customer-ledger-ui\.css\?v=20261101-ledger1/);
+  assert.doesNotMatch(html, /work-order-ai\.css/);
 });
