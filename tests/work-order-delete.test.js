@@ -9,7 +9,7 @@ const ui = fs.readFileSync(path.join(root, "admin/work-order-delete.js"), "utf8"
 const overview = fs.readFileSync(path.join(root, "admin/oversikt.js"), "utf8");
 
 test("work order detail uses recoverable trash instead of direct hard delete", () => {
-  assert.match(html, /work-order-delete\.js\?v=20260925-trash1/);
+  assert.match(html, /work-order-delete\.js\?v=20261101-ledger1/);
   assert.match(html, /openWorkOrderTrash/);
   assert.match(ui, /Flytt til papirkurv/);
   assert.match(ui, /\/trash/);
