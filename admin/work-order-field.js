@@ -501,7 +501,7 @@
     if (!ledger) throw new Error("Registreringsoversikta kunne ikkje lastast");
     detail.innerHTML = '<div class="field-workspace field-workspace-ledger" data-field-workspace data-order-id="' + esc(order._id) + '">' +
       '<section class="field-hero">' +
-        '<div class="field-hero-top"><div class="field-identity"><p class="field-kicker">Kundeoppdrag</p><h2>' + esc(customer.name || "Ukjent kunde") + '</h2><p class="field-service">' + esc(order.serviceName) + '</p></div><span class="field-status ' + esc(displayStatus) + '">' + esc(statusNames[displayStatus] || displayStatus) + '</span></div>' +
+        '<div class="field-hero-top"><div class="field-identity"><p class="field-kicker">Kundeoppdrag</p><h2>' + esc(customer.name || "Ukjent kunde") + '</h2><p class="field-service">' + esc(order.serviceName) + '</p><a class="field-minor-link customer-portal-detail-link" href="kundeportal.html?workOrderId=' + encodeURIComponent(order._id) + '">Åpne kundeportalen</a></div><span class="field-status ' + esc(displayStatus) + '">' + esc(statusNames[displayStatus] || displayStatus) + '</span></div>' +
         '<div class="field-metrics field-metrics-core">' +
           '<div class="field-metric"><span>Arbeidstid totalt</span><strong data-field-total-time>' + esc(durationText(ledger.totalSeconds)) + '</strong><small>' + ledger.time + ' arbeidsøkter</small>' + timeCorrectionMarkup(order) + '</div>' +
           '<div class="field-metric"><span>Alle registreringar</span><strong>' + ledger.count + '</strong><small>Tid, utgifter, utstyr, materiale og notat</small></div>' +
