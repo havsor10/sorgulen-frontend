@@ -100,3 +100,12 @@ test("alle registreringar og summer er synlege, ikkje gøymde under meir", () =>
   assert.match(html, /customer-ledger-ui\.css/);
   assert.doesNotMatch(html, /work-order-ai\.js/);
 });
+
+test("farlige adminval og kundeportal-lenkje forstyrrar ikkje oppdragsoversikta", () => {
+  const deleteUi = fs.readFileSync(path.join(root, "admin/work-order-delete.js"), "utf8");
+  const portal = fs.readFileSync(path.join(root, "admin/customer-portal-links.js"), "utf8");
+  assert.match(deleteUi, /<details data-work-order-delete-zone/);
+  assert.match(deleteUi, /Avansert administrasjon/);
+  assert.match(js, /field-minor-link customer-portal-detail-link/);
+  assert.match(portal, /content\.querySelector\("\[data-field-workspace\]"\)/);
+});
