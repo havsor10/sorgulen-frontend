@@ -52,8 +52,9 @@
       ? "Testoppdrag · ignoreres av varslinger, fakturering, økonomioversikt og AI."
       : "Merk testdata dersom oppdraget bare brukes til testing.";
     return `
-      <section data-work-order-delete-zone style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(180,85,85,.35)">
-        <div style="display:grid;gap:10px">
+      <details data-work-order-delete-zone class="field-collapse field-admin-danger">
+        <summary>Avansert administrasjon <span>Testmerking og papirkurv</span></summary>
+        <div class="field-collapse-body field-admin-danger-body">
           <button type="button" class="secondary-btn" data-work-order-test style="width:100%">
             ${order.isTest ? "✓ Testoppdrag – fjern testmerking" : "Marker som testoppdrag"}
           </button>
@@ -61,7 +62,7 @@
           <button type="button" class="danger-btn" data-work-order-trash style="width:100%">Flytt til papirkurv</button>
           <p class="muted" style="margin:-3px 0 0">Oppdraget skjules og varsler stopper. Kunden beholdes. Du kan gjenopprette oppdraget fra papirkurven.</p>
         </div>
-      </section>`;
+      </details>`;
   }
 
   async function decorate() {
