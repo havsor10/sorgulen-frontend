@@ -32,10 +32,10 @@ test("Komplett adminhjem skjuler registreringsknappene bak ett valg", () => {
   assert.match(homeJs, /Åpne oppdrag/);
 });
 
-test("kundeoppdrag viser kjerneinfo først og sekundærinfo i én Mer-seksjon", () => {
+test("kundeoppdrag viser registreringar direkte og gøymer sekundære prosjektdata", () => {
   assert.match(jobJs, /function compactWorkControls/);
   assert.match(jobJs, /field-metrics field-metrics-core/);
-  assert.match(jobJs, /Mer om oppdraget/);
+  assert.match(jobJs, /Kunde og oppdragsinfo/);
   assert.match(jobJs, /function moreProjectMarkup/);
   assert.doesNotMatch(jobJs, /<details id="fieldProjectInfo"/);
 });
@@ -47,7 +47,7 @@ test("oppdragslisten er en kompakt helkort-handling", () => {
 });
 
 test("kundesiden viser aktivt arbeid først og samler sekundærinfo", () => {
-  assert.match(customerJs, /customer-ops-summary-core/);
+  assert.match(customerJs, /customer-ledger-summary/);
   assert.match(customerJs, /Åpne aktivt oppdrag/);
   assert.match(customerJs, /customer-action-more/);
   assert.match(customerJs, /customer-collapse/);
