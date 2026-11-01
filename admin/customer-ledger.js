@@ -14,6 +14,10 @@
     const end = entry?.endedAt ? new Date(entry.endedAt).getTime() : now;
     return Number.isFinite(start) && Number.isFinite(end) && end >= start ? Math.floor((end - start) / 1000) : 0;
   }
+  function equipmentAmount(entry) {
+    if (entry?.amount != null && Number.isFinite(Number(entry.amount))) return round(Number(entry.amount));
+    return round(number(entry?.durationMinutes) / 60 * number(entry?.hourlyRateSnapshot));
+  }
   function summarizeOrder(order = {}, now = Date.now()) {
     const time = order.workIntervals || [];
     const expenses = order.additionalCosts || [];
@@ -30,8 +34,8 @@
     }, 0);
     const expensesTotal = expenses.reduce((total, entry) => total + number(entry.amount), 0);
     const expensesBillable = expenses.filter((entry) => entry.billable !== false).reduce((total, entry) => total + number(entry.amount), 0);
-    const equipmentTotal = equipment.reduce((total, entry) => total + number(entry.amount), 0);
-    const equipmentBillable = equipment.filter((entry) => entry.billable !== false).reduce((total, entry) => total + number(entry.amount), 0);
+    const equipmentTotal = equipment.reduce((total, entry) => total + equipmentAmount(entry), 0);
+    const equipmentBillable = equipment.filter((entry) => entry.billable !== false).reduce((total, entry) => total + equipmentAmount(entry), 0);
     const materialsCost = materials.reduce((total, entry) => total + number(entry.quantity) * number(entry.purchaseUnitPrice), 0);
     const materialsTotal = materials.filter((entry) => entry.unitPrice != null).reduce((total, entry) => total + number(entry.quantity) * number(entry.unitPrice), 0);
     const materialsBillable = materials.filter((entry) => entry.billable !== false && entry.unitPrice != null).reduce((total, entry) => total + number(entry.quantity) * number(entry.unitPrice), 0);
@@ -62,5 +66,5 @@
     for (const key of ["workAmount", "expensesTotal", "expensesBillable", "equipmentTotal", "equipmentBillable", "materialsTotal", "materialsCost", "materialsBillable", "fixedAmount", "estimate"]) totals[key] = round(totals[key]);
     return totals;
   }
-  return { seconds, summarizeOrder, summarizeCustomer };
+  return { seconds, equipmentAmount, summarizeOrder, summarizeCustomer };
 });
