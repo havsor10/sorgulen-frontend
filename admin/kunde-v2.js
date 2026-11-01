@@ -53,11 +53,26 @@
     return Number.isFinite(start) && Number.isFinite(end) && end >= start ? Math.floor((end - start) / 1000) : 0;
   }
   function useState(order, type, entryId) {
+    const sourceKey = entryKey(order._id, type, entryId);
+    // Fakturastatus for denne posten går før prosjektets eldre invoiceId.
+    // Ei delfaktura betyr ikkje at alle andre registreringar er fakturerte.
+    const usage = billingData?.billing?.usage?.[sourceKey];
+    if (usage) return usage;
+    if (!order.invoiceId) return null;
+    const invoice = (pageData?.invoices || []).find((item) => String(item._id) === String(order.invoiceId));
+    if (!invoice) return null;
+    if (Array.isArray(invoice.sourceEntryKeys) && invoice.sourceEntryKeys.length && !invoice.sourceEntryKeys.includes(sourceKey)) return null;
+    return { status: invoice.status, invoiceId: invoice._id, invoiceNumber: invoice.invoiceNumber };
+  }
+  const lockedStatuses = new Set(["issued", "sent", "paid", "credited"]);
+  function registrationLocked(order, type, entryId, info) {
+    if (order.status === "cancelled" || lockedStatuses.has(info?.status)) return true;
     if (order.invoiceId) {
-      const invoice = (pageData.invoices || []).find((item) => String(item._id) === String(order.invoiceId));
-      if (invoice) return { status: invoice.status, invoiceId: invoice._id, invoiceNumber: invoice.invoiceNumber };
+      const invoice = (pageData?.invoices || []).find((item) => String(item._id) === String(order.invoiceId));
+      if (invoice && lockedStatuses.has(invoice.status)) return true;
     }
-    return billingData?.billing?.usage?.[entryKey(order._id, type, entryId)] || null;
+    const entry = (order.workIntervals || []).find((item) => item.entryId === entryId);
+    return type === "time" && entry?.source !== "manual" && !entry?.endedAt;
   }
   function stateBadge(info, billable = true) {
     if (!billable) return '<span class="billing-state">Intern</span>';
@@ -76,25 +91,94 @@
       for (const entry of order.workIntervals || []) {
         const seconds = intervalSeconds(entry);
         const rate = Number(entry.hourlyRateSnapshot ?? order.hourlyRate ?? 0);
+        const amountText = entry.billable === false ? "Intern" : order.pricingMode === "fixed"
+          ? "Inkludert i fastpris"
+          : fmtMoney(window.SorgulenWorkOrderTime.calculateEstimatedAmount({
+            status: "stopped", hourlyRate: rate, workIntervals: [entry],
+          }));
         items.push({
           at: entry.workDate || entry.startedAt || order.jobDate,
           order, type: "time", entryId: entry.entryId,
           title: entry.comment || `${categoryText(entry.category)} – ${order.serviceName}`,
-          meta: `${fmtDuration(seconds)} · ${fmtMoney(rate)}/t · ${fmtMoney(window.SorgulenWorkOrderTime.calculateEstimatedAmount({ status: "stopped", hourlyRate: rate, workIntervals: [entry] }))} · ${entry.source === "manual" ? "Manuell" : "Takstameter"}${seconds <= 0 ? " · Kontroller nullminuttøkt" : ""}`,
+          meta: `${fmtDuration(seconds)} · ${fmtMoney(rate)}/t · ${amountText} · ${entry.source === "manual" ? "Manuell" : "Takstameter"}${seconds <= 0 ? " · Kontroller 0-min-økt" : ""}`,
           billable: entry.billable !== false,
         });
       }
-      for (const entry of order.additionalCosts || []) items.push({ at: entry.occurredAt || order.jobDate, order, type: "expense", entryId: entry.entryId, title: entry.item, meta: `${fmtMoney(entry.amount)}${entry.supplier ? ` · ${entry.supplier}` : ""} · Utgift`, billable: entry.billable !== false });
-      for (const entry of order.equipment || []) items.push({ at: entry.createdAt || order.jobDate, order, type: "equipment", entryId: entry.entryId, title: entry.item || "Utstyr", meta: `${entry.durationMinutes || 0} min · ${fmtMoney(entry.hourlyRateSnapshot || 0)}/t · ${fmtMoney(entry.amount || 0)} · Utstyr`, billable: entry.billable !== false });
-      for (const entry of order.materials || []) items.push({ at: entry.createdAt || order.jobDate, order, type: "material", entryId: entry.entryId, title: entry.item, meta: `${entry.quantity} ${entry.unit || "stk"}${entry.unitPrice != null ? ` · ${fmtMoney(Number(entry.quantity) * Number(entry.unitPrice))}` : " · Pris ikke satt"} · Materiale`, billable: entry.billable !== false });
+      for (const entry of order.additionalCosts || []) items.push({
+        at: entry.occurredAt || order.jobDate, order, type: "expense", entryId: entry.entryId,
+        title: entry.item, meta: `${fmtMoney(entry.amount)}${entry.supplier ? ` · ${entry.supplier}` : ""} · Utgift`, billable: entry.billable !== false,
+      });
+      for (const entry of order.equipment || []) items.push({
+        at: entry.createdAt || order.jobDate, order, type: "equipment", entryId: entry.entryId,
+        title: entry.item || "Utstyr", meta: `${entry.durationMinutes || 0} min · ${fmtMoney(entry.hourlyRateSnapshot || 0)}/t · ${fmtMoney(entry.amount || 0)} · Utstyr`, billable: entry.billable !== false,
+      });
+      for (const entry of order.materials || []) items.push({
+        at: entry.createdAt || order.jobDate, order, type: "material", entryId: entry.entryId,
+        title: entry.item, meta: `${entry.quantity} ${entry.unit || "stk"}${entry.unitPrice != null ? ` · ${fmtMoney(Number(entry.quantity) * Number(entry.unitPrice))}` : " · Kundepris manglar"} · Materiale`, billable: entry.billable !== false,
+      });
+      for (const entry of order.projectNotes || []) items.push({
+        at: entry.createdAt || order.jobDate, order, type: "note", entryId: entry.entryId,
+        title: entry.text, meta: "Prosjektnotat", billable: false,
+      });
     }
     items.sort((a, b) => new Date(b.at) - new Date(a.at));
-    if (!items.length) return '<p class="empty-state">Ingen arbeid, utgifter, utstyr eller materialer registrert ennå.</p>';
-    return `<div class="customer-registration-list">${items.map((item) => {
+    if (!items.length) return '<p class="empty-state">Ingen arbeid, utgifter, utstyr, materiale eller notat registrert enno.</p>';
+    return `<div class="customer-registration-list customer-ledger-entries">${items.map((item) => {
       const billing = useState(item.order, item.type, item.entryId);
-      return `<div class="customer-registration"><div><strong>${esc(item.title)}</strong><p>${esc(fmtDate(item.at))} · ${esc(item.meta)} · ${esc(item.order.serviceName)}</p><button type="button" class="quiet-link" style="border:0;background:none;padding:7px 0 0;cursor:pointer" data-operations-manager="${esc(item.order._id)}">Rediger registrering</button></div>${stateBadge(billing, item.billable)}</div>`;
+      const locked = registrationLocked(item.order, item.type, item.entryId, billing);
+      const actions = !item.entryId ? '<span class="customer-entry-locked">Mangler ID. Opne oppdraget for kontroll.</span>'
+        : locked ? '<span class="customer-entry-locked">Låst av faktura, avslutta oppdrag eller aktiv tidsøkt</span>'
+          : `<button type="button" data-customer-edit-entry data-order-id="${esc(item.order._id)}" data-kind="${esc(item.type)}" data-entry-id="${esc(item.entryId)}">Rediger</button>
+            <button type="button" class="customer-entry-delete" data-customer-delete-entry data-order-id="${esc(item.order._id)}" data-kind="${esc(item.type)}" data-entry-id="${esc(item.entryId)}" data-entry-label="${esc(item.title)}">Slett</button>`;
+      return `<div class="customer-registration"><div><strong>${esc(item.title)}</strong>
+        <p>${esc(fmtDate(item.at))} · ${esc(item.meta)} · ${esc(item.order.serviceName)}${item.order.status === "cancelled" ? " · Avbrutt" : ""}</p></div>
+        ${stateBadge(billing, item.billable)}
+        <div class="customer-entry-actions">${actions}</div>
+      </div>`;
     }).join("")}</div>`;
   }
+
+  let entryBusy = false;
+  async function editOrDeleteEntry(button, remove) {
+    if (entryBusy || button.disabled) return;
+    const orderId = button.dataset.orderId;
+    const entryId = button.dataset.entryId;
+    const kind = button.dataset.kind;
+    if (!orderId || !entryId || !["time", "expense", "equipment", "material", "note"].includes(kind)) return;
+    entryBusy = true;
+    button.disabled = true;
+    try {
+      // Sjå alltid på ferske fakturalåsar før handling – aldri stol berre på visinga.
+      const result = await api(`/admin/work-orders/${encodeURIComponent(orderId)}`);
+      const order = result.workOrder;
+      const lock = order?.billingLocks?.entries?.[`${kind}:${entryId}`];
+      if (order?.status === "cancelled" || order?.billingLocks?.projectLocked || lock?.locked) {
+        throw new Error("Registreringa er låst. Ei utstedt faktura må korrigerast via fakturaflyten.");
+      }
+      if (!remove) {
+        if (!window.SorgulenOperations?.openRegistration) throw new Error("Redigering er ikkje tilgjengeleg. Oppdater sida.");
+        await window.SorgulenOperations.openRegistration({ orderId, kind, entryId });
+        return;
+      }
+      if (!confirm(`Slette «${button.dataset.entryLabel || "registreringa"}»? Dette endrar registrert grunnlag. Allereie utstedt faktura blir ikkje endra.`)) return;
+      const endpoint = ({ time: "time", expense: "expenses", equipment: "equipment", material: "materials", note: "notes" })[kind];
+      await api(`/admin/operations/work-orders/${encodeURIComponent(orderId)}/${endpoint}/${encodeURIComponent(entryId)}`, { method: "DELETE" });
+      await load();
+      status.textContent = "Registreringa er sletta. Kontroller fakturautkast dersom det finst.";
+      await window.SorgulenAdminShell?.refreshBadges?.();
+    } catch (error) {
+      status.textContent = error.message;
+      status.className = "status-message error";
+    } finally {
+      entryBusy = false;
+      button.disabled = false;
+    }
+  }
+  detail.addEventListener("click", (event) => {
+    const edit = event.target.closest("[data-customer-edit-entry]");
+    const remove = event.target.closest("[data-customer-delete-entry]");
+    if (edit || remove) { event.preventDefault(); editOrDeleteEntry(edit || remove, Boolean(remove)); }
+  });
 
   function scheduleLabel(schedule) {
     if (schedule?.mode === "monthly") return "Månedlig";
@@ -113,6 +197,7 @@
     const draftChanges = (billingResponse?.billing?.drafts || []).filter((item) => item.changed);
     const rate = recentRate(workOrders);
     const schedule = customer.billingSchedule || { mode: "manual", intervalDays: 14, anchorDate: "" };
+    const totals = window.SorgulenCustomerLedger.summarizeCustomer(workOrders);
 
     document.getElementById("pageTitle").textContent = customer.name;
     const primaryProject = activeProjects[0] || null;
@@ -127,10 +212,17 @@
           </div>
         </div>
 
-        <div class="customer-ops-summary customer-ops-summary-core">
-          <div class="customer-ops-stat"><span>Aktive oppdrag</span><strong>${esc(activeProjects.length)}</strong></div>
-          <div class="customer-ops-stat"><span>Ikke fakturert</span><strong>${esc(fmtMoney(basis.total || 0))}</strong></div>
+        <div class="customer-ledger-summary" aria-label="Totalt registrert på kunden">
+          <div class="customer-ops-stat"><span>Alle oppdrag</span><strong>${esc(totals.orders)}</strong></div>
+          <div class="customer-ops-stat"><span>Arbeidstid totalt</span><strong>${esc(fmtDuration(totals.totalSeconds))}</strong></div>
+          <div class="customer-ops-stat"><span>Alle registreringar</span><strong>${esc(totals.count)}</strong></div>
+          <div class="customer-ops-stat"><span>Utgifter ført</span><strong>${esc(fmtMoney(totals.expensesTotal))}</strong></div>
+          <div class="customer-ops-stat"><span>Utstyr ført</span><strong>${esc(fmtMoney(totals.equipmentTotal))}</strong></div>
+          <div class="customer-ops-stat"><span>Materiale kundepris</span><strong>${esc(fmtMoney(totals.materialsTotal))}</strong></div>
+          <div class="customer-ops-stat"><span>Sum registrert (anslag)</span><strong>${esc(fmtMoney(totals.estimate))}</strong></div>
+          <div class="customer-ops-stat"><span>Ledig fakturagrunnlag</span><strong>${esc(fmtMoney(basis.total || 0))}</strong></div>
         </div>
+        <p class="customer-ledger-explainer">Utgifter er det som er ført på oppdraga, også interne utgifter. Anslaget er ikkje ei utstedt faktura; tidlegare fakturerte postar kan vere inkluderte. Ledig fakturagrunnlag kjem frå serveren og inkluderer ikkje postar som ligg i fakturautkast eller utstedt faktura.</p>
 
         ${due.due ? `<div class="billing-ready"><strong>Klar for fakturering.</strong> ${esc(basis.count)} poster ligger klare.</div>` : ""}
         ${draftChanges.map((draft) => `<div class="billing-draft-warning"><strong>Fakturautkast må oppdateres.</strong><span>${draft.added?.length || 0} nye, ${draft.removed?.length || 0} fjernede og ${draft.modified?.length || 0} endrede poster.</span><a href="faktura-detalj.html?id=${encodeURIComponent(draft.invoiceId)}">Åpne utkast</a></div>`).join("")}
@@ -189,8 +281,8 @@
         </div>
       </details>
 
-      <details class="customer-section customer-collapse">
-        <summary><span><strong>Arbeid og registreringer</strong><small>${esc(basis.count || 0)} ikke-fakturerte poster</small></span><b>›</b></summary>
+      <details id="customerRegistrations" class="customer-section customer-collapse customer-ledger-section" open>
+        <summary><span><strong>Alle registreringar</strong><small>${esc(totals.count)} postar på ${esc(totals.orders)} oppdrag · rediger eller slett direkte</small></span><b>›</b></summary>
         <div class="customer-collapse-body">${registrationRows(workOrders)}</div>
       </details>
 
