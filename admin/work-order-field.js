@@ -262,7 +262,6 @@
       const first = entries[0]?.startedAt;
       const last = entries.at(-1)?.endedAt;
       const dayPauses = pauses.filter((pause) => osloDateKey(pause.startedAt) === key);
-      const related = relatedByDay(order, key);
       return `<details class="field-day" ${index === 0 ? "open" : ""}>
         <summary>
           <span class="field-day-title"><strong>${esc(dayLabel(key))}</strong><span>${esc(clock(first))}–${last ? esc(clock(last)) : "pågår"} · ${entries.length} økt${entries.length === 1 ? "" : "er"}</span></span>
@@ -271,7 +270,6 @@
         <div class="field-day-body">
           ${entries.map((entry) => sessionMarkup(order, entry)).join("")}
           ${dayPauses.map((pause) => `<div class="field-pause"><span><strong>Pause</strong> ${esc(clock(pause.startedAt))}–${esc(clock(pause.endedAt))}</span><span>${esc(durationText(pause.seconds))}</span></div>`).join("")}
-          ${related.map((row) => `<div class="field-related-line"><span>${esc(row.type)}</span><strong>${esc(row.title)}</strong><span>${esc(row.tail)}</span></div>`).join("")}
         </div>
       </details>`;
     }).join("");
@@ -295,9 +293,9 @@
     };
     const rows = (items, mapper, empty) => items.length ? `<div class="field-register-list">${items.map(mapper).join("")}</div>` : `<p class="muted">${esc(empty)}</p>`;
     return `<div class="field-registration-groups">
-      <section class="field-register-group"><h4>Utgifter · ${expenses.length}</h4>${rows(expenses, (x) => `<div class="field-register-row"><div><strong>${esc(x.item)}</strong><span>${esc(dateTime(x.occurredAt))}${x.supplier ? ` · ${esc(x.supplier)}` : ""}</span></div><span>${esc(money(x.amount))}</span>${actions("expense", x.entryId, x.item || "utgiften")}</div>`, "Ingen utgifter")}</section>
-      <section class="field-register-group"><h4>Utstyr · ${equipment.length}</h4>${rows(equipment, (x) => `<div class="field-register-row"><div><strong>${esc(x.item || "Utstyr")}</strong><span>${esc(x.durationMinutes || 0)} min · ${esc(money(x.hourlyRateSnapshot || 0))}/t${x.note ? ` · ${esc(x.note)}` : ""}</span></div><span>${esc(money(x.amount || 0))}</span>${actions("equipment", x.entryId, x.item || "utstyrsregistreringen")}</div>`, "Ingen utstyrsbruk")}</section>
-      <section class="field-register-group"><h4>Materialer · ${materials.length}</h4>${rows(materials, (x) => `<div class="field-register-row"><div><strong>${esc(x.item)}</strong><span>${esc(x.quantity)} ${esc(x.unit || "stk")}${x.comment ? ` · ${esc(x.comment)}` : ""}</span></div><span>${x.unitPrice == null ? "Pris mangler" : esc(money(Number(x.quantity) * Number(x.unitPrice)))}</span>${actions("material", x.entryId, x.item || "materialet")}</div>`, "Ingen materialer")}</section>
+      <section class="field-register-group"><h4>Utgifter · ${expenses.length}</h4>${rows(expenses, (x) => `<div class="field-register-row"><div><strong>${esc(x.item)}</strong><span>${esc(dateTime(x.occurredAt))}${x.supplier ? ` · ${esc(x.supplier)}` : ""} · ${x.billable === false ? "Intern utgift" : "Fakturerbar"}</span></div><span>${esc(money(x.amount))}</span>${actions("expense", x.entryId, x.item || "utgiften")}</div>`, "Ingen utgifter")}</section>
+      <section class="field-register-group"><h4>Utstyr · ${equipment.length}</h4>${rows(equipment, (x) => `<div class="field-register-row"><div><strong>${esc(x.item || "Utstyr")}</strong><span>${esc(x.durationMinutes || 0)} min · ${esc(money(x.hourlyRateSnapshot || 0))}/t${x.note ? ` · ${esc(x.note)}` : ""} · ${x.billable === false ? "Intern" : "Fakturerbar"}</span></div><span>${esc(money(x.amount || 0))}</span>${actions("equipment", x.entryId, x.item || "utstyrsregistreringen")}</div>`, "Ingen utstyrsbruk")}</section>
+      <section class="field-register-group"><h4>Materialer · ${materials.length}</h4>${rows(materials, (x) => `<div class="field-register-row"><div><strong>${esc(x.item)}</strong><span>${esc(x.quantity)} ${esc(x.unit || "stk")}${x.comment ? ` · ${esc(x.comment)}` : ""} · ${x.billable === false ? "Intern" : "Fakturerbar"}</span></div><span>${x.unitPrice == null ? "Pris mangler" : esc(money(Number(x.quantity) * Number(x.unitPrice)))}</span>${actions("material", x.entryId, x.item || "materialet")}</div>`, "Ingen materialer")}</section>
       <section class="field-register-group"><h4>Notater · ${notes.length}</h4>${rows(notes, (x) => `<div class="field-register-row"><div><strong>${esc(x.text)}</strong><span>${esc(dateTime(x.createdAt))}</span></div><span></span>${actions("note", x.entryId, "notatet")}</div>`, "Ingen løpende notater")}</section>
     </div>`;
   }
@@ -425,10 +423,47 @@
     return "";
   }
 
+
+  function timeRegistrationsMarkup(order) {
+    const entries = order.workIntervals || [];
+    const editable = order.status !== "cancelled" && !projectRegistrationsLocked(order);
+    const rows = entries.map((entry) => {
+      const seconds = intervalSeconds(entry);
+      const rate = Number(entry.hourlyRateSnapshot ?? order.hourlyRate ?? 0);
+      const billable = entry.billable !== false;
+      const timerOpen = entry.source !== "manual" && !entry.endedAt;
+      const lock = registrationBillingLock(order, "time", entry.entryId);
+      const amountText = !billable ? "Intern" : order.pricingMode === "fixed"
+        ? "Inkl. i fastpris" : money((seconds / 3600) * rate);
+      const actions = !editable || lock?.locked
+        ? '<span class="field-locked-note">' + esc(billingLockText(lock, "Låst for endring")) + '</span>'
+        : timerOpen
+          ? '<span class="field-locked-note">Stopp økta før redigering</span>'
+          : `<div class="field-register-actions"><button type="button" data-field-edit-session="${esc(entry.entryId)}">Rediger tid</button><button type="button" class="field-delete-entry" data-field-delete-registration="time" data-entry-id="${esc(entry.entryId)}" data-entry-label="${esc(entry.comment || "arbeidsøkta")}">Slett tid</button></div>`;
+      return `<div class="field-register-row field-time-row">
+        <div><strong>${esc(entry.comment || (seconds === 0 ? "0 min – kontroller registreringa" : categoryNames[entry.category] || "Arbeid"))}</strong>
+          <span>${esc(dateTime(entry.startedAt))} – ${entry.endedAt ? esc(clock(entry.endedAt)) : "Pågår"} · ${esc(durationText(seconds))} · ${esc(entry.source === "manual" ? "Manuell" : "Takstameter")}</span></div>
+        <strong class="field-register-amount">${esc(amountText)}</strong>${actions}</div>`;
+    }).join("");
+    return `<section class="field-register-group"><h4>Tid · ${entries.length}</h4>${entries.length
+      ? `<div class="field-register-list">${rows}</div>`
+      : '<p class="field-empty-register">Ingen arbeidsøkter. Utgifter og andre registreringar er framleis viste nedanfor.</p>'}</section>`;
+  }
+
+  function ledgerBreakdownMarkup(order, ledger) {
+    const row = (label, detailText, amount) => `<div class="field-ledger-line"><div><strong>${esc(label)}</strong><span>${esc(detailText)}</span></div><strong>${esc(amount)}</strong></div>`;
+    return `<div class="field-ledger-breakdown" aria-label="Beløp per registreringstype">
+      ${row("Tid", `${ledger.time} økter · ${durationText(ledger.totalSeconds)}`, order.pricingMode === "fixed" ? "Inkludert i fastpris" : money(ledger.workAmount))}
+      ${row("Utgifter", `${ledger.expenses} førte · ${money(ledger.expensesBillable)} fakturerbart`, money(ledger.expensesTotal))}
+      ${row("Utstyr", `${ledger.equipment} registreringar · ${money(ledger.equipmentBillable)} fakturerbart`, money(ledger.equipmentTotal))}
+      ${row("Materiale", `${ledger.materials} registreringar · ${money(ledger.materialsCost)} innkjøpskostnad`, money(ledger.materialsTotal))}
+      ${ledger.fixedAmount > 0 ? row("Avtalt fastpris", "Kjem i tillegg til eventuelle avtalte tillegg", money(ledger.fixedAmount)) : ""}
+    </div>`;
+  }
+
   function moreProjectMarkup(order, customer, contact) {
-    const registrationCount = (order.additionalCosts || []).length + (order.equipment || []).length + (order.materials || []).length + (order.projectNotes || []).length;
     return '<details id="fieldMore" class="field-collapse field-more">' +
-      '<summary>Mer om oppdraget <span>' + registrationCount + ' registreringer</span></summary>' +
+      '<summary>Kunde og oppdragsinfo <span>Detaljar</span></summary>' +
       '<div class="field-collapse-body">' +
         '<section class="field-more-section"><h4>Kunde og prosjekt</h4><div class="field-info-grid">' +
           '<div><span>Kunde</span><strong>' + esc(customer.name || "–") + '</strong></div>' +
@@ -438,7 +473,6 @@
           '<div><span>Pris</span><strong>' + esc(pricingLabel(order)) + '</strong></div>' +
           '<div><span>Kilde</span><strong>' + esc(order.customerSourceType || "Manuell") + (order.sourceRefNumber ? ' · #' + esc(order.sourceRefNumber) : '') + '</strong></div>' +
         '</div></section>' +
-        '<section class="field-more-section"><h4>Utgifter, utstyr, materialer og notater</h4>' + registrationsMarkup(order) + '</section>' +
         '<section class="field-more-section field-notes"><h4>Prosjektbeskrivelse</h4><textarea id="detailNotes" maxlength="5000" placeholder="Avtaler, omfang eller annen viktig prosjektinfo">' + esc(order.notes || "") + '</textarea><button id="saveDetailNotes" type="button" class="secondary-btn">Lagre prosjektbeskrivelse</button></section>' +
       '</div></details>';
   }
@@ -463,23 +497,29 @@
     const contact = [customer.phone, customer.email, customer.address].filter(Boolean).join(" · ") || "Ingen kontaktinformasjon registrert";
     if (title) title.textContent = customer.name || "Oppdrag";
 
-    detail.innerHTML = '<div class="field-workspace" data-field-workspace data-order-id="' + esc(order._id) + '">' +
+    const ledger = window.SorgulenCustomerLedger?.summarizeOrder(order);
+    if (!ledger) throw new Error("Registreringsoversikta kunne ikkje lastast");
+    detail.innerHTML = '<div class="field-workspace field-workspace-ledger" data-field-workspace data-order-id="' + esc(order._id) + '">' +
       '<section class="field-hero">' +
         '<div class="field-hero-top"><div class="field-identity"><p class="field-kicker">Kundeoppdrag</p><h2>' + esc(customer.name || "Ukjent kunde") + '</h2><p class="field-service">' + esc(order.serviceName) + '</p></div><span class="field-status ' + esc(displayStatus) + '">' + esc(statusNames[displayStatus] || displayStatus) + '</span></div>' +
         '<div class="field-metrics field-metrics-core">' +
-          '<div class="field-metric"><span>Arbeidstid</span><strong data-field-total-time>' + esc(durationText(totalSeconds(order))) + '</strong><small>Registrert totalt</small>' + timeCorrectionMarkup(order) + '</div>' +
-          '<div class="field-metric"><span>Pris hittil</span><strong data-field-total-price>' + esc(money(projectedTotal(order))) + '</strong><small>' + (missingPrice ? "Foreløpig – pris mangler" : "Fakturerbart registrert") + '</small></div>' +
+          '<div class="field-metric"><span>Arbeidstid totalt</span><strong data-field-total-time>' + esc(durationText(ledger.totalSeconds)) + '</strong><small>' + ledger.time + ' arbeidsøkter</small>' + timeCorrectionMarkup(order) + '</div>' +
+          '<div class="field-metric"><span>Alle registreringar</span><strong>' + ledger.count + '</strong><small>Tid, utgifter, utstyr, materiale og notat</small></div>' +
+          '<div class="field-metric"><span>Utgifter førte</span><strong>' + esc(money(ledger.expensesTotal)) + '</strong><small>Inkl. ikkje-fakturerbare utgifter</small></div>' +
+          '<div class="field-metric field-metric-total"><span>Sum registrert (anslag)</span><strong data-field-total-price>' + esc(money(projectedTotal(order))) + '</strong><small>Omfattar òg tidlegare fakturerte postar. Ikkje faktura.</small></div>' +
         '</div>' +
         compactWorkControls(order) +
-        (issues.count ? '<button type="button" class="field-readiness" data-field-readiness-jump><span class="field-readiness-icon">!</span><span class="field-readiness-copy"><strong>' + issues.count + ' ting må ordnes før faktura</strong><span>Trykk for å gå rett til det som mangler</span></span><span class="field-readiness-tail">›</span></button>' : '') +
-        workflowMarkup(order) +
         addMenuMarkup(order) +
       '</section>' +
-
-      '<section class="field-section"><div class="field-section-head"><div><h3>Arbeidslogg</h3><p>Det som faktisk er gjort, dag for dag.</p></div></div><div class="field-log">' + dailyLogMarkup(order) + '</div></section>' +
-
-      (issues.count ? '<details id="fieldReadiness" class="field-collapse" open><summary>Må ordnes før faktura <span>' + issues.count + ' ting</span></summary><div class="field-collapse-body"><ul class="field-issue-list">' + issues.items.map((issue) => issueMarkup(issue, order)).join("") + '</ul></div></details>' : '') +
-
+      (issues.count ? '<details id="fieldReadiness" class="field-collapse field-attention" open><summary>Må rettast før faktura <span>' + issues.count + ' punkt</span></summary><div class="field-collapse-body"><ul class="field-issue-list">' + issues.items.map((issue) => issueMarkup(issue, order)).join("") + '</ul></div></details>' : '') +
+      '<section class="field-section field-ledger" id="fieldLedger">' +
+        '<div class="field-section-head"><div><h3>Alle registreringar</h3><p>Alt som er ført på dette oppdraget. Trykk Rediger eller Slett på kvar post.</p></div><strong class="field-ledger-count">' + ledger.count + ' postar</strong></div>' +
+        ledgerBreakdownMarkup(order, ledger) +
+        '<p class="field-ledger-disclaimer">Beløpa her viser registrerte verdiar, ikkje endeleg faktura eller rest til fakturering. Fakturautkast og betalte postar kan inngå. Kontroller fakturadelen før sending.</p>' +
+        '<div class="field-all-entries">' + timeRegistrationsMarkup(order) + registrationsMarkup(order) + '</div>' +
+      '</section>' +
+      '<details id="fieldBilling" class="field-collapse"><summary>Fakturering <span>Utkast, delfaktura og sluttfaktura</span></summary><div class="field-collapse-body">' + workflowMarkup(order) + (order.customerId ? '<a class="field-secondary-action field-customer-billing-link" href="kunde.html?id=' + encodeURIComponent(order.customerId) + '">Sjå alle oppdrag og fakturagrunnlag for kunden</a>' : "") + '</div></details>' +
+      '<details class="field-collapse field-log-collapse"><summary>Arbeidslogg <span>Økter fordelt på dag</span></summary><div class="field-collapse-body"><div class="field-log">' + dailyLogMarkup(order) + '</div></div></details>' +
       moreProjectMarkup(order, customer, contact) +
     '</div>';
   }
