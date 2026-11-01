@@ -249,6 +249,7 @@
         <div class="operation-field"><label>Beløp</label><input name="amount" type="number" min="0.01" max="1000000" step="0.01" value="${esc(item.amount)}" required></div>
         <div class="operation-field"><label>Leverandør</label><input name="supplier" value="${esc(item.supplier || "")}"></div>
         <div class="operation-field"><label>Dato</label><input name="occurredAt" type="date" value="${esc(dateValue(item.occurredAt) || today())}" required></div>
+        <div class="operation-field wide"><label>Legg ved kvittering</label><input name="receiptImage" type="file" accept="image/jpeg,image/png,image/webp,image/heic">${item.receiptUrl ? `<small>Kvittering finst allereie. Last opp berre om ho skal erstattast.</small>` : ""}</div>
         <label class="operation-check"><input name="billable" type="checkbox" ${item.billable === false ? "" : "checked"}> Fakturerbar</label>
       </div><p id="operationError" class="operation-error"></p><div class="operation-actions"><button type="button" class="secondary-btn operation-danger" data-operation-delete>Slett registrering</button><button type="button" class="secondary-btn" data-operation-close-2>Avbryt</button><button type="submit" class="primary-btn">Lagre</button></div></form>`;
     }
@@ -364,6 +365,19 @@
         const button = form.querySelector("button[type=submit]");
         button.disabled = true;
         try {
+          if (kind === "expense") {
+            const receipt = new FormData(form).get("receiptImage");
+            delete payload.receiptImage;
+            if (receipt instanceof File && receipt.size > 0) {
+              if (receipt.size > 10 * 1024 * 1024) throw new Error("Kvitteringen er for stor (maks 10 MB).");
+              payload.receiptImage = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(new Error("Kunne ikkje lese kvitteringen."));
+                reader.readAsDataURL(receipt);
+              });
+            }
+          }
           await api(`/admin/operations/work-orders/${encodeURIComponent(form.dataset.orderId)}/${endpoint}/${encodeURIComponent(form.dataset.entryId)}`, { method: "PATCH", body: JSON.stringify(payload) });
           closeModal();
           await window.SorgulenAdminShell?.refreshBadges?.();
