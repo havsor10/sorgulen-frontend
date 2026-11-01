@@ -110,7 +110,7 @@
       });
       for (const entry of order.equipment || []) items.push({
         at: entry.createdAt || order.jobDate, order, type: "equipment", entryId: entry.entryId,
-        title: entry.item || "Utstyr", meta: `${entry.durationMinutes || 0} min · ${fmtMoney(entry.hourlyRateSnapshot || 0)}/t · ${fmtMoney(entry.amount || 0)} · Utstyr`, billable: entry.billable !== false,
+        title: entry.item || "Utstyr", meta: `${entry.durationMinutes || 0} min · ${fmtMoney(entry.hourlyRateSnapshot || 0)}/t · ${fmtMoney(window.SorgulenCustomerLedger.equipmentAmount(entry))} · Utstyr`, billable: entry.billable !== false,
       });
       for (const entry of order.materials || []) items.push({
         at: entry.createdAt || order.jobDate, order, type: "material", entryId: entry.entryId,
@@ -131,8 +131,8 @@
           : `<button type="button" data-customer-edit-entry data-order-id="${esc(item.order._id)}" data-kind="${esc(item.type)}" data-entry-id="${esc(item.entryId)}">Rediger</button>
             <button type="button" class="customer-entry-delete" data-customer-delete-entry data-order-id="${esc(item.order._id)}" data-kind="${esc(item.type)}" data-entry-id="${esc(item.entryId)}" data-entry-label="${esc(item.title)}">Slett</button>`;
       return `<div class="customer-registration"><div><strong>${esc(item.title)}</strong>
-        <p>${esc(fmtDate(item.at))} · ${esc(item.meta)} · ${esc(item.order.serviceName)}${item.order.status === "cancelled" ? " · Avbrutt" : ""}</p></div>
-        ${stateBadge(billing, item.billable)}
+        <p>${esc(fmtDate(item.at))} · ${esc(item.meta)} · ${esc(item.order.serviceName)}${item.order.status === "cancelled" ? " · Avbrutt" : ""}${item.order.isTest ? " · TESTOPPDRAG" : ""}</p></div>
+        ${item.order.isTest ? '<span class="billing-state">Testdata</span>' : stateBadge(billing, item.billable)}
         <div class="customer-entry-actions">${actions}</div>
       </div>`;
     }).join("")}</div>`;
@@ -197,7 +197,10 @@
     const draftChanges = (billingResponse?.billing?.drafts || []).filter((item) => item.changed);
     const rate = recentRate(workOrders);
     const schedule = customer.billingSchedule || { mode: "manual", intervalDays: 14, anchorDate: "" };
-    const totals = window.SorgulenCustomerLedger.summarizeCustomer(workOrders);
+    const realWorkOrders = workOrders.filter((order) => !order.isTest);
+    const testCount = workOrders.length - realWorkOrders.length;
+    // Same non-test scope as billing-summary on the backend.
+    const totals = window.SorgulenCustomerLedger.summarizeCustomer(realWorkOrders);
 
     document.getElementById("pageTitle").textContent = customer.name;
     const primaryProject = activeProjects[0] || null;
@@ -213,7 +216,7 @@
         </div>
 
         <div class="customer-ledger-summary" aria-label="Totalt registrert på kunden">
-          <div class="customer-ops-stat"><span>Alle oppdrag</span><strong>${esc(totals.orders)}</strong></div>
+          <div class="customer-ops-stat"><span>Ekte oppdrag</span><strong>${esc(totals.orders)}</strong></div>
           <div class="customer-ops-stat"><span>Arbeidstid totalt</span><strong>${esc(fmtDuration(totals.totalSeconds))}</strong></div>
           <div class="customer-ops-stat"><span>Alle registreringar</span><strong>${esc(totals.count)}</strong></div>
           <div class="customer-ops-stat"><span>Utgifter ført</span><strong>${esc(fmtMoney(totals.expensesTotal))}</strong></div>
@@ -222,6 +225,7 @@
           <div class="customer-ops-stat"><span>Sum registrert (anslag)</span><strong>${esc(fmtMoney(totals.estimate))}</strong></div>
           <div class="customer-ops-stat"><span>Ledig fakturagrunnlag</span><strong>${esc(fmtMoney(basis.total || 0))}</strong></div>
         </div>
+        ${testCount ? '<p class="customer-ledger-explainer">Testoppdrag: ' + esc(testCount) + '. Desse er viste i lista for kontroll, men ikkje rekna med i totalsummar eller fakturagrunnlag.</p>' : ""}
         <p class="customer-ledger-explainer">Utgifter er det som er ført på oppdraga, også interne utgifter. Anslaget er ikkje ei utstedt faktura; tidlegare fakturerte postar kan vere inkluderte. Ledig fakturagrunnlag kjem frå serveren og inkluderer ikkje postar som ligg i fakturautkast eller utstedt faktura.</p>
 
         ${due.due ? `<div class="billing-ready"><strong>Klar for fakturering.</strong> ${esc(basis.count)} poster ligger klare.</div>` : ""}
