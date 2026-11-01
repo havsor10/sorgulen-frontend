@@ -22,3 +22,9 @@ test("resolved notifications use authenticated backend and can be restored", () 
   assert.match(html, /id="resolvedTaskCount"/);
   assert.match(js, /Fakturaen|INGEN faktura/);
 });
+
+
+test("admin does not merge distinct alerts that share title and action", () => {
+  assert.match(js, /task\.id\s*\?\s*"id:"\s*\+\s*task\.id/);
+  assert.match(js, /seen\.add\(key\)/);
+});

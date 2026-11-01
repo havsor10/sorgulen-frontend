@@ -35,7 +35,9 @@
     return (home?.overview?.tasks||[]).filter((task)=>{
       if(!task?.actionLabel||(!task?.href&&!task?.assistantAction))return false;
       if(activeId&&task.priority!=="critical"&&String(task.href||"").includes(activeId))return false;
-      const key=[task.href||"",task.actionLabel||"",task.title||""].join("|");
+      // Same customer and same action can still represent different real bookings.
+      // Use backend identity so no actionable item disappears from the list.
+      const key=task.id ? "id:"+task.id : [task.href||"",task.actionLabel||"",task.title||""].join("|");
       if(seen.has(key))return false;
       seen.add(key);
       return true;
