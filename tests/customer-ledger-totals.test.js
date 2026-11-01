@@ -50,3 +50,17 @@ test("kunden og oppdraget lastar same summeringsmotor", () => {
   assert.match(read("admin/work-order-field.js"), /SorgulenCustomerLedger/);
   assert.match(read("admin/kunde-v2.js"), /SorgulenCustomerLedger/);
 });
+
+test("utstyr med eldre manglande amount blir likevel rekna riktig frå varigheit og sats", () => {
+  const order = { equipment: [{ item: "Lift", durationMinutes: 90, hourlyRateSnapshot: 200, billable: true }] };
+  const result = ledger.summarizeOrder(order);
+  assert.equal(result.equipmentTotal, 300);
+  assert.equal(result.equipmentBillable, 300);
+  assert.equal(result.estimate, 300);
+});
+
+test("testoppdrag blir haldne utanfor kundesummer", () => {
+  const customer = read("admin/kunde-v2.js");
+  assert.match(customer, /workOrders\.filter\(\(order\) => !order\.isTest\)/);
+  assert.match(customer, /TESTOPPDRAG/);
+});
