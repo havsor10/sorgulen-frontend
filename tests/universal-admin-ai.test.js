@@ -8,10 +8,10 @@ const shell = fs.readFileSync(path.join(root, "admin/admin-shell.js"), "utf8");
 const ai = fs.readFileSync(path.join(root, "admin/ai-universal.js"), "utf8");
 const css = fs.readFileSync(path.join(root, "admin/ai-universal.css"), "utf8");
 
-test("universal AI is loaded on all admin shell pages", () => {
+test("universal AI remains available outside customer and job pages", () => {
   assert.match(shell, /ai-universal\.css/);
   assert.match(shell, /ai-universal\.js/);
-  assert.doesNotMatch(shell, /if \(page === "jobs"\) ensureAsset\("script", \{ src: "ai-universal/);
+  assert.match(shell, /!\["jobs", "customers"\]\.includes\(page\)/);
 });
 
 test("universal AI supports multiple images and page context", () => {
