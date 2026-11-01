@@ -1,0 +1,81 @@
+/* Reinsleg og tydeleg økonomi-/registreringsoversikt på kundar og oppdrag.
+   Held fakturalås og lagra registreringar i eksisterande API. */
+.field-workspace-ledger{max-width:100%;gap:14px}
+.field-workspace-ledger .field-hero{gap:13px;background:#151d29;border-color:#344257;padding:16px}
+.field-workspace-ledger .field-identity h2{font-size:clamp(22px,5vw,29px)}
+.field-workspace-ledger .field-metrics-core{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.field-workspace-ledger .field-metric{min-height:93px;padding:12px;border-color:#344457;border-radius:12px}
+.field-workspace-ledger .field-metric span{font-size:11px;letter-spacing:.02em;text-transform:none}
+.field-workspace-ledger .field-metric strong{font-size:clamp(18px,3vw,23px);font-variant-numeric:tabular-nums}
+.field-workspace-ledger .field-metric small{font-size:11px;line-height:1.35}
+.field-workspace-ledger .field-metric-total{background:#0f2030;border-color:#42607e}
+.field-workspace-ledger .field-work-controls{padding:0}
+.field-workspace-ledger .field-work-controls .work-btn{min-height:49px;font-size:14px;letter-spacing:0}
+.field-workspace-ledger .field-action-row{margin:0}
+.field-workspace-ledger .field-add-main{min-height:49px}
+.field-workspace-ledger .field-section-head{align-items:start}
+.field-workspace-ledger .field-section-head h3{font-size:19px}
+.field-ledger{padding:15px;border:1px solid #374759;border-radius:16px;background:#121a25}
+.field-ledger-count{white-space:nowrap;padding:7px 10px;border-radius:999px;background:#253244;color:#dfeaf5;font-size:12px}
+.field-ledger-breakdown{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:3px}
+.field-ledger-line{display:flex;align-items:center;justify-content:space-between;gap:9px;min-width:0;padding:10px;border:1px solid #2b3c50;border-radius:10px;background:#0d1723}
+.field-ledger-line>div{display:grid;gap:3px;min-width:0}
+.field-ledger-line strong{font-size:13px;color:#edf5fc;overflow-wrap:anywhere}
+.field-ledger-line>strong{white-space:nowrap;font-size:14px;font-variant-numeric:tabular-nums}
+.field-ledger-line span{font-size:11px;line-height:1.35;color:#9aabc0}
+.field-ledger-disclaimer{margin:0;padding:9px 11px;border-left:3px solid #54789c;border-radius:6px;background:#142337;color:#adc0d5;font-size:12px;line-height:1.5}
+.field-all-entries{display:grid;gap:13px}
+.field-all-entries>.field-register-group,.field-all-entries>.field-registration-groups>.field-register-group{padding:12px;border:1px solid #29394b;border-radius:12px;background:#0d1520}
+.field-all-entries .field-registration-groups{display:grid;gap:13px;padding-top:0}
+.field-all-entries .field-register-group h4{font-size:15px;margin-bottom:9px}
+.field-all-entries .field-register-list{gap:8px}
+.field-all-entries .field-register-row{background:#142130;grid-template-columns:minmax(0,1fr) auto;border:1px solid #2a3d53;padding:11px;row-gap:7px}
+.field-all-entries .field-register-row>div:first-child{min-width:0}
+.field-all-entries .field-register-row strong{line-height:1.4;font-size:14px;white-space:normal;overflow-wrap:anywhere}
+.field-all-entries .field-register-row>span,.field-all-entries .field-register-row>strong.field-register-amount{align-self:start;text-align:right;color:#eaf3fd;font-size:13px}
+.field-all-entries .field-register-row .field-register-actions{grid-column:1/-1;display:flex;gap:8px;align-items:center;margin-top:4px}
+.field-all-entries .field-register-actions button{min-height:42px;flex:1;font-size:13px}
+.field-all-entries .field-register-row>.field-locked-note{grid-column:1/-1}
+.field-empty-register{color:#96a8bd;margin:0;font-size:13px}
+.field-attention{border-color:#755323}
+.field-workspace-ledger .field-collapse>summary{min-height:48px;padding:13px 15px}
+.field-workspace-ledger .field-collapse-body{padding-top:11px}
+.field-workspace-ledger .field-status-workflow{margin:0}
+.field-customer-billing-link{display:block;min-height:42px;text-align:center}
+.customer-ledger-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.customer-ledger-summary .customer-ops-stat{min-height:75px;padding:12px}
+.customer-ledger-summary .customer-ops-stat span{font-size:12px;color:#9caec2;line-height:1.35}
+.customer-ledger-summary .customer-ops-stat strong{font-size:19px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.customer-ledger-explainer{margin:0;color:#aabed2;font-size:12px;line-height:1.5}
+.customer-ledger-entries{display:grid;gap:7px}
+.customer-ledger-entries .customer-registration{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;border:1px solid #2d4054;border-radius:12px;padding:12px;background:#131f2e}
+.customer-ledger-entries .customer-registration>div:first-child{min-width:0}
+.customer-ledger-entries .customer-registration strong{display:block;overflow-wrap:anywhere}
+.customer-ledger-entries .customer-registration p{font-size:12px;line-height:1.5}
+.customer-entry-actions{grid-column:1/-1;display:flex;align-items:center;gap:8px;margin-top:2px}
+.customer-entry-actions button{min-height:42px;padding:8px 13px;flex:1;border:1px solid #4a627b;border-radius:10px;background:#1b2a3b;color:#f0f6fd;font-size:13px;font-weight:800;cursor:pointer}
+.customer-entry-actions .customer-entry-delete{border-color:#79414c;background:#372026;color:#ffdce0}
+.customer-entry-actions .customer-entry-locked{font-size:12px;color:#f0c48f}
+.customer-ledger-section>summary{background:#1b293a}
+.customer-ledger-section[open]>.customer-collapse-body{padding-top:13px}
+@media(max-width:720px){
+ .field-workspace-ledger .field-metrics-core{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .field-workspace-ledger .field-metric:last-child{grid-column:auto}
+ .field-workspace-ledger .field-metric{min-height:89px}
+ .field-ledger{padding:12px}
+ .field-ledger-breakdown{grid-template-columns:1fr}
+ .field-ledger-line{padding:11px}
+ .field-all-entries>.field-register-group,.field-all-entries>.field-registration-groups>.field-register-group{padding:10px}
+ .field-workspace-ledger .field-hero{padding:12px}
+ .field-workspace-ledger .field-identity h2{font-size:23px}
+ .field-workspace-ledger .field-status{font-size:11px;white-space:nowrap}
+ .customer-ledger-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .customer-ledger-summary .customer-ops-stat:last-child{grid-column:auto}
+ .customer-ledger-entries .customer-registration{grid-template-columns:minmax(0,1fr)}
+ .customer-ledger-entries .billing-state{justify-self:start}
+}
+@media(max-width:375px){
+ .field-workspace-ledger .field-metric{padding:9px}
+ .field-workspace-ledger .field-metric strong{font-size:17px}
+ .customer-ledger-summary .customer-ops-stat strong{font-size:17px}
+}
