@@ -411,10 +411,12 @@
     const renderCard = ({ order, finance }) => {
       const customer = order.customerSnapshot || {};
       const seconds = calculateWorkSeconds(order);
-      const amount = calculateEstimatedAmount(order, seconds);
+      // Bruk same registeroversikt som kundedetaljen. Den gamle kortsummen
+      // tok berre med timebetaling og viste til dømes 0 kr når kunden hadde utgifter.
+      const ledger = window.SorgulenCustomerLedger?.summarizeOrder(order);
+      const amount = ledger ? ledger.estimate : calculateEstimatedAmount(order, seconds);
       const status = effectiveStatus(order);
       const showAmount = status !== "planned" && status !== "cancelled";
-      const estimated = !["completed", "stopped"].includes(status);
       const labelChips = finance.labels.length
         ? finance.labels.map((label) => boardChip(label.key, label.label + (label.count > 1 ? " (" + label.count + ")" : ""))).join("")
         : boardChip(finance.source === "unbilled" ? "unbilled" :
@@ -437,7 +439,7 @@
           '</strong><span>' + escapeHtml(order.serviceName || "Oppdrag") + '</span></span>' +
           '<span class="history-summary"><span>' + escapeHtml(formatDate(order.jobDate)) + '</span>' +
           (status === "planned" ? "" : '<span>' + escapeHtml(formatDuration(seconds)) + '</span>') +
-          (showAmount ? '<span>Arbeidsanslag ' + escapeHtml(formatCurrency(amount, estimated)) + '</span>' : '') + '</span>' +
+          (showAmount ? '<span>Registrert anslag ' + escapeHtml(formatCurrency(amount, true)) + '</span>' : '') + '</span>' +
           '<span class="history-tail"><span class="work-status-badge status-' + escapeHtml(status) + '">' +
           escapeHtml(finance.stageLabel) + '</span><b aria-hidden="true">›</b></span></button>' +
           '<div class="order-board-status" aria-label="Økonomistatus">' + labelChips + '</div>' +
