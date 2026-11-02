@@ -186,3 +186,32 @@ test("oppdragskortet inkluderer registrerte utgifter – aldri berre timar", () 
   assert.match(jobs, /extraInvoices/);
   assert.match(jobs, /invoice\.group !== historyStatus\.value/);
 });
+
+test("ny registrering etter betalt faktura held oppdraget i oppfølgingskø", () => {
+  const order = {
+    ...makeOrder("x"), hourlyRate: 850, pricingMode: "hourly",
+    workIntervals: [
+      { entryId: "old", source: "manual", durationSeconds: 3600, billable: true },
+      { entryId: "new", source: "manual", durationSeconds: 1800, billable: true },
+    ],
+  };
+  const board = model([order], [invoice("paid1", "paid", "x", { sourceEntryKeys: ["x:time:old"] })]);
+  assert.equal(board.records[0].finance.group, "attention");
+  assert.equal(board.records[0].finance.source, "unbilled-extra");
+  assert.equal(board.records[0].finance.unbilledAfterInvoice, 1);
+});
+
+test("betalt faktura med alle registreringar med er ferdig og betalt", () => {
+  const order = {
+    ...makeOrder("x"), pricingMode: "hourly",
+    additionalCosts: [{ entryId: "cost", amount: 100, billable: true }],
+  };
+  const board = model([order], [invoice("paid1", "paid", "x", { sourceEntryKeys: ["x:expense:cost"] })]);
+  assert.equal(board.records[0].finance.group, "done");
+});
+
+test("avbroten jobb med ubetalt faktura blir framleis vist som ventar betaling", () => {
+  const board = model([makeOrder("x", "cancelled")], [invoice("unpaid", "sent", "x")]);
+  assert.equal(board.records[0].finance.group, "waiting");
+  assert.equal(board.records[0].finance.stageLabel, "Avbrutt");
+});
