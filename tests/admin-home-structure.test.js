@@ -25,7 +25,7 @@ test("home shows all working customers before a collapsed follow-up queue", () =
 test("active customers are visible before the action queue", () => {
   assert.match(html, /id="ongoingSection" aria-labelledby="ongoingTitle"/);
   assert.match(html, /id="workingCount"/);
-  assert.match(html, /Aktive kunder/);
+  assert.match(html, /Kundar under arbeid/);
   assert.match(js, /ongoingProjects/);
   assert.match(js, /workingOrders\(\)/);
   assert.ok(html.indexOf('id="ongoingSection"') < html.indexOf('id="handling"'), "aktive kunder skal stå før handlingskøen");
@@ -58,7 +58,7 @@ test("every project quick action is wired to a protected backend route", () => {
   assert.match(js, /function openQuick/);
   assert.match(js, /type==="expense"/);
   assert.match(js, /type==="material"/);
-  assert.match(js, /type==="note"/);
+  assert.match(js, /note:\`/);
   assert.match(js, /admin\/work-orders\/\$\{encodeURIComponent\(quickType\.id\)\}/);
   assert.match(js, /x-admin-key/);
 });
