@@ -130,6 +130,11 @@
   function renderTasks(){
     const tasks=actionTasks();
     const title=el("tasksTitle");
+    const panel=el("followupPanel");
+    if(panel){
+      panel.classList.toggle("has-actions",tasks.length>0);
+      panel.classList.toggle("has-urgent",tasks.some((task)=>["critical","high"].includes(task.priority)));
+    }
     if(title)title.textContent=tasks.length?tasks.length+" ting å ordne":"Alt er under kontroll";
     if(!tasks.length){taskList.innerHTML='<div class="empty-home">Ingenting krever handling akkurat nå.</div>';return;}
     const visible=tasksExpanded?tasks:tasks.slice(0,3);
