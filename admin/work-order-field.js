@@ -680,6 +680,9 @@
     if (!confirm(`Slette ${label || "registreringen"}? Denne endringen lagres med en gang.`)) return;
     try {
       await api(`/admin/operations/work-orders/${encodeURIComponent(currentOrder._id)}/${endpoint}/${encodeURIComponent(entryId)}`, { method: "DELETE" });
+      // Vis ferske faktura- og oppdragsstatusar etter korrigering.
+      // Arbeidslista og fakturapanelet skal ikkje bruke gamle data.
+      await window.SorgulenOrderBoardReload?.();
       await refreshWorkspace(currentOrder._id);
       await window.SorgulenAdminShell?.refreshBadges?.();
     } catch (error) {
