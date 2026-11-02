@@ -144,3 +144,45 @@ test("UI lastar finansstatus før oppdragsliste og har synleg kontrollfeil", () 
   assert.match(page, /orderBoard\.financeAvailable/);
   assert.match(page, /Fakturastatus kunne ikkje hentast/);
 });
+
+test("historisk sluttfaktura blir kopla via WorkOrder.invoiceId også utan sourceType", () => {
+  const order = { ...makeOrder("old"), invoiceId: "old-invoice" };
+  const board = model([order], [invoice("old-invoice", "sent", null, {
+    sourceType: "manual", sourceId: null, customerId: "c1",
+  })]);
+  assert.equal(board.records[0].finance.source, "unpaid");
+  assert.equal(board.unmatchedInvoices.length, 0);
+});
+
+test("fakturaer utan sikker oppdragskopling tel i oppfølgings- og betalingsoversikta", () => {
+  const board = model([makeOrder("x", "planned", "unknown")], [
+    invoice("externalDraft", "draft", null, { sourceType: "request", customerId: "c1" }),
+    invoice("externalSent", "sent", null, { sourceType: "booking", customerId: "c1" }),
+    invoice("externalOverdue", "sent", null, { sourceType: "manual", customerId: "c1", dueDate: "2026-10-01" }),
+  ]);
+  assert.equal(board.summary.attention, 2);
+  assert.equal(board.summary.waiting, 1);
+  assert.equal(board.unmatchedInvoices.filter((item) => item.group === "attention").length, 2);
+  assert.equal(board.unmatchedInvoices.filter((item) => item.group === "waiting").length, 1);
+  assert.equal(board.summary.unpaidInvoices, 2);
+});
+
+test("opning av oppdraget viser òg fakturaer og betalingar, ikkje berre arbeidsstatus", () => {
+  const root = path.resolve(__dirname, "..");
+  const field = fs.readFileSync(path.join(root, "admin/work-order-field.js"), "utf8");
+  assert.match(field, /function financeStatusMarkup/);
+  assert.match(field, /fieldFinanceStatus/);
+  assert.match(field, /Faktura og betaling/);
+  assert.match(field, /Fakturastatus kunne ikkje kontrollerast/);
+  assert.match(field, /financeStatusMarkup\(order\)/);
+  assert.match(field, /faktura-detalj\.html\?id=/);
+});
+
+test("oppdragskortet inkluderer registrerte utgifter – aldri berre timar", () => {
+  const root = path.resolve(__dirname, "..");
+  const jobs = fs.readFileSync(path.join(root, "admin/oppdrag.js"), "utf8");
+  assert.match(jobs, /SorgulenCustomerLedger\?\.summarizeOrder\(order\)/);
+  assert.match(jobs, /Registrert anslag/);
+  assert.match(jobs, /extraInvoices/);
+  assert.match(jobs, /invoice\.group !== historyStatus\.value/);
+});
