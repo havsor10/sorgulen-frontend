@@ -86,10 +86,52 @@
     return labels;
   }
 
+  function unbilledSourceKeys(order, invoices) {
+    if (!invoices.length || order?.status !== "completed") return [];
+    const known = new Set(invoices.flatMap((inv) =>
+      Array.isArray(inv.sourceEntryKeys) && inv.sourceEntryKeys.length
+        ? inv.sourceEntryKeys : inv.basisSnapshot?.sourceEntryKeys || []).map(String));
+    // Eldre fakturaer utan registreringsnøklar kan ikkje etterprøvast sikkert.
+    if (!known.size) return [];
+    const prefix = normId(order._id);
+    const candidates = [];
+    const add = (type, id, amount) => {
+      if (id && amount > 0) candidates.push(prefix + ":" + type + ":" + id);
+    };
+    if (["fixed", "hybrid"].includes(order.pricingMode))
+      add("fixed", "price", moneyNumber(order.fixedPrice));
+    if (order.pricingMode !== "fixed") {
+      for (const entry of order.workIntervals || []) {
+        if (entry.billable === false || (entry.source !== "manual" && !entry.endedAt)) continue;
+        const start = new Date(entry.startedAt).getTime();
+        const end = entry.endedAt ? new Date(entry.endedAt).getTime() : NaN;
+        const duration = entry.source === "manual" && moneyNumber(entry.durationSeconds) > 0
+          ? Number(entry.durationSeconds) : end >= start ? (end - start) / 1000 : 0;
+        add("time", entry.entryId, duration);
+      }
+    }
+    for (const entry of order.additionalCosts || []) {
+      if (entry.billable !== false) add("expense", entry.entryId, moneyNumber(entry.amount));
+    }
+    for (const entry of order.equipment || []) {
+      if (entry.billable !== false) add("equipment", entry.entryId, moneyNumber(entry.amount) ||
+        moneyNumber(entry.durationMinutes) * moneyNumber(entry.hourlyRateSnapshot) / 60);
+    }
+    for (const entry of order.materials || []) {
+      if (entry.billable !== false && entry.unitPrice != null)
+        add("material", entry.entryId, moneyNumber(entry.quantity) * moneyNumber(entry.unitPrice));
+    }
+    return candidates.filter((key) => !known.has(key));
+  }
+
   function classify(order, linkedInvoices, unlinkedSameCustomer, today, financeAvailable) {
     const stage = workStage(order);
     const invoices = linkedInvoices.filter(validInvoice);
     const labels = financeAvailable ? invoiceLabels(invoices, today) : [];
+    const unbilledAfterInvoice = financeAvailable ? unbilledSourceKeys(order, invoices) : [];
+    if (unbilledAfterInvoice.length) labels.push({
+      key: "unbilled", label: "Nye registreringar manglar på faktura", count: unbilledAfterInvoice.length,
+    });
     if (financeAvailable && stage === "completed" && !invoices.length && unlinkedSameCustomer.length) {
       const sent = unlinkedSameCustomer.filter((inv) => inv.status === "sent");
       const draft = unlinkedSameCustomer.filter((inv) => inv.status === "draft");
@@ -113,13 +155,17 @@
     const noFinance = { group: "unknown", priority: 0, action: "Fakturastatus ikkje henta", href: "", source: "unknown" };
     let decision;
     if (order.isTest) decision = { group: "test", priority: 90, action: "", href: "", source: "test" };
-    else if (stage === "cancelled") decision = { group: "cancelled", priority: 85, action: "", href: "", source: "cancelled" };
     else if (!financeAvailable) decision = noFinance;
     else if (inconsistent) decision = { group: "attention", priority: 0, action: "Kontroller betalingsavvik i Fiken", href: toInvoice(inconsistent), source: "mismatch" };
     else if (overdue) decision = { group: "attention", priority: 1, action: "Følg opp forfalt betaling", href: toInvoice(overdue), source: "overdue" };
     else if (draft) decision = { group: "attention", priority: 2, action: "Kontroller fakturautkast", href: toInvoice(draft), source: "draft" };
     else if (issued) decision = { group: "attention", priority: 3, action: "Kontroller levering av faktura", href: toInvoice(issued), source: "issued" };
     else if (sent) decision = { group: "waiting", priority: 5, action: "Sjå faktura og betaling", href: toInvoice(sent), source: "unpaid" };
+    // Ei avbroten arbeidsøkt kan framleis ha ein utstedt eller ubetalt faktura.
+    else if (stage === "cancelled") decision = { group: "cancelled", priority: 85, action: "", href: "", source: "cancelled" };
+    else if (unbilledAfterInvoice.length)
+      decision = { group: "attention", priority: 5, action: "Kontroller registreringar som manglar i faktura",
+        href: "kunde.html?id=" + encodeURIComponent(normId(order.customerId)), source: "unbilled-extra" };
     else if (openStages.has(stage)) decision = { group: "working", priority: 10, action: "Opne oppdrag", href: "", source: "work" };
     else if (stage === "planned") decision = { group: "planned", priority: 15, action: "Opne planlagt oppdrag", href: "", source: "planned" };
     else if (stage === "completed" && paid && invoices.every((inv) => ["paid", "credited"].includes(inv.status)) && !credited)
@@ -140,6 +186,7 @@
         paymentMismatch: inconsistentPayment(inv),
       })),
       hasMissingLink: Boolean(stage === "completed" && unlinkedSameCustomer.length && !invoices.length),
+      unbilledAfterInvoice: unbilledAfterInvoice.length,
       outstanding: invoices.reduce((sum, inv) => sum + outstanding(inv), 0),
     };
   }
