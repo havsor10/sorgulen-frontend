@@ -50,7 +50,7 @@ test("andre handlingar er under Mer, ikkje som store knappar på framsida", () =
 
 test("fargekodar formidlar også status som ord og fungerer på mobil", () => {
   for (const state of ["active", "paused", "stopped"]) {
-    assert.match(js, new RegExp("state-" + state));
+    assert.match(js, /state-\$\{status\}/);
     assert.match(css, new RegExp("\\.home-working-card\\.state-" + state));
   }
   assert.match(js, /Arbeid pågår/);
