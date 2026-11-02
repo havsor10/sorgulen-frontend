@@ -148,11 +148,17 @@
     const today = osloDate(now);
     const valid = (invoices || []).filter(validInvoice);
     const orderIds = new Set((orders || []).map((order) => normId(order._id)));
+    const invoiceOwners = new Map((orders || [])
+      .filter((order) => normId(order.invoiceId))
+      .map((order) => [normId(order.invoiceId), normId(order._id)]));
     const invoiceLinks = new Map();
     const linkedByOrder = new Map((orders || []).map((order) => [normId(order._id), []]));
     const unlinkedByCustomer = new Map();
     for (const inv of valid) {
       const ids = matchingOrderIds(inv, orderIds);
+      // Den gamle sluttfakturaflyten kan berre ha invoiceId på oppdraget.
+      const legacyOwner = invoiceOwners.get(normId(inv._id));
+      if (legacyOwner) ids.add(legacyOwner);
       invoiceLinks.set(normId(inv._id), ids);
       for (const id of ids) linkedByOrder.get(id)?.push(inv);
       if (!ids.size && normId(inv.customerId)) {
