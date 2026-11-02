@@ -90,6 +90,16 @@
     const stage = workStage(order);
     const invoices = linkedInvoices.filter(validInvoice);
     const labels = financeAvailable ? invoiceLabels(invoices, today) : [];
+    if (financeAvailable && stage === "completed" && !invoices.length && unlinkedSameCustomer.length) {
+      const sent = unlinkedSameCustomer.filter((inv) => inv.status === "sent");
+      const draft = unlinkedSameCustomer.filter((inv) => inv.status === "draft");
+      labels.push({
+        key: "ambiguous",
+        label: sent.length ? "Kunden har ubetalt faktura – kopling uklar" :
+          draft.length ? "Kunden har fakturautkast – kopling uklar" : "Fakturakopling må kontrollerast",
+        count: unlinkedSameCustomer.length,
+      });
+    }
     const find = (status) => invoices.find((inv) => inv.status === status);
     const overdue = invoices.find((inv) => isOverdue(inv, today));
     const inconsistent = invoices.find(inconsistentPayment);
@@ -171,12 +181,19 @@
         id: normId(inv._id), name: inv.customerName || "Ukjend kunde",
         number: inv.invoiceNumber || null, status: inv.status, amount: moneyNumber(inv.amount),
         outstanding: outstanding(inv), overdue: isOverdue(inv, today), dueDate: dueDateKey(inv.dueDate),
+        mismatch: inconsistentPayment(inv),
+        group: (inv.status === "draft" || inv.status === "issued" || isOverdue(inv, today) || inconsistentPayment(inv))
+          ? "attention" : "waiting",
       }));
+    unmatchedInvoices.sort((a, b) =>
+      (a.group === b.group ? 0 : a.group === "attention" ? -1 : 1) ||
+      (a.dueDate || "").localeCompare(b.dueDate || ""));
     const payableInvoices = valid.filter((inv) => nonPaidStages.has(inv.status));
     return {
       today, records, groups, groupNames, unmatchedInvoices, financeAvailable,
       summary: {
-        attention: groups.attention.length, waiting: groups.waiting.length,
+        attention: groups.attention.length + unmatchedInvoices.filter((inv) => inv.group === "attention").length,
+        waiting: groups.waiting.length + unmatchedInvoices.filter((inv) => inv.group === "waiting").length,
         working: groups.working.length, planned: groups.planned.length,
         done: groups.done.length, test: groups.test.length,
         unpaidInvoices: payableInvoices.length,
