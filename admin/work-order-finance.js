@@ -16,9 +16,11 @@
   const osloDate = (date = new Date()) => {
     const parsed = date instanceof Date ? date : new Date(date);
     if (Number.isNaN(parsed.getTime())) return "";
-    return new Intl.DateTimeFormat("en-CA", {
+    const parts = new Intl.DateTimeFormat("en-CA", {
       timeZone: "Europe/Oslo", year: "numeric", month: "2-digit", day: "2-digit",
-    }).format(parsed);
+    }).formatToParts(parsed);
+    const value = (type) => parts.find((part) => part.type === type)?.value || "";
+    return `${value("year")}-${value("month")}-${value("day")}`;
   };
   const dueDateKey = (date) => {
     if (!date) return "";
