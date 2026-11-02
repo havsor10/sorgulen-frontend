@@ -94,7 +94,7 @@
     try {
       const data = await request("/admin/fiken/expense-receipts/sync", {
         method: "POST",
-        body: JSON.stringify({ limit: 20 }),
+        body: JSON.stringify({ limit: 5 }),
       });
       const result = data.result || {};
       message.textContent = (result.uploaded || 0) + " kvittering(ar) sendt til Fiken-innboksen."
