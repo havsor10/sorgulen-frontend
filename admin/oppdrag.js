@@ -644,7 +644,7 @@
       entryFields.innerHTML = `<div class="entry-field"><label>Kategori</label><select name="category"><option value="work">Arbeid</option><option value="purchase">Innkjøp</option><option value="transport">Transport</option></select></div><div class="entry-field"><label>Fra</label><input name="startedAt" type="datetime-local" value="${localDateTimeValue()}" required></div><div class="entry-field"><label>Til</label><input name="endedAt" type="datetime-local" value="${localDateTimeValue(new Date(Date.now() + 60 * 60000))}" required></div><div class="entry-field"><label>Kommentar</label><input name="comment" maxlength="1000"></div>${billable}`;
     } else if (kind === "expense") {
       document.getElementById("entryModalTitle").textContent = "Ny utgift";
-      entryFields.innerHTML = `<div class="entry-field"><label>Beløp</label><input name="amount" type="number" min="0.01" step="0.01" inputmode="decimal" required></div><div class="entry-field"><label>Beskrivelse</label><input name="description" maxlength="500" required></div><div class="entry-field"><label>Leverandør</label><input name="supplier" maxlength="160"></div><div class="entry-field"><label>Dato</label><input name="occurredAt" type="date" value="${getOsloDateInputValue()}" required></div>${billable}`;
+      entryFields.innerHTML = `<div class="entry-field"><label>Beløp</label><input name="amount" type="number" min="0.01" step="0.01" inputmode="decimal" required></div><div class="entry-field"><label>Beskrivelse</label><input name="description" maxlength="500" required></div><div class="entry-field"><label>Leverandør</label><input name="supplier" maxlength="160"></div><div class="entry-field"><label>Dato</label><input name="occurredAt" type="date" value="${getOsloDateInputValue()}" required></div><div class="entry-field"><label>Kvittering (bilde, valgfritt)</label><input name="receiptImage" type="file" accept="image/jpeg,image/png,image/webp,image/heic"></div>${billable}`;
     } else if (kind === "material") {
       document.getElementById("entryModalTitle").textContent = "Nytt materiale";
       entryFields.innerHTML = `<div class="entry-field"><label>Beskrivelse</label><input name="item" maxlength="300" required></div><div class="entry-field"><label>Antall</label><input name="quantity" type="number" min="0.01" step="0.01" value="1" required></div><div class="entry-field"><label>Enhet</label><input name="unit" value="stk" maxlength="40"></div><div class="entry-field"><label>Innkjøpspris per enhet (valgfritt)</label><input name="purchaseUnitPrice" type="number" min="0.01" step="0.01"></div><div class="entry-field"><label>Kundepris per enhet (valgfritt)</label><input name="unitPrice" type="number" min="0.01" step="0.01"></div><div class="entry-field"><label>Kommentar</label><input name="comment" maxlength="500"></div>${billable}`;
@@ -673,6 +673,19 @@
     actionInFlight = true;
     document.getElementById("saveEntry").disabled = true;
     try {
+      if (kind === "expense") {
+        const receipt = form.get("receiptImage");
+        delete payload.receiptImage;
+        if (receipt instanceof File && receipt.size > 0) {
+          if (receipt.size > 10 * 1024 * 1024) throw new Error("Kvitteringen er for stor (maks 10 MB).");
+          payload.receiptImage = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error("Kunne ikke lese kvitteringen."));
+            reader.readAsDataURL(receipt);
+          });
+        }
+      }
       const data = await apiFetch(`/admin/work-orders/${encodeURIComponent(entryTargetId)}/${endpoint}`, { method: "POST", body: JSON.stringify(payload) });
       entryModal.classList.add("hidden");
       entryOperationId = null;

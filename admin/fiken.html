@@ -128,6 +128,10 @@
             <input id="autoPayments" type="checkbox">
             <span><strong>Synk betalinger automatisk</strong><small>Admin kontrollerer Fiken jevnlig og oppdaterer betalt-status.</small></span>
           </label>
+          <label class="fiken-toggle">
+            <input id="autoExpenseReceipts" type="checkbox">
+            <span><strong>Send nye kvitteringer automatisk til Fiken-innboksen</strong><small>Gjelder bare kvitteringer som legges til eller endres etter at valget aktiveres. Gamle kvitteringer må sendes med knappen nedenfor. Ingen kjøp bokføres automatisk.</small></span>
+          </label>
           <label class="fiken-toggle fiken-enable-toggle">
             <input id="enabled" type="checkbox">
             <span><strong>Fiken-integrasjon aktiv</strong><small>Når denne er aktiv, blokkeres sending dersom Fiken-registrering feiler.</small></span>
@@ -155,6 +159,23 @@
       <div id="lastSyncText" class="fiken-last-sync"></div>
     </section>
 
+    <section class="fiken-card" aria-labelledby="receiptSyncHeading">
+      <div class="fiken-card-head">
+        <div>
+          <p class="admin-eyebrow">Innkjøp til kundeoppdrag</p>
+          <h2 id="receiptSyncHeading">Kvitteringer til Fiken</h2>
+          <p>Du registrerer utgiften i oppdraget. Vi sender bilaget til Fiken-innboksen. Du kontrollerer bokføringen i Fiken; kundens fakturalinjer kommer fra oppdraget.</p>
+        </div>
+      </div>
+      <div id="receiptSyncSummary" role="status" aria-live="polite">Henter kvitteringsstatus…</div>
+      <div class="fiken-actions">
+        <button id="receiptSyncBtn" class="secondary-btn" type="button">Send usendte kvitteringer</button>
+        <button id="receiptRefreshBtn" class="secondary-btn" type="button">Oppdater liste</button>
+      </div>
+      <div id="receiptSyncMessage" role="status" aria-live="polite"></div>
+      <div id="receiptSyncList" class="fiken-receipt-list"></div>
+      <p class="fiken-security-note">Vi oppretter verken kjøpsbilag eller kundefaktura her. Et dokument som har uklar overføringsstatus, blir ikkje sendt på nytt automatisk.</p>
+    </section>
     <section class="fiken-card fiken-flow-card">
       <p class="admin-eyebrow">Slik fungerer det</p>
       <h2>Én arbeidsflyt</h2>
@@ -169,5 +190,6 @@
 
   <script src="../config.js"></script>
   <script src="fiken.js"></script>
+  <script src="fiken-expense-receipts.js"></script>
 </body>
 </html>

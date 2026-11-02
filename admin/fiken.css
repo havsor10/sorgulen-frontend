@@ -16,3 +16,20 @@
 .bank-transaction-side{text-align:right;flex:0 0 auto}.bank-transaction.is-credit .bank-transaction-side strong{color:#9fe2bb}.bank-transaction.is-debit .bank-transaction-side strong{color:#e8edf2}
 .bank-empty{padding:14px!important;border:1px dashed var(--admin-line,#353b43);border-radius:12px}
 @media(max-width:720px){.bank-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.bank-transaction{align-items:flex-start}.bank-transaction-main strong{white-space:normal}}
+
+/* Kø for innkjøpsbilag - mobilvennleg og utan fare for dobbeltbokføring. */
+.fiken-receipt-list { display: grid; gap: 8px; margin-top: 14px; }
+.fiken-receipt-row {
+  display: flex; flex-wrap: wrap; justify-content: space-between;
+  align-items: center; gap: 10px; padding: 12px;
+  background: rgba(8, 17, 29, .65); border: 1px solid rgba(145, 160, 180, .18);
+  border-radius: 12px;
+}
+.fiken-receipt-row > div { min-width: 180px; flex: 1; }
+.fiken-receipt-row strong { color: #edf2fb; overflow-wrap: anywhere; }
+.fiken-receipt-row p { color: #a4b4c6; margin: 5px 0 0; font-size: .89rem; overflow-wrap: anywhere; }
+.fiken-receipt-status { color: #8cdbb6; font-size: .86rem; font-weight: 650; }
+.fiken-receipt-warning { color: #f5c27f; }
+.fiken-receipt-missing { color: #f2a2a2; }
+#receiptSyncSummary, #receiptSyncMessage { margin: 10px 0; line-height: 1.5; }
+#receiptSyncMessage { color: #dce8f5; }

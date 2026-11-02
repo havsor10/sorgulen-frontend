@@ -89,6 +89,7 @@
 
     el("autoRegister").checked = settings.autoRegisterInvoices !== false;
     el("autoPayments").checked = settings.autoSyncPayments !== false;
+    el("autoExpenseReceipts").checked = settings.autoUploadExpenseReceipts === true;
     el("enabled").checked = settings.enabled === true;
 
     el("linkedCount").textContent = data.linkedInvoices ?? 0;
@@ -410,6 +411,7 @@
         incomeAccount: el("incomeSelect").value,
         autoRegisterInvoices: el("autoRegister").checked,
         autoSyncPayments: el("autoPayments").checked,
+        autoUploadExpenseReceipts: el("autoExpenseReceipts").checked,
         enabled: el("enabled").checked,
       };
       const data = await api("/admin/fiken/settings", { method: "PATCH", body: JSON.stringify(payload) });
