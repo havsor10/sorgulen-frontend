@@ -938,6 +938,8 @@
     } else if (showLoading) setMessage(`Kontrollert ${workOrders.length} oppdrag mot fakturasystemet.`, "success");
   }
 
+  window.SorgulenOrderBoardReload = () => loadDashboard(false);
+
   customerSearch.addEventListener("focus", () => {
     if (!selectedCustomer && !customerResults.innerHTML) searchCustomers(customerSearch.value.trim());
   });
