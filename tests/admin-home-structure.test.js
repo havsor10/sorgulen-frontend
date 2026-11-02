@@ -9,10 +9,12 @@ const js = fs.readFileSync(path.join(root, "admin/hjem.js"), "utf8");
 const css = fs.readFileSync(path.join(root, "admin/hjem.css"), "utf8");
 const shellCss = fs.readFileSync(path.join(root, "admin/admin-shell.css"), "utf8");
 
-test("home prioritizes current work and one concrete action queue", () => {
-  assert.match(html, /focusContent/);
-  assert.match(html, /Hva trenger deg nå\?/);
-  assert.match(html, /Bare ting som faktisk krever handling/);
+test("home shows all working customers before a collapsed follow-up queue", () => {
+  assert.doesNotMatch(html, /id="focusContent"/);
+  assert.match(html, /Mine aktive oppdrag/);
+  assert.match(html, /Kundar under arbeid/);
+  assert.match(html, /home-work-list/);
+  assert.match(html, /id="followupPanel"/);
   assert.match(html, /id="handling"/);
   assert.doesNotMatch(html, /home-attention\.js/);
   assert.doesNotMatch(html, /aiSummary/);
@@ -22,8 +24,10 @@ test("home prioritizes current work and one concrete action queue", () => {
 
 test("active customers are visible before the action queue", () => {
   assert.match(html, /id="ongoingSection" aria-labelledby="ongoingTitle"/);
-  assert.match(html, /Aktive kunder/);
+  assert.match(html, /id="workingCount"/);
+  assert.match(html, /Kundar under arbeid/);
   assert.match(js, /ongoingProjects/);
+  assert.match(js, /workingOrders\(\)/);
   assert.ok(html.indexOf('id="ongoingSection"') < html.indexOf('id="handling"'), "aktive kunder skal stå før handlingskøen");
 });
 
@@ -51,10 +55,10 @@ test("assistant proposal can still be approved directly from the action queue", 
 });
 
 test("every project quick action is wired to a protected backend route", () => {
-  assert.match(js, /data-quick="expense"/);
-  assert.match(js, /data-quick="equipment"/);
-  assert.match(js, /data-quick="material"/);
-  assert.match(js, /data-quick="note"/);
+  assert.match(js, /function openQuick/);
+  assert.match(js, /type==="expense"/);
+  assert.match(js, /type==="material"/);
+  assert.match(js, /note:\`/);
   assert.match(js, /admin\/work-orders\/\$\{encodeURIComponent\(quickType\.id\)\}/);
   assert.match(js, /x-admin-key/);
 });

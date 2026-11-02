@@ -39,10 +39,11 @@ test("legacy request previews also keep the admin key out of URLs", () => {
   assert.match(js, /URL\.createObjectURL/);
 });
 
-test("home lists several ongoing projects and mobile quick time registration", () => {
+test("home shows all open customers, but registration editing is behind the project view", () => {
   assert.match(read("admin/hjem.html"), /ongoingProjects/);
   const js = read("admin/hjem.js");
-  assert.match(js, /data-quick="time"/);
-  assert.match(js, /time-entries/);
-  assert.match(read("admin/hjem.html"), /name="operationId"/);
+  assert.match(js, /data-select-work/);
+  assert.match(js, /Mer – full oversikt, redigering og utgifter/);
+  assert.match(js, /\/admin\/work-orders\/\$\{encodeURIComponent\(id\)\}\/action/);
+  assert.doesNotMatch(read("admin/hjem.html"), /data-quick="time"/);
 });

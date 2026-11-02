@@ -25,11 +25,11 @@ test("Feltadmin prioriterer aktiv jobb før varsler og skjuler registreringsdeta
   assert.doesNotMatch(feltJs, /field-quick-row[^;]+\+ Utgift[^;]+\+ Notat[^;]+\+ Tid[^;]+\+ Utstyr[^;]+\+ Materiale/s);
 });
 
-test("Komplett adminhjem skjuler registreringsknappene bak ett valg", () => {
-  assert.match(homeJs, /quick-actions-menu/);
-  assert.match(homeJs, /<summary>Registrer på oppdrag<\/summary>/);
-  assert.match(homeJs, /Fortsett arbeid/);
-  assert.match(homeJs, /Åpne oppdrag/);
+test("Komplett adminhjem prioriterer kompakte kundekort med eige arbeidsval og full oversikt", () => {
+  assert.match(homeJs, /data-select-work/);
+  assert.match(homeJs, /home-work-action-row/);
+  assert.match(homeJs, /Start ny arbeidsøkt/);
+  assert.match(homeJs, /Mer – full oversikt/);
 });
 
 test("kundeoppdrag viser registreringar direkte og gøymer sekundære prosjektdata", () => {

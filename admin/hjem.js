@@ -3,8 +3,8 @@
   const KEY_STORAGE = "sorgulen_admin_key";
   const timeTools = window.SorgulenWorkOrderTime;
   const el = (id) => document.getElementById(id);
-  const focusContent=el("focusContent"), taskList=el("taskList"), homeStatus=el("homeStatus"),ongoingProjects=el("ongoingProjects"),ongoingSection=el("ongoingSection");
-  let home=null, activeProject=null, serverOffset=0, busy=false, quickType=null, confirmRun=null, tasksExpanded=false;
+  const taskList=el("taskList"), homeStatus=el("homeStatus"),ongoingProjects=el("ongoingProjects"),ongoingSection=el("ongoingSection");
+  let home=null, selectedWorkId=null, serverOffset=0, busy=false, quickType=null, confirmRun=null, tasksExpanded=false;
 
   const escapeHtml=(v)=>String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
   const fmtDate=(value)=>{ if(!value)return ""; const d=new Date(`${value}T12:00:00`); return new Intl.DateTimeFormat("no-NO",{timeZone:"Europe/Oslo",weekday:"short",day:"numeric",month:"short"}).format(d); };
@@ -16,19 +16,87 @@
   function currentSeconds(order){return timeTools?timeTools.calculateWorkSeconds(order,Date.now()+serverOffset):Number(order.currentWorkSeconds||0);}
   function sessionSeconds(order){return timeTools?.calculateCurrentSessionSeconds?timeTools.calculateCurrentSessionSeconds(order,Date.now()+serverOffset):0;}
   function sessionStartedAt(order){const stopped=(order.events||[]).filter(event=>event?.type==="stopped"&&event?.at).reduce((latest,event)=>Math.max(latest,new Date(event.at).getTime()||0),0);return (order.workIntervals||[]).filter(interval=>interval?.source!=="manual"&&new Date(interval?.startedAt).getTime()>stopped).map(interval=>interval.startedAt).find(Boolean)||order.workIntervals?.at(-1)?.startedAt||order.startedAt;}
-  function projectStats(order){const expenses=order.additionalCosts||[],equipment=order.equipment||[],materials=order.materials||[],notes=order.projectNotes||[];const expenseTotal=expenses.reduce((sum,item)=>sum+(Number(item.amount)||0),0);const equipmentTotal=equipment.reduce((sum,item)=>sum+(Number(item.amount)||0),0);const fmt=(value)=>new Intl.NumberFormat("no-NO",{style:"currency",currency:"NOK",maximumFractionDigits:0}).format(value);return `<div class="project-stats"><span>${order.workIntervals?.length||0} økter</span><span>${fmt(expenseTotal)} utgifter</span><span>${fmt(equipmentTotal)} utstyr</span><span>${materials.length} materialer</span><span>${notes.length} notater</span></div>`;}
-  function quickButtons(order){return `<details class="quick-actions-menu"><summary>Registrer på oppdrag</summary><div class="quick-actions"><button class="quick-action" data-quick="time" data-id="${escapeHtml(order._id)}">Tid</button><button class="quick-action" data-quick="expense" data-id="${escapeHtml(order._id)}">Utgift</button><button class="quick-action" data-quick="equipment" data-id="${escapeHtml(order._id)}">Utstyr</button><button class="quick-action" data-quick="material" data-id="${escapeHtml(order._id)}">Materiale</button><button class="quick-action" data-quick="note" data-id="${escapeHtml(order._id)}">Notat</button></div></details>`;}
-  function renderFocus(){
-    const active=home.activeWorkOrder;
-    if(active){activeProject=active;const isPaused=active.status==="paused";focusContent.className="home-card focus-card is-active";focusContent.innerHTML=`<div class="focus-top"><div><p class="eyebrow">Pågår nå</p><h2 id="focusTitle" class="focus-name">${escapeHtml(active.customerSnapshot?.name||"Ukjent kunde")}</h2><p class="focus-service">${escapeHtml(active.serviceName)}</p></div><span class="status-pill ${isPaused?"paused":"active"}">${isPaused?"Pauset":"Aktiv"}</span></div><div class="timer" data-live-timer>${fmtDuration(sessionSeconds(active))}</div><p class="focus-meta">${isPaused?"Pausen regnes ikke som arbeidstid":`Dagens økt startet ${fmtTime(sessionStartedAt(active))}`}</p>${projectStats(active)}<div class="main-actions"><button class="primary-action" data-action="${isPaused?"resume":"pause"}" data-id="${escapeHtml(active._id)}">${isPaused?"Fortsett":"Pause"}</button><button class="secondary-action" data-confirm="stop" data-id="${escapeHtml(active._id)}">Avslutt økt</button></div>${quickButtons(active)}`;return;}
-    const ongoing=home.ongoingProject;
-    if(ongoing){activeProject=ongoing;focusContent.className="home-card focus-card";focusContent.innerHTML=`<div class="focus-top"><div><p class="eyebrow">Pågående prosjekt</p><h2 id="focusTitle" class="focus-name">${escapeHtml(ongoing.customerSnapshot?.name||"Ukjent kunde")}</h2><p class="focus-service">${escapeHtml(ongoing.serviceName)}</p></div><span class="status-pill">Mellom økter</span></div><p class="focus-meta" style="margin:20px 0 10px">Registrert tid: <strong>${fmtDuration(currentSeconds(ongoing))}</strong></p>${projectStats(ongoing)}<div class="main-actions"><button class="primary-action" data-action="resume" data-session="work" data-id="${escapeHtml(ongoing._id)}">Fortsett arbeid</button><a class="secondary-action" href="oppdrag.html?open=${encodeURIComponent(ongoing._id)}">Åpne oppdrag</a></div>${quickButtons(ongoing)}`;return;}
-    activeProject=null;const planned=home.nextWorkOrder;
-    if(planned){focusContent.className="home-card focus-card";focusContent.innerHTML=`<div class="focus-top"><div><p class="eyebrow">Neste oppdrag</p><h2 id="focusTitle" class="focus-name">${escapeHtml(planned.customerSnapshot?.name||"Ukjent kunde")}</h2><p class="focus-service">${escapeHtml(planned.serviceName)}</p></div><span class="status-pill">Planlagt</span></div><p class="focus-meta" style="margin:20px 0">${escapeHtml(fmtDate(planned.jobDate))}${planned.customerSnapshot?.address?`<br>${escapeHtml(planned.customerSnapshot.address)}`:""}</p><button class="primary-action" data-action="start" data-session="work" data-id="${escapeHtml(planned._id)}">Start oppdrag</button>`;return;}
-    const b=home.nextBooking;
-    if(b){focusContent.className="home-card focus-card";focusContent.innerHTML=`<div class="focus-top"><div><p class="eyebrow">Neste oppdrag</p><h2 id="focusTitle" class="focus-name">${escapeHtml(b.customerName)}</h2><p class="focus-service">${escapeHtml(b.serviceName)}</p></div><span class="status-pill">${escapeHtml(b.status==="pending"?"Venter":"Planlagt")}</span></div><p class="focus-meta" style="margin:20px 0">${escapeHtml(fmtDate(b.date))} kl. ${escapeHtml(b.time||"")}${b.customerAddress?`<br>${escapeHtml(b.customerAddress)}`:""}</p><a class="primary-action" style="display:inline-grid;place-items:center;text-decoration:none" href="oppdrag.html?bookingId=${encodeURIComponent(b._id)}">Klargjør oppdrag</a>`;return;}
-    focusContent.className="home-card focus-card";focusContent.innerHTML=`<p class="eyebrow">Oppdrag</p><h2 id="focusTitle">Ingen aktive eller kommende oppdrag</h2><p class="focus-meta" style="margin:12px 0 18px">Du kan opprette et nytt oppdrag når du trenger det.</p><a class="primary-action" style="display:inline-grid;place-items:center;text-decoration:none" href="oppdrag.html">Opprett oppdrag</a>`;
+  const WORKING_STATUSES = new Set(["active", "paused", "stopped"]);
+  const workStateText = { active: "Arbeid pågår", paused: "Pausa", stopped: "Mellom økter" };
+
+  function workingOrders() {
+    if (!home) return [];
+    // Backend leverer eiga arbeidsliste. Fallback held eldre versjonar
+    // funksjonelle fram til backend er publisert.
+    const serverList = Array.isArray(home.workingOrders)
+      ? home.workingOrders
+      : [home.activeWorkOrder, ...(home.ongoingProjects || [])];
+    const byId = new Map();
+    for (const order of serverList) {
+      if (!order?._id || !WORKING_STATUSES.has(order.status) || order.isTest || order.trashedAt) continue;
+      byId.set(String(order._id), order);
+    }
+    return [...byId.values()].sort((a, b) => {
+      const rank = { active: 0, paused: 1, stopped: 2 };
+      return (rank[a.status] ?? 3) - (rank[b.status] ?? 3) ||
+        String(a.customerSnapshot?.name || "").localeCompare(String(b.customerSnapshot?.name || ""), "no") ||
+        String(a._id).localeCompare(String(b._id));
+    });
   }
+
+  function workActionMarkup(order, conflictingOpen) {
+    const id = escapeHtml(order._id);
+    const isActive = order.status === "active";
+    const isPaused = order.status === "paused";
+    const action = isActive ? "pause" : "resume";
+    const label = isActive ? "Pause arbeidsøkta" : isPaused ? "Fortsett arbeidsøkta" : "Start ny arbeidsøkt";
+    const blocked = !isActive && conflictingOpen && String(conflictingOpen._id) !== String(order._id);
+    const blocker = blocked ? `<p class="home-work-blocker">Du har allereie ei open økt på ${escapeHtml(conflictingOpen.customerSnapshot?.name || "eit anna oppdrag")}. Stopp eller avslutt den først.</p>` : "";
+    const primary = `<button type="button" class="home-work-action primary-action" data-action="${action}" data-session="work" data-id="${id}" ${blocked ? 'disabled title="Avslutt anna økt først"' : ""}>${label}</button>`;
+    const stop = isActive || isPaused
+      ? `<button type="button" class="home-work-action home-work-stop" data-confirm="stop" data-id="${id}">Avslutt økta</button>` : "";
+    return `<div class="home-work-actions" id="homeWorkActions-${id}">
+      ${blocker}
+      <div class="home-work-action-row">${primary}${stop}</div>
+      <a class="home-work-more" href="oppdrag.html?open=${encodeURIComponent(order._id)}">Mer – full oversikt, redigering og utgifter <span aria-hidden="true">›</span></a>
+    </div>`;
+  }
+
+  function renderWorking() {
+    const list = workingOrders();
+    const counter = el("workingCount");
+    if (counter) counter.textContent = String(list.length);
+    ongoingSection.classList.remove("hidden");
+
+    if (selectedWorkId && !list.some((order) => String(order._id) === selectedWorkId)) selectedWorkId = null;
+    if (!list.length) {
+      ongoingProjects.innerHTML = '<div class="home-work-empty"><strong>Ingen aktive kundeoppdrag akkurat no.</strong><p>Planlagde og ferdige oppdrag ligg under Oppdrag – ikkje her på framsida.</p><a href="oppdrag.html">Gå til alle oppdrag</a></div>';
+      return;
+    }
+    const lockedBy = list.find((order) => ["active", "paused"].includes(order.status))
+      || home?.activeWorkOrder;
+    ongoingProjects.innerHTML = list.map((order) => {
+      const id = escapeHtml(order._id);
+      const selected = String(order._id) === selectedWorkId;
+      const status = order.status;
+      const active = status === "active";
+      const name = escapeHtml(order.customerSnapshot?.name || "Ukjend kunde");
+      const service = escapeHtml(order.serviceName || "Oppdrag");
+      const total = fmtDuration(currentSeconds(order));
+      const clock = active
+        ? `<span class="home-work-current"><span class="home-work-current-label">Økta no</span><strong data-live-timer data-order-id="${id}">${fmtDuration(sessionSeconds(order))}</strong></span>`
+        : `<span class="home-work-total">Registrert tid <strong>${total}</strong></span>`;
+      return `<article class="home-working-card state-${status}${selected ? " is-selected" : ""}" data-work-card="${id}">
+        <button type="button" class="home-work-select" data-select-work="${id}" aria-expanded="${selected ? "true" : "false"}" ${selected ? 'aria-controls="homeWorkActions-' + id + '"' : ''}>
+          <span class="home-work-card-top">
+            <span class="home-work-name">${name}</span>
+            <span class="home-work-state state-${status}"><span class="home-work-dot" aria-hidden="true"></span>${workStateText[status]}</span>
+          </span>
+          <span class="home-work-service">${service}</span>
+          <span class="home-work-card-bottom">${clock}
+            <span class="home-work-chevron" aria-hidden="true">${selected ? "⌃" : "⌄"}</span>
+          </span>
+        </button>
+        ${selected ? workActionMarkup(order, lockedBy) : ""}
+      </article>`;
+    }).join("");
+  }
+
   function actionTasks(){
     const activeId=home?.activeWorkOrder?._id?String(home.activeWorkOrder._id):"";
     const seen=new Set();
@@ -62,6 +130,11 @@
   function renderTasks(){
     const tasks=actionTasks();
     const title=el("tasksTitle");
+    const panel=el("followupPanel");
+    if(panel){
+      panel.classList.toggle("has-actions",tasks.length>0);
+      panel.classList.toggle("has-urgent",tasks.some((task)=>["critical","high"].includes(task.priority)));
+    }
     if(title)title.textContent=tasks.length?tasks.length+" ting å ordne":"Alt er under kontroll";
     if(!tasks.length){taskList.innerHTML='<div class="empty-home">Ingenting krever handling akkurat nå.</div>';return;}
     const visible=tasksExpanded?tasks:tasks.slice(0,3);
@@ -105,8 +178,16 @@
     }catch(error){setStatus(error.message,"error");}
     finally{busy=false;button.disabled=false;}
   }
-  function renderOngoing(){const list=(home.ongoingProjects||[]).filter(item=>item._id!==home.activeWorkOrder?._id);ongoingSection.classList.toggle("hidden",!list.length);ongoingProjects.innerHTML=list.map(item=>{const stopped=item.status==="stopped";const hasTime=currentSeconds(item)>0;const action=stopped?"resume":"start";const actionLabel=stopped?"Fortsett / ny økt":hasTime?"Start ny økt":"Start takstameter";const stateLabel=stopped?"Mellom økter":"Planlagt";return `<article class="booking-item home-active-project"><a class="home-active-project-main" href="oppdrag.html?open=${encodeURIComponent(item._id)}"><div><h3>${escapeHtml(item.customerSnapshot?.name||"Ukjent kunde")}</h3><p>${escapeHtml(item.serviceName)} · ${fmtDuration(currentSeconds(item))} · ${stateLabel}</p></div></a><div class="home-active-project-actions"><button class="primary-action home-active-start" type="button" data-action="${action}" data-session="work" data-id="${escapeHtml(item._id)}">${actionLabel}</button><a class="secondary-action home-active-open" href="oppdrag.html?open=${encodeURIComponent(item._id)}">Åpne</a></div></article>`;}).join("");}
-  async function load(show=true){if(show)setStatus("Henter dagens oversikt…");home=await api("/admin/assistant/home");renderFocus();renderTasks();renderOngoing();setStatus("");await loadResolvedTasks();}
+  async function load(show=true){
+    if(show)setStatus("Hentar aktive oppdrag…");
+    home=await api("/admin/assistant/home");
+    renderWorking();
+    renderTasks();
+    if(home.workingOrdersTruncated) setStatus("Det finst over 500 opne oppdrag. Bruk Oppdrag for å sjå resten.", "error");
+    else if(!Array.isArray(home.workingOrders)) setStatus("Arbeidslista er mellombels henta frå den eldre oversikta. Fleire oppdrag kan mangle.", "error");
+    else setStatus("");
+    await loadResolvedTasks();
+  }
 
   async function publishNextWork(button){
     if(busy||button.disabled)return;
@@ -133,6 +214,13 @@
   el("quickForm").addEventListener("submit",async(e)=>{e.preventDefault();if(busy||!quickType)return;const form=new FormData(e.currentTarget),type=quickType.type;let payload=Object.fromEntries(form.entries());delete payload.receipt;if(type!=="note")payload.billable=form.has("billable");if(type==="time"){payload.startedAt=new Date(payload.startedAt).toISOString();payload.endedAt=new Date(payload.endedAt).toISOString();}try{busy=true;el("quickSave").disabled=true;el("quickError").textContent="";if(type==="expense"){const file=el("qReceipt")?.files?.[0];if(file&&file.size>12*1024*1024)throw new Error("Kvitteringsbildet er for stort (maks 12 MB).");payload.receiptImage=await fileData(file);}const endpoint=type==="time"?"time-entries":type==="expense"?"expenses":type==="material"?"materials":"notes";const saved=await api(`/admin/work-orders/${encodeURIComponent(quickType.id)}/${endpoint}`,{method:"POST",body:JSON.stringify(payload)});el("quickModal").classList.add("hidden");e.currentTarget.reset();await load(false);if(saved.overlapWarning)setStatus(saved.overlapWarning,"error");}catch(err){el("quickError").textContent=err.message;}finally{busy=false;el("quickSave").disabled=false;}});
   document.addEventListener("click",async(e)=>{const complete=e.target.closest('[data-confirm="complete"]');if(!complete)return;e.stopImmediatePropagation();try{setStatus("Kontrollerer prosjektet…");const data=await api(`/admin/work-orders/${encodeURIComponent(complete.dataset.id)}/completion-check`);const check=data.completionCheck||{blocking:[],warnings:[]};if(check.blocking.length){setStatus(check.blocking.join(" "),"error");return;}const project=data.workOrder||{},basis=data.invoiceBasis||{};const summary=`Registrert tid: ${fmtDuration(currentSeconds(project))}. Utgifter: ${(project.additionalCosts||[]).length}. Materialer: ${(project.materials||[]).length}. Notater: ${(project.projectNotes||[]).length}. Fakturagrunnlag: ${(basis.lines||[]).length} linjer.`;const warnings=check.warnings.length?` Kontroller: ${check.warnings.join(" ")}`:"";confirmRun=()=>action(complete.dataset.id,"complete");el("confirmTitle").textContent="Fullføre prosjektet?";el("confirmText").textContent=`${summary}${warnings} All historikk bevares.`;el("confirmModal").classList.remove("hidden");setStatus("");}catch(error){setStatus(error.message,"error");}},true);
   document.addEventListener("click",(e)=>{
+    const chosen=e.target.closest("[data-select-work]");
+    if(chosen){
+      const id=chosen.dataset.selectWork;
+      selectedWorkId=selectedWorkId===id?null:id;
+      renderWorking();
+      return;
+    }
     const resolver=e.target.closest("[data-resolve-task]");
     if(resolver){e.preventDefault();resolveTask(resolver);return;}
     const restore=e.target.closest("[data-restore-task]");
@@ -149,6 +237,13 @@
     if(c){const operation=c.dataset.confirm;confirmRun=()=>action(c.dataset.id,operation);el("confirmTitle").textContent=operation==="stop"?"Avslutte arbeidsøkten?":"Fullføre prosjektet?";el("confirmText").textContent=operation==="stop"?"Tiden lagres. Prosjektet beholdes og kan fortsettes senere.":"All tid, utgifter, materialer og notater bevares. Prosjektet blir klart til fakturering.";el("confirmModal").classList.remove("hidden");}
   });
   el("closeQuick").addEventListener("click",()=>el("quickModal").classList.add("hidden"));el("confirmCancel").addEventListener("click",()=>el("confirmModal").classList.add("hidden"));el("confirmOk").addEventListener("click",()=>{el("confirmModal").classList.add("hidden");confirmRun?.();});el("refreshBtn").addEventListener("click",()=>load().catch(err=>setStatus(err.message,"error")));el("logoutBtn").addEventListener("click",()=>localStorage.removeItem(KEY_STORAGE));
-  setInterval(()=>{const timer=document.querySelector("[data-live-timer]");if(timer&&home?.activeWorkOrder)timer.textContent=fmtDuration(sessionSeconds(home.activeWorkOrder));},1000);
-  load().catch(err=>{focusContent.innerHTML='<div class="empty-home">Kunne ikke hente oppdrag.</div>';taskList.innerHTML='<div class="empty-home">Kunne ikke hente gjøremål.</div>';setStatus(err.message,"error");});
+  setInterval(()=>{
+    if(!home)return;
+    const list=workingOrders();
+    document.querySelectorAll("[data-live-timer][data-order-id]").forEach((timer)=>{
+      const order=list.find((item)=>String(item._id)===timer.dataset.orderId);
+      if(order?.status==="active")timer.textContent=fmtDuration(sessionSeconds(order));
+    });
+  },1000);
+  load().catch(err=>{ongoingProjects.innerHTML='<div class="home-work-empty"><strong>Kunne ikkje hente aktive oppdrag.</strong><p>Prøv å oppdatere sida. Ingen arbeidsstatus er endra.</p></div>';taskList.innerHTML='<div class="empty-home">Kunne ikkje hente gjøremål.</div>';setStatus(err.message,"error");});
 })();
