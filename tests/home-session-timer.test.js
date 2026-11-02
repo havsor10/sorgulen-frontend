@@ -9,8 +9,9 @@ const html = fs.readFileSync(path.join(root, "admin/hjem.html"), "utf8");
 
 test("home live timer uses current session time, not project total", () => {
   assert.match(home, /calculateCurrentSessionSeconds/);
-  assert.match(home, /data-live-timer>\$\{fmtDuration\(sessionSeconds\(active\)\)\}/);
-  assert.match(home, /timer\.textContent=fmtDuration\(sessionSeconds\(home\.activeWorkOrder\)\)/);
+  assert.match(home, /data-live-timer data-order-id/);
+  assert.match(home, /timer\.textContent=fmtDuration\(sessionSeconds\(order\)\)/);
+  assert.match(home, /data-action="\$\{action\}"/);
 });
 
 test("home session timer assets are cache-busted", () => {
