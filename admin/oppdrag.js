@@ -408,11 +408,6 @@
 
   function renderHistory() {
     const visible = filteredWorkOrders();
-    if (!visible.length) {
-      historyContainer.innerHTML = '<div class="order-board-empty">Ingen oppdrag passar søket eller filteret.</div>';
-      return;
-    }
-
     const renderCard = ({ order, finance }) => {
       const customer = order.customerSnapshot || {};
       const seconds = calculateWorkSeconds(order);
@@ -470,12 +465,17 @@
         '</h3>' + cards + '</section>';
     }).join("");
     // Fakturaer frå andre kanalar kan ikkje koplast til eit oppdrag berre fordi kundenamnet liknar.
-    const extra = orderBoard?.financeAvailable && historyStatus.value === "all" &&
-      !(historySearch.value || "").trim() && orderBoard.unmatchedInvoices.length
+    const invoiceSearch = (historySearch.value || "").trim().toLowerCase();
+    const extraInvoices = (orderBoard?.unmatchedInvoices || []).filter((invoice) => {
+      if (!["all", "attention", "waiting"].includes(historyStatus.value)) return false;
+      if (historyStatus.value !== "all" && invoice.group !== historyStatus.value) return false;
+      return !invoiceSearch || [invoice.name, invoice.number, invoice.status].join(" ").toLowerCase().includes(invoiceSearch);
+    });
+    const extra = orderBoard?.financeAvailable && extraInvoices.length
       ? '<section class="order-board-other-invoices"><h3>Andre fakturaer som må følgjast opp (' +
-        orderBoard.unmatchedInvoices.length + ')</h3><p>Fakturaene har ikkje ei eintydig oppdragskopling i systemet. ' +
+        extraInvoices.length + ')</h3><p>Fakturaene har ikkje ei eintydig oppdragskopling i systemet. ' +
         'Dei kan komme frå booking, førespurnad eller manuell fakturering. Dei er ikkje automatisk knytte til feil kundeoppdrag.</p>' +
-        orderBoard.unmatchedInvoices.map((inv) =>
+        extraInvoices.map((inv) =>
           '<div class="order-board-other-invoice"><div><strong>' +
           escapeHtml(inv.name) + (inv.number ? ' · faktura ' + escapeHtml(inv.number) : ' · fakturautkast') +
           '</strong><span>' + escapeHtml(inv.status === "draft" ? "Utkast må kontrollerast" :
