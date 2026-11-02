@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="operations.css?v=20260918-unified1">
   <link rel="stylesheet" href="work-order-field.css?v=20261031-editclock1">
   <link rel="stylesheet" href="customer-ledger-ui.css?v=20261101-ledger1">
+  <link rel="stylesheet" href="order-board.css?v=20261102-finance1">
 </head>
 <body data-field-ui-version="20261004-lock2">
   <div id="adminShell" data-page="jobs"></div>
@@ -24,6 +25,8 @@
       </div>
     </header>
     <div id="statusMessage" class="status-message" role="status" aria-live="polite"></div>
+    <div id="orderBoardError" class="order-board-error" role="alert" hidden></div>
+    <section id="orderBoardSummary" class="order-board-summary" aria-label="Arbeid og fakturaoversikt"><p>Hentar samla arbeids- og fakturastatus…</p></section>
 
     <section id="activeWorkOrderSection" class="admin-section" aria-labelledby="activeWorkOrderHeading">
       <div class="section-heading-row">
@@ -108,24 +111,28 @@
     <section class="work-history-section admin-section" aria-labelledby="historyHeading">
       <div class="section-heading-row">
         <div>
-          <p class="section-kicker">Oppdragslogg</p>
-          <h2 id="historyHeading">Pågående og historikk</h2>
+          <p class="section-kicker">Automatisk oppfølging</p>
+          <h2 id="historyHeading">Kva må skje vidare?</h2>
         </div>
       </div>
 
       <div class="history-toolbar">
-        <button id="openWorkOrderTrash" class="secondary-btn" type="button">Papirkurv</button>
-        <input id="historySearch" type="search" placeholder="Søk kunde, oppdrag eller notat" aria-label="Søk i oppdrag">
+        <input id="historySearch" type="search" placeholder="Søk kunde, oppdrag eller faktura" aria-label="Søk i oppdrag">
         <select id="historyStatus" aria-label="Filtrer på status">
-          <option value="all">Alle statuser</option>
+          <option value="all">Alle oppdrag – sortert etter behov</option>
+          <option value="attention">Krev handling</option>
+          <option value="waiting">Ventar på betaling</option>
+          <option value="working">I arbeid</option>
+          <option value="done">Ferdig og betalt</option>
           <option value="planned">Planlagt</option>
-          <option value="open">Aktiv / pauset / stoppet</option>
-          <option value="completed">Ferdigstilt</option>
+          <option value="other">Andre oppdrag</option>
+          <option value="test">Testoppdrag</option>
           <option value="cancelled">Avbrutt</option>
         </select>
       </div>
 
       <div id="workOrderHistory" class="work-order-history"></div>
+      <details class="order-board-admin-extra"><summary>Administrasjon og papirkurv</summary><button id="openWorkOrderTrash" class="secondary-btn" type="button">Opne papirkurv</button></details>
     </section>
   </main>
 
@@ -162,11 +169,12 @@
   <script src="../config.js"></script>
   <script src="customer-ledger.js?v=20261101-ledger1"></script>
   <script src="work-order-time.js?v=20261004-audit1"></script>
-  <script src="oppdrag.js?v=20261030-fixedprice1"></script>
+  <script src="work-order-finance.js?v=20261102-finance1"></script>
+  <script src="oppdrag.js?v=20261102-finance1"></script>
   <script src="operations-ui.js?v=20261004-lock2"></script>
   <script src="inventory-project.js"></script>
   <script src="customer-portal-links.js?v=20261101-ledger1"></script>
-  <script src="work-order-field.js?v=20261101-ledger1"></script>
+  <script src="work-order-field.js?v=20261102-finance1"></script>
   <script src="work-order-actionability.js?v=20261003-direct1"></script>
   <script src="work-order-delete.js?v=20261101-ledger1"></script>
 </body>

@@ -4,8 +4,10 @@
   const OPEN_STATUSES = new Set(["active", "paused"]);
   const PROJECT_OPEN_STATUSES = new Set(["active", "paused", "stopped"]);
   const workOrderTime = window.SorgulenWorkOrderTime;
+  const financeModel = window.SorgulenOrderBoard;
 
   if (!workOrderTime) throw new Error("Mangler tidsberegning for oppdrag");
+  if (!financeModel) throw new Error("Mangler felles økonomistatus for oppdrag");
 
   const statusLabels = {
     planned: "Planlagt",
@@ -67,6 +69,8 @@
 
   let openWorkOrder = null;
   let workOrders = [];
+  let orderBoard = null;
+  let financeError = "";
   let detailWorkOrder = null;
   let selectedCustomer = null;
   let customerOptions = [];
@@ -335,58 +339,157 @@
       </article>`;
   }
 
+  const NOK = new Intl.NumberFormat("no-NO", { style: "currency", currency: "NOK", maximumFractionDigits: 2 });
+  const boardFilters = ["attention", "waiting", "working", "planned", "done", "other", "test", "cancelled", "unknown"];
   function filteredWorkOrders() {
     const query = (historySearch.value || "").trim().toLowerCase();
     const filter = historyStatus.value;
-    return workOrders.filter((workOrder) => {
-      if (filter === "open" && !PROJECT_OPEN_STATUSES.has(effectiveStatus(workOrder))) return false;
-      if (!["all", "open"].includes(filter) && effectiveStatus(workOrder) !== filter) return false;
+    return (orderBoard?.records || []).filter(({ order, finance }) => {
+      if (filter !== "all" && finance.group !== filter) return false;
       if (!query) return true;
-      const customer = workOrder.customerSnapshot || {};
-      return [customer.name, customer.email, customer.phone, workOrder.serviceName, workOrder.notes]
-        .join(" ")
-        .toLowerCase()
-        .includes(query);
+      const customer = order.customerSnapshot || {};
+      return [customer.name, customer.email, customer.phone, order.serviceName,
+        order.notes, finance.stageLabel, ...finance.labels.map((item) => item.label),
+        ...finance.linkedInvoices.map((inv) => inv.number)]
+        .join(" ").toLowerCase().includes(query);
     });
+  }
+
+  function boardChip(key, label) {
+    return '<span class="order-board-status-chip" data-finance="' +
+      escapeHtml(key) + '">' + escapeHtml(label) + '</span>';
+  }
+
+  function financeInfo(finance) {
+    const invoices = finance.linkedInvoices || [];
+    const primaryInvoice = invoices.find((item) => item.id && ["draft", "issued", "sent"].includes(item.status)) || invoices[0];
+    const numberText = primaryInvoice?.number ? "Faktura " + primaryInvoice.number : primaryInvoice ? "Fakturautkast" : "";
+    const unpaid = Number(finance.outstanding) || 0;
+    const fragments = [numberText];
+    if (unpaid > 0) fragments.push(NOK.format(unpaid) + " uteståande");
+    if (primaryInvoice?.dueDate && ["sent", "issued"].includes(primaryInvoice.status))
+      fragments.push("Forfall " + primaryInvoice.dueDate.split("-").reverse().join("."));
+    if (finance.source === "ambiguous") fragments.push("Kunden har ein faktura utan sikker oppdragskopling");
+    return fragments.filter(Boolean).join(" · ");
+  }
+
+  function renderBoardSummary() {
+    const mount = document.getElementById("orderBoardSummary");
+    const errorElement = document.getElementById("orderBoardError");
+    if (!mount || !errorElement || !orderBoard) return;
+    const healthy = orderBoard.financeAvailable;
+    errorElement.hidden = healthy;
+    errorElement.textContent = healthy ? "" :
+      "Fakturastatus kunne ikkje hentast. Oppdraga kan visast, men det er ikkje trygt å konkludere med at noko er fakturert eller betalt. " +
+      (financeError ? "Feil: " + financeError : "Prøv Oppdater.");
+    const summary = orderBoard.summary;
+    const tile = (filter, value, title, desc) => {
+      const selected = historyStatus.value === filter;
+      return '<button type="button" class="order-board-total' + (selected ? ' active' : '') +
+        '" data-board-filter="' + filter + '" aria-pressed="' + String(selected) + '">' +
+        '<strong>' + escapeHtml(value) + '</strong><span>' + escapeHtml(title) +
+        '</span><small>' + escapeHtml(desc) + '</small></button>';
+    };
+    mount.innerHTML = '<div class="order-board-summary-head"><div><h2>Din oversikt</h2>' +
+      '<p>Arbeid og økonomi blir følgt opp kvar for seg. Ingen manuell statusdobling.</p></div></div>' +
+      '<div class="order-board-totals">' +
+      tile("attention", healthy ? summary.attention : "–", "Krev handling", "Faktura, levering eller forfall") +
+      tile("waiting", healthy ? summary.waiting : "–", "Ventar på betaling", "Faktura sendt, ikkje betalt") +
+      tile("working", summary.working, "I arbeid", "Aktive og stoppa økter") +
+      tile("done", healthy ? summary.done : "–", "Ferdig og betalt", "Inga open betalingsoppgåve") +
+      '</div>' +
+      (healthy ? '<div class="order-board-balance"><div><span>Uteståande på alle registrerte fakturaer</span><strong>' +
+        escapeHtml(NOK.format(summary.outstanding)) + '</strong><small>' +
+        summary.unpaidInvoices + ' fakturaer utstedt/sendt, av desse ' + summary.overdueInvoices +
+        ' registrert forfalne. Restbeløp frå Fiken blir brukt når det finst.</small></div>' +
+        '<a href="fakturaer.html">Sjå alle fakturaer</a></div>' :
+        '<p class="order-board-diagnostic">Oppdater sida når fakturatenesta er tilgjengeleg. I mellomtida blir ingen oppdrag feilaktig merkte som betalte eller ufakturerte.</p>');
   }
 
   function renderHistory() {
     const visible = filteredWorkOrders();
-    if (!visible.length) {
-      historyContainer.innerHTML = '<div class="empty-state">Ingen oppdrag å vise.</div>';
-      return;
-    }
-
-    const renderCard = (workOrder) => {
-      const customer = workOrder.customerSnapshot || {};
-      const seconds = calculateWorkSeconds(workOrder);
-      const amount = calculateEstimatedAmount(workOrder, seconds);
-      const showAmount = effectiveStatus(workOrder) !== "planned" && effectiveStatus(workOrder) !== "cancelled";
-      const amountEstimated = !["completed", "stopped"].includes(effectiveStatus(workOrder));
-
-      return `
-        <article class="work-history-card work-history-card-simple status-${escapeHtml(effectiveStatus(workOrder))}">
-          <button type="button" class="work-history-open open-job-detail" data-id="${escapeHtml(workOrder._id)}">
-            <span class="history-main">
-              <strong>${escapeHtml(customer.name || "Ukjent kunde")} ${workOrder.isTest ? '<span class="work-status-badge history-test">TEST</span>' : ""}</strong>
-              <span>${escapeHtml(workOrder.serviceName)}</span>
-            </span>
-            <span class="history-summary">
-              <span>${escapeHtml(formatDate(workOrder.jobDate))}</span>
-              ${effectiveStatus(workOrder) === "planned" ? "" : `<span>${escapeHtml(formatDuration(seconds))}</span>`}
-              ${showAmount ? `<span>${escapeHtml(formatCurrency(amount, amountEstimated))}</span>` : ""}
-            </span>
-            <span class="history-tail"><span class="work-status-badge status-${escapeHtml(effectiveStatus(workOrder))}">${escapeHtml(statusLabels[effectiveStatus(workOrder)] || effectiveStatus(workOrder))}</span><b aria-hidden="true">›</b></span>
-          </button>
-        </article>`;
+    const renderCard = ({ order, finance }) => {
+      const customer = order.customerSnapshot || {};
+      const seconds = calculateWorkSeconds(order);
+      // Bruk same registeroversikt som kundedetaljen. Den gamle kortsummen
+      // tok berre med timebetaling og viste til dømes 0 kr når kunden hadde utgifter.
+      const ledger = window.SorgulenCustomerLedger?.summarizeOrder(order);
+      const amount = ledger ? ledger.estimate : calculateEstimatedAmount(order, seconds);
+      const status = effectiveStatus(order);
+      const showAmount = status !== "planned" && status !== "cancelled";
+      const labelChips = finance.labels.length
+        ? finance.labels.map((label) => boardChip(label.key, label.label + (label.count > 1 ? " (" + label.count + ")" : ""))).join("")
+        : boardChip(finance.source === "unbilled" ? "unbilled" :
+          finance.source === "ambiguous" ? "ambiguous" :
+          finance.source === "unknown" ? "unknown" :
+          status === "cancelled" ? "cancelled" : finance.source === "test" ? "test" : "unlinked",
+          finance.source === "unbilled" ? "Ingen kopla faktura" :
+          finance.source === "ambiguous" ? "Fakturakopling uklar" :
+          finance.source === "unknown" ? "Økonomistatus utilgjengeleg" :
+          status === "cancelled" ? "Ingen aktiv oppfølging" : finance.source === "test" ? "Testdata" :
+          "Inga uteståande faktura");
+      const action = finance.href
+        ? '<a class="order-board-action" href="' + escapeHtml(finance.href) + '">' + escapeHtml(finance.action) + '</a>'
+        : '<span class="order-board-note">' + escapeHtml(finance.action || "Ingen handling") + '</span>';
+      return '<article class="work-history-card work-history-card-simple order-board-card status-' +
+        escapeHtml(status) + ' order-board-' + escapeHtml(finance.group) + '">' +
+        '<button type="button" class="work-history-open open-job-detail" data-id="' + escapeHtml(order._id) + '">' +
+          '<span class="history-main"><strong>' + escapeHtml(customer.name || "Ukjend kunde") +
+          (order.isTest ? ' <span class="work-status-badge history-test">TEST</span>' : '') +
+          '</strong><span>' + escapeHtml(order.serviceName || "Oppdrag") + '</span></span>' +
+          '<span class="history-summary"><span>' + escapeHtml(formatDate(order.jobDate)) + '</span>' +
+          (status === "planned" ? "" : '<span>' + escapeHtml(formatDuration(seconds)) + '</span>') +
+          (showAmount ? '<span>Registrert anslag ' + escapeHtml(formatCurrency(amount, true)) + '</span>' : '') + '</span>' +
+          '<span class="history-tail"><span class="work-status-badge status-' + escapeHtml(status) + '">' +
+          escapeHtml(finance.stageLabel) + '</span><b aria-hidden="true">›</b></span></button>' +
+          '<div class="order-board-status" aria-label="Økonomistatus">' + labelChips + '</div>' +
+          '<div class="order-board-next"><span>' + escapeHtml(financeInfo(finance) || (
+            finance.source === "unbilled" ? "Arbeidet er ferdig. Fakturagrunnlaget må kontrollerast." :
+            finance.source === "unknown" ? "Klarte ikkje hente opplysningar om faktura." :
+            finance.group === "working" ? "Oppdraget pågår – opne for timar og registreringar." :
+            finance.group === "planned" ? "Neste steg: utfør arbeidet." :
+            finance.group === "done" ? "Oppdraget er betalt og ferdig." : "Arbeid og økonomi er viste kvar for seg."
+          )) + '</span>' + action + '</div></article>';
     };
 
-    const ongoing = visible.filter((workOrder) => PROJECT_OPEN_STATUSES.has(effectiveStatus(workOrder)));
-    const remaining = visible.filter((workOrder) => !PROJECT_OPEN_STATUSES.has(effectiveStatus(workOrder)));
-    historyContainer.innerHTML = [
-      ongoing.length ? `<section class="work-order-group"><h3 class="work-order-group-title">Pågående prosjekter</h3>${ongoing.map(renderCard).join("")}</section>` : "",
-      remaining.length ? `<section class="work-order-group"><h3 class="work-order-group-title">Planlagt og tidligere</h3>${remaining.map(renderCard).join("")}</section>` : "",
-    ].join("");
+    const grouped = boardFilters.map((key) => {
+      const entries = visible.filter((item) => item.finance.group === key);
+      if (!entries.length) return "";
+      const cards = entries.map(renderCard).join("");
+      const title = escapeHtml(orderBoard?.groupNames?.[key] || key);
+      const count = '<span class="order-group-count">' + entries.length + '</span>';
+      if (["test", "cancelled"].includes(key) && historyStatus.value === "all")
+        return '<details class="work-order-group work-order-group-' + key +
+          ' order-board-secondary"><summary class="work-order-group-title">' + title + count +
+          '</summary>' + cards + '</details>';
+      return '<section class="work-order-group work-order-group-' + key +
+        '"><h3 class="work-order-group-title">' + title + count +
+        '</h3>' + cards + '</section>';
+    }).join("");
+    // Fakturaer frå andre kanalar kan ikkje koplast til eit oppdrag berre fordi kundenamnet liknar.
+    const invoiceSearch = (historySearch.value || "").trim().toLowerCase();
+    const extraInvoices = (orderBoard?.unmatchedInvoices || []).filter((invoice) => {
+      if (!["all", "attention", "waiting"].includes(historyStatus.value)) return false;
+      if (historyStatus.value !== "all" && invoice.group !== historyStatus.value) return false;
+      return !invoiceSearch || [invoice.name, invoice.number, invoice.status].join(" ").toLowerCase().includes(invoiceSearch);
+    });
+    const extra = orderBoard?.financeAvailable && extraInvoices.length
+      ? '<section class="order-board-other-invoices"><h3>Andre fakturaer som må følgjast opp (' +
+        extraInvoices.length + ')</h3><p>Fakturaene har ikkje ei eintydig oppdragskopling i systemet. ' +
+        'Dei kan komme frå booking, førespurnad eller manuell fakturering. Dei er ikkje automatisk knytte til feil kundeoppdrag.</p>' +
+        extraInvoices.map((inv) =>
+          '<div class="order-board-other-invoice"><div><strong>' +
+          escapeHtml(inv.name) + (inv.number ? ' · faktura ' + escapeHtml(inv.number) : ' · fakturautkast') +
+          '</strong><span>' + escapeHtml(inv.status === "draft" ? "Utkast må kontrollerast" :
+          inv.status === "issued" ? "Utstedt – kontroller levering" :
+          inv.overdue ? "Forfalt – følg opp" : "Sendt – ventar på betaling") +
+          (inv.outstanding > 0 ? ' · ' + escapeHtml(NOK.format(inv.outstanding)) + ' uteståande' : '') +
+          '</span></div><a class="order-board-action" href="faktura-detalj.html?id=' +
+          encodeURIComponent(inv.id) + '">Åpne faktura</a></div>'
+        ).join("") + '</section>'
+      : "";
+    historyContainer.innerHTML = grouped + extra;
+    if (!grouped && !extra) historyContainer.innerHTML = '<div class="order-board-empty">Ingen oppdrag i denne gruppa.</div>';
   }
 
   function renderCustomerResults(options) {
@@ -813,17 +916,29 @@
 
   async function loadDashboard(showLoading = true) {
     if (showLoading) setMessage("Henter oppdrag...", "info");
-    const [activeData, historyData] = await Promise.all([
+    const [activeData, historyData, invoiceResult] = await Promise.all([
       apiFetch("/admin/work-orders/active"),
-      apiFetch("/admin/work-orders?limit=200"),
+      apiFetch("/admin/work-orders?limit=300"),
+      apiFetch("/invoices").then((data) => ({ ok: true, invoices: data.invoices || [] }))
+        .catch((error) => ({ ok: false, message: error.message })),
     ]);
     openWorkOrder = activeData.workOrder || null;
     workOrders = Array.isArray(historyData.workOrders) ? historyData.workOrders : [];
+    financeError = invoiceResult.ok ? "" : invoiceResult.message;
+    orderBoard = financeModel.buildBoard(workOrders, invoiceResult.invoices || [], { financeAvailable: invoiceResult.ok });
+    window.SorgulenOrderBoardCurrent = orderBoard;
+    renderBoardSummary();
     renderActiveWorkOrder();
     renderHistory();
     ensureTickInterval();
-    if (showLoading) setMessage(`Hentet ${workOrders.length} oppdrag.`, "success");
+    if (workOrders.length >= 300) {
+      setMessage("300 oppdrag henta. Fleire kan finnast i databasen – oppdragslista er ikkje komplett.", "error");
+    } else if (!invoiceResult.ok) {
+      setMessage("Fakturastatus manglar. Sjå feilmeldinga over.", "error");
+    } else if (showLoading) setMessage(`Kontrollert ${workOrders.length} oppdrag mot fakturasystemet.`, "success");
   }
+
+  window.SorgulenOrderBoardReload = () => loadDashboard(false);
 
   customerSearch.addEventListener("focus", () => {
     if (!selectedCustomer && !customerResults.innerHTML) searchCustomers(customerSearch.value.trim());
@@ -867,7 +982,15 @@
 
   createForm.addEventListener("submit", createWorkOrder);
   historySearch.addEventListener("input", renderHistory);
-  historyStatus.addEventListener("change", renderHistory);
+  historyStatus.addEventListener("change", () => { renderHistory(); renderBoardSummary(); });
+  document.getElementById("orderBoardSummary")?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-board-filter]");
+    if (!button) return;
+    historyStatus.value = button.dataset.boardFilter;
+    renderHistory();
+    renderBoardSummary();
+    document.getElementById("historyHeading")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
   refreshBtn.addEventListener("click", () => loadDashboard(true).catch((err) => setMessage(err.message, "error")));
   logoutBtn.addEventListener("click", () => localStorage.removeItem(KEY_STORAGE));
 

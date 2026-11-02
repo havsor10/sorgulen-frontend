@@ -1,0 +1,98 @@
+/* Eigarstyrt arbeidsflyt: arbeid + fakturering + betaling i ein samanheng.
+   Kvar status er utleidd frå faktiske fakturaer og ordra sine tilstandar. */
+.order-board-summary{display:grid;gap:12px;margin:14px 0 20px}
+.order-board-summary-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.order-board-summary-head h2{margin:0;font-size:clamp(19px,4.5vw,24px);color:#f3f7fb}
+.order-board-summary-head p{margin:4px 0 0;color:#9aadc1;font-size:12px}
+.order-board-totals{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.order-board-total{display:grid;gap:4px;align-content:center;min-height:92px;width:100%;padding:13px;text-align:left;border:1px solid #38465a;border-radius:13px;background:#151f2d;color:#eef4fa;cursor:pointer}
+.order-board-total strong{font-size:clamp(22px,4vw,29px);font-variant-numeric:tabular-nums;line-height:1}
+.order-board-total span{font-size:12px;font-weight:800;line-height:1.3}
+.order-board-total small{font-size:11px;color:#95a8bb;line-height:1.4}
+.order-board-total[data-board-filter="attention"]{border-color:#926539;background:#292014}
+.order-board-total[data-board-filter="attention"] strong{color:#f4c38a}
+.order-board-total[data-board-filter="waiting"]{border-color:#415e83;background:#162237}
+.order-board-total[data-board-filter="waiting"] strong{color:#b4d6ff}
+.order-board-total[data-board-filter="done"] strong{color:#95e0bb}
+.order-board-total.active{outline:2px solid #dce8f7;outline-offset:2px}
+.order-board-total:focus-visible,.order-board-action:focus-visible{outline:3px solid #83b7fa;outline-offset:3px}
+.order-board-balance{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 15px;border:1px solid #324258;border-radius:13px;background:#111b28}
+.order-board-balance div{display:grid;gap:3px}
+.order-board-balance strong{color:#f5f8fc;font-size:clamp(19px,4vw,25px);font-variant-numeric:tabular-nums}
+.order-board-balance span,.order-board-balance small{font-size:12px;color:#9eafc1;line-height:1.35}
+.order-board-balance a{min-height:38px;display:inline-flex;align-items:center;padding:8px 12px;border:1px solid #526882;border-radius:9px;color:#dceafa;text-decoration:none;font-weight:800;font-size:12px}
+.order-board-error{margin:12px 0;padding:15px 16px;border:2px solid #bb665e;border-radius:12px;background:#311b1b;color:#ffddd5;font-weight:800;line-height:1.45}
+.order-board-error[hidden]{display:none!important}
+.order-board-diagnostic{padding:9px 11px;background:#162232;border:1px solid #3b536e;border-radius:10px;color:#d4e4f2;font-size:12px;line-height:1.45}
+.work-history-section .history-toolbar{display:grid;grid-template-columns:minmax(0,1fr) minmax(190px,280px);gap:10px;align-items:center;margin-bottom:15px}
+.work-history-section .history-toolbar>*{min-width:0;min-height:48px}
+.work-history-section .work-order-group{margin-top:21px}
+.work-history-section .work-order-group-title{margin:0 0 10px;color:#c3d0de;letter-spacing:.02em;font-size:16px}
+.work-history-section .work-order-group-title .order-group-count{display:inline-flex;align-items:center;margin-left:8px;padding:3px 7px;border-radius:8px;background:#263445;font-size:12px;color:#bdd0e3;font-weight:800;letter-spacing:0}
+.work-history-section .work-order-group-attention .work-order-group-title{color:#f5ca8f}
+.work-history-section .work-order-group-waiting .work-order-group-title{color:#a8c8ec}
+.work-history-card.order-board-card{margin-bottom:9px}
+.order-board-card.status-completed{border-left-color:#6e8aa9!important}
+.order-board-card.order-board-attention{border-left-color:#dd9856!important}
+.order-board-card.order-board-waiting{border-left-color:#6497d2!important}
+.order-board-card.order-board-done{border-left-color:#3ebd84!important}
+.order-board-card.order-board-test{opacity:.83}
+.order-board-card .work-history-open{padding:13px 14px 8px;gap:8px}
+.order-board-card .work-history-open .history-main>strong{white-space:normal;line-height:1.24}
+.order-board-card .work-history-open .history-main>span{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.order-board-card .history-tail{align-self:start}
+.order-board-card .history-tail .work-status-badge{font-size:10px;background:#2b3645;color:#d8e7f6;padding:5px 8px}
+.order-board-card .history-summary{font-size:11px;color:#9babbc!important}
+.order-board-card .history-summary span+span::before{margin-right:7px}
+.order-board-status{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:3px 13px 10px}
+.order-board-status-chip{display:inline-flex;align-items:center;min-height:28px;padding:5px 9px;border-radius:8px;background:#273647;color:#d8e6f3;border:1px solid #405268;font-size:11px;font-weight:850;line-height:1.3}
+.order-board-status-chip[data-finance="draft"],.order-board-status-chip[data-finance="issued"]{background:#342817;color:#f7d49a;border-color:#765d36}
+.order-board-status-chip[data-finance="unpaid"],.order-board-status-chip[data-finance="overdue"]{background:#192e49;color:#b9d5fa;border-color:#405d80}
+.order-board-status-chip[data-finance="overdue"]{background:#47201f;border-color:#99544a;color:#ffd1c8}
+.order-board-status-chip[data-finance="paid"]{background:#163727;border-color:#347551;color:#bdf3d5}
+.order-board-status-chip[data-finance="mismatch"],.order-board-status-chip[data-finance="credited"]{background:#452b18;border-color:#876341;color:#ffdab1}
+.order-board-status-chip[data-finance="unknown"],.order-board-status-chip[data-finance="ambiguous"]{background:#3a2c1d;color:#fbdba6;border-color:#80623d}
+.order-board-next{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 13px 12px;border-top:1px solid #2b3849;background:#111924}
+.order-board-next>span{font-size:12px;color:#b9c9dc;line-height:1.4}
+.order-board-action{display:inline-flex;align-items:center;justify-content:center;text-align:center;flex:0 0 auto;min-height:40px;min-width:138px;padding:9px 13px;border:1px solid #48617b;border-radius:10px;background:#24364a;color:#edf4fc!important;text-decoration:none;font-size:12px;font-weight:850}
+.order-board-attention .order-board-action{background:#ecd0a8;color:#261c11!important;border-color:#ecd0a8}
+.order-board-next .order-board-note{color:#9fb2c7;font-size:11px}
+.order-board-other-invoices{margin-top:16px;padding:14px;border:1px solid #45556a;border-radius:14px;background:#15202e}
+.order-board-other-invoices h3{margin:0 0 5px;font-size:17px;color:#edf5fd}
+.order-board-other-invoices p{margin:0 0 12px;font-size:12px;line-height:1.5;color:#a3b6c9}
+.order-board-other-invoice{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;padding:11px 0;border-top:1px solid #324358}
+.order-board-other-invoice strong,.order-board-other-invoice span{display:block;font-size:13px}
+.order-board-other-invoice span{color:#aab9cb;margin-top:4px}
+.order-board-admin-extra{margin-top:20px;padding:11px 13px;border:1px solid #303e50;border-radius:11px;background:#141c26}
+.order-board-admin-extra summary{cursor:pointer;color:#a9b9c9;font-size:13px;font-weight:800}
+.order-board-admin-extra button{margin-top:13px;min-height:44px}
+.order-board-empty{padding:18px;background:#141e2b;border:1px solid #394c60;border-radius:12px;color:#b9cee1;line-height:1.45}
+.field-finance-panel{display:grid;gap:10px;padding:13px;border:1px solid #3b5570;border-radius:13px;background:#102033}
+.field-finance-panel h3{font-size:17px;margin:0;color:#f3f8ff}
+.field-finance-panel>p{margin:0;color:#aec1d4;font-size:12px;line-height:1.55}
+.field-finance-panel .order-board-status{margin:0}
+.field-finance-links{display:grid;gap:8px}
+.field-finance-links a{display:grid;gap:3px;padding:10px;border:1px solid #4d6078;border-radius:9px;background:#1b2d41;color:#f1f7ff;text-decoration:none}
+.field-finance-links a strong{font-size:13px}
+.field-finance-links a span{font-size:12px;color:#b7c8da}
+@media(max-width:760px){
+ .order-board-totals{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .order-board-total{min-height:89px;padding:12px}
+ .order-board-balance{align-items:start}
+ .order-board-balance a{align-self:center}
+ .work-history-section .history-toolbar{grid-template-columns:1fr}
+ .work-history-section .history-toolbar>*{width:100%}
+ .order-board-card .work-history-open{grid-template-columns:minmax(0,1fr) auto}
+ .order-board-card .history-tail{align-items:start}
+ .order-board-card .history-summary{grid-area:summary}
+ .order-board-next{flex-direction:column;align-items:stretch;gap:8px}
+ .order-board-next .order-board-action{width:100%;min-width:0;min-height:45px}
+ .order-board-other-invoice{grid-template-columns:1fr}
+ .order-board-other-invoice .order-board-action{justify-self:stretch;min-height:44px}
+}
+@media(max-width:390px){
+ .order-board-total{padding:10px}
+ .order-board-balance{flex-direction:column}
+ .order-board-balance a{width:100%;box-sizing:border-box;justify-content:center}
+ .order-board-status-chip{font-size:10px}
+}
