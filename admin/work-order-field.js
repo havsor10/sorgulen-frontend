@@ -486,6 +486,56 @@
     return '<button class="field-correct-time" type="button" data-field-correct-time>Korriger arbeidstid</button>';
   }
 
+  function financeStatusMarkup(order) {
+    const board = window.SorgulenOrderBoardCurrent;
+    const entry = board?.records?.find((record) => String(record.id) === String(order._id));
+    const finance = entry?.finance;
+    if (!board?.financeAvailable || !finance) {
+      return '<section class="field-finance-panel" id="fieldFinanceStatus"><h3>Faktura og betaling</h3>' +
+        '<p>Fakturastatus kunne ikkje kontrollerast no. Oppdraget sin arbeidsstatus seier ikkje om kunden har betalt.</p></section>';
+    }
+
+    const chips = finance.labels.length
+      ? finance.labels.map((item) =>
+        '<span class="order-board-status-chip" data-finance="' + esc(item.key) + '">' +
+        esc(item.label + (item.count > 1 ? " (" + item.count + ")" : "")) + '</span>').join("")
+      : '<span class="order-board-status-chip" data-finance="' + esc(finance.source) + '">' +
+        esc(finance.source === "unbilled" ? "Ingen kopla faktura" :
+          finance.source === "ambiguous" ? "Uklart kva faktura som høyrer til oppdraget" :
+          finance.source === "test" ? "Testoppdrag" :
+          finance.source === "cancelled" ? "Avbrutt" : "Ingen open faktura registrert") + '</span>';
+    const names = { draft: "Fakturautkast – ikkje utstedt", issued: "Utstedt – levering må sjekkast",
+      sent: "Sendt – ikkje registrert betalt", paid: "Betalt", credited: "Kreditert" };
+    const invoiceLinks = (finance.linkedInvoices || []).map((invoice) => {
+      const main = (invoice.number ? "Faktura " + invoice.number : "Fakturautkast") +
+        " · " + (names[invoice.status] || invoice.status);
+      const details = [
+        invoice.outstanding > 0 ? money(invoice.outstanding) + " uteståande" : "",
+        invoice.dueDate ? "Forfall " + invoice.dueDate.split("-").reverse().join(".") : "",
+        invoice.paymentMismatch ? "Betaling avviker frå Fiken – må sjekkast" : "",
+      ].filter(Boolean).join(" · ");
+      return '<a href="faktura-detalj.html?id=' + encodeURIComponent(invoice.id) +
+        '"><strong>' + esc(main) + '</strong><span>' + esc(details || "Opne fakturaen for detaljar") +
+        '</span></a>';
+    }).join("");
+    const noInvoice = !finance.linkedInvoices.length
+      ? '<p>' + esc(finance.source === "ambiguous"
+        ? "Det finst faktura på kunden utan sikker kopling til dette oppdraget. Kontroller før du opprettar ei ny."
+        : finance.source === "unbilled" ? "Arbeidet er ferdig, men det er ikkje funne ei tilknytt faktura."
+        : "Ingen faktura er knytt direkte til dette oppdraget.") + '</p>'
+      : '';
+    const action = finance.href
+      ? '<a class="order-board-action" href="' + esc(finance.href) + '">' + esc(finance.action) + '</a>'
+      : '';
+    return '<section class="field-finance-panel" id="fieldFinanceStatus">' +
+      '<h3>Faktura og betaling</h3>' +
+      '<p>Arbeid: <strong>' + esc(finance.stageLabel) + '</strong>. Fakturastatus blir henta frå registrerte fakturaer, ikkje gjetta frå arbeidsstatus.</p>' +
+      '<div class="order-board-status">' + chips + '</div>' +
+      (invoiceLinks ? '<div class="field-finance-links">' + invoiceLinks + '</div>' : noInvoice) +
+      (action ? '<div class="field-finance-actions">' + action + '</div>' : '') +
+      '</section>';
+  }
+
   function render(order, completionCheck) {
     closeAddMenu();
     currentOrder = order;
@@ -511,6 +561,7 @@
         compactWorkControls(order) +
         addMenuMarkup(order) +
       '</section>' +
+      financeStatusMarkup(order) +
       (issues.count ? '<details id="fieldReadiness" class="field-collapse field-attention" open><summary>Må rettast før faktura <span>' + issues.count + ' punkt</span></summary><div class="field-collapse-body"><ul class="field-issue-list">' + issues.items.map((issue) => issueMarkup(issue, order)).join("") + '</ul></div></details>' : '') +
       '<section class="field-section field-ledger" id="fieldLedger">' +
         '<div class="field-section-head"><div><h3>Alle registreringar</h3><p>Alt som er ført på dette oppdraget. Trykk Rediger eller Slett på kvar post.</p></div><strong class="field-ledger-count">' + ledger.count + ' postar</strong></div>' +
