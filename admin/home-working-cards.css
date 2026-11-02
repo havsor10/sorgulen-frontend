@@ -70,3 +70,10 @@
 .home-main .quiet-link{min-height:40px;display:inline-flex;align-items:center;text-align:right;line-height:1.2;font-size:12px;font-weight:800}
 @media(min-width:700px){.home-work-list{grid-template-columns:repeat(2,minmax(0,1fr))}.home-work-action-row{grid-template-columns:1fr 1fr}}
 @media(max-width:430px){.home-work-select{padding:14px 13px}.home-work-actions{padding:10px 12px 12px}.home-work-state{font-size:10px;padding:7px 8px}.home-work-name{font-size:18px}.home-work-service{font-size:12px}.home-work-legend{gap:6px 11px}.home-work-legend span{font-size:10px}.home-followup-panel>summary{padding:13px}.home-work-total{font-size:11px}.home-work-total strong{font-size:14px}}
+
+.home-followup-panel.has-actions{border-color:#80623b}
+.home-followup-panel.has-actions>summary{background:linear-gradient(95deg,#302719,#151e29 76%)}
+.home-followup-panel.has-actions .home-followup-label strong{color:#f6d49c}
+.home-followup-panel.has-urgent{border-color:#a76351}
+.home-followup-panel.has-urgent>summary{background:linear-gradient(95deg,#3b231e,#151e29 78%)}
+.home-followup-panel.has-urgent .home-followup-label strong{color:#ffb8a4}
