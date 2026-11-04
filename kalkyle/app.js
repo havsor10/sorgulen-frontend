@@ -3,36 +3,24 @@
 
   // PROTOTYPE: kalkylen er lokal og bruker demonstrasjonssatsar. Ingen API-kall,
   // kundesynkronisering, databaseoperasjon eller automatisk utsending.
-  const CATALOG = Object.freeze({
-    brostein: { name: "Brostein – vask og vedlikehald", unit: "m²", capacity: 22, setup: 0.75, material: 11, equipment: 65 },
-    kantklipp: { name: "Kantklipping", unit: "meter", capacity: 130, setup: 0.30, material: 0, equipment: 28 },
-    plenklipp: { name: "Plenklipping", unit: "m²", capacity: 450, setup: 0.25, material: 0, equipment: 42 },
-    hekk: { name: "Hekk og buskar", unit: "meter", capacity: 11, setup: 0.50, material: 0, equipment: 32 },
-    takrenne: { name: "Takrenner", unit: "meter", capacity: 14, setup: 0.50, material: 0, equipment: 25 },
-    rydding: { name: "Rydding / bortkøyring", unit: "m³", capacity: 1.8, setup: 0.50, material: 0, equipment: 35 },
-    annet: { name: "Diverse arbeid", unit: "timeverk", capacity: 1, setup: 0, material: 0, equipment: 0 }
-  });
-  const COMPLEXITY = { easy: 0.85, normal: 1, demanding: 1.35, extreme: 1.7 };
-  const ACCESS = { good: 1, medium: 1.15, difficult: 1.4 };
-  const FIELD_IDS = ["projectName", "customerName", "address", "notes", "saleHourly", "costHourly", "travelMinutes", "markup", "otherCost", "disposalCost", "buffer", "vat"];
+  // Kalkylemotoren held berekningane skilde frå brukargrensesnittet.
+  const ENGINE = window.SorgulenPricing;
+  if (!ENGINE) throw new Error("Kalkylemotoren manglar. Last sida på nytt.");
+  const CATALOG = ENGINE.CATALOG;
+  const COMPLEXITY = ENGINE.COMPLEXITY;
+  const ACCESS = ENGINE.ACCESS;
+
+  const FIELD_IDS = ["projectName", "customerName", "address", "notes", "jobDescription", "rateMode", "saleHourly", "costHourly", "travelMinutes", "markup", "otherCost", "disposalCost", "buffer", "vat"];
   const NUMERIC_FIELDS = new Set(["saleHourly", "costHourly", "travelMinutes", "markup", "otherCost", "disposalCost", "buffer", "vat"]);
   const $ = (id) => document.getElementById(id);
   let serial = 0;
   let toastTimer;
   let activePanel = "scope";
 
-  const newItem = (type = "brostein", overrides = {}) => ({
-    id: `op-${Date.now()}-${++serial}`,
-    type: CATALOG[type] ? type : "annet",
-    quantity: 130,
-    complexity: "normal",
-    access: "good",
-    capacity: CATALOG[type]?.capacity ?? 1,
-    setup: CATALOG[type]?.setup ?? 0,
-    material: CATALOG[type]?.material ?? 0,
-    equipment: CATALOG[type]?.equipment ?? 0,
-    ...overrides
-  });
+  const newItem = (type = "brostein", overrides = {}) => Object.assign(
+    { id: "op-" + Date.now() + "-" + (++serial) }, ENGINE.makeItem(type, overrides)
+  );
+
   let items = [newItem("brostein")];
 
   const format = (v, digits = 0) => Number(v).toLocaleString("nb-NO", { minimumFractionDigits: digits, maximumFractionDigits: digits });
@@ -44,37 +32,12 @@
   const roundedOffer = (v) => Math.ceil((v - 1e-8) / 10) * 10;
 
   function calculate() {
-    const ops = items.map((item) => {
-      const c = CATALOG[item.type] || CATALOG.annet;
-      const quantity = safeNum(item.quantity, 100000);
-      const capacity = Math.max(0.01, safeNum(item.capacity, 100000));
-      const setup = safeNum(item.setup, 100);
-      const execution = quantity / capacity * (COMPLEXITY[item.complexity] || 1) * (ACCESS[item.access] || 1) + setup;
-      const material = quantity * safeNum(item.material, 100000);
-      const equipment = execution * safeNum(item.equipment, 100000);
-      return { id: item.id, title: c.name, quantity, unit: c.unit, execution, material, equipment };
+    return ENGINE.calculate(items, {
+      rateMode: $("rateMode").value,
+      costHourly: getNum("costHourly"), travelMinutes: getNum("travelMinutes"),
+      markup: getNum("markup"), otherCost: getNum("otherCost"),
+      disposalCost: getNum("disposalCost"), buffer: getNum("buffer"), vat: getNum("vat")
     });
-    const executionHours = ops.reduce((s, op) => s + op.execution, 0);
-    const travelHours = getNum("travelMinutes") / 60;
-    const totalHours = executionHours + travelHours;
-    const totalMaterialCost = ops.reduce((s, op) => s + op.material, 0);
-    const equipmentCost = ops.reduce((s, op) => s + op.equipment, 0);
-    const extraCost = getNum("otherCost") + getNum("disposalCost");
-    const internalLaborCost = totalHours * getNum("costHourly");
-    const costs = internalLaborCost + equipmentCost + totalMaterialCost + extraCost;
-    const laborSale = totalHours * getNum("saleHourly");
-    const extrasSale = (totalMaterialCost + extraCost) * (1 + getNum("markup") / 100);
-    const salesBeforeBuffer = laborSale + extrasSale;
-    const contingency = salesBeforeBuffer * getNum("buffer") / 100;
-    const net = roundedOffer(salesBeforeBuffer + contingency);
-    const vat = net * getNum("vat") / 100;
-    const profit = net - costs;
-    const margin = net > 0 ? (profit / net) * 100 : 0;
-    const rangeFactor = items.some((op) => op.complexity === "extreme" || op.access === "difficult") ? 0.28 : items.some((op) => op.complexity === "demanding") ? 0.21 : 0.15;
-    const variance = executionHours * getNum("saleHourly") * rangeFactor;
-    const rangeLow = Math.max(0, Math.floor((net - variance) / 10) * 10);
-    const rangeHigh = Math.max(net, Math.ceil((net + variance) / 10) * 10);
-    return { ops, executionHours, travelHours, totalHours, totalMaterialCost, equipmentCost, extraCost, internalLaborCost, costs, laborSale, extrasSale, salesBeforeBuffer, contingency, net, vat, gross: net + vat, profit, margin, rangeLow, rangeHigh };
   }
 
   function renderOperations() {
