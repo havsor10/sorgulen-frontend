@@ -144,11 +144,13 @@
   }
 
   function offerLines(c) {
-    const lines = c.ops.map((op) => ({ label: `${op.title} · ${format(op.quantity, op.quantity % 1 ? 1 : 0)} ${op.unit}`, sum: op.execution * getNum("saleHourly") }));
-    if (c.travelHours > 0) lines.push({ label: `Transport · ${format(c.travelHours, 1)} t`, sum: c.travelHours * getNum("saleHourly") });
-    if (c.totalMaterialCost > 0) lines.push({ label: "Material og forbruksmateriell", sum: c.totalMaterialCost * (1 + getNum("markup") / 100) });
-    if (c.extraCost > 0) lines.push({ label: "Levering og andre tillegg", sum: c.extraCost * (1 + getNum("markup") / 100) });
-    if (c.contingency > 0) lines.push({ label: "Kalkylebuffer", sum: c.contingency });
+    // Risiko-/kalkylebufferen er intern og fordelast på prislinjene.
+    // Kunden skal ikkje sjå interne påslag eller lønsemdstal i tilbodet.
+    const quoteFactor = c.salesBeforeBuffer > 0 ? (c.salesBeforeBuffer + c.contingency) / c.salesBeforeBuffer : 1;
+    const lines = c.ops.map((op) => ({ label: `${op.title} · ${format(op.quantity, op.quantity % 1 ? 1 : 0)} ${op.unit}`, sum: op.execution * getNum("saleHourly") * quoteFactor }));
+    if (c.travelHours > 0) lines.push({ label: `Transport · ${format(c.travelHours, 1)} t`, sum: c.travelHours * getNum("saleHourly") * quoteFactor });
+    if (c.totalMaterialCost > 0) lines.push({ label: "Material og forbruksmateriell", sum: c.totalMaterialCost * (1 + getNum("markup") / 100) * quoteFactor });
+    if (c.extraCost > 0) lines.push({ label: "Levering og andre tillegg", sum: c.extraCost * (1 + getNum("markup") / 100) * quoteFactor });
     // Avrundingsdifferansen visast for at summen av linjene skal samsvare med totalen.
     const delta = c.net - lines.reduce((sum, l) => sum + l.sum, 0);
     if (Math.abs(delta) > 0.001) lines.push({ label: "Avrunding", sum: delta });
