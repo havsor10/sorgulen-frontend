@@ -4,3 +4,34 @@
 @media(max-width:760px){.sidebar{display:none}.topbar{height:62px;padding:0 17px}.topbar-private,.topbar-version{display:none}.topbar-left{font-size:11px}.topbar-right{gap:2px}.topbar-right .btn{min-height:33px;padding:7px 9px}.main{padding:24px 15px 20px}.page-intro{align-items:start}.page-intro h1{font-size:30px}.page-description{font-size:12px}.btn-example{padding:9px 10px;min-height:37px}.workspace-grid{gap:16px}.live-card{grid-template-columns:1fr 1fr;padding:17px;gap:12px}.live-header{padding-bottom:9px}.quote-main{padding:6px 0 8px}.hero-price{font-size:clamp(24px,7vw,36px)}.live-stats{margin:0;grid-row:2 / 4}.live-stats>div{padding:5px 0}.live-stats span,.live-stats strong{font-size:10px}.margin-display{padding:11px;margin:0}.margin-label{font-size:10px}.check-panel{margin:0}.live-card>.btn{margin-top:2px}.stepper{padding:14px 10px}.step{gap:6px}.step-num{height:29px;min-width:29px;font-size:9px}.step strong{font-size:10px}.step small{font-size:9px}.step-divider{width:5px;margin:0 4px}.input-card,.operation-card,.table-card,.offer-editor{padding:18px}.main-footer{font-size:9px}}
 @media(max-width:520px){.topbar-left .breadcrumbs,.topbar-left .breadcrumb-separator{display:none}.topbar-right .btn-ghost{font-size:10px;padding:7px 6px}.page-intro{display:block}.page-intro h1{font-size:30px}.btn-example{margin-top:15px}.warning-banner{padding:11px}.step{justify-content:center}.step span:last-child{display:none}.step.is-active span:last-child{display:flex}.step.is-active{flex:2}.step-divider{flex:1}.step.is-active strong{font-size:11px}.step.is-active small{font-size:9px}.form-grid{grid-template-columns:1fr}.field-wide{grid-column:auto}.operation-grid{grid-template-columns:1fr 1fr;gap:10px}.op-card{padding:12px}.operation-field>span{font-size:9px;white-space:normal}.operation-field input,.operation-field select{font-size:11px;padding:9px 7px;min-height:39px}.operation-field select{padding-right:22px;background-position:right 5px center}.add-operation{display:grid;grid-template-columns:1fr;gap:9px}.btn-add{width:100%}.live-card{grid-template-columns:1fr 1fr;gap:6px 12px}.live-header{grid-column:1 / -1}.live-header h2{font-size:15px}.quote-main{padding:13px 0 5px}.quote-subtitle{display:block;font-size:9px}.live-stats{grid-row:2 / 3;grid-column:2;align-self:center}.live-stats>div{padding:4px 0}.live-stats>div:nth-child(3){margin-top:3px;padding-top:7px}.margin-display{grid-column:1 / -1;margin:8px 0}.check-panel{grid-column:1 / -1}.paper-header{gap:6px}.offer-paper{padding:16px}.paper-logo{font-size:11px}.paper-header h3{font-size:17px}.paper-meta{display:block}.paper-meta>div+div{margin-top:13px}.paper-list-head,.paper-list-row{grid-template-columns:minmax(0,1fr) 82px}.offer-controls{flex-direction:column}.panel-actions{flex-wrap:wrap}.quiet-hint{display:none}}
 @media print{body{background:#fff!important}.sidebar,.topbar,.page-intro,.warning-banner,.stepper,.estimate-sidebar,.panel-actions,.offer-controls,.offer-footnote,.main-footer{display:none!important}.site-frame,.work-area,.main,.workspace-grid,.workspace-main{display:block!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;min-height:0!important}.panel{display:none!important}#panel-offer{display:block!important}.offer-editor{border:0;box-shadow:none;padding:0;margin:0}.offer-editor>.card-heading{display:none}.offer-paper{border:0;box-shadow:none;padding:0;min-height:0}@page{margin:19mm}}
+
+
+/* Kalkyle Studio v0.2 – arbeidsmaler og naturlig beskrivelse */
+.smart-card{border:1px solid #cce8d7;background:linear-gradient(130deg,#f5fcf7,#fff 68%);margin-bottom:18px;padding:25px;border-radius:15px;box-shadow:var(--shadow)}
+.smart-card .card-heading{margin-bottom:20px}
+.smart-card .field>span{font-size:12px;font-weight:750;color:#385b46}
+.smart-card textarea{font-size:14px;line-height:1.6;min-height:105px;resize:vertical;border:1px solid #b9d4c3}
+.smart-actions{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:14px}
+.smart-actions .btn{white-space:normal;text-align:center}
+.smart-example{font-size:11px;color:#71897a}
+.smart-result{margin-top:13px;background:#e8f7ee;border:1px solid #cae7d5;padding:10px 13px;border-radius:9px;font-size:12px;color:#275941;min-height:37px}
+.op-extra-title{margin:15px 0 9px;color:#197247;font-weight:800;font-size:12px}
+.op-extra-fields{background:#f1f8f3;padding:14px;border:1px solid #dfebe3;border-radius:10px}
+.fine-tuning{margin-top:15px;border:1px solid #e1e7e3;border-radius:10px;background:#fbfcfb}
+.fine-tuning summary{padding:13px 14px;color:#536e60;font-weight:750;font-size:12px;cursor:pointer}
+.fine-tuning[open] summary{border-bottom:1px solid #e1e7e3}
+.fine-tuning>.operation-grid{padding:14px}
+#saleHourly[readonly]{background:#ebf7ef;color:#145f3c;font-weight:800}
+.btn:disabled{cursor:not-allowed;opacity:.5;transform:none}
+@media(max-width:760px){
+  .smart-card{padding:17px;border-radius:12px}
+  .smart-actions .btn{width:100%;min-height:47px}
+  .op-extra-fields{padding:10px;gap:10px}
+  .fine-tuning>.operation-grid{padding:10px}
+  .smart-card textarea{font-size:16px}
+}
+@media(max-width:520px){
+  .op-extra-fields .operation-field input,.op-extra-fields .operation-field select{font-size:12px;min-height:44px}
+  .smart-example{font-size:11px}
+}
+@media print{.smart-card{display:none!important}}
