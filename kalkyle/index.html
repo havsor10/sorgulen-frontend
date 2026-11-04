@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f7f6">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <title>Kalkyle Studio – Sørgulen Industriservice</title>
+  <meta name="description" content="Førsteutkast av Sørgulen Kalkyle Studio. Ingen kundedata lagrast eller sendast.">
+  <link rel="icon" href="../assets/logo.png">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+  
+</head>
+<body>
+  <div class="site-frame">
+    <aside class="sidebar" aria-label="Sidepanel">
+      <a class="brand" href="../admin/hjem.html" aria-label="Tilbake til Sørgulen admin">
+        <span class="brand-mark" aria-hidden="true">S<span>.</span></span>
+        <span class="brand-copy"><strong>SØRGULEN</strong><small>INDUSTRISERVICE</small></span>
+      </a>
+      <div class="side-section-label">ARBEIDSOMRÅDE</div>
+      <nav class="side-nav" aria-label="Navigasjon">
+        <a class="side-link" href="../admin/hjem.html"><span class="side-ico" aria-hidden="true">⌂</span>Adminpanel <span class="link-trailing">↗</span></a>
+        <a class="side-link side-link-active" href="./" aria-current="page"><span class="side-ico" aria-hidden="true">▦</span>Kalkyle Studio <span class="nav-dot"></span></a>
+        <a class="side-link" href="../admin/foresporsler.html"><span class="side-ico" aria-hidden="true">↗</span>Førespurnader <span class="link-trailing">↗</span></a>
+      </nav>
+      <div class="side-section-label side-section-label-lower">SYSTEMSTATUS</div>
+      <div class="side-note"><span class="status-dot"></span><div><strong>Prototype v0.1</strong><p>Ingen synkronisering med kunderegister eller fakturering.</p></div></div>
+      <div class="sidebar-bottom"><span class="side-avatar">SI</span><div><strong>Sørgulen</strong><small>Internt kalkyleverktøy</small></div><span class="sidebar-more">•••</span></div>
+    </aside>
+
+    <div class="work-area">
+      <header class="topbar">
+        <div class="topbar-left"><span class="breadcrumbs">Verktøy</span><span class="breadcrumb-separator">/</span><strong>Kalkyle Studio</strong><span class="topbar-version">BETA 0.1</span></div>
+        <div class="topbar-right"><span class="topbar-private">◉ Lokal demonstrasjon</span><button type="button" class="btn btn-ghost btn-small" id="resetBtn">Nullstill</button><button type="button" class="btn btn-primary btn-small" id="exportBtn">⇩ <span>Eksporter utkast</span></button></div>
+      </header>
+
+      <main class="main">
+        <div class="page-intro">
+          <div><p class="eyebrow"><span class="eyebrow-line"></span> KALKYLE / NYTT UTKAST</p><h1>Prissett med <em>presisjon.</em></h1><p class="page-description">Frå første førespurnad til eit gjennomarbeidd pristilbod. Alle tal kan kontrollerast, justerast og sporast.</p></div>
+          <button type="button" class="btn btn-outline btn-example" id="demoBtn"><span aria-hidden="true">✧</span> Fyll inn demooppdrag</button>
+        </div>
+
+        <div class="warning-banner"><span class="warning-icon">i</span><p><strong>Dette er ein fungerande prototype.</strong> Satsar og produktivitetstal er fiktive eksempel, ikkje godkjende prisar. Informasjonen blir berre behandla i nettlesaren din, og blir ikkje sendt til Sørgulen-backenden.</p></div>
+
+        <div class="workspace-grid">
+          <section class="workspace-main" aria-label="Kalkyleeditor">
+            <div class="stepper" role="tablist" aria-label="Kalkylesteg">
+              <button class="step is-active" type="button" data-step="scope" role="tab" aria-selected="true" aria-controls="panel-scope"><span class="step-num">01</span><span><strong>Oppdrag & befaring</strong><small>Kva skal gjerast?</small></span></button>
+              <span class="step-divider" aria-hidden="true"></span>
+              <button class="step" type="button" data-step="costs" role="tab" aria-selected="false" aria-controls="panel-costs"><span class="step-num">02</span><span><strong>Kostnader</strong><small>Kva kostar jobben?</small></span></button>
+              <span class="step-divider" aria-hidden="true"></span>
+              <button class="step" type="button" data-step="offer" role="tab" aria-selected="false" aria-controls="panel-offer"><span class="step-num">03</span><span><strong>Tilbod</strong><small>Klart til gjennomgang</small></span></button>
+            </div>
+
+            <div class="panel" id="panel-scope" role="tabpanel">
+              <section class="card input-card">
+                <div class="card-heading"><div class="section-icon">▤</div><div><p class="card-eyebrow">01 / GRUNNLAG</p><h2>Oppdragsinformasjon</h2><p>Registrer kunde og kva oppdraget omfattar.</p></div></div>
+                <div class="form-grid">
+                  <label class="field field-wide"><span>Prosjektnamn <span class="req">*</span></span><input id="projectName" name="projectName" placeholder="F.eks. Vask og fuging av brostein" autocomplete="off" maxlength="140"></label>
+                  <label class="field"><span>Kunde</span><input id="customerName" name="customerName" placeholder="Kundenamn" maxlength="140"></label>
+                  <label class="field"><span>Adresse / arbeidsstad</span><input id="address" name="address" placeholder="Kor skal arbeidet utførast?" maxlength="180"></label>
+                  <label class="field field-wide"><span>Merknader frå befaring</span><textarea id="notes" name="notes" rows="3" placeholder="Tilkomst, overflater, særlege forhold, kva kunden ønskjer …" maxlength="2000"></textarea></label>
+                </div>
+              </section>
+
+              <section class="card operation-card">
+                <div class="card-heading split-heading"><div class="heading-group"><div class="section-icon">▦</div><div><p class="card-eyebrow">02 / ARBEIDSOMFANG</p><h2>Arbeidsoperasjonar</h2><p>Legg til alle delane av jobben. Tidsestimatet blir oppdatert fortløpande.</p></div></div><span class="count-badge" id="operationCount">1 operasjon</span></div>
+                <div id="operations" class="operations" aria-live="polite"></div>
+                <div class="add-operation"><label class="field select-field"><span>Legg til arbeidsoperasjon</span><select id="addType"><option value="brostein">Brostein – vask og vedlikehald</option><option value="kantklipp">Kantklipping</option><option value="plenklipp">Plenklipping</option><option value="hekk">Hekk og buskar</option><option value="takrenne">Takrenner</option><option value="rydding">Rydding / bortkøyring</option><option value="annet">Diverse arbeid</option></select></label><button type="button" class="btn btn-add" id="addOperationBtn">＋ Legg til</button></div>
+              </section>
+
+              <div class="panel-actions"><span class="quiet-hint">Alle utrekningar skjer lokalt i nettlesaren.</span><button type="button" class="btn btn-primary" data-go="costs">Neste: Kostnader <span aria-hidden="true">→</span></button></div>
+            </div>
+
+            <div class="panel" id="panel-costs" role="tabpanel" hidden>
+              <section class="card input-card">
+                <div class="card-heading"><div class="section-icon">kr</div><div><p class="card-eyebrow">03 / PRISMODELL</p><h2>Satsar og interne kostnader</h2><p>Tilpass tala til dine eigne faktiske satsar før tilbodet kan brukast.</p></div></div>
+                <div class="form-grid">
+                  <label class="field"><span>Fakturert timepris (kr/t)</span><input id="saleHourly" type="number" min="0" max="100000" step="10" value="850"></label>
+                  <label class="field"><span>Intern timekostnad (kr/t)</span><input id="costHourly" type="number" min="0" max="100000" step="10" value="320"></label>
+                  <label class="field"><span>Transport, tur/retur (min)</span><input id="travelMinutes" type="number" min="0" max="10000" step="5" value="30"></label>
+                  <label class="field"><span>Materialpåslag (%)</span><input id="markup" type="number" min="0" max="500" step="1" value="20"></label>
+                  <label class="field"><span>Andre direkte kostnader (kr)</span><input id="otherCost" type="number" min="0" max="10000000" step="50" value="0"></label>
+                  <label class="field"><span>Avfalls-/leveringskostnad (kr)</span><input id="disposalCost" type="number" min="0" max="10000000" step="50" value="0"></label>
+                  <label class="field"><span>Kalkylebuffer (%)</span><input id="buffer" type="number" min="0" max="100" step="1" value="8"></label>
+                  <label class="field"><span>MVA på tilbod (%)</span><select id="vat"><option value="0">0 % (standard i demo)</option><option value="25">25 %</option></select></label>
+                </div>
+                <div class="info-line"><span aria-hidden="true">ⓘ</span> Intern timekostnad må dekkje ein realistisk verdi av eiga arbeidstid og relevante driftskostnader. MVA-valet må samsvare med verksemda si registrering og oppdraget.</div>
+              </section>
+              <section class="card table-card"><div class="card-heading"><div class="section-icon">≋</div><div><p class="card-eyebrow">04 / KOSTNADSBILETE</p><h2>Detaljert utrekning</h2><p>Salspris, forventa kostnader og margin frå opplysningane over.</p></div></div><div class="breakdown-table" id="costTable"></div></section>
+              <div class="panel-actions"><button type="button" class="btn btn-ghost" data-go="scope">← Tilbake</button><button type="button" class="btn btn-primary" data-go="offer">Neste: Tilbod <span aria-hidden="true">→</span></button></div>
+            </div>
+
+            <div class="panel" id="panel-offer" role="tabpanel" hidden>
+              <section class="card offer-editor"><div class="card-heading"><div class="section-icon">✓</div><div><p class="card-eyebrow">05 / TILBOD</p><h2>Pristilbod til kunden</h2><p>Førehandsvis tilbodet. Kontroller tal og forbehold før eventuell utsending.</p></div></div>
+                <div class="offer-paper" id="offerSheet" aria-live="polite"></div>
+                <div class="offer-controls"><button type="button" class="btn btn-outline" id="copyOfferBtn">⧉ Kopier tilbodstekst</button><button type="button" class="btn btn-primary" id="printBtn">↗ Skriv ut / lag PDF</button></div>
+                <p class="offer-footnote">Ingen utsending eller lagring mot databasen skjer i denne versjonen. Utskrift og kopiering må gjennomgåast manuelt.</p>
+              </section>
+              <div class="panel-actions"><button type="button" class="btn btn-ghost" data-go="costs">← Tilbake til kostnader</button><button type="button" class="btn btn-outline" id="importBtn">Importer utkast</button><input id="importFile" type="file" accept="application/json,.json" hidden></div>
+            </div>
+          </section>
+
+          <aside class="estimate-sidebar" aria-label="Live kalkyle">
+            <div class="live-card"><div class="live-header"><div><span class="live-kicker"><span class="live-pulse"></span> LIVE KALKYLE</span><h2>Prisoversikt</h2></div><span class="calc-badge">ESTIMAT</span></div>
+              <div class="quote-main"><span class="muted-small">Føreslått tilbodspris, eks. mva.</span><div class="hero-price" id="totalPrice">–</div><span class="quote-subtitle" id="quoteRange">Berekna prisintervall: –</span></div>
+              <div class="live-stats"><div><span>Estimert tidsbruk</span><strong id="timeEstimate">–</strong></div><div><span>Direkte kostnader</span><strong id="costEstimate">–</strong></div><div><span>Estimert bruttoforteneste</span><strong id="profitEstimate">–</strong></div><div><span>Bruttomargin</span><strong id="marginEstimate">–</strong></div></div>
+              <div class="margin-display"><div class="margin-label"><span>Bruttomargin</span><strong id="marginPct">–</strong></div><div class="margin-track"><div id="marginFill"></div></div><span class="muted-xsmall">Margin før skatt, basert på oppgitte kostnader.</span></div>
+              <div class="check-panel"><div class="check-heading"><span aria-hidden="true">✦</span> Kalkylekontroll</div><p id="qualityLabel">Ventar på grunnlag</p><ul id="qualityNotes"></ul></div>
+              <button type="button" class="btn btn-dark btn-full" data-go="offer">Sjå pristilbod <span aria-hidden="true">→</span></button>
+            </div>
+            <div class="helper-card"><span class="helper-symbol">✳</span><div><strong>Presisjon framfor gjetting.</strong><p>Arbeidskapasitet, tilkomst og dokumenterte kostnader er grunnlaget. Etter kvart kan vi lære av faktisk registrerte arbeidstimar.</p></div></div>
+          </aside>
+        </div>
+        <footer class="main-footer"><span>© Sørgulen Industriservice · Kalkyle Studio v0.1</span><span>Prototype · Ingen reelle kundedata</span></footer>
+      </main>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+</body>
+</html>
