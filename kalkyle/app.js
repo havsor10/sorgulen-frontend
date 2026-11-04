@@ -41,23 +41,50 @@
   }
 
   function renderOperations() {
-    $("operations").innerHTML = items.map((item, i) => {
-      const c = CATALOG[item.type];
-      return `<article class="op-card" data-id="${esc(item.id)}">
-        <div class="op-header"><div class="op-title"><span class="op-number">${String(i + 1).padStart(2, "0")}</span><h3>${esc(c.name)}</h3></div><button type="button" class="op-remove" data-remove="${esc(item.id)}" aria-label="Fjern ${esc(c.name)}">✕ Fjern</button></div>
-        <div class="operation-grid">
-          <label class="operation-field"><span>Mengd (${esc(c.unit)})</span><input type="number" min="0" max="100000" step="any" data-key="quantity" value="${esc(item.quantity)}"></label>
-          <label class="operation-field"><span>Tilstand</span><select data-key="complexity"><option value="easy" ${item.complexity === "easy" ? "selected" : ""}>Enkel</option><option value="normal" ${item.complexity === "normal" ? "selected" : ""}>Normal</option><option value="demanding" ${item.complexity === "demanding" ? "selected" : ""}>Krevjande</option><option value="extreme" ${item.complexity === "extreme" ? "selected" : ""}>Svært krevjande</option></select></label>
-          <label class="operation-field"><span>Tilkomst</span><select data-key="access"><option value="good" ${item.access === "good" ? "selected" : ""}>God</option><option value="medium" ${item.access === "medium" ? "selected" : ""}>Avgrensa</option><option value="difficult" ${item.access === "difficult" ? "selected" : ""}>Vanskeleg</option></select></label>
-          <label class="operation-field"><span>Kapasitet (${esc(c.unit)}/t)</span><input type="number" min="0.01" max="100000" step="any" data-key="capacity" value="${esc(item.capacity)}"></label>
-          <label class="operation-field"><span>Rigging (timar)</span><input type="number" min="0" max="100" step="any" data-key="setup" value="${esc(item.setup)}"></label>
-          <label class="operation-field"><span>Materialkostnad (kr/${esc(c.unit)})</span><input type="number" min="0" max="100000" step="any" data-key="material" value="${esc(item.material)}"></label>
-          <label class="operation-field"><span>Utstyrskostnad (kr/t)</span><input type="number" min="0" max="100000" step="any" data-key="equipment" value="${esc(item.equipment)}"></label>
-        </div>
-        <div class="op-preview"><span>Estimert arbeidstid inkludert rigg</span><strong data-op-hours="${esc(item.id)}">–</strong></div>
-      </article>`;
+    $("operations").innerHTML = items.map(function (item, index) {
+      const c = CATALOG[item.type] || CATALOG.annet;
+      const id = esc(item.id);
+      const detailFields = (c.fields || []).map(function (f) {
+        const val = item.details[f.id];
+        let control = "";
+        if (f.type === "select") {
+          control = '<select data-detail="' + esc(f.id) + '">' +
+            f.options.map(function (o) {
+              return '<option value="' + esc(o[0]) + '"' + (o[0] === val ? " selected" : "") + '>' + esc(o[1]) + '</option>';
+            }).join("") + '</select>';
+        } else {
+          control = '<input type="number" inputmode="decimal" min="0" max="1000" step="any" data-detail="' + esc(f.id) + '" value="' + esc(val) + '">';
+        }
+        return '<label class="operation-field"><span>' + esc(f.label) + '</span>' + control + '</label>';
+      }).join("");
+      function numField(key, label, value, step) {
+        return '<label class="operation-field"><span>' + esc(label) + '</span><input type="number" inputmode="decimal" min="0" max="100000" step="' +
+          (step || "any") + '" data-key="' + key + '" value="' + esc(value) + '"></label>';
+      }
+      const complexity = [["easy","Enkel"],["normal","Normal"],["demanding","Krevjande"],["extreme","Svært krevjande"]];
+      const access = [["good","God"],["medium","Avgrensa"],["difficult","Vanskeleg"]];
+      function choice(key, label, options) {
+        return '<label class="operation-field"><span>' + label + '</span><select data-key="' + key + '">' +
+          options.map(function (o) { return '<option value="' + o[0] + '"' + (item[key] === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join("") + '</select></label>';
+      }
+      return '<article class="op-card" data-id="' + id + '">' +
+        '<div class="op-header"><div class="op-title"><span class="op-number">' + String(index + 1).padStart(2,"0") + '</span><h3>' + esc(c.name) + '</h3></div><button type="button" class="op-remove" data-remove="' + id + '">✕ Fjern</button></div>' +
+        '<div class="operation-grid">' +
+          numField("quantity", "Mengde (" + c.unit + ")", item.quantity) +
+          choice("complexity", "Generell vanskegrad", complexity) +
+          choice("access", "Tilkomst", access) +
+        '</div>' +
+        (detailFields ? '<div class="op-extra-title">Opplysningar for denne jobben</div><div class="operation-grid op-extra-fields">' + detailFields + '</div>' : '') +
+        '<details class="fine-tuning"><summary>Finjuster arbeidskapasitet, rigg og kostnader</summary><div class="operation-grid">' +
+          numField("capacity", "Kapasitet (" + c.unit + "/t)", item.capacity) +
+          numField("setup", "Rigging (timar)", item.setup) +
+          numField("material", "Materialkostnad (kr/" + c.unit + ")", item.material) +
+          numField("equipment", "Utstyrskostnad (kr/t)", item.equipment) +
+        '</div></details>' +
+        '<div class="op-preview"><span>Estimert arbeidstid inkludert rigg</span><strong data-op-hours="' + id + '">–</strong></div>' +
+      '</article>';
     }).join("");
-    $("operationCount").textContent = `${items.length} ${items.length === 1 ? "operasjon" : "operasjonar"}`;
+    $("operationCount").textContent = items.length + " " + (items.length === 1 ? "operasjon" : "operasjonar");
   }
 
   function quality(calc) {
@@ -65,11 +92,7 @@
     if (!$("projectName").value.trim()) notes.push("Gi prosjektet eit namn før bruk.");
     if (!$("address").value.trim()) notes.push("Arbeidsstad er ikkje registrert.");
     if (!$("customerName").value.trim()) notes.push("Kunde er ikkje registrert.");
-    if (items.some((item) => safeNum(item.quantity) === 0)) notes.push("Minst éin operasjon manglar mengd.");
-    if (calc.margin < 15) notes.push("Låg berekna margin. Kontroller satsar og kostnader.");
-    if (items.some((item) => item.complexity === "extreme" || item.access === "difficult")) notes.push("Krevjande arbeidsforhold bør stadfestast på befaring.");
-    notes.push("Demoverdiar for kapasitet og satsar må kvalitetssikrast.");
-    return notes;
+    return notes.concat(ENGINE.issues(items, calc));
   }
 
   function renderSummary(calc) {
@@ -84,6 +107,10 @@
     $("marginFill").classList.toggle("negative", calc.margin < 0);
     $("profitEstimate").style.color = calc.profit < 0 ? "#bc4b4b" : "";
     const notes = quality(calc);
+    $("copyOfferBtn").disabled = !calc.active || calc.needsVisit;
+    $("printBtn").disabled = !calc.active || calc.needsVisit;
+    $("copyOfferBtn").title = calc.needsVisit ? "Krev HMS-kontroll/befaring før utsending" : "";
+    $("printBtn").title = calc.needsVisit ? "Krev HMS-kontroll/befaring før utsending" : "";
     $("qualityLabel").textContent = notes.length > 1 ? "Kontroller desse punkta før tilbod:" : "Kalkyleutkast – manuell kontroll nødvendig";
     $("qualityNotes").innerHTML = notes.map((n) => `<li>${esc(n)}</li>`).join("");
     for (const op of calc.ops) {
@@ -132,7 +159,7 @@
       <div class="paper-list-head"><span>ARBEID OG TILLEGG</span><span style="text-align:right">SUM EKS. MVA.</span></div>
       ${lines.map((l) => `<div class="paper-list-row"><span>${esc(l.label)}</span><span>${money(l.sum)}</span></div>`).join("")}
       <div class="paper-sum"><span>Tilbodspris eks. mva.</span><strong>${money(c.net)}</strong></div><div class="paper-vat">MVA ${format(getNum("vat"), 0)} %: ${money(c.vat)} &nbsp; · &nbsp; Total inkl. vald MVA: ${money(c.gross)}</div>
-      <div class="paper-disclaimer"><strong>Viktig:</strong> Dette er eit uverifisert kalkyleutkast med demonstrasjonssatsar, ikkje eit bindande tilbod. Omfang, priser, MVA, arbeidsforhold, vilkår og eventuelle forbehold må kvalitetssikrast og godkjennast før utsending.</div>`;
+      <div class="paper-disclaimer"><strong>Viktig:</strong> Faste standardtimesatsar frå admin, men førebelse arbeidsnormer og kostnader. Dette er ikkje eit bindande tilbod. Kontroll av omfang, materialprisar, MVA, HMS og vilkår er nødvendig før utsending.</div>`;
   }
 
   function update() {
@@ -167,12 +194,12 @@
   function setValues(values) {
     for (const field of FIELD_IDS) {
       const el = $(field);
-      if (values[field] !== undefined) el.value = String(values[field]).slice(0, field === "notes" ? 2000 : 180);
+      if (values[field] !== undefined) el.value = String(values[field]).slice(0, field === "jobDescription" ? 2500 : field === "notes" ? 2000 : 180);
     }
   }
 
   function exportData() {
-    return { version: 1, generatedAt: new Date().toISOString(), fields: Object.fromEntries(FIELD_IDS.map((key) => [key, $(key).value])), operations: items.map(({ id, ...rest }) => rest) };
+    return { version: 2, generatedAt: new Date().toISOString(), fields: Object.fromEntries(FIELD_IDS.map((key) => [key, $(key).value])), operations: items.map(({ id, ...rest }) => rest) };
   }
 
   function downloadDraft() {
@@ -190,28 +217,20 @@
   }
 
   function importData(data) {
-    if (!data || data.version !== 1 || !data.fields || !Array.isArray(data.operations) || !data.operations.length || data.operations.length > 15) {
-      throw new Error("Ugyldig kalkylefil eller feil versjon.");
-    }
-    const approved = data.operations.map((raw) => {
-      if (!raw || !CATALOG[raw.type]) throw new Error("Ukjend arbeidsoperasjon i fila.");
-      return newItem(raw.type, {
-        quantity: safeNum(raw.quantity, 100000),
-        capacity: Math.max(0.01, safeNum(raw.capacity, 100000)),
-        complexity: COMPLEXITY[raw.complexity] ? raw.complexity : "normal",
-        access: ACCESS[raw.access] ? raw.access : "good",
-        setup: safeNum(raw.setup, 100),
-        material: safeNum(raw.material, 100000),
-        equipment: safeNum(raw.equipment, 100000)
-      });
+    if (!data || ![1, 2].includes(data.version) || !data.fields || !Array.isArray(data.operations) ||
+        !data.operations.length || data.operations.length > 15) throw new Error("Ugyldig kalkylefil.");
+    const approved = data.operations.map(function (raw) {
+      if (!raw || !CATALOG[raw.type]) throw new Error("Ukjend arbeidsoperasjon.");
+      return newItem(raw.type, raw);
     });
-    items = approved;
     const validFields = {};
     for (const field of FIELD_IDS) {
       if (typeof data.fields[field] !== "string" && typeof data.fields[field] !== "number") continue;
-      validFields[field] = NUMERIC_FIELDS.has(field) ? String(safeNum(data.fields[field], field === "vat" ? 25 : 10000000)) : String(data.fields[field]);
+      validFields[field] = NUMERIC_FIELDS.has(field) ? String(ENGINE.safe(data.fields[field], field === "vat" ? 25 : 10000000)) : String(data.fields[field]);
     }
+    items = approved;
     setValues(validFields);
+    syncRate();
     renderOperations();
     update();
     goto("scope");
@@ -220,7 +239,7 @@
   function offerText(c) {
     const project = $("projectName").value.trim() || "Utan prosjektnamn";
     const customer = $("customerName").value.trim() || "Ikkje registrert";
-    return [`SØRGULEN INDUSTRISERVICE – UTKAST TIL PRISTILBOD`, `Kunde: ${customer}`, `Oppdrag: ${project}`, `Stad: ${$("address").value.trim() || "Ikkje registrert"}`, "", `Beskriving: ${$("notes").value.trim() || "Sjå arbeidslinjene."}`, "", ...offerLines(c).map((l) => `${l.label}: ${money(l.sum)}`), "", `Sum eks. mva.: ${money(c.net)}`, `MVA (${getNum("vat")} %): ${money(c.vat)}`, `Total inkl. vald MVA: ${money(c.gross)}`, "", "Dette er eit uverifisert utkast, ikkje eit bindande tilbod. Kontroller alle satsar, mengder og vilkår."].join("\n");
+    return [`SØRGULEN INDUSTRISERVICE – UTKAST TIL PRISTILBOD`, `Kunde: ${customer}`, `Oppdrag: ${project}`, `Stad: ${$("address").value.trim() || "Ikkje registrert"}`, "", `Beskriving: ${$("notes").value.trim() || "Sjå arbeidslinjene."}`, "", ...offerLines(c).map((l) => `${l.label}: ${money(l.sum)}`), "", `Sum eks. mva.: ${money(c.net)}`, `MVA (${getNum("vat")} %): ${money(c.vat)}`, `Total inkl. vald MVA: ${money(c.gross)}`, "", "Dette er eit ikkje-bindande estimat. Kontroll av arbeidsnormer, materialkostnader, MVA, tryggleik og vilkår er nødvendig før utsending."].join("\n");
   }
 
   document.querySelectorAll("[data-step]").forEach((button) => button.addEventListener("click", () => goto(button.dataset.step)));
