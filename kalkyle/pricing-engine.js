@@ -207,14 +207,14 @@
   }
   function infer(text) {
     const raw = String(text || "").slice(0, 2500);
-    const t = raw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const t = raw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ø/g, "o").replace(/æ/g, "ae").replace(/å/g, "a");
     const found = [];
     function hit(type, pattern) { if (pattern.test(t)) found.push(type); }
     hit("brostein", /brostein|belegningsstein|steinheller|heller.*(?:vask|rens)|(?:vask|rens).*heller/);
     hit("takrenne", /takrenne|takrenner|renser.*takren/);
     hit("takvask", /takvask|takrens(?!enne)|takstein.*(?:vask|rens)|(?:vask|rengjor|rense|mose).*tak(?!renn)|mose.*tak/);
-    hit("broyting", /broyting|broyte|snorydd|snoma(k|k)|moke sno|br[oø]yt/);
-    hit("trefelling", /trefell|felle (?:et )?tre|felling av tre|hogge tre|kappe (?:av )?tre|kapping av tr|motorsag/);
+    hit("broyting", /broyting|broyte|snorydd|snomak|moke sno|broyt/);
+    hit("trefelling", /trefell|felle (?:et )?(?:\d+\s*)?tre|felling av (?:\d+\s*)?tre|hogge tre|kappe (?:av )?(?:\d+\s*)?tre|kapping av (?:\d+\s*)?tr|motorsag/);
     hit("plenklipp", /plenklipp|gressklipp|gras(s)?klipp|klipp.*plen/);
     hit("kantklipp", /kantklipp|kanttrim/);
     hit("hekk", /hekk|buskklipp|beskj[aæ]r.*busk/);
@@ -225,7 +225,7 @@
     hit("maling", /maling|male.*hus|male.*vegg|beise/);
     const sqm = t.match(/(\d+(?:[.,]\d+)?)\s*(?:kvm|m2|m²|kvadrat(?:meter)?)/);
     const metres = t.match(/(\d+(?:[.,]\d+)?)\s*(?:meter|m)\b/);
-    const countTrees = t.match(/(\d+)\s*(?:tr[aæ]r|tre(?:\b|et\b))/);
+    const countTrees = t.match(/(\d+)\s*(?:tr(?:aer|ær|er|ar)|tre(?:et)?\b)/);
     const cm = t.match(/(\d+(?:[.,]\d+)?)\s*(?:cm)\b/);
     const amount = function (m) { return m ? safe(Number(m[1].replace(",", ".")), 100000) : 0; };
     const qtyArea = amount(sqm), qtyM = amount(metres), qtyT = amount(countTrees), snowCm = amount(cm);
