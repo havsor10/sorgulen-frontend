@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  // PROTOTYPE: kalkylen er lokal og bruker demonstrasjonssatsar. Ingen API-kall,
+  // Lokal kalkyle med satsar spegla frå backend DEFAULT_RATES. Ingen API-kall,
   // kundesynkronisering, databaseoperasjon eller automatisk utsending.
   // Kalkylemotoren held berekningane skilde frå brukargrensesnittet.
   const ENGINE = window.SorgulenPricing;
@@ -248,47 +248,85 @@
     $(id).addEventListener("input", update);
     $(id).addEventListener("change", update);
   }
-  $("operations").addEventListener("input", (event) => {
+  function syncRate() {
+    $("saleHourly").value = ENGINE.RATES[$("rateMode").value === "customer" ? "customer" : "own"];
+  }
+  function changeOperation(event) {
     const row = event.target.closest(".op-card");
+    const op = items.find(function (item) { return item.id === row?.dataset.id; });
+    if (!op) return;
     const key = event.target.dataset.key;
-    const op = items.find((item) => item.id === row?.dataset.id);
-    if (!op || !key || !["quantity", "capacity", "setup", "material", "equipment", "complexity", "access"].includes(key)) return;
-    op[key] = ["complexity", "access"].includes(key) ? event.target.value : (event.target.value === "" ? 0 : safeNum(event.target.value, key === "setup" ? 100 : 100000));
+    const detail = event.target.dataset.detail;
+    if (key && ["quantity","capacity","setup","material","equipment","complexity","access"].includes(key)) {
+      if (["complexity","access"].includes(key)) op[key] = event.target.value;
+      else op[key] = ENGINE.safe(event.target.value, key === "setup" ? 100 : 100000);
+    } else if (detail) {
+      const def = (CATALOG[op.type].fields || []).find(function (f) { return f.id === detail; });
+      if (!def) return;
+      if (def.type === "select") {
+        if (!def.options.some(function (o) { return o[0] === event.target.value; })) return;
+        op.details[detail] = event.target.value;
+      } else op.details[detail] = ENGINE.safe(event.target.value, 1000);
+    } else return;
     update();
+  }
+  $("operations").addEventListener("input", changeOperation);
+  $("operations").addEventListener("change", function (event) {
+    if (event.target.matches("select")) changeOperation(event);
   });
-  $("operations").addEventListener("change", (event) => {
-    if (event.target.matches("select")) {
-      const row = event.target.closest(".op-card");
-      const op = items.find((item) => item.id === row?.dataset.id);
-      if (op) { op[event.target.dataset.key] = event.target.value; update(); }
-    }
-  });
-  $("operations").addEventListener("click", (event) => {
+  $("operations").addEventListener("click", function (event) {
     const button = event.target.closest("[data-remove]");
     if (!button) return;
     if (items.length === 1) return toast("Kalkylen må ha minst éin arbeidsoperasjon.");
-    items = items.filter((item) => item.id !== button.dataset.remove);
+    items = items.filter(function (item) { return item.id !== button.dataset.remove; });
     renderOperations();
     update();
   });
-  $("addOperationBtn").addEventListener("click", () => {
-    if (items.length >= 15) return toast("Maks 15 operasjonar per utkast.");
+  $("addOperationBtn").addEventListener("click", function () {
+    if (items.length >= 15) return toast("Maks 15 operasjonar per kalkyle.");
     const type = $("addType").value;
-    items.push(newItem(type, { quantity: type === "rydding" ? 3 : type === "annet" ? 2 : type === "brostein" ? 50 : 25 }));
+    items.push(newItem(type));
     renderOperations();
     update();
     $("operations").lastElementChild?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   });
-  $("resetBtn").addEventListener("click", () => {
-    setValues({ projectName: "", customerName: "", address: "", notes: "", saleHourly: "850", costHourly: "320", travelMinutes: "30", markup: "20", otherCost: "0", disposalCost: "0", buffer: "8", vat: "0" });
-    items = [newItem("brostein", { quantity: 0 })];
-    renderOperations(); update(); goto("scope"); toast("Utkastet er nullstilt.");
+  $("analyzeBtn").addEventListener("click", function () {
+    const raw = $("jobDescription").value.trim();
+    if (!raw) { $("parseMessage").textContent = "Skriv kva som skal gjerast først."; return; }
+    const result = ENGINE.infer(raw);
+    if (items.some(function (op) { return op.quantity > 0; }) &&
+        !window.confirm("Dette erstattar arbeidsoperasjonane i den opne kalkylen. Vil du halde fram?")) return;
+    items = result.items.map(function (item) { return newItem(item.type, item); }).slice(0, 15);
+    if (!$("projectName").value.trim()) $("projectName").value = items.length === 1 ? CATALOG[items[0].type].name : "Kombinert vedlikehaldsoppdrag";
+    if (!$("notes").value.trim()) $("notes").value = raw.slice(0, 2000);
+    renderOperations();
+    update();
+    $("parseMessage").textContent = result.message + " Ingen ekstern AI blir brukt; tolkinga skjer i nettlesaren.";
+    $("operations").scrollIntoView({ behavior: "smooth", block: "start" });
   });
-  $("demoBtn").addEventListener("click", () => {
-    setValues({ projectName: "Vask og fuging av brostein", customerName: "DEMO – eksempelperson", address: "DEMO – eksempeladresse i Florø", notes: "Vask av brostein ved inngangsparti. Nokre område med mose. Ny fugesand. God tilkomst og tilgang til vatn.", saleHourly: "850", costHourly: "320", travelMinutes: "30", markup: "20", otherCost: "300", disposalCost: "0", buffer: "8", vat: "0" });
-    items = [newItem("brostein", { quantity: 130, complexity: "normal", access: "good" }), newItem("kantklipp", { quantity: 45, complexity: "easy", access: "good" })];
-    renderOperations(); update(); goto("scope"); toast("Demooppdrag lagt inn. Tala er ikkje reelle prisar.");
+  $("rateMode").addEventListener("change", function () { syncRate(); update(); });
+
+  $("resetBtn").addEventListener("click", function () {
+    if (items.some(function (op) { return op.quantity > 0; }) && !window.confirm("Nullstille kalkylen? Ueksporterte endringar går tapt.")) return;
+    setValues({ projectName: "", customerName: "", address: "", notes: "", jobDescription: "",
+      rateMode: "own", saleHourly: "850", costHourly: "320", travelMinutes: "30",
+      markup: "20", otherCost: "0", disposalCost: "0", buffer: "8", vat: "0" });
+    items = [newItem("brostein")];
+    syncRate(); renderOperations(); update(); goto("scope");
+    $("parseMessage").textContent = "Ny kalkyle klar for registrering.";
+    toast("Kalkylen er nullstilt.");
   });
+  $("demoBtn").addEventListener("click", function () {
+    setValues({ projectName: "Vask og fuging av brostein", customerName: "", address: "",
+      notes: "Vask av brostein med ugras og ny fugesand.", jobDescription: "Vasking av 130 kvm brostein med mykje ugras og ny fugesand.",
+      rateMode: "own", saleHourly: "850", costHourly: "320", travelMinutes: "30",
+      markup: "20", otherCost: "300", disposalCost: "0", buffer: "8", vat: "0" });
+    items = [newItem("brostein", { quantity: 130, details: { weeds: "heavy", joints: "yes", water: "yes", stairs: 0 } })];
+    syncRate(); renderOperations(); update(); goto("scope");
+    $("parseMessage").textContent = "Eksempeloppdrag er fylt inn. Tilpass kostnader, materialforbruk og kapasitet før bruk.";
+    toast("Eksempeloppdrag fylt inn.");
+  });
+
   $("exportBtn").addEventListener("click", downloadDraft);
   $("importBtn").addEventListener("click", () => $("importFile").click());
   $("importFile").addEventListener("change", async (event) => {
@@ -305,6 +343,11 @@
   });
   $("printBtn").addEventListener("click", () => window.print());
 
+  $("addType").innerHTML = Object.entries(CATALOG).map(function (entry) {
+    return '<option value="' + esc(entry[0]) + '">' + esc(entry[1].name) + '</option>';
+  }).join("");
+  $("addType").value = "brostein";
+  syncRate();
   renderOperations();
   update();
   goto(activePanel, false);
