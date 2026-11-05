@@ -8,6 +8,10 @@
 /admin/*
   Cache-Control: no-store, max-age=0
 
+# Kalkyleoppdateringar skal ikkje bli sitjande i Safari-cache.
+/kalkyle/*
+  Cache-Control: no-store, max-age=0, must-revalidate
+
 /config.js
   Cache-Control: no-store, max-age=0
 

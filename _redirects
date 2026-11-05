@@ -1,3 +1,8 @@
+# Tydelige inngangar for kalkyleverktoyet på mobil og desktop
+/kalkyle /kalkyle/ 301
+/kalkyle.html /kalkyle/ 301
+/kalkyle/ /kalkyle/index.html 200
+
 # Egen booking-URL for kvart utleigeprodukt
 /utleie/bestill/:slug /utleie/bestill.html 200
 
