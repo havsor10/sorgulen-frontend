@@ -35,3 +35,113 @@
   .smart-example{font-size:11px}
 }
 @media print{.smart-card{display:none!important}}
+
+
+/* v0.3: precise guided intake + clean, professional PDF quote */
+.guided-card{margin-bottom:18px;padding:25px;border-radius:15px;border:1px solid #d6e8dd;background:#fff;box-shadow:var(--shadow)}
+.guided-card .card-heading{margin-bottom:14px}
+.guided-block+.guided-block{margin-top:22px}
+.guided-block h3{font-size:14px;font-weight:850;color:#1d4935;margin:0 0 12px}
+.question-table{border:1px solid #dfe7e0;border-radius:12px;overflow:hidden}
+.question-table-head,.question-row{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(150px,1fr) minmax(0,.9fr);gap:14px;align-items:center}
+.question-table-head{padding:12px 15px;color:#ebf4ef;background:#1c392c;font-size:10px;font-weight:850;letter-spacing:.4px}
+.question-row{padding:13px 15px;background:#fff;border-bottom:1px solid #e6ebe7}
+.question-row:nth-child(odd){background:#f8faf8}
+.question-row:last-child{border-bottom:0}
+.question-text b{display:block;font-size:12px;color:#203f31}
+.question-text small{font-size:10px;color:#7a8d80;display:block;margin-top:3px}
+.question-answer select,.question-answer input,.question-answer textarea{width:100%;background:#fff;border:1px solid #ccd9d0;border-radius:8px;min-height:43px;padding:9px;font-size:13px;color:#1a3227}
+.question-why{font-size:11px;color:#77897d;line-height:1.45}
+.manual-question{background:#fff9ec!important}
+.manual-question .question-why{color:#9a7042}
+.ordered-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}
+.ordered-fields .field{padding:4px}
+.ordered-fields .field>span{font-weight:750;color:#29473a;font-size:12px}
+.quote-settings .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.quote-settings .field-wide{grid-column:1/-1}
+.quote-settings textarea{min-height:76px;resize:vertical;font-size:13px;line-height:1.5}
+.quote-settings .field>span{font-weight:750;color:#29483c}
+.confirm-quote{display:flex;align-items:flex-start;gap:12px;border:1px solid #bcdcc8;background:#f1f9f3;border-radius:11px;padding:15px;margin-top:16px;font-size:12px;color:#315542;cursor:pointer}
+.confirm-quote input{accent-color:#159a62;width:18px;height:18px;margin:1px 0 0;flex:none}
+.offer-paper{background:#fff;overflow:hidden;padding:0!important;border:1px solid #dce5e5}
+.official-quote{background:#fff;color:#252d36;padding:34px 40px 30px;min-height:770px;display:flex;flex-direction:column;font-family:Arial,"Helvetica Neue",sans-serif;font-size:12px;line-height:1.45}
+.quote-doc-header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;padding:0 0 24px;border-bottom:1px solid #d8dfe6}
+.quote-firm{display:flex;align-items:center;gap:9px;min-width:0}
+.quote-firm-logo{width:57px;height:57px;object-fit:contain}
+.quote-firm>div{display:flex;flex-direction:column;gap:1px}
+.quote-firm strong{color:#1a5674;letter-spacing:1px;font-size:24px;line-height:1;font-weight:900}
+.quote-firm span{color:#1a5674;letter-spacing:.5px;font-size:10px;font-weight:800}
+.quote-firm small{margin-top:8px;font-size:9px;color:#8293ab}
+.quote-doc-title{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:2px;color:#738aa6;font-size:10px}
+.quote-doc-title h2{font-size:22px;line-height:1.3;font-weight:850;letter-spacing:.3px;color:#69819e;margin:0 0 6px}
+.quote-doc-title small{font-size:9px;color:#718ba5;margin-top:5px}
+.quote-client{display:grid;grid-template-columns:1.25fr .8fr;gap:22px;padding-top:19px;padding-bottom:16px}
+.quote-client>div{display:flex;flex-direction:column;gap:2px}
+.quote-client small,.quote-subject>small{font-size:9px;font-weight:850;color:#728ba8;letter-spacing:.4px}
+.quote-client h3{margin:2px 0 0;font-size:13px;color:#212c3e}
+.quote-client strong{font-size:12px;color:#26374a}
+.quote-client span{font-size:11px;color:#303948}
+.quote-client .quote-small{font-size:10px;margin-top:4px;text-transform:none;color:#647a91}
+.quote-subject{padding:3px 0 18px}
+.quote-subject h3{font-size:13px;font-weight:700;margin:4px 0}
+.quote-subject p{font-size:11px;color:#596f8c;white-space:pre-wrap;line-height:1.5;margin:0}
+.quote-table{width:100%;border-collapse:collapse;table-layout:fixed;margin:3px 0 22px}
+.quote-table th{background:#192130;color:#fff;text-align:left;padding:10px 10px;font-size:10px;font-weight:750}
+.quote-table th:first-child{width:51%}.quote-table th:nth-child(2){width:17%}.quote-table th:nth-child(3){width:15%}.quote-table th:nth-child(4){width:17%}
+.quote-table td{font-size:10px;color:#263444;vertical-align:top;padding:10px;border-bottom:1px solid #f0f3f7;overflow-wrap:anywhere}
+.quote-table td:first-child strong{display:block;font-weight:650}
+.quote-table td small{display:block;color:#8294af;margin-top:4px;font-size:9px}
+.quote-table tr.alt td{background:#f0f3f8}
+.quote-table .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.quote-totals{display:flex;align-items:flex-end;justify-content:space-between;gap:15px;border-top:1px solid #d6dfea;padding-top:22px;margin-top:5px}
+.quote-total-notes{font-size:10px;color:#8696af;max-width:50%}
+.quote-total-values{min-width:220px;text-align:right;display:flex;flex-direction:column;gap:5px}
+.quote-total-values>span{display:flex;justify-content:space-between;gap:20px;color:#607894;font-size:10px}
+.quote-grand{display:flex;justify-content:space-between;gap:24px;align-items:baseline;font-size:14px;font-weight:850;color:#222b39;margin-top:10px}
+.quote-grand strong{font-size:20px;color:#0ca86b;white-space:nowrap}
+.quote-conditions{border-top:3px solid #1c2c3a;margin-top:21px;padding-top:13px}
+.quote-conditions h4{font-size:11px;font-weight:800;margin:6px 0 5px}
+.quote-conditions p{font-size:10.5px;white-space:pre-wrap;margin:0 0 9px;color:#3c4a5b;line-height:1.5}
+.quote-accept{background:#edf3f9;padding:10px 11px;color:#4c6987;font-size:10px;font-weight:700;margin-top:9px}
+.quote-doc-footer{font-size:9px;color:#8297b2;text-align:center;border-top:1px solid #d7e0e9;margin-top:auto;padding-top:15px;line-height:1.4}
+.quote-settings .info-line{margin-top:10px}
+@media(max-width:760px){
+  .guided-card{padding:18px}
+  .question-table-head,.question-row{grid-template-columns:1fr 1fr;gap:9px}
+  .question-table-head span:last-child{display:none}
+  .question-why{grid-column:1/-1}
+  .question-row{padding:12px}
+  .quote-settings .form-grid,.ordered-fields{grid-template-columns:1fr}
+  .official-quote{padding:22px 17px;min-height:640px}
+  .quote-firm strong{font-size:17px}
+  .quote-firm-logo{width:40px;height:40px}
+  .quote-doc-title h2{font-size:16px}
+  .quote-table th,.quote-table td{padding:7px 5px;font-size:9px}
+  .quote-table td small{font-size:8px}
+  .quote-table th:first-child{width:48%}
+  .quote-table th:nth-child(2){width:18%}
+  .quote-table th:nth-child(3){width:16%}
+  .quote-table th:nth-child(4){width:18%}
+  .quote-grand strong{font-size:15px}
+  .quote-total-values{min-width:155px}
+}
+@media(max-width:390px){
+  .quote-table th:nth-child(3),.quote-table td:nth-child(3){display:none}
+  .quote-table th:first-child{width:54%}.quote-table th:nth-child(2){width:20%}.quote-table th:nth-child(4){width:26%}
+  .quote-doc-header{gap:8px}
+  .quote-firm{gap:5px}.quote-firm strong{font-size:14px}.quote-doc-title h2{font-size:14px}
+}
+@media print{
+  @page{size:A4;margin:15mm}
+  .quote-settings,.guided-card{display:none!important}
+  .official-quote{padding:0!important;min-height:266mm!important;max-width:none!important;font-size:10px}
+  .offer-paper{width:100%!important;border:0!important;overflow:visible!important}
+  .quote-doc-header{break-after:avoid}
+  .quote-table thead{display:table-header-group}
+  .quote-table tr{break-inside:avoid}
+  .quote-doc-footer{break-inside:avoid}
+  .quote-grand strong{color:#0ca86b!important}
+  .quote-table th{background:#192130!important;color:#fff!important}
+  .quote-table .alt td{background:#f0f3f8!important}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+}
