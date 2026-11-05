@@ -10,12 +10,14 @@
   const COMPLEXITY = ENGINE.COMPLEXITY;
   const ACCESS = ENGINE.ACCESS;
 
-  const FIELD_IDS = ["projectName", "customerName", "address", "notes", "jobDescription", "rateMode", "saleHourly", "costHourly", "travelMinutes", "markup", "otherCost", "disposalCost", "buffer", "vat"];
+  const FIELD_IDS = ["projectName", "customerName", "customerEmail", "customerPhone", "address", "notes", "jobDescription", "rateMode", "saleHourly", "costHourly", "travelMinutes", "markup", "otherCost", "disposalCost", "buffer", "vat", "priceMode", "validDays", "offerReference", "offerScope", "offerExclusions", "offerTerms"];
   const NUMERIC_FIELDS = new Set(["saleHourly", "costHourly", "travelMinutes", "markup", "otherCost", "disposalCost", "buffer", "vat"]);
   const $ = (id) => document.getElementById(id);
   let serial = 0;
   let toastTimer;
   let activePanel = "scope";
+  let aiReview = null;
+  let extraAnswers = {};
 
   const newItem = (type = "brostein", overrides = {}) => Object.assign(
     { id: "op-" + Date.now() + "-" + (++serial) }, ENGINE.makeItem(type, overrides)
@@ -107,10 +109,11 @@
     $("marginFill").classList.toggle("negative", calc.margin < 0);
     $("profitEstimate").style.color = calc.profit < 0 ? "#bc4b4b" : "";
     const notes = quality(calc);
-    $("copyOfferBtn").disabled = !calc.active || calc.needsVisit;
-    $("printBtn").disabled = !calc.active || calc.needsVisit;
-    $("copyOfferBtn").title = calc.needsVisit ? "Krev HMS-kontroll/befaring før utsending" : "";
-    $("printBtn").title = calc.needsVisit ? "Krev HMS-kontroll/befaring før utsending" : "";
+    const confirmed = Boolean($("reviewCheck").checked && $("customerName").value.trim() && $("projectName").value.trim() && $("address").value.trim());
+    $("copyOfferBtn").disabled = !calc.active || !confirmed;
+    $("printBtn").disabled = !calc.active || !confirmed;
+    $("copyOfferBtn").title = confirmed ? "" : "Fyll ut kunde, adresse og prosjekt, og stadfest gjennomgang.";
+    $("printBtn").title = $("copyOfferBtn").title;
     $("qualityLabel").textContent = notes.length > 1 ? "Kontroller desse punkta før tilbod:" : "Kalkyleutkast – manuell kontroll nødvendig";
     $("qualityNotes").innerHTML = notes.map((n) => `<li>${esc(n)}</li>`).join("");
     for (const op of calc.ops) {
@@ -148,18 +151,15 @@
   }
 
   function renderOffer(c) {
-    const project = $("projectName").value.trim() || "Namn på oppdraget manglar";
-    const customer = $("customerName").value.trim() || "Kunde ikkje registrert";
-    const location = $("address").value.trim() || "Adresse ikkje registrert";
-    const notes = $("notes").value.trim();
-    const lines = offerLines(c);
-    $("offerSheet").innerHTML = `<div class="paper-header"><div class="paper-logo">SØRGULEN<span>.</span><div style="font-size:8px;font-weight:650;letter-spacing:1px;color:#7d9883;margin-top:3px">INDUSTRISERVICE</div></div><div><h3>PRISTILBOD</h3><p>UTKAST · IKKJE SENDT</p></div></div>
-      <div class="paper-meta"><div><small>TIL</small><strong>${esc(customer)}</strong><span>${esc(location)}</span></div><div><small>OPPDRAG</small><strong>${esc(project)}</strong><span>Estimert arbeidstid: ${esc(hours(c.totalHours))}</span></div></div>
-      <div class="paper-description"><h4>Arbeidsbeskriving</h4><p>${esc(notes || "Arbeidet omfattar operasjonane som er spesifiserte nedanfor. Detaljar må gjennomgåast og stadfestast før eit bindande tilbod kan sendast.")}</p></div>
-      <div class="paper-list-head"><span>ARBEID OG TILLEGG</span><span style="text-align:right">SUM EKS. MVA.</span></div>
-      ${lines.map((l) => `<div class="paper-list-row"><span>${esc(l.label)}</span><span>${money(l.sum)}</span></div>`).join("")}
-      <div class="paper-sum"><span>Tilbodspris eks. mva.</span><strong>${money(c.net)}</strong></div><div class="paper-vat">MVA ${format(getNum("vat"), 0)} %: ${money(c.vat)} &nbsp; · &nbsp; Total inkl. vald MVA: ${money(c.gross)}</div>
-      <div class="paper-disclaimer"><strong>Viktig:</strong> Faste standardtimesatsar frå admin, men førebelse arbeidsnormer og kostnader. Dette er ikkje eit bindande tilbod. Kontroll av omfang, materialprisar, MVA, HMS og vilkår er nødvendig før utsending.</div>`;
+    $("offerSheet").innerHTML = window.SorgulenOffer.render({
+      calc: c, items, opts: {markup:getNum("markup"), vat:getNum("vat")},
+      title: $("projectName").value.trim(), customer: $("customerName").value.trim(),
+      address: $("address").value.trim(), email: $("customerEmail").value.trim(),
+      phone: $("customerPhone").value.trim(), notes: $("notes").value.trim(),
+      scope: $("offerScope").value.trim(), exclusions: $("offerExclusions").value.trim(),
+      terms: $("offerTerms").value.trim(), reference: $("offerReference").value.trim(),
+      validDays: $("validDays").value, priceMode: $("priceMode").value, reviewed: $("reviewCheck").checked
+    });
   }
 
   function update() {
@@ -199,7 +199,7 @@
   }
 
   function exportData() {
-    return { version: 2, generatedAt: new Date().toISOString(), fields: Object.fromEntries(FIELD_IDS.map((key) => [key, $(key).value])), operations: items.map(({ id, ...rest }) => rest) };
+    return { version: 3, generatedAt: new Date().toISOString(), fields: Object.fromEntries(FIELD_IDS.map((key) => [key, $(key).value])), operations: items.map(({ id, ...rest }) => rest), extraAnswers };
   }
 
   function downloadDraft() {
@@ -217,7 +217,7 @@
   }
 
   function importData(data) {
-    if (!data || ![1, 2].includes(data.version) || !data.fields || !Array.isArray(data.operations) ||
+    if (!data || ![1, 2, 3].includes(data.version) || !data.fields || !Array.isArray(data.operations) ||
         !data.operations.length || data.operations.length > 15) throw new Error("Ugyldig kalkylefil.");
     const approved = data.operations.map(function (raw) {
       if (!raw || !CATALOG[raw.type]) throw new Error("Ukjend arbeidsoperasjon.");
@@ -230,6 +230,9 @@
     }
     items = approved;
     setValues(validFields);
+    $("reviewCheck").checked = false;
+    aiReview = null;
+    extraAnswers = data.version >= 3 && data.extraAnswers && typeof data.extraAnswers === "object" ? data.extraAnswers : {};
     syncRate();
     renderOperations();
     update();
@@ -237,9 +240,20 @@
   }
 
   function offerText(c) {
-    const project = $("projectName").value.trim() || "Utan prosjektnamn";
-    const customer = $("customerName").value.trim() || "Ikkje registrert";
-    return [`SØRGULEN INDUSTRISERVICE – UTKAST TIL PRISTILBOD`, `Kunde: ${customer}`, `Oppdrag: ${project}`, `Stad: ${$("address").value.trim() || "Ikkje registrert"}`, "", `Beskriving: ${$("notes").value.trim() || "Sjå arbeidslinjene."}`, "", ...offerLines(c).map((l) => `${l.label}: ${money(l.sum)}`), "", `Sum eks. mva.: ${money(c.net)}`, `MVA (${getNum("vat")} %): ${money(c.vat)}`, `Total inkl. vald MVA: ${money(c.gross)}`, "", "Dette er eit ikkje-bindande estimat. Kontroll av arbeidsnormer, materialkostnader, MVA, tryggleik og vilkår er nødvendig før utsending."].join("\n");
+    const rows = window.SorgulenOffer.makeRows(c, items, {markup:getNum("markup")});
+    return [
+      "SØRGULEN INDUSTRISERVICE – PRISTILBOD (UTKAST)",
+      "Til: " + $("customerName").value.trim(), "E-post: " + $("customerEmail").value.trim(),
+      "Adresse: " + $("address").value.trim(),
+      "Gjeld: " + $("projectName").value.trim(),
+      "", "Omfang: " + ($("offerScope").value.trim() || $("notes").value.trim()),
+      "", ...rows.map(r=>r.description + " · " + r.quantity + " " + r.unit + " · " + money(r.amount)),
+      "", "Sum eks. mva.: " + money(c.net),
+      "MVA: " + money(c.vat), "Sum inkl. vald mva.: " + money(c.gross),
+      "", "Avgrensingar: " + $("offerExclusions").value.trim(),
+      "Vilkår: " + $("offerTerms").value.trim(),
+      "Utkast – ikkje sendt. Kontroller alle opplysningar før bruk."
+    ].join("\n");
   }
 
   document.querySelectorAll("[data-step]").forEach((button) => button.addEventListener("click", () => goto(button.dataset.step)));
