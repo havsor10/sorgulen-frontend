@@ -9,7 +9,9 @@
   <meta name="description" content="Førsteutkast av Sørgulen Kalkyle Studio. Ingen kundedata lagrast eller sendast.">
   <link rel="icon" href="../assets/logo.png">
   <link rel="stylesheet" href="styles.css">
+  <script src="../config.js"></script>
   <script src="pricing-engine.js" defer></script>
+  <script src="offer-studio.js" defer></script>
   <script src="app.js" defer></script>
   
 </head>
@@ -27,13 +29,13 @@
         <a class="side-link" href="../admin/foresporsler.html"><span class="side-ico" aria-hidden="true">↗</span>Førespurnader <span class="link-trailing">↗</span></a>
       </nav>
       <div class="side-section-label side-section-label-lower">SYSTEMSTATUS</div>
-      <div class="side-note"><span class="status-dot"></span><div><strong>Kalkyle v0.2</strong><p>Faste standardtimesatsar. Lokal kalkulering, utan kundesynkronisering.</p></div></div>
+      <div class="side-note"><span class="status-dot"></span><div><strong>Kalkyle v0.3</strong><p>Faste standardtimesatsar. Lokal kalkulering, utan kundesynkronisering.</p></div></div>
       <div class="sidebar-bottom"><span class="side-avatar">SI</span><div><strong>Sørgulen</strong><small>Internt kalkyleverktøy</small></div><span class="sidebar-more">•••</span></div>
     </aside>
 
     <div class="work-area">
       <header class="topbar">
-        <div class="topbar-left"><span class="breadcrumbs">Verktøy</span><span class="breadcrumb-separator">/</span><strong>Kalkyle Studio</strong><span class="topbar-version">VERSJON 0.2</span></div>
+        <div class="topbar-left"><span class="breadcrumbs">Verktøy</span><span class="breadcrumb-separator">/</span><strong>Kalkyle Studio</strong><span class="topbar-version">VERSJON 0.3</span></div>
         <div class="topbar-right"><span class="topbar-private">◉ Lokal kalkyle</span><button type="button" class="btn btn-ghost btn-small" id="resetBtn">Nullstill</button><button type="button" class="btn btn-primary btn-small" id="exportBtn">⇩ <span>Eksporter utkast</span></button></div>
       </header>
 
@@ -61,16 +63,22 @@
                 <div class="card-heading"><div class="section-icon">✦</div><div><p class="card-eyebrow">START HER</p><h2>Beskriv jobben</h2><p>Skriv kva kunden ønskjer. Vi kjenner att arbeidstype, areal og enkelte forhold, og set opp ei tilpassa kalkyle.</p></div></div>
                 <label class="field field-wide"><span>Kva skal gjerast?</span>
                   <textarea id="jobDescription" rows="3" maxlength="2500" placeholder="Til dømes: Vasking av 130 kvm brostein, mykje ugras, fjerne mosen og legge ny fugesand."></textarea></label>
-                <div class="smart-actions"><button type="button" class="btn btn-primary" id="analyzeBtn">✦ Tolk beskriving og lag kalkyle</button>
+                <div class="smart-actions"><button type="button" class="btn btn-primary" id="analyzeBtn">✦ Tolk beskriving lokalt</button><button type="button" class="btn btn-outline" id="aiAnalyzeBtn">✦ Spør AI om kva vi manglar</button>
                   <span class="smart-example">Døme: «Brøyting av 450 m², 30 cm snø»</span></div>
-                <div id="parseMessage" class="smart-result" role="status" aria-live="polite">Vel ei oppgåve, eller skriv fritekst og trykk Tolk.</div>
+                <div id="parseMessage" class="smart-result" role="status" aria-live="polite">Skriv oppdraget og vel lokal tolking eller AI-analyse. AI krev admin-innlogging.</div>
+              </section>
+              <section class="card guided-card" id="guidedCard" aria-label="Relevante oppfølgingsspørsmål">
+                <div class="card-heading"><div class="section-icon">?</div><div><p class="card-eyebrow">UTFYLLANDE BEFARING</p><h2>Relevante spørsmål</h2><p>Svar berre på det som er relevant for jobben. Felt merka med «manuell vurdering» påverkar ikkje prisen før du justerer kalkylen.</p></div></div>
+                <div id="guidedQuestions" class="guided-questions" aria-live="polite"></div>
               </section>
               <section class="card input-card">
                 <div class="card-heading"><div class="section-icon">▤</div><div><p class="card-eyebrow">01 / GRUNNLAG</p><h2>Oppdragsinformasjon</h2><p>Registrer kunde og kva oppdraget omfattar.</p></div></div>
-                <div class="form-grid">
+                <div class="form-grid ordered-fields">
                   <label class="field field-wide"><span>Prosjektnamn <span class="req">*</span></span><input id="projectName" name="projectName" placeholder="F.eks. Vask og fuging av brostein" autocomplete="off" maxlength="140"></label>
                   <label class="field"><span>Kunde</span><input id="customerName" name="customerName" placeholder="Kundenamn" maxlength="140"></label>
                   <label class="field"><span>Adresse / arbeidsstad</span><input id="address" name="address" placeholder="Kor skal arbeidet utførast?" maxlength="180"></label>
+                  <label class="field"><span>Kunde sin e-post (til tilbodet)</span><input id="customerEmail" type="email" maxlength="180" placeholder="namn@eksempel.no"></label>
+                  <label class="field"><span>Kunde sitt telefonnummer</span><input id="customerPhone" type="tel" maxlength="60" placeholder="+47 ..."></label>
                   <label class="field field-wide"><span>Merknader frå befaring</span><textarea id="notes" name="notes" rows="3" placeholder="Tilkomst, overflater, særlege forhold, kva kunden ønskjer …" maxlength="2000"></textarea></label>
                 </div>
               </section>
@@ -108,10 +116,24 @@
             </div>
 
             <div class="panel" id="panel-offer" role="tabpanel" hidden>
-              <section class="card offer-editor"><div class="card-heading"><div class="section-icon">✓</div><div><p class="card-eyebrow">05 / TILBOD</p><h2>Pristilbod til kunden</h2><p>Førehandsvis tilbodet. Kontroller tal og forbehold før eventuell utsending.</p></div></div>
+              <section class="card input-card quote-settings">
+                <div class="card-heading"><div class="section-icon">▤</div><div><p class="card-eyebrow">05 / KUNDETILBOD</p><h2>Innhald og vilkår</h2><p>Fyll inn opplysningane nedanfor. Alt du skriv blir vist i sjølve pristilbodet.</p></div></div>
+                <div class="form-grid">
+                  <label class="field"><span>Pristype</span><select id="priceMode"><option value="fixed">Førebels fastpris</option><option value="estimate">Prisoverslag</option></select></label>
+                  <label class="field"><span>Gyldig i</span><select id="validDays"><option value="7">7 dagar</option><option value="14" selected>14 dagar</option><option value="21">21 dagar</option><option value="30">30 dagar</option></select></label>
+                  <label class="field field-wide"><span>Tilbodsreferanse (valfritt)</span><input id="offerReference" maxlength="80" placeholder="T.d. TILBOD-2026-001, eller la stå tomt for utkast"></label>
+                  <label class="field field-wide"><span>Omfang og arbeidsbeskriving</span><textarea id="offerScope" maxlength="2400" rows="3" placeholder="Kva blir gjort – inkl. resultat, material og omfang?"></textarea></label>
+                  <label class="field field-wide"><span>Avgrensingar – kva er ikkje inkludert?</span><textarea id="offerExclusions" maxlength="2000" rows="3" placeholder="T.d. bortkøyring av ved, røter eller arbeid i ukjend konstruksjon"></textarea></label>
+                  <label class="field field-wide"><span>Vilkår og betaling</span><textarea id="offerTerms" maxlength="1800" rows="3" placeholder="T.d. betaling etter utført arbeid, oppstart etter avtale"></textarea></label>
+                </div>
+                <label class="confirm-quote"><input type="checkbox" id="reviewCheck"><span>Eg har kontrollert mengder, kostnader, HMS, mva. og vilkår. Dette er eit utkast som skal gjennomgåast før utsending.</span></label>
+                <div class="info-line">Tilbod blir ikkje sendt automatisk. Ved takvask/trefelling krevst befaring og sikkerheitsvurdering.</div>
+              </section>
+              <section class="card offer-editor">
+                <div class="card-heading"><div class="section-icon">✓</div><div><p class="card-eyebrow">06 / FORHÅNDSVISNING</p><h2>Profesjonelt pristilbod</h2><p>Same oppbygging som Sørgulen-dokumentet: firmatopp, kundedata, spesifisert tabell, total og vilkår.</p></div></div>
                 <div class="offer-paper" id="offerSheet" aria-live="polite"></div>
-                <div class="offer-controls"><button type="button" class="btn btn-outline" id="copyOfferBtn">⧉ Kopier tilbodstekst</button><button type="button" class="btn btn-primary" id="printBtn">↗ Skriv ut / lag PDF</button></div>
-                <p class="offer-footnote">Ingen utsending eller lagring mot databasen skjer i denne versjonen. Utskrift og kopiering må gjennomgåast manuelt.</p>
+                <div class="offer-controls"><button type="button" class="btn btn-outline" id="copyOfferBtn">⧉ Kopier tilbodstekst</button><button type="button" class="btn btn-primary" id="printBtn">↗ Lag PDF / skriv ut</button></div>
+                <p class="offer-footnote">På iPhone vel du Skriv ut og deler/lagrar utskriftsvisinga som PDF. Ingen automatisk e-post eller datablagring.</p>
               </section>
               <div class="panel-actions"><button type="button" class="btn btn-ghost" data-go="costs">← Tilbake til kostnader</button><button type="button" class="btn btn-outline" id="importBtn">Importer utkast</button><input id="importFile" type="file" accept="application/json,.json" hidden></div>
             </div>
@@ -128,7 +150,7 @@
             <div class="helper-card"><span class="helper-symbol">✳</span><div><strong>Presisjon framfor gjetting.</strong><p>Arbeidskapasitet, tilkomst og dokumenterte kostnader er grunnlaget. Etter kvart kan vi lære av faktisk registrerte arbeidstimar.</p></div></div>
           </aside>
         </div>
-        <footer class="main-footer"><span>© Sørgulen Industriservice · Kalkyle Studio v0.2</span><span>Foreløpig prisestimat · Sjekk føresetnadene</span></footer>
+        <footer class="main-footer"><span>© Sørgulen Industriservice · Kalkyle Studio v0.3</span><span>Foreløpig prisestimat · Sjekk føresetnadene</span></footer>
       </main>
     </div>
   </div>
