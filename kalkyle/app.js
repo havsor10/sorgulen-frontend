@@ -87,6 +87,39 @@
       '</article>';
     }).join("");
     $("operationCount").textContent = items.length + " " + (items.length === 1 ? "operasjon" : "operasjonar");
+    renderGuidedQuestions();
+  }
+
+  // A guided questionnaire: one answer column, one label column and one explanation column.
+  // Details selected here affect the deterministic engine, without AI deciding prices.
+  function renderGuidedQuestions() {
+    const root = $("guidedQuestions");
+    if (!root) return;
+    root.innerHTML = items.map(function(item,index) {
+      const meta = CATALOG[item.type] || CATALOG.annet;
+      const suggestions = aiReview && aiReview.category===item.type ? aiReview.questions||[] : [];
+      const byKey = Object.fromEntries(suggestions.map(q=>[q.key,q]));
+      const ordered = (meta.fields||[]).slice().sort((a,b)=>Number(Boolean(byKey[b.id]))-Number(Boolean(byKey[a.id])));
+      const quantityRow = '<div class="question-row"><div class="question-text"><b>Mengde ('+esc(meta.unit)+')</b><small>Areal, lengd eller talet på einingar</small></div><div class="question-answer"><input type="number" inputmode="decimal" min="0" step="any" data-guide-quantity="'+index+'" value="'+esc(item.quantity)+'"></div><div class="question-why">Påverkar tids- og prisberekninga direkte.</div></div>';
+      const questionRows=ordered.map(function(f) {
+        const suggestion=byKey[f.id];
+        const label=esc(suggestion?.label || f.label);
+        const reason=esc(suggestion?.why || "Faktor i arbeidskalkylen");
+        let input="";
+        const current=item.details?.[f.id]??f.default;
+        if(f.type==="select"){
+          input='<select data-guide-index="'+index+'" data-guide-key="'+esc(f.id)+'">'+f.options.map(o=>'<option value="'+esc(o[0])+'"'+(o[0]===current?' selected':'')+'>'+esc(o[1])+'</option>').join("")+'</select>';
+        }else{
+          input='<input type="number" inputmode="decimal" min="0" step="any" data-guide-index="'+index+'" data-guide-key="'+esc(f.id)+'" value="'+esc(current)+'">';
+        }
+        return '<div class="question-row"><div class="question-text"><b>'+label+'</b><small>'+esc(meta.name)+'</small></div><div class="question-answer">'+input+'</div><div class="question-why">'+reason+'</div></div>';
+      }).join("");
+      const extras=(aiReview && aiReview.category===item.type ? aiReview.otherQuestions||[]:[]).map(function(q,qi){
+        const answerKey="extra-"+index+"-"+qi;
+        return '<div class="question-row manual-question"><div class="question-text"><b>'+esc(q)+'</b><small>Tilleggsopplysning frå AI</small></div><div class="question-answer"><textarea data-extra-answer="'+answerKey+'" rows="2" maxlength="450" placeholder="Skriv svar / merknad">'+esc(extraAnswers[answerKey]||"")+'</textarea></div><div class="question-why">Manuell vurdering: Endrar ikkje prisen automatisk.</div></div>';
+      }).join("");
+      return '<section class="guided-block"><h3>'+String(index+1).padStart(2,"0")+' · '+esc(meta.name)+'</h3><div class="question-table"><div class="question-table-head"><span>Opplysning</span><span>Svar / verdi</span><span>Kalkylepåverknad</span></div>'+quantityRow+questionRows+extras+'</div></section>';
+    }).join("");
   }
 
   function quality(calc) {
@@ -284,6 +317,37 @@
     } else return;
     update();
   }
+  $("guidedQuestions").addEventListener("input",function(event){
+    const target=event.target;
+    if(target.dataset.extraAnswer){
+      extraAnswers[target.dataset.extraAnswer]=String(target.value).slice(0,450);
+      return;
+    }
+    let idx=Number(target.dataset.guideIndex);
+    if(target.dataset.guideQuantity!==undefined)idx=Number(target.dataset.guideQuantity);
+    const item=items[idx];
+    if(!item)return;
+    if(target.dataset.guideQuantity!==undefined){
+      item.quantity=ENGINE.safe(target.value,100000);
+      const original=$("operations").querySelectorAll(".op-card")[idx]?.querySelector('[data-key="quantity"]');
+      if(original)original.value=item.quantity;
+    }else{
+      const key=target.dataset.guideKey;
+      const field=(CATALOG[item.type].fields||[]).find(f=>f.id===key);
+      if(!field)return;
+      if(field.type==="select"){
+        if(!field.options.some(o=>o[0]===target.value))return;
+        item.details[key]=target.value;
+      }else item.details[key]=ENGINE.safe(target.value,1000);
+      const original=$("operations").querySelectorAll(".op-card")[idx]?.querySelector('[data-detail="'+key+'"]');
+      if(original)original.value=item.details[key];
+    }
+    update();
+  });
+  $("guidedQuestions").addEventListener("change",function(event){
+    if(event.target.tagName==="SELECT")event.target.dispatchEvent(new Event("input",{bubbles:true}));
+  });
+
   $("operations").addEventListener("input", changeOperation);
   $("operations").addEventListener("change", function (event) {
     if (event.target.matches("select")) changeOperation(event);
@@ -307,6 +371,8 @@
   $("analyzeBtn").addEventListener("click", function () {
     const raw = $("jobDescription").value.trim();
     if (!raw) { $("parseMessage").textContent = "Skriv kva som skal gjerast først."; return; }
+    aiReview = null;
+    extraAnswers = {};
     const result = ENGINE.infer(raw);
     if (items.some(function (op) { return op.quantity > 0; }) &&
         !window.confirm("Dette erstattar arbeidsoperasjonane i den opne kalkylen. Vil du halde fram?")) return;
@@ -319,12 +385,52 @@
     $("operations").scrollIntoView({ behavior: "smooth", block: "start" });
   });
   $("rateMode").addEventListener("change", function () { syncRate(); update(); });
+  $("aiAnalyzeBtn").addEventListener("click",async function(){
+    const raw=$("jobDescription").value.trim();
+    const status=$("parseMessage");
+    if(raw.length<8){status.textContent="Skriv minst 8 teikn om jobben.";return;}
+    const key=localStorage.getItem("sorgulen_admin_key")||"";
+    if(!key){
+      status.textContent="Ekte AI krev innlogging i admin. Bruk «Tolk beskriving lokalt» for spørsmål utan AI. Ingenting er sendt.";
+      return;
+    }
+    const button=$("aiAnalyzeBtn");
+    button.disabled=true;status.textContent="AI analyserer beskrivinga og vurderer kva spørsmål som manglar …";
+    try{
+      const api=(window.CONFIG&&window.CONFIG.API_BASE_URL)||"https://sorgulen-backend-2.onrender.com/api";
+      const response=await fetch(api+"/admin/kalkyle/analyze",{
+        method:"POST",headers:{"Content-Type":"application/json","x-admin-key":key},
+        body:JSON.stringify({description:raw,category:ENGINE.infer(raw).items[0]?.type||""})
+      });
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok||!data.ok)throw new Error(response.status===401||response.status===403?"Admin-innlogginga er utgått. Logg inn på nytt.":(data.error||"AI-analysen feila"));
+      const a=data.analysis;
+      if(!a||!CATALOG[a.category])throw new Error("AI returnerte ikkje ein gyldig kategori.");
+      if(items.some(op=>op.quantity>0)&&!window.confirm("AI vil oppdatere arbeidsoperasjonane. Halde fram?")){status.textContent="AI-svaret vart ikkje lagt inn.";return;}
+      const parsed=ENGINE.infer(raw);
+      const baseline=parsed.items.find(op=>op.type===a.category)||ENGINE.makeItem(a.category);
+      const main=newItem(a.category,{quantity:a.quantity||baseline.quantity||0,details:{...baseline.details,...a.details}});
+      const rest=parsed.items.filter(op=>op.type!==a.category).map(op=>newItem(op.type,op));
+      items=[main,...rest].slice(0,15);
+      aiReview=a;extraAnswers={};
+      if(!$("projectName").value.trim())$("projectName").value=CATALOG[main.type].name;
+      if(!$("notes").value.trim())$("notes").value=raw.slice(0,2000);
+      renderOperations();update();
+      status.textContent="AI: "+(a.summary||"Oppdraget er tolka")+". "+(a.questions?.length||0)+" prioriterte spørsmål. Kontroller svara nedanfor.";
+      $("guidedCard").scrollIntoView({behavior:"smooth",block:"start"});
+    }catch(err){
+      status.textContent="AI utilgjengeleg: "+err.message+" Du kan framleis bruke lokal tolking og prisberekning.";
+    }finally{button.disabled=false;}
+  });
+  $("reviewCheck").addEventListener("change",update);
+
 
   $("resetBtn").addEventListener("click", function () {
     if (items.some(function (op) { return op.quantity > 0; }) && !window.confirm("Nullstille kalkylen? Ueksporterte endringar går tapt.")) return;
     setValues({ projectName: "", customerName: "", address: "", notes: "", jobDescription: "",
       rateMode: "own", saleHourly: "850", costHourly: "320", travelMinutes: "30",
       markup: "20", otherCost: "0", disposalCost: "0", buffer: "8", vat: "0" });
+    aiReview=null; extraAnswers={};
     items = [newItem("brostein")];
     syncRate(); renderOperations(); update(); goto("scope");
     $("parseMessage").textContent = "Ny kalkyle klar for registrering.";
