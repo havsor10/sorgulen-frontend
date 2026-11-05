@@ -45,10 +45,11 @@
   });
   if(calc.travelHours>0)rows.push({description:"Transport og køyretid",subtitle:"Tur/retur etter berekna reisetid",quantity:1,unit:"post",rate:calc.travelHours*rate*factor,amount:calc.travelHours*rate*factor});
   if(calc.extraCost>0)rows.push({description:"Andre tillegg og levering",subtitle:"Avtalt materiell, avfall og direkte utgifter",quantity:1,unit:"post",rate:calc.extraCost*(1+markup)*factor,amount:calc.extraCost*(1+markup)*factor});
-  const sum=rows.reduce((total,row)=>total+row.amount,0);
-  const delta=Math.round((calc.net-sum)*100)/100;
-  if(Math.abs(delta)>0.004)rows.push({description:"Prisavrunding",subtitle:"Justering til tilbodssum",quantity:1,unit:"post",rate:delta,amount:delta});
-  return rows.map(r=>({...r,amount:Math.round((r.amount+Number.EPSILON)*100)/100}));
+  const rounded=rows.map(r=>({...r,amount:Math.round((r.amount+Number.EPSILON)*100)/100}));
+  const sum=rounded.reduce((total,row)=>total+Math.round(row.amount*100),0);
+  const delta=(Math.round(calc.net*100)-sum)/100;
+  if(Math.abs(delta)>0.004)rounded.push({description:"Prisavrunding",subtitle:"Justering til tilbodssum",quantity:1,unit:"post",rate:delta,amount:delta});
+  return rounded;
  }
  function formatDate(value){
   const d=value instanceof Date?value:new Date(value);
