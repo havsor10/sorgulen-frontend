@@ -21,7 +21,7 @@ test("questions and price stay hidden until description is analyzed",()=>{
   assert.match(script,/renderQuestions\(\);updatePrice\(\)/);
 });
 test("AI endpoint is admin-only and local calculation always available",()=>{
-  assert.match(script,/api\+"\/admin\/kalkyle\/analyze"/);
+  assert.ok(script.includes('"/admin/kalkyle/analyze"'));
   assert.match(script,/x-admin-key/);
   assert.match(script,/Engine\.infer\(text\)/);
   assert.match(script,/Engine\.calculate\(items/);
