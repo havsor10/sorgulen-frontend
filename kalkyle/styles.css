@@ -145,3 +145,252 @@
   .quote-table .alt td{background:#f0f3f8!important}
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
 }
+
+
+/* v0.4 — Befaring med tydeleg skilje mellom handling og støtteinformasjon.
+   Berre interaktiv nettside blir endra; det utskrivne pristilbodet blir halde uendra. */
+@media screen {
+  :root {
+    --entry-ink:#142c20;
+    --entry-label:#173b29;
+    --entry-border:#70ad86;
+    --entry-focus:#13844f;
+    --entry-tint:#f4fff8;
+    --passive-surface:#e9efeb;
+    --passive-ink:#52645a;
+  }
+
+  /* Visuell ro i dei passive områda, utan å gjere tekstar uleselege. */
+  .page-description,
+  .card-heading p:last-child,
+  .smart-example,
+  .quiet-hint,
+  .question-why,
+  .question-text small,
+  .topbar-private,
+  .op-preview span,
+  .table-card .card-heading p:last-child {
+    color:var(--passive-ink);
+  }
+  .sidebar .side-ico,
+  .sidebar .link-trailing,
+  .breadcrumbs,
+  .breadcrumb-separator,
+  .sidebar-more {opacity:.64}
+  .side-link-active .side-ico {opacity:1}
+  .section-icon {
+    background:#e4ebe7;
+    color:#45675a;
+    border:1px solid #d5e1da;
+  }
+  .card-eyebrow {color:#4b8162}
+  .warning-banner {
+    background:#e6efe8;
+    border-color:#cbded0;
+    color:#4d6454;
+  }
+  .warning-icon {background:#ceded1;color:#245738}
+
+  /* Kvit, lysande arbeidsflate – sterkare kant og mørkare tekst enn støtteinfomasjon. */
+  .form-grid .field > span,
+  .ordered-fields .field > span,
+  .quote-settings .field > span,
+  .operation-field > span,
+  .smart-card .field > span {
+    color:var(--entry-label);
+    font-weight:800;
+    font-size:12px;
+    letter-spacing:.01em;
+  }
+  .field input:not([type="checkbox"]),
+  .field select,
+  .field textarea,
+  .operation-field input,
+  .operation-field select,
+  .question-answer input,
+  .question-answer select,
+  .question-answer textarea {
+    background-color:#fff;
+    border:2px solid var(--entry-border);
+    color:var(--entry-ink);
+    font-weight:650;
+    box-shadow:0 1px 2px rgba(20,77,44,.05),0 0 0 3px rgba(255,255,255,.68);
+    min-height:49px;
+    border-radius:9px;
+    transition:border-color .15s, box-shadow .15s, background-color .15s;
+  }
+  .field textarea,
+  .question-answer textarea {min-height:95px}
+  .field input::placeholder,
+  .field textarea::placeholder,
+  .question-answer textarea::placeholder {
+    color:#66786d;
+    font-weight:450;
+    opacity:1;
+  }
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus,
+  .operation-field input:focus,
+  .operation-field select:focus,
+  .question-answer input:focus,
+  .question-answer select:focus,
+  .question-answer textarea:focus {
+    outline:3px solid rgba(27,167,99,.20);
+    outline-offset:1px;
+    border-color:var(--entry-focus);
+    background-color:var(--entry-tint);
+    box-shadow:0 0 0 4px rgba(27,167,99,.13), 0 2px 8px rgba(23,91,55,.09);
+  }
+  .field input:disabled,
+  .field select:disabled,
+  .field textarea:disabled,
+  .operation-field input:disabled,
+  .operation-field select:disabled,
+  .question-answer input:disabled,
+  .question-answer select:disabled,
+  .question-answer textarea:disabled {
+    border-color:#bdc9c0;
+    background:#dfe7e1;
+    box-shadow:none;
+    color:#5b6a60;
+    cursor:not-allowed;
+  }
+  /* Fast sats er med vilje låst og skal ikkje sjå redigerbar ut. */
+  #saleHourly[readonly] {
+    background:#e0ebe4;
+    border-color:#acbeb0;
+    box-shadow:none;
+    color:#325641;
+  }
+
+  /* Kolonne 2 skal vere den tydelegaste: her skal brukaren skrive/velje. */
+  .guided-card {
+    background:#f5f8f5;
+    border:1px solid #d6e2d9;
+  }
+  .guided-block h3 {color:#173d29}
+  .question-table {
+    border:1px solid #c7d9cc;
+    background:#e8efea;
+  }
+  .question-table-head {
+    background:#19382a;
+    color:#f9fff9;
+  }
+  .question-table-head span:nth-child(2){
+    background:#e4f5e8;
+    border:1px solid #a9d3b5;
+    color:#173d29;
+    border-radius:6px;
+    padding:8px 9px;
+    margin:-8px -9px;
+    font-weight:900;
+    letter-spacing:.02em;
+  }
+  .question-row,
+  .question-row:nth-child(odd) {
+    background:#e8eee9;
+    border-bottom:1px solid #d5e1d8;
+  }
+  .question-row .question-text b {
+    color:#34483b;
+    font-weight:700;
+  }
+  .question-row .question-text small,
+  .question-row .question-why {color:#53685b}
+  .question-row .question-answer {
+    background:var(--entry-tint);
+    padding:6px;
+    border:1px solid #bddbc6;
+    border-radius:10px;
+    min-width:0;
+  }
+  .question-row .question-answer input,
+  .question-row .question-answer select,
+  .question-row .question-answer textarea {
+    width:100%;
+    min-width:0;
+    border-color:#4e9c70;
+    background-color:#fff;
+    color:#10341f;
+    font-size:14px;
+    font-weight:750;
+  }
+  .question-row:focus-within {
+    background:#e1f2e7;
+  }
+  .question-row:focus-within .question-answer {
+    background:#ddf6e6;
+    border-color:#47a76d;
+  }
+  .manual-question,
+  .manual-question:nth-child(odd){
+    background:#eaece8!important;
+  }
+  .manual-question .question-answer{background:#f5f8f4}
+  .manual-question .question-why{color:#656a57}
+
+  /* Dei sekundære arbeidskorta får rolegare flater, med klare inputfelt. */
+  .op-card {background:#eef3ef;border-color:#d7e4da}
+  .op-extra-fields {background:#e7eee8;border-color:#d1e2d5}
+  .fine-tuning {background:#e9efeb;border-color:#d4e1d8}
+  .fine-tuning summary {color:#40584a}
+  .operation-field input,
+  .operation-field select {background-color:#fff}
+  .smart-card{
+    background:#eff4f0;
+    border-color:#d3e4d7;
+  }
+  .smart-card textarea,
+  .quote-settings textarea{background:#fff}
+
+  .btn-primary {
+    background:#137b4c;
+    border-color:#0e6f42;
+    color:#fff;
+    box-shadow:0 2px 6px rgba(15,84,49,.15);
+  }
+  .btn-primary:hover {background:#0c633b}
+  .btn-outline,
+  .btn-add {border-color:#9abda7;color:#234936}
+  .btn:disabled {opacity:.58;box-shadow:none}
+
+  /* Ein kundetilbod-preview skal halde sitt eige nøytrale dokumentuttrykk. */
+  .official-quote .quote-doc-header,
+  .official-quote .quote-table {color:#263444}
+}
+@media screen and (max-width:760px) {
+  /* Store treffflater og kontrast på iPhone, utan horisontal scrolling. */
+  .guided-card {padding:16px}
+  .question-table-head,
+  .question-row {
+    grid-template-columns:minmax(0, .95fr) minmax(0, 1.05fr);
+    gap:10px;
+  }
+  .question-row{padding:11px 10px}
+  .question-row .question-answer{padding:5px}
+  .question-row .question-answer input,
+  .question-row .question-answer select,
+  .question-row .question-answer textarea {font-size:16px;min-height:48px}
+  .field input,
+  .field textarea,
+  .field select,
+  .operation-field input,
+  .operation-field select {font-size:16px;min-height:48px}
+  .question-why {grid-column:1/-1;font-size:11px}
+  .question-table-head span:nth-child(2){margin:-6px -5px;padding:7px 5px}
+}
+@media screen and (max-width:390px){
+  .question-row,
+  .question-table-head {gap:7px}
+  .question-row .question-text b {font-size:11.5px}
+  .question-row .question-answer select {padding-right:23px;background-position:right 5px center}
+  .guided-card {padding:12px}
+}
+@media (prefers-reduced-motion:reduce){
+  .field input,.field select,.field textarea,
+  .operation-field input,.operation-field select,
+  .question-answer input,.question-answer select,
+  .question-answer textarea {transition:none}
+}
