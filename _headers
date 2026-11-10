@@ -33,3 +33,9 @@
 
 /maintenance.js
   Cache-Control: no-store, max-age=0
+
+# Berre den eksisterande admin-kundeportalen kan visast inne i oppdragsvisninga.
+/admin/kundeportal.html
+  X-Frame-Options: SAMEORIGIN
+  Content-Security-Policy: frame-ancestors 'self'
+  Cache-Control: no-store, max-age=0

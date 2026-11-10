@@ -4,6 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Kundeportal | Sørgulen Industriservice</title>
+  <script>
+    // Berre innbakt i ei side frå same opphav; vanleg kundeportal-admin er uendra.
+    if (window.parent !== window && new URLSearchParams(window.location.search).get("embed") === "1") {
+      document.documentElement.classList.add("portal-embed");
+    }
+  </script>
   <link rel="stylesheet" href="admin.css">
   <link rel="stylesheet" href="admin-shell.css?v=20261028-simple1">
   <link rel="stylesheet" href="admin-pages.css">
@@ -12,6 +18,7 @@
   <link rel="stylesheet" href="kundeportal-mobile.css">
   <link rel="stylesheet" href="kundeportal-publish.css">
   <link rel="stylesheet" href="kundeportal-corrections.css?v=20260917-min-jobb2">
+  <link rel="stylesheet" href="kundeportal-embedded.css?v=20261110">
 </head>
 <body>
   <div id="adminShell" data-page="portal"></div>
@@ -81,7 +88,7 @@
 
   <script src="../config.js"></script>
   <script src="portal-image-upload.js"></script>
-  <script src="kundeportal.js?v=20260918-purchase1"></script>
+  <script src="kundeportal.js?v=20261110-embed1"></script>
   <script src="kundeportal-guard.js"></script>
   <script src="kundeportal-mobile.js"></script>
   <script src="kundeportal-publish.js?v=20261004-audit1"></script>

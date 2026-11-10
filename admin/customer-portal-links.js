@@ -1,7 +1,7 @@
 (() => {
   const style = document.createElement("style");
   style.textContent = `
-    .customer-portal-link { margin-left: 8px; }
+    .customer-portal-link { margin-left: 8px; cursor: pointer; font: inherit; }
     .history-action .customer-portal-link { display: inline-block; margin-top: 5px; }
     @media (max-width: 640px) { .history-action .customer-portal-link { margin-left: 0; } }
   `;
@@ -16,9 +16,11 @@
       const openButton = card.querySelector(".open-job-detail[data-id]");
       const action = card.querySelector(".history-action");
       if (!openButton || !action || action.querySelector(".customer-portal-link")) return;
-      const link = document.createElement("a");
-      link.className = "details-link customer-portal-link";
-      link.href = portalHref(openButton.dataset.id);
+      const link = document.createElement("button");
+      link.type = "button";
+      link.className = "details-link customer-portal-link open-job-detail";
+      link.dataset.id = openButton.dataset.id;
+      link.dataset.openPortalOrder = openButton.dataset.id;
       link.textContent = "Kundeportal";
       action.appendChild(link);
     });
@@ -29,9 +31,11 @@
     const openButton = content?.querySelector(".open-job-detail[data-id]");
     const controls = content?.querySelector(".meter-controls");
     if (!openButton || !controls || controls.querySelector(".customer-portal-link")) return;
-    const link = document.createElement("a");
-    link.className = "secondary-btn customer-portal-link";
-    link.href = portalHref(openButton.dataset.id);
+    const link = document.createElement("button");
+    link.type = "button";
+    link.className = "secondary-btn customer-portal-link open-job-detail";
+    link.dataset.id = openButton.dataset.id;
+    link.dataset.openPortalOrder = openButton.dataset.id;
     link.textContent = "Kundeportal";
     controls.appendChild(link);
   }

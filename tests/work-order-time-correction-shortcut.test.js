@@ -13,7 +13,7 @@ test("arbeidstidskortet viser en tydelig knapp for korrigering", () => {
   assert.match(field, /timeCorrectionMarkup\(order\)/);
   assert.match(field, /data-field-correct-time/);
   assert.match(css, /\.field-correct-time/);
-  assert.match(html, /work-order-field\.js\?v=20261102-finance1/);
+  assert.match(html, /work-order-field\.js\?v=20261110-portal1/);
 });
 
 test("korrigering åpner rett økt eller lar brukeren velge mellom flere", () => {

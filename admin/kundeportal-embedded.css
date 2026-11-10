@@ -1,0 +1,33 @@
+/* Kundeportalen vist inni eitt konkret oppdrag (ingen ny backend eller lenkje). */
+html.portal-embed, html.portal-embed body { overflow-x: hidden; }
+html.portal-embed #adminShell,
+html.portal-embed .portal-page-header,
+html.portal-embed .portal-project-picker,
+html.portal-embed .availability-details { display: none !important; }
+html.portal-embed .portal-admin-main {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0 0 12px;
+}
+html.portal-embed .portal-admin-layout {
+  display: block;
+  min-width: 0;
+}
+html.portal-embed .portal-editor-empty { min-height: 180px; }
+html.portal-embed #portalEditor {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: none;
+}
+html.portal-embed #portalStatus { margin-bottom: 8px; }
+html.portal-embed .portal-form-grid { min-width: 0; }
+@media (max-width: 640px) {
+  html.portal-embed #portalEditor { padding: 12px; }
+  html.portal-embed .portal-form-grid { grid-template-columns: 1fr; }
+  html.portal-embed .portal-field.full { grid-column: auto; }
+}
