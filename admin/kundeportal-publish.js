@@ -1,4 +1,6 @@
 (() => {
+  // Fullskjerm har ei eiga samla lagrelinje. Ikkje lag ein ekstra publiseringsknapp.
+  if (document.documentElement?.classList?.contains("portal-fullscreen")) return;
   const editor = document.getElementById("portalEditor");
   const projectList = document.getElementById("projectList");
   const statusBox = document.getElementById("portalStatus");

@@ -1,0 +1,340 @@
+/* Kundeportal for eitt oppdrag: eiga skjermflate, ikkje eit innebygd panel. */
+html.portal-fullscreen, html.portal-fullscreen body {
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+}
+html.portal-fullscreen body {
+  padding-bottom: calc(116px + env(safe-area-inset-bottom));
+  background: #0b111a;
+  color: #f3f7fb;
+}
+html.portal-fullscreen #adminShell,
+html.portal-fullscreen .portal-page-header,
+html.portal-fullscreen .portal-project-picker,
+html.portal-fullscreen .availability-details,
+html.portal-fullscreen #portalPublishBar {
+  display: none !important;
+}
+html.portal-fullscreen .portal-admin-main {
+  width: min(100% - 20px, 880px);
+  max-width: 880px;
+  min-width: 0;
+  margin: 0 auto;
+  padding: 0 0 28px;
+}
+html.portal-fullscreen .portal-admin-layout {
+  display: block;
+  min-width: 0;
+}
+html.portal-fullscreen #portalEditor {
+  min-width: 0;
+  width: 100%;
+  margin: 12px 0;
+  border-radius: 16px;
+  box-sizing: border-box;
+}
+html.portal-fullscreen #portalEditor > section,
+html.portal-fullscreen #portalSettingsForm {
+  scroll-margin-top: 190px;
+}
+html.portal-fullscreen #portalStatus {
+  margin: 12px 0 4px;
+}
+html.portal-fullscreen .portal-editor-empty { min-height: 180px; }
+html.portal-fullscreen #savePortalSettings,
+html.portal-fullscreen [data-save-procurement="researching"],
+html.portal-fullscreen #uploadPortalImage {
+  display: none !important;
+}
+html.portal-fullscreen .portal-fullscreen-header {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  box-sizing: border-box;
+  padding: calc(12px + env(safe-area-inset-top)) 14px 12px;
+  border-bottom: 1px solid #36465b;
+  border-radius: 0 0 12px 12px;
+  background: rgba(12, 20, 31, .98);
+}
+html.portal-fullscreen .portal-fullscreen-header[hidden] { display: none !important; }
+html.portal-fullscreen #portalReturnOrder {
+  display: inline-flex;
+  align-items: center;
+  min-height: 43px;
+  padding: 0 12px;
+  border: 1px solid #3c546f;
+  border-radius: 10px;
+  background: #1b2a3b;
+  color: #e6f0fa;
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+}
+html.portal-fullscreen .portal-fullscreen-heading {
+  margin-top: 12px;
+  min-width: 0;
+}
+html.portal-fullscreen .portal-fullscreen-heading span {
+  color: #91a4ba;
+  font-size: 10px;
+  letter-spacing: .08em;
+  font-weight: 800;
+}
+html.portal-fullscreen .portal-fullscreen-heading h1 {
+  margin: 4px 0 2px;
+  font-size: clamp(21px, 4vw, 28px);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+html.portal-fullscreen .portal-fullscreen-heading p {
+  margin: 0;
+  color: #acbdcf;
+  font-size: 13px;
+}
+html.portal-fullscreen .portal-fullscreen-link-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid #33475d;
+  border-radius: 12px;
+  background: #172639;
+}
+html.portal-fullscreen .portal-fullscreen-link-summary > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+html.portal-fullscreen .portal-fullscreen-link-summary strong {
+  font-size: 13px;
+  color: #f1f7fc;
+}
+html.portal-fullscreen .portal-fullscreen-link-summary span {
+  font-size: 12px;
+  color: #a6bbcd;
+}
+html.portal-fullscreen #portalFullscreenCopyLink {
+  border: 1px solid #526c85;
+  border-radius: 9px;
+  min-height: 40px;
+  padding: 8px 12px;
+  background: #243b54;
+  color: #f0f6fc;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+html.portal-fullscreen #portalFullscreenCopyLink:disabled {
+  opacity: .48;
+  cursor: not-allowed;
+}
+html.portal-fullscreen .portal-fullscreen-nav {
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 10px 14px;
+  border-bottom: 1px solid #344b62;
+  border-radius: 0 0 12px 12px;
+  background: rgba(12, 20, 31, .98);
+  box-shadow: 0 6px 18px rgba(0,0,0,.18);
+}
+html.portal-fullscreen .portal-fullscreen-nav [role="tab"] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 45px;
+  padding: 8px 7px;
+  border: 1px solid #3b516b;
+  border-radius: 10px;
+  background: #172537;
+  color: #cedce9;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+  cursor: pointer;
+}
+html.portal-fullscreen .portal-fullscreen-nav [role="tab"][aria-selected="true"] {
+  background: #255578;
+  border-color: #77bde3;
+  color: #fff;
+}
+html.portal-fullscreen .portal-fullscreen-nav [role="tab"]:focus-visible,
+html.portal-fullscreen #portalFullscreenCopyLink:focus-visible {
+  outline: 3px solid #9de3ff;
+  outline-offset: 2px;
+}
+/* Synlegheitsinnstillingar skal alltid stå som lesbare, klikkbare heile rader. */
+html.portal-fullscreen #portalVisibilitySettings .portal-visibility {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+html.portal-fullscreen #portalVisibilitySettings .portal-check {
+  display: flex !important;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  min-height: 54px;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid #34485b;
+  border-radius: 11px;
+  background: #162435;
+  color: #f0f6fb;
+  font-size: 14px;
+  line-height: 1.35;
+  text-align: left;
+}
+html.portal-fullscreen #portalVisibilitySettings .portal-check input[type="checkbox"] {
+  flex: 0 0 auto;
+  min-width: 18px;
+  min-height: 18px;
+}
+html.portal-fullscreen #portalVisibilitySettings .portal-check.portal-switch-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 12px !important;
+  min-height: 72px;
+}
+html.portal-fullscreen #portalVisibilitySettings .portal-check:not(.portal-switch-row) input[type="checkbox"] {
+  width: 20px !important;
+  min-width: 20px;
+  height: 20px !important;
+  min-height: 20px;
+  flex: 0 0 20px;
+  margin: 0;
+}
+html.portal-fullscreen #portalVisibilitySettings .portal-check.portal-switch-row input[type="checkbox"] {
+  width: 52px !important;
+  min-width: 52px;
+  height: 30px !important;
+  flex: 0 0 52px;
+}
+html.portal-fullscreen .portal-work-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 5px 12px;
+  margin: 0 0 16px;
+  padding: 12px 13px;
+  border: 1px solid #34495d;
+  border-radius: 11px;
+  background: #162436;
+}
+html.portal-fullscreen .portal-work-status span {
+  font-size: 12px;
+  color: #b9cad9;
+}
+html.portal-fullscreen .portal-work-status strong {
+  margin-left: auto;
+  font-size: 14px;
+  color: #f4f9fd;
+}
+html.portal-fullscreen .portal-work-status small {
+  flex: 1 0 100%;
+  font-size: 11px;
+  color: #92a8b9;
+}
+html.portal-fullscreen #portalEditor > hr,
+html.portal-fullscreen #portalEditor .portal-editor-head {
+  display: none !important;
+}
+html.portal-fullscreen #portalEditor [data-portal-tab-section][hidden],
+html.portal-fullscreen #portalSettingsForm[hidden] {
+  display: none !important;
+}
+html.portal-fullscreen #portalSettingsForm > [data-portal-tab-section] {
+  min-width: 0;
+}
+html.portal-fullscreen #portalEditor > [data-portal-tab-section],
+html.portal-fullscreen #portalSettingsForm > [data-portal-tab-section] {
+  scroll-margin-top: 290px;
+}
+html.portal-fullscreen #portalEditor > [data-portal-tab-section] > h3,
+html.portal-fullscreen #portalSettingsForm > [data-portal-tab-section] > h3 {
+  margin: 0 0 15px;
+  color: #f3f8fd;
+  font-size: 19px;
+}
+html.portal-fullscreen .portal-fullscreen-dock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 110;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px max(14px, calc((100vw - 880px) / 2));
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  border-top: 1px solid #32465a;
+  background: rgba(13, 21, 32, .98);
+  box-shadow: 0 -8px 25px rgba(0, 0, 0, .25);
+  box-sizing: border-box;
+}
+html.portal-fullscreen .portal-fullscreen-dock[hidden] { display: none !important; }
+html.portal-fullscreen #portalFullscreenSaveStatus {
+  min-width: 0;
+  font-size: 12px;
+  color: #aebfce;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+html.portal-fullscreen #portalFullscreenSave {
+  min-height: 52px;
+  padding: 12px 19px;
+  border: 0;
+  border-radius: 12px;
+  background: #15c987;
+  color: #05140e;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+}
+html.portal-fullscreen #portalFullscreenSave:disabled {
+  background: #364758;
+  color: #c1ccd6;
+  opacity: .75;
+  cursor: not-allowed;
+}
+html.portal-fullscreen #portalEditor .portal-admin-card,
+html.portal-fullscreen #portalEditor { box-shadow: none; }
+@media (max-width: 640px) {
+  html.portal-fullscreen .portal-admin-main { width: calc(100% - 12px); }
+  html.portal-fullscreen .portal-fullscreen-header { padding-left: 10px; padding-right: 10px; }
+  html.portal-fullscreen #portalEditor { padding: 13px 12px; }
+  html.portal-fullscreen .portal-fullscreen-dock {
+    grid-template-columns: 1fr;
+    gap: 7px;
+    padding: 9px 12px calc(9px + env(safe-area-inset-bottom));
+  }
+  html.portal-fullscreen #portalFullscreenSave { width: 100%; }
+  html.portal-fullscreen .portal-fullscreen-heading h1 { font-size: 22px; }
+  html.portal-fullscreen .portal-fullscreen-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 8px 10px;
+  }
+  html.portal-fullscreen .portal-fullscreen-nav [role="tab"] {
+    min-height: 43px;
+    font-size: 13px;
+  }
+  html.portal-fullscreen .portal-fullscreen-link-summary { margin-top: 9px; }
+  html.portal-fullscreen #portalEditor { margin-top: 10px; }
+}

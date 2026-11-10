@@ -262,6 +262,11 @@
     if (!selectedWorkOrder) return;
     const portal = { ...portalDefaults(), ...(selectedPortal || {}) };
     const customer = selectedWorkOrder.customerSnapshot || {};
+    const workStatus = selectedWorkOrder.workflow?.status || selectedWorkOrder.status || "";
+    const workStatusLabel = ({
+      planned: "Planlagt", active: "Pågår", paused: "Pausa",
+      stopped: "Stoppa", completed: "Ferdig", cancelled: "Avbrote",
+    })[workStatus] || "Ikkje angitt";
     const linkActive = Boolean(portal.enabled && portal.tokenHint);
     latestPortalUrl = buildPortalUrl(portal.shareToken) || latestPortalUrl;
 
@@ -279,8 +284,8 @@
         </div>
       </div>
 
-      <section>
-        <h3>1. Kundelenke</h3>
+      <section id="portalLinkSettings" data-portal-tab-section="settings" role="tabpanel" aria-labelledby="portalTabSettings">
+        <h3>Kundelenkje</h3>
         <p class="muted">Denne lenken åpner kun dette prosjektet. Kunden kan bruke samme lenke gjennom hele oppdraget.</p>
         ${linkActive ? `<p><strong>Aktiv sikker lenke</strong> · slutter på …${escapeHtml(portal.tokenHint)}</p>` : ""}
         <div class="portal-actions">
@@ -293,7 +298,13 @@
       <hr>
 
       <form id="portalSettingsForm">
-        <h3>2. Det viktigste kunden ser</h3>
+        <div id="portalUpdateFields" data-portal-tab-section="update" role="tabpanel" aria-labelledby="portalTabUpdate">
+          <h3>Oppdatering til kunden</h3>
+          <div class="portal-work-status">
+            <span>Oppdragsstatus</span>
+            <strong>${escapeHtml(workStatusLabel)}</strong>
+            <small>Status blir endra på sjølve oppdraget.</small>
+          </div>
         ${portal.scheduleExpired ? '<div class="portal-warning"><strong>Neste arbeidsperiode er passert.</strong><span>Kunden ser ikke den gamle datoen. Sett en ny dato eller bruk «Foreslå neste mulighet».</span></div>' : ""}
         <div class="portal-form-grid">
           <div class="portal-field"><label for="nextWorkStart">Fra dato</label><input id="nextWorkStart" type="date" value="${escapeHtml(portal.nextWorkStart)}"></div>
@@ -303,7 +314,9 @@
           <div class="portal-field full"><label for="customerMessage">Siste oppdatering til kunden</label><textarea id="customerMessage" maxlength="1500" placeholder="F.eks. Parkeringsområdet er ferdig. Neste gang fortsetter jeg langs garasjen.">${escapeHtml(portal.customerMessage)}</textarea></div>
         </div>
 
-        <h3>3. Hva kunden får se</h3>
+        </div>
+        <div id="portalVisibilitySettings" data-portal-tab-section="settings" role="tabpanel" aria-labelledby="portalTabSettings">
+          <h3>Synlegheit på kundesida</h3>
         <p class="muted">Tomme seksjoner vises aldri. Disse bryterne bestemmer bare om informasjon som faktisk finnes kan vises.</p>
         <div class="portal-visibility">
           <label class="portal-check"><input id="showHours" type="checkbox" ${portal.showHours ? "checked" : ""}> Arbeidstid hittil</label>
@@ -311,20 +324,21 @@
           <label class="portal-check"><input id="showImages" type="checkbox" ${portal.showImages ? "checked" : ""}> Prosjektbilder</label>
         </div>
         <div class="portal-actions"><button id="savePortalSettings" type="submit" class="primary-btn">Lagre kundeoppdatering</button></div>
+        </div>
       </form>
 
       <hr>
 
-      <section>
-        <h3>4. Innkjøp kunden eventuelt skal godkjenne</h3>
+      <section id="portalPurchasesPanel" data-portal-tab-section="procurement" role="tabpanel" aria-labelledby="portalTabProcurement">
+        <h3>Innkjøp og godkjenningar</h3>
         ${procurementCards(portal.procurements)}
         ${procurementForm(portal.procurements)}
       </section>
 
       <hr>
 
-      <section>
-        <h3>5. Bilder kunden kan se</h3>
+      <section id="portalImagesPanel" data-portal-tab-section="images" role="tabpanel" aria-labelledby="portalTabImages">
+        <h3>Bilete og dokumentasjon</h3>
         <div class="portal-form-grid">
           <div class="portal-field"><label for="portalImage">Velg bilde</label><input id="portalImage" type="file" accept="image/jpeg,image/png,image/webp,image/heic"></div>
           <div class="portal-field"><label for="portalImageCaption">Kort bildetekst</label><input id="portalImageCaption" maxlength="300" placeholder="F.eks. Området etter første rengjøring"></div>
@@ -438,6 +452,7 @@
       document.getElementById("nextWorkStart").value = data.suggestion.start;
       document.getElementById("nextWorkEnd").value = data.suggestion.end;
       document.getElementById("nextWorkMode").value = "expected";
+      document.getElementById("nextWorkMode").dispatchEvent(new Event("change", { bubbles: true }));
       setStatus(`Forslag: ${formatDate(data.suggestion.start)}${data.suggestion.end !== data.suggestion.start ? ` – ${formatDate(data.suggestion.end)}` : ""}. Kontroller og trykk Lagre.`, "success");
     } catch (error) { setStatus(error.message, "error"); }
   }
@@ -679,6 +694,109 @@
     window.addEventListener("load", reportHeight);
     window.requestAnimationFrame(reportHeight);
   }
+
+  // Samla lagring i fullskjerm: hentar alt frå skjemaet før fyrste API-kall.
+  // Eksisterande autoriserte ruter blir nytta, utan automatisk SMS eller e-post.
+  async function saveFullscreenChanges(changes = {}) {
+    if (!selectedWorkOrder) throw new Error("Oppdraget er ikkje ferdig lasta.");
+    if (busy) throw new Error("Ei lagring pågår allereie.");
+    const kinds = ["settings", "procurement", "image"].filter((key) => changes[key]);
+    if (!kinds.length) return { saved: [], publicUpdated: false };
+
+    const orderId = encodeURIComponent(selectedWorkOrder._id);
+    const payload = changes.settings ? {
+      nextWorkStart: document.getElementById("nextWorkStart").value,
+      nextWorkEnd: document.getElementById("nextWorkEnd").value,
+      nextWorkMode: document.getElementById("nextWorkMode").value,
+      customerMessage: document.getElementById("customerMessage").value.trim(),
+      showHours: document.getElementById("showHours").checked,
+      showWorkHistory: document.getElementById("showWorkHistory").checked,
+      showImages: document.getElementById("showImages").checked,
+    } : null;
+
+    const draft = changes.procurement ? {
+      title: document.getElementById("procurementTitle")?.value.trim() || "",
+      supplier: document.getElementById("procurementSupplier")?.value.trim() || "",
+      customerNote: document.getElementById("procurementNote")?.value.trim() || "",
+      items: collectProcurementItems(),
+      status: "researching",
+    } : null;
+
+    if (draft && !draft.title) throw new Error("Gi innkjøpsutkastet eit namn før lagring.");
+    const imageInput = document.getElementById("portalImage");
+    const file = changes.image ? imageInput?.files?.[0] : null;
+    if (changes.image && !file) throw new Error("Vel eit bilete før du lagrar bildeteksten.");
+    if (file && !window.SorgulenPortalImageUpload?.prepare) throw new Error("Bildeopplasting er ikkje klar.");
+    const caption = file ? document.getElementById("portalImageCaption")?.value.trim() || "" : "";
+    const editId = editingProcurementId;
+    const existingDraft = editId
+      ? selectedPortal?.procurements?.find((item) => item.entryId === editId)
+      : null;
+    if (draft && editId && !existingDraft) throw new Error("Innkjøpet er endra av andre. Oppdater sida.");
+
+    busy = true;
+    const saved = [];
+    try {
+      // Klargjer fil før noko blir skrive til databasen.
+      const prepared = file ? await window.SorgulenPortalImageUpload.prepare(file) : null;
+      if (payload) {
+        const result = await apiFetch("/admin/customer-portal/" + orderId, {
+          method: "PATCH", body: JSON.stringify(payload),
+        });
+        selectedPortal = result.portal;
+        saved.push("kundeinnstillingar");
+      }
+      if (draft) {
+        const path = "/admin/customer-portal/" + orderId + "/procurements"
+          + (editId ? "/" + encodeURIComponent(editId) : "");
+        const result = await apiFetch(path, {
+          method: editId ? "PATCH" : "POST",
+          body: JSON.stringify(draft),
+        });
+        selectedPortal = result.portal;
+        editingProcurementId = null;
+        saved.push("internt innkjøpsutkast");
+      }
+      if (prepared) {
+        const result = await apiFetch("/admin/customer-portal/" + orderId + "/images", {
+          method: "POST",
+          body: JSON.stringify({ imageData: prepared.imageData, caption }),
+        });
+        selectedPortal = result.portal;
+        saved.push("prosjektbilete");
+      }
+      latestPortalUrl = buildPortalUrl(selectedPortal?.shareToken) || latestPortalUrl;
+      renderEditor();
+      if (payload) await loadAvailability().catch((err) => console.warn("Kunne ikkje oppdatere tilgjengelegheit:", err.message));
+      setStatus("Lagra: " + saved.join(", ") + ".", "success");
+      return { saved, publicUpdated: Boolean((payload || prepared) && selectedPortal?.enabled && selectedPortal?.tokenHint) };
+    } catch (error) {
+      // Ved delvis lagring skal vi ikkje la brukaren trykkje same knapp igjen og
+      // risikere eit duplikat. Vis verifisert status og last skjema på nytt.
+      if (saved.length) {
+        latestPortalUrl = buildPortalUrl(selectedPortal?.shareToken) || latestPortalUrl;
+        renderEditor();
+        const message = "Delvis lagra (" + saved.join(", ") + "). Resten vart ikkje lagra: " + error.message
+          + ". Kontroller felta og legg inn dei resterande endringane på nytt.";
+        setStatus(message, "error");
+        const partial = new Error(message);
+        partial.partialSaved = saved;
+        throw partial;
+      }
+      setStatus(error.message || "Lagring feila.", "error");
+      throw error;
+    } finally {
+      busy = false;
+    }
+  }
+
+  window.SorgulenPortalFullscreenAdmin = {
+    save: saveFullscreenChanges,
+    isReady: () => Boolean(selectedWorkOrder) && !busy,
+    linkIsActive: () => Boolean(selectedPortal?.enabled && selectedPortal?.tokenHint),
+    editingPublicProcurement: () => Boolean(editingProcurementId && selectedPortal?.procurements
+      ?.some((item) => item.entryId === editingProcurementId && !["researching", "cancelled"].includes(item.status))),
+  };
 
   document.addEventListener("DOMContentLoaded", async () => {
     try {

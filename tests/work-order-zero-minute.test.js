@@ -32,6 +32,6 @@ test("0-min økter er tydelig markert på mobil", () => {
 
 test("oppdrag henter fersk arbeidsloggkode", () => {
   assert.match(html, /field-ui-20261004-lock2/);
-  assert.match(html, /work-order-field\.css\?v=20261031-editclock1/);
-  assert.match(html, /work-order-field\.js\?v=20261110-portal2/);
+  assert.match(html, /work-order-field\.css\?v=20261110-portalnav1/);
+  assert.match(html, /work-order-field\.js\?v=20261110-fullscreen2/);
 });

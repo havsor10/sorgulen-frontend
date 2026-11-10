@@ -48,7 +48,10 @@
   }
 
   function removeRedundantRefresh() {
-    editor?.querySelector("#refreshSelectedPortal")?.remove();
+    // Korrigeringar treng denne oppdateringsknappen i fullskjerm.
+    if (!document.documentElement.classList.contains("portal-fullscreen")) {
+      editor?.querySelector("#refreshSelectedPortal")?.remove();
+    }
   }
 
   function improveEditorText() {
