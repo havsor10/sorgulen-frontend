@@ -262,6 +262,11 @@
     if (!selectedWorkOrder) return;
     const portal = { ...portalDefaults(), ...(selectedPortal || {}) };
     const customer = selectedWorkOrder.customerSnapshot || {};
+    const workStatus = selectedWorkOrder.workflow?.status || selectedWorkOrder.status || "";
+    const workStatusLabel = ({
+      planned: "Planlagt", active: "Pågår", paused: "Pausa",
+      stopped: "Stoppa", completed: "Ferdig", cancelled: "Avbrote",
+    })[workStatus] || "Ikkje angitt";
     const linkActive = Boolean(portal.enabled && portal.tokenHint);
     latestPortalUrl = buildPortalUrl(portal.shareToken) || latestPortalUrl;
 
@@ -279,8 +284,8 @@
         </div>
       </div>
 
-      <section>
-        <h3>1. Kundelenke</h3>
+      <section id="portalLinkSettings" data-portal-tab-section="settings" role="tabpanel" aria-labelledby="portalTabSettings">
+        <h3>Kundelenkje</h3>
         <p class="muted">Denne lenken åpner kun dette prosjektet. Kunden kan bruke samme lenke gjennom hele oppdraget.</p>
         ${linkActive ? `<p><strong>Aktiv sikker lenke</strong> · slutter på …${escapeHtml(portal.tokenHint)}</p>` : ""}
         <div class="portal-actions">
@@ -293,7 +298,13 @@
       <hr>
 
       <form id="portalSettingsForm">
-        <h3>2. Det viktigste kunden ser</h3>
+        <div id="portalUpdateFields" data-portal-tab-section="update" role="tabpanel" aria-labelledby="portalTabUpdate">
+          <h3>Oppdatering til kunden</h3>
+          <div class="portal-work-status">
+            <span>Oppdragsstatus</span>
+            <strong>${escapeHtml(workStatusLabel)}</strong>
+            <small>Status blir endra på sjølve oppdraget.</small>
+          </div>
         ${portal.scheduleExpired ? '<div class="portal-warning"><strong>Neste arbeidsperiode er passert.</strong><span>Kunden ser ikke den gamle datoen. Sett en ny dato eller bruk «Foreslå neste mulighet».</span></div>' : ""}
         <div class="portal-form-grid">
           <div class="portal-field"><label for="nextWorkStart">Fra dato</label><input id="nextWorkStart" type="date" value="${escapeHtml(portal.nextWorkStart)}"></div>
@@ -303,7 +314,9 @@
           <div class="portal-field full"><label for="customerMessage">Siste oppdatering til kunden</label><textarea id="customerMessage" maxlength="1500" placeholder="F.eks. Parkeringsområdet er ferdig. Neste gang fortsetter jeg langs garasjen.">${escapeHtml(portal.customerMessage)}</textarea></div>
         </div>
 
-        <h3>3. Hva kunden får se</h3>
+        </div>
+        <div id="portalVisibilitySettings" data-portal-tab-section="settings" role="tabpanel" aria-labelledby="portalTabSettings">
+          <h3>Synlegheit på kundesida</h3>
         <p class="muted">Tomme seksjoner vises aldri. Disse bryterne bestemmer bare om informasjon som faktisk finnes kan vises.</p>
         <div class="portal-visibility">
           <label class="portal-check"><input id="showHours" type="checkbox" ${portal.showHours ? "checked" : ""}> Arbeidstid hittil</label>
@@ -311,20 +324,21 @@
           <label class="portal-check"><input id="showImages" type="checkbox" ${portal.showImages ? "checked" : ""}> Prosjektbilder</label>
         </div>
         <div class="portal-actions"><button id="savePortalSettings" type="submit" class="primary-btn">Lagre kundeoppdatering</button></div>
+        </div>
       </form>
 
       <hr>
 
-      <section>
-        <h3>4. Innkjøp kunden eventuelt skal godkjenne</h3>
+      <section id="portalPurchasesPanel" data-portal-tab-section="procurement" role="tabpanel" aria-labelledby="portalTabProcurement">
+        <h3>Innkjøp og godkjenningar</h3>
         ${procurementCards(portal.procurements)}
         ${procurementForm(portal.procurements)}
       </section>
 
       <hr>
 
-      <section>
-        <h3>5. Bilder kunden kan se</h3>
+      <section id="portalImagesPanel" data-portal-tab-section="images" role="tabpanel" aria-labelledby="portalTabImages">
+        <h3>Bilete og dokumentasjon</h3>
         <div class="portal-form-grid">
           <div class="portal-field"><label for="portalImage">Velg bilde</label><input id="portalImage" type="file" accept="image/jpeg,image/png,image/webp,image/heic"></div>
           <div class="portal-field"><label for="portalImageCaption">Kort bildetekst</label><input id="portalImageCaption" maxlength="300" placeholder="F.eks. Området etter første rengjøring"></div>

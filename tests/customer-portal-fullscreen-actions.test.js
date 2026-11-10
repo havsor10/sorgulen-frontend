@@ -8,6 +8,19 @@ const source = fs.readFileSync(path.join(__dirname, "..", "admin/kundeportal-ful
 const id = "0123456789abcdef01234567";
 function setup(options = {}) {
   const editorHandlers = {};
+  const tabNames = ["update", "procurement", "images", "settings"];
+  const tabNodes = options.tabs ? tabNames.map((name) => ({
+    dataset: { portalTab: name }, tabIndex: 0, attributes: {},
+    handlers: {},
+    setAttribute(key, value) { this.attributes[key] = value; },
+    focus() { this.focused = true; },
+    addEventListener(key, callback) { this.handlers[key] = callback; },
+  })) : [];
+  const paneNodes = options.tabs
+    ? ["settings", "update", "settings", "procurement", "images"]
+      .map((name) => ({ dataset: { portalTabSection: name }, hidden: false }))
+    : [];
+  const mockForm = { hidden: false };
   const buttonHandlers = {};
   const backHandlers = {};
   const windowHandlers = {};
@@ -27,7 +40,8 @@ function setup(options = {}) {
   const editor = {
     children: [],
     addEventListener(type, cb) { editorHandlers[type] = cb; },
-    querySelector() { return null; },
+    querySelector(selector) { return options.tabs && selector === "#portalSettingsForm" ? mockForm : null; },
+    querySelectorAll(selector) { return options.tabs && selector === "[data-portal-tab-section]" ? paneNodes : []; },
   };
   const elements = {
     portalFullscreenHeader: header,
@@ -55,7 +69,7 @@ function setup(options = {}) {
     document: {
       documentElement: { classList: { contains: (x) => x === "portal-fullscreen" } },
       getElementById: (name) => elements[name],
-      querySelectorAll: () => [],
+      querySelectorAll: (selector) => options.tabs && selector === "[data-portal-tab]" ? tabNodes : [],
       addEventListener: (type, cb) => { documentHandlers[type] = cb; },
     },
     window: {
@@ -83,7 +97,7 @@ function setup(options = {}) {
   return {
     input, savedCalls, confirmations, alerts, saveButton, buttonHandlers,
     back, backHandlers, documentHandlers, windowHandlers, editorHandlers, header, dock,
-    saveStatus, statusBox,
+    saveStatus, statusBox, tabNodes, paneNodes, mockForm,
   };
 }
 
@@ -169,4 +183,49 @@ test("browser back warns while edits are unsaved and does not warn after save", 
   prevented = false;
   s.windowHandlers.beforeunload({ preventDefault() { prevented = true; } });
   assert.equal(prevented, false);
+});
+
+test("four real tabs show exactly one content type without deleting other form data", async () => {
+  const s = setup({ tabs: true });
+  const visible = () => s.paneNodes.filter((p) => !p.hidden).map((p) => p.dataset.portalTabSection);
+  assert.deepEqual(visible(), ["update"]);
+  assert.equal(s.mockForm.hidden, false);
+  assert.equal(s.tabNodes[0].attributes["aria-selected"], "true");
+  assert.equal(s.tabNodes[1].attributes["aria-selected"], "false");
+
+  s.input("settings");
+  s.tabNodes[1].handlers.click();
+  assert.deepEqual(visible(), ["procurement"]);
+  assert.equal(s.mockForm.hidden, true);
+  assert.equal(s.saveButton.disabled, false, "dirty changes are preserved across tabs");
+
+  s.tabNodes[2].handlers.click();
+  assert.deepEqual(visible(), ["images"]);
+  s.tabNodes[3].handlers.click();
+  assert.deepEqual(visible(), ["settings", "settings"]);
+  assert.equal(s.mockForm.hidden, false);
+  assert.equal(s.tabNodes[3].attributes["aria-selected"], "true");
+
+  s.tabNodes[0].handlers.click();
+  assert.deepEqual(visible(), ["update"]);
+  assert.equal(s.saveButton.disabled, false);
+  await s.buttonHandlers.click();
+  assert.equal(s.savedCalls.length, 1);
+  assert.equal(s.savedCalls[0].settings, true);
+  assert.equal(s.saveButton.disabled, true);
+});
+
+test("tab navigation supports arrow keys, Home and End without exposing other panels", () => {
+  const s = setup({ tabs: true });
+  let prevented = 0;
+  const event = (key) => ({ key, preventDefault: () => { prevented++; } });
+  s.tabNodes[0].handlers.keydown(event("ArrowRight"));
+  assert.equal(s.tabNodes[1].attributes["aria-selected"], "true");
+  assert.equal(s.paneNodes.filter((p) => !p.hidden)[0].dataset.portalTabSection, "procurement");
+  s.tabNodes[1].handlers.keydown(event("End"));
+  assert.equal(s.tabNodes[3].attributes["aria-selected"], "true");
+  s.tabNodes[3].handlers.keydown(event("Home"));
+  assert.equal(s.tabNodes[0].attributes["aria-selected"], "true");
+  assert.equal(prevented, 3);
+  assert.equal(s.tabNodes[0].focused, true);
 });
