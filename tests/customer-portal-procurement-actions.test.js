@@ -45,7 +45,7 @@ test("Rediger og Fjern henter innkjøpet på nytt dersom lokal portalstate ikke 
 
 test("mobil/nettleser får fersk innkjøpskode", () => {
   assert.match(html, /kundeportal\.css\?v=20260918-purchase1/);
-  assert.match(html, /kundeportal\.js\?v=20260918-purchase1/);
+  assert.match(html, /kundeportal\.js\?v=20261110-embed1/);
   assert.match(html, /kundeportal-corrections\.js\?v=20260918-purchase2/);
   assert.match(css, /procurement-card-actions/);
   assert.match(css, /procurement-remove-btn/);

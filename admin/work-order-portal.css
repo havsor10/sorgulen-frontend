@@ -1,0 +1,43 @@
+/* Permanent kundeside-administrasjon på kvar arbeidsordre. */
+.field-identity button.field-minor-link[data-field-open-portal] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 12px;
+  min-height: 39px;
+  padding: 8px 12px;
+  border: 1px solid #496981;
+  border-radius: 9px;
+  background: #182c3d;
+  color: #eaf5ff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 750;
+  text-decoration: none;
+  cursor: pointer;
+}
+.field-identity button.field-minor-link[data-field-open-portal]:focus-visible,
+.field-portal-heading:focus-visible {
+  outline: 3px solid #9ad6ec;
+  outline-offset: 3px;
+}
+.field-customer-portal { border-color: #3d6375; }
+.field-portal-heading { padding: 18px 16px 14px; display: grid; gap: 5px; background: #132a37; border-bottom: 1px solid #36505f; }
+.field-portal-heading h3 { margin: 0; font-size: 19px; color: #f6fbff; }
+.field-portal-heading p { margin: 0; font-size: 13px; line-height: 1.45; color: #b7cad7; }
+
+.field-customer-portal-body { padding: 12px; min-width: 0; }
+
+.field-customer-portal iframe {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 900px;
+  border: 0;
+  background: #0c1119;
+  border-radius: 11px;
+}
+@media (max-width: 720px) {
+  .field-portal-heading { padding: 14px 12px; }
+  .field-customer-portal-body { padding: 8px; }
+}

@@ -12,6 +12,7 @@
   let currentOrder = null;
   let currentCompletionCheck = {};
   let lastOpenedOrderId = new URLSearchParams(location.search).get("open") || "";
+  let pendingPortalOrderId = "";
 
   const statusNames = { planned: "Planlagt", active: "Aktiv", paused: "Pauset", stopped: "Mellom økter", completed: "Ferdigstilt", cancelled: "Avbrutt" };
   const categoryNames = { work: "Arbeid", purchase: "Innkjøp", transport: "Transport" };
@@ -551,7 +552,7 @@
     if (!ledger) throw new Error("Registreringsoversikta kunne ikkje lastast");
     detail.innerHTML = '<div class="field-workspace field-workspace-ledger" data-field-workspace data-order-id="' + esc(order._id) + '">' +
       '<section class="field-hero">' +
-        '<div class="field-hero-top"><div class="field-identity"><p class="field-kicker">Kundeoppdrag</p><h2>' + esc(customer.name || "Ukjent kunde") + '</h2><p class="field-service">' + esc(order.serviceName) + '</p><a class="field-minor-link customer-portal-detail-link" href="kundeportal.html?workOrderId=' + encodeURIComponent(order._id) + '">Åpne kundeportalen</a></div><span class="field-status ' + esc(displayStatus) + '">' + esc(statusNames[displayStatus] || displayStatus) + '</span></div>' +
+        '<div class="field-hero-top"><div class="field-identity"><p class="field-kicker">Kundeoppdrag</p><h2>' + esc(customer.name || "Ukjent kunde") + '</h2><p class="field-service">' + esc(order.serviceName) + '</p><button type="button" class="field-minor-link customer-portal-detail-link" data-field-open-portal>↓ Kundeportal – lenger ned på oppdraget</button></div><span class="field-status ' + esc(displayStatus) + '">' + esc(statusNames[displayStatus] || displayStatus) + '</span></div>' +
         '<div class="field-metrics field-metrics-core">' +
           '<div class="field-metric"><span>Arbeidstid totalt</span><strong data-field-total-time>' + esc(durationText(ledger.totalSeconds)) + '</strong><small>' + ledger.time + ' arbeidsøkter</small>' + timeCorrectionMarkup(order) + '</div>' +
           '<div class="field-metric"><span>Alle registreringar</span><strong>' + ledger.count + '</strong><small>Tid, utgifter, utstyr, materiale og notat</small></div>' +
@@ -561,6 +562,7 @@
         compactWorkControls(order) +
         addMenuMarkup(order) +
       '</section>' +
+      portalMarkup(order) +
       financeStatusMarkup(order) +
       (issues.count ? '<details id="fieldReadiness" class="field-collapse field-attention" open><summary>Må rettast før faktura <span>' + issues.count + ' punkt</span></summary><div class="field-collapse-body"><ul class="field-issue-list">' + issues.items.map((issue) => issueMarkup(issue, order)).join("") + '</ul></div></details>' : '') +
       '<section class="field-section field-ledger" id="fieldLedger">' +
@@ -573,7 +575,46 @@
       '<details class="field-collapse field-log-collapse"><summary>Arbeidslogg <span>Økter fordelt på dag</span></summary><div class="field-collapse-body"><div class="field-log">' + dailyLogMarkup(order) + '</div></div></details>' +
       moreProjectMarkup(order, customer, contact) +
     '</div>';
+    // Kundeportalen er ein synleg del av kvar arbeidsordre, utan ekstra klikk.
+    const portalPanel = detail.querySelector("#fieldCustomerPortal");
+    ensurePortalLoaded(portalPanel);
+    if (pendingPortalOrderId === order._id) {
+      portalPanel?.scrollIntoView({ behavior: "smooth", block: "start" });
+      pendingPortalOrderId = "";
+    }
   }
+
+
+  // Gjenbruk den eksisterande kundeportal-adminen, knytt til denne arbeidsordren.
+  // Inga lenkje eller kundemelding blir oppretta av å opne panelet.
+  function portalMarkup(order) {
+    return '<section id="fieldCustomerPortal" class="field-collapse field-customer-portal" data-work-order-id="' + esc(order._id) + '" aria-label="Administrer kundeportal">' +
+      '<div class="field-portal-heading"><h3>Kundeportal</h3><p>Opprett kundelenkje, endre innstillingar og oppdater kunden direkte på dette oppdraget.</p></div>' +
+      '<div class="field-collapse-body field-customer-portal-body">' +
+        '<iframe data-field-portal-frame data-work-order-id="' + esc(order._id) + '" title="Kundeportal for ' + esc(order.customerSnapshot?.name || "kunde") + '" loading="eager" allow="clipboard-write; web-share"></iframe>' +
+      '</div></section>';
+  }
+
+  function ensurePortalLoaded(panel) {
+    if (!panel) return;
+    const frame = panel.querySelector("[data-field-portal-frame]");
+    const id = panel.dataset.workOrderId;
+    if (!frame || !id || frame.getAttribute("src")) return;
+    frame.setAttribute("src", "kundeportal.html?workOrderId=" + encodeURIComponent(id) + "&embed=1");
+  }
+
+  // Høgda kjem berre frå den same opphavsadressa og det opne oppdraget.
+  // Dette hindrar nøsta rullefelt når kundesida endrar høgd.
+  window.addEventListener("message", (event) => {
+    if (event.origin !== location.origin || event.data?.type !== "sorgulen-portal-embed-height") return;
+    const panel = detail.querySelector("#fieldCustomerPortal");
+    const frame = panel?.querySelector("[data-field-portal-frame]");
+    if (!frame || event.source !== frame.contentWindow || event.data.workOrderId !== panel.dataset.workOrderId) return;
+    const height = Number(event.data.height);
+    if (Number.isFinite(height) && height >= 500 && height <= 8000) {
+      frame.style.height = Math.ceil(height) + "px";
+    }
+  });
 
   function orderIdFromLegacy() {
     return detail.querySelector("[data-work-action][data-id]")?.dataset.id
@@ -692,10 +733,25 @@
 
   document.addEventListener("click", (event) => {
     const opener = event.target.closest(".open-job-detail[data-id]");
-    if (opener?.dataset.id) lastOpenedOrderId = opener.dataset.id;
+    if (opener?.dataset.id) {
+      lastOpenedOrderId = opener.dataset.id;
+      pendingPortalOrderId = opener.dataset.openPortalOrder === opener.dataset.id
+        ? opener.dataset.id : "";
+    }
   }, true);
 
   document.addEventListener("click", async (event) => {
+    const portalButton = event.target.closest("[data-field-open-portal]");
+    if (portalButton) {
+      event.preventDefault();
+      const panel = detail.querySelector("#fieldCustomerPortal");
+      if (panel) {
+        ensurePortalLoaded(panel);
+        panel.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      return;
+    }
+
     const recover = event.target.closest("[data-field-recover-order]");
     if (recover && currentOrder?.status === "cancelled") {
       event.preventDefault();

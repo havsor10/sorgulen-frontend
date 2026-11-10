@@ -660,14 +660,46 @@
   });
   blockDayForm.addEventListener("submit", blockDay);
 
+
+  // Ved visning inni oppdragskortet skal kunden sitt redigeringsskjema
+  // fylle breidda utan eigen admin-meny eller andre kundar sitt prosjektval.
+  if (document.documentElement.classList.contains("portal-embed") && window.parent !== window) {
+    const reportHeight = () => {
+      const main = document.querySelector(".portal-admin-main");
+      if (!main) return;
+      const height = Math.max(650, Math.ceil(main.getBoundingClientRect().bottom + 24));
+      window.parent.postMessage({
+        type: "sorgulen-portal-embed-height",
+        workOrderId: new URLSearchParams(window.location.search).get("workOrderId") || "",
+        height: Math.min(height, 8000),
+      }, window.location.origin);
+    };
+    const main = document.querySelector(".portal-admin-main");
+    if (main && typeof ResizeObserver === "function") new ResizeObserver(reportHeight).observe(main);
+    window.addEventListener("load", reportHeight);
+    window.requestAnimationFrame(reportHeight);
+  }
+
   document.addEventListener("DOMContentLoaded", async () => {
     try {
       setStatus("Henter prosjekter og skiftplan…");
       await loadProjects();
       const requestedId = new URLSearchParams(window.location.search).get("workOrderId");
+      // Direkte inngang frå oppdrag må fungere sjølv om kunden ikkje ligg
+      // blant dei fyrste 200 arbeidsordrane på lista.
+      if (requestedId && !workOrders.some((order) => order._id === requestedId)) {
+        const result = await apiFetch("/admin/work-orders/" + encodeURIComponent(requestedId));
+        if (result.workOrder?._id === requestedId) {
+          workOrders.push(result.workOrder);
+          renderProjectList();
+        }
+      }
       if (requestedId && workOrders.some((order) => order._id === requestedId)) await selectProject(requestedId);
-      else await loadAvailability();
-      setStatus("");
+      else {
+        await loadAvailability();
+        if (requestedId) setStatus("Fann ikkje det valde oppdraget. Kontroller at det framleis finst.", "error");
+      }
+      if (!requestedId || selectedWorkOrder) setStatus("");
     } catch (error) {
       setStatus(error.message || "Kunne ikke hente kundeportalen.", "error");
     }
