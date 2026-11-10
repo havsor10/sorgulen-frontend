@@ -14,6 +14,7 @@
   const dirty = { settings: false, procurement: false, image: false };
   let saving = false;
   let postingProcurement = false;
+  let lastMessage = "";
 
   const hasChanges = () => Object.values(dirty).some(Boolean);
   const api = () => window.SorgulenPortalFullscreenAdmin;
@@ -36,9 +37,11 @@
       saveStatus.textContent = "Lagrar endringane…";
       saveButton.textContent = "Lagrar…";
     } else {
-      saveStatus.textContent = n
-        ? "Ulagra endringar" + (n > 1 ? " i fleire delar" : "")
-        : "Alle endringar er lagra";
+      saveStatus.textContent = lastMessage || (!api()?.isReady()
+        ? "Hentar oppdraget…"
+        : n
+          ? "Ulagra endringar" + (n > 1 ? " i fleire delar" : "")
+          : "Alle endringar er lagra");
       saveButton.textContent = "Lagre endringar";
     }
     saveButton.disabled = saving || !hasChanges() || !api()?.isReady();
@@ -47,6 +50,7 @@
   function mark(section) {
     if (!dirty[section] || !hasChanges()) {
       dirty[section] = true;
+      lastMessage = "";
       refreshStatus();
     }
   }
@@ -166,23 +170,25 @@
       );
       if (!approved) return;
     }
+    lastMessage = "";
     saving = true;
     refreshStatus();
     try {
       const result = await api().save(changes);
       clearAll();
-      saveStatus.textContent = result.publicUpdated
+      lastMessage = result.publicUpdated
         ? "Lagra. Kundesida er oppdatert."
         : "Lagra. Ingen kundemelding er sendt.";
     } catch (error) {
       if (error.partialSaved?.length) clearAll();
-      saveStatus.textContent = error.message || "Lagring feila. Prøv igjen.";
+      lastMessage = error.message || "Lagring feila. Prøv igjen.";
     } finally {
       saving = false;
       refreshStatus();
       // Ei feilmelding blir vist i det vanlege statusfeltet. Ikkje rapporter falsk suksess.
       if (statusBox.classList.contains("error")) {
-        saveStatus.textContent = statusBox.textContent;
+        lastMessage = statusBox.textContent;
+        refreshStatus();
       }
     }
   }
