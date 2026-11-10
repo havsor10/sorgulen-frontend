@@ -39,7 +39,7 @@ test("embedded portal hides the other customers and admin shell without changing
   assert.match(css, /html\.portal-embed #adminShell/);
   assert.match(css, /html\.portal-embed #portalEditor/);
   assert.match(html, /work-order-portal\.css/);
-  assert.match(html, /work-order-field\.js\?v=20261110-portal1/);
+  assert.match(html, /work-order-field\.js\?v=20261110-portal2/);
 });
 
 test("portal actions on active and planned cards open the existing job modal, not another page", () => {
@@ -56,4 +56,14 @@ test("Netlify only allows the portal editor to be framed by the same site", () =
   assert.match(headers, /\/admin\/kundeportal\.html\n  X-Frame-Options: SAMEORIGIN/);
   assert.match(headers, /Content-Security-Policy: frame-ancestors 'self'/);
   assert.match(headers, /\/\*\n  X-Frame-Options: DENY/);
+});
+
+test("the portal is always visible and loads on every work-order detail, before the invoice panel", () => {
+  const source = read("admin/work-order-field.js");
+  assert.match(source, /return '<section id="fieldCustomerPortal"/);
+  assert.doesNotMatch(source, /return '<details id="fieldCustomerPortal"/);
+  assert.match(source, /loading="eager"/);
+  assert.match(source, /const portalPanel = detail.querySelector\("#fieldCustomerPortal"\);\s+ensurePortalLoaded\(portalPanel\)/);
+  assert.ok(source.indexOf('portalMarkup(order) +') < source.indexOf('financeStatusMarkup(order) +'));
+  assert.match(read("admin/work-order-portal.css"), /\.field-portal-heading/);
 });
