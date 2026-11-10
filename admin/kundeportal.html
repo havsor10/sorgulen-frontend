@@ -5,9 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Kundeportal | Sørgulen Industriservice</title>
   <script>
-    // Berre innbakt i ei side frå same opphav; vanleg kundeportal-admin er uendra.
-    if (window.parent !== window && new URLSearchParams(window.location.search).get("embed") === "1") {
-      document.documentElement.classList.add("portal-embed");
+    if (new URLSearchParams(window.location.search).get("fullscreen") === "1") {
+      document.documentElement.classList.add("portal-fullscreen");
     }
   </script>
   <link rel="stylesheet" href="admin.css">
@@ -18,13 +17,27 @@
   <link rel="stylesheet" href="kundeportal-mobile.css">
   <link rel="stylesheet" href="kundeportal-publish.css">
   <link rel="stylesheet" href="kundeportal-corrections.css?v=20260917-min-jobb2">
-  <link rel="stylesheet" href="kundeportal-embedded.css?v=20261110">
+  <link rel="stylesheet" href="kundeportal-fullscreen.css?v=20261110a">
 </head>
 <body>
   <div id="adminShell" data-page="portal"></div>
   <script src="admin-shell.js?v=20261028-simple1"></script>
 
   <main class="portal-admin-main">
+    <header class="portal-fullscreen-header" id="portalFullscreenHeader" hidden>
+      <a id="portalReturnOrder" href="oppdrag.html">← Tilbake til oppdraget</a>
+      <div class="portal-fullscreen-heading">
+        <span>KUNDEPORTAL</span>
+        <h1 id="portalFullscreenCustomer">Hentar kunde…</h1>
+        <p id="portalFullscreenJob">Administrasjon av kundesida</p>
+      </div>
+      <nav class="portal-fullscreen-nav" aria-label="Innstillingar for kundeportal">
+        <a href="#portalFullscreenLink" data-portal-jump="portalFullscreenLink">Kundelenkje</a>
+        <a href="#portalFullscreenSettings" data-portal-jump="portalFullscreenSettings">Framdrift</a>
+        <a href="#portalFullscreenPurchases" data-portal-jump="portalFullscreenPurchases">Innkjøp</a>
+        <a href="#portalFullscreenImages" data-portal-jump="portalFullscreenImages">Bilete</a>
+      </nav>
+    </header>
     <header class="admin-page-header portal-page-header">
       <div>
         <p class="admin-eyebrow">Kundeoppfølging</p>
@@ -85,13 +98,18 @@
       </div>
     </details>
   </main>
+  <div id="portalFullscreenDock" class="portal-fullscreen-dock" hidden>
+    <span id="portalFullscreenSaveStatus" role="status" aria-live="polite">Ingen ulagrede endringar</span>
+    <button id="portalFullscreenSave" type="button" disabled>Lagre endringar</button>
+  </div>
 
   <script src="../config.js"></script>
   <script src="portal-image-upload.js"></script>
-  <script src="kundeportal.js?v=20261110-embed1"></script>
+  <script src="kundeportal.js?v=20261110-fullscreen1"></script>
   <script src="kundeportal-guard.js"></script>
-  <script src="kundeportal-mobile.js"></script>
-  <script src="kundeportal-publish.js?v=20261004-audit1"></script>
+  <script src="kundeportal-mobile.js?v=20261110-fullscreen1"></script>
+  <script src="kundeportal-publish.js?v=20261110-fullscreen1"></script>
   <script src="kundeportal-corrections.js?v=20260918-purchase2-audit1"></script>
+  <script src="kundeportal-fullscreen.js?v=20261110a"></script>
 </body>
 </html>
