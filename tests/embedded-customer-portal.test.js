@@ -7,7 +7,8 @@ const read = (name) => fs.readFileSync(path.join(root, name), "utf8");
 
 test("work-order modal has only one compact portal action and keeps all financial panels", () => {
   const source = read("admin/work-order-field.js");
-  assert.match(source, /class="field-minor-link customer-portal-detail-link" href="kundeportal\.html\?fullscreen=1&amp;workOrderId=/);
+  assert.ok(source.includes('class="field-secondary-action field-portal-action"'));
+  assert.ok(!source.includes("field-minor-link customer-portal-detail-link"));
   assert.doesNotMatch(source, /portalMarkup\(|fieldCustomerPortal|ensurePortalLoaded|data-field-portal-frame/);
   assert.match(source, /financeStatusMarkup\(order\)/);
   assert.match(source, /ledgerBreakdownMarkup\(order/);
@@ -68,5 +69,5 @@ test("old embed and frame override are removed; other portal admin flows survive
   assert.ok(!fs.existsSync(path.join(root, "admin/work-order-portal.css")));
   assert.match(portal, /kundeportal-mobile\.js/);
   assert.match(portal, /kundeportal-corrections\.js/);
-  assert.match(job, /work-order-field\.js\?v=20261110-fullscreen1/);
+  assert.match(job, /work-order-field\.js\?v=20261110-fullscreen2/);
 });

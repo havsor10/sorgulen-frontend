@@ -320,12 +320,19 @@
     return `<li class="field-issue ${issue.tone === "blocking" ? "blocking" : ""}" data-field-issue="${esc(issue.key)}"><div class="field-issue-row"><span>${esc(issue.message)}</span>${action}</div>${emailForm}</li>`;
   }
 
+  function portalActionMarkup(order) {
+    return '<a class="field-secondary-action field-portal-action" href="kundeportal.html?fullscreen=1&amp;workOrderId='
+      + encodeURIComponent(order._id) + '">Kundeportal</a>';
+  }
+
   function addMenuMarkup(order) {
     const canAdd = order.status !== "cancelled" && !projectRegistrationsLocked(order);
-    if (!canAdd) return "";
+    // Kundeportal finst også på fullførte og fakturalåste oppdrag.
+    if (!canAdd) return '<div class="field-action-row">' + portalActionMarkup(order) + '</div>';
     return `<div class="field-action-row">
       <button type="button" class="field-add-main" data-field-add-toggle aria-expanded="false">+ Legg til registrering</button>
       ${order.customerId ? `<a class="field-secondary-action" href="kunde.html?id=${encodeURIComponent(order.customerId)}">Kundeinfo</a>` : ""}
+      ${portalActionMarkup(order)}
       <div class="field-add-backdrop" data-field-add-backdrop hidden></div>
       <section class="field-add-menu" data-field-add-menu hidden role="dialog" aria-modal="true" aria-label="Legg til på oppdrag">
         <div class="field-add-head"><div><span>Legg til på oppdrag</span><strong>Hva vil du registrere?</strong></div><button type="button" data-field-add-close aria-label="Lukk">×</button></div>
@@ -551,7 +558,7 @@
     if (!ledger) throw new Error("Registreringsoversikta kunne ikkje lastast");
     detail.innerHTML = '<div class="field-workspace field-workspace-ledger" data-field-workspace data-order-id="' + esc(order._id) + '">' +
       '<section class="field-hero">' +
-        '<div class="field-hero-top"><div class="field-identity"><p class="field-kicker">Kundeoppdrag</p><h2>' + esc(customer.name || "Ukjent kunde") + '</h2><p class="field-service">' + esc(order.serviceName) + '</p><a class="field-minor-link customer-portal-detail-link" href="kundeportal.html?fullscreen=1&amp;workOrderId=' + encodeURIComponent(order._id) + '">Kundeportal →</a></div><span class="field-status ' + esc(displayStatus) + '">' + esc(statusNames[displayStatus] || displayStatus) + '</span></div>' +
+        '<div class="field-hero-top"><div class="field-identity"><p class="field-kicker">Kundeoppdrag</p><h2>' + esc(customer.name || "Ukjent kunde") + '</h2><p class="field-service">' + esc(order.serviceName) + '</p></div><span class="field-status ' + esc(displayStatus) + '">' + esc(statusNames[displayStatus] || displayStatus) + '</span></div>' +
         '<div class="field-metrics field-metrics-core">' +
           '<div class="field-metric"><span>Arbeidstid totalt</span><strong data-field-total-time>' + esc(durationText(ledger.totalSeconds)) + '</strong><small>' + ledger.time + ' arbeidsøkter</small>' + timeCorrectionMarkup(order) + '</div>' +
           '<div class="field-metric"><span>Alle registreringar</span><strong>' + ledger.count + '</strong><small>Tid, utgifter, utstyr, materiale og notat</small></div>' +

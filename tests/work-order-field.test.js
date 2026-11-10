@@ -13,8 +13,8 @@ const operations = fs.readFileSync(path.join(root, "admin/operations-ui.js"), "u
 test("oppdrag laster én operations-motor før den dedikerte feltvisningen", () => {
   assert.match(html, /operations\.css/);
   assert.match(html, /operations-ui\.js\?v=20261004-lock2/);
-  assert.match(html, /work-order-field\.css\?v=20261031-editclock1/);
-  assert.match(html, /work-order-field\.js\?v=20261110-fullscreen1/);
+  assert.match(html, /work-order-field\.css\?v=20261110-portalnav1/);
+  assert.match(html, /work-order-field\.js\?v=20261110-fullscreen2/);
   assert.doesNotMatch(html, /work-order-field-compat\.js/);
   assert.doesNotMatch(html, /work-order-description-edit\.js/);
   assert.doesNotMatch(html, /completed-work-order-flow\.js/);
@@ -106,6 +106,7 @@ test("farlige adminval og kundeportal-lenkje forstyrrar ikkje oppdragsoversikta"
   const portal = fs.readFileSync(path.join(root, "admin/customer-portal-links.js"), "utf8");
   assert.match(deleteUi, /<details data-work-order-delete-zone/);
   assert.match(deleteUi, /Avansert administrasjon/);
-  assert.match(js, /field-minor-link customer-portal-detail-link/);
+  assert.match(js, /field-secondary-action field-portal-action/);
+  assert.doesNotMatch(js, /field-minor-link customer-portal-detail-link/);
   assert.match(portal, /content\.querySelector\("\[data-field-workspace\]"\)/);
 });

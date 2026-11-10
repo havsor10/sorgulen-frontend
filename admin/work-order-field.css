@@ -87,3 +87,45 @@ body.field-add-open{overflow:hidden}
   .field-work-controls-top{grid-template-columns:1fr}
   .field-control-more{grid-column:auto}
 }
+
+
+/* Kundeportal: synleg oppdragshandling saman med registrering og kundeinfo. */
+.field-action-row > .field-portal-action {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 58px;
+  border: 1px solid #4f84a8;
+  border-radius: 12px;
+  background: #214766;
+  color: #f5faff;
+  font-size: 17px;
+  font-weight: 900;
+  text-align: center;
+  text-decoration: none;
+  transition: background .15s ease, border-color .15s ease;
+}
+.field-action-row > .field-portal-action::before {
+  content: "\2197";
+  font-size: 21px;
+  line-height: 1;
+}
+.field-action-row > .field-portal-action:hover {
+  background: #2a5b81;
+  border-color: #81c2e9;
+}
+.field-action-row > .field-portal-action:focus-visible {
+  outline: 3px solid #9cdbfa;
+  outline-offset: 3px;
+}
+@media (max-width:720px) {
+  .field-action-row > .field-portal-action {
+    min-height: 58px;
+    padding: 14px 16px;
+    font-size: 17px;
+  }
+}
