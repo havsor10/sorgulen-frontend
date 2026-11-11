@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="admin.css">
   <link rel="stylesheet" href="admin-shell.css?v=20261028-simple1">
   <link rel="stylesheet" href="admin-pages.css">
-  <link rel="stylesheet" href="broyting.css?v=20261111-inbox1">
+  <link rel="stylesheet" href="broyting.css?v=20261111-callout1">
 </head>
 <body>
   <div id="adminShell" data-page="snow"></div>
@@ -46,11 +46,11 @@
     <section id="noRound" class="snow-launch admin-card hidden">
       <p class="section-kicker">Ny økt</p>
       <h2>Start brøyterunde</h2>
-      <p>Faste kunder og nye brøytebestillinger samles automatisk i samme kø.</p>
+      <p>Faste kunder og nye brøytebestillinger samles automatisk i samme kø. <strong>Standardpris: 350 kr i oppmøte + arbeidstid.</strong></p>
       <form id="startRoundForm" class="snow-form-grid">
         <label>Dato<input name="roundDate" type="date" required></label>
         <label>Standard tid pr. kunde<input name="defaultServiceMinutes" type="number" min="1" max="480" value="15" inputmode="numeric"></label>
-        <label>Prismodell<select name="defaultPricingMode"><option value="hourly">Timepris</option><option value="fixed">Fastpris</option></select></label>
+        <label>Prismodell<select name="defaultPricingMode"><option value="hybrid">350 kr oppmøte + timepris</option><option value="fixed">Avtalt fastpris (utan tillegg)</option></select></label>
         <label>Standard timepris<input name="defaultHourlyRate" type="number" min="1" step="1" value="850" inputmode="decimal"></label>
         <label id="roundFixedWrap" class="hidden">Standard fastpris<input name="defaultFixedPrice" type="number" min="1" step="1" inputmode="decimal"></label>
         <label class="snow-check wide"><input name="autoQueueAgreements" type="checkbox" checked> Legg aktive faste brøytekunder i køen</label>
@@ -110,7 +110,7 @@
   </div>
 
   <script src="../config.js?v=20260904-snow1"></script>
-  <script src="broyting.js?v=20261111-inbox1"></script>
+  <script src="broyting.js?v=20261111-callout1"></script>
   <script src="broyting-portal.js?v=20260917-min-jobb2"></script>
 </body>
 </html>

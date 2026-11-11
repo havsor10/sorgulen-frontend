@@ -72,3 +72,7 @@
 .snow-inbox-actions p{margin:0;line-height:1.4;font-size:.8rem}
 #snowInboxMore{margin:10px 0 0}
 @media(max-width:700px){.snow-inbox{padding:15px}.snow-inbox-item{grid-template-columns:1fr}.snow-inbox-item time{grid-row:1}.snow-inbox-item strong{font-size:1.08rem}}
+
+/* Missing callout must never be presented as the customer's final amount. */
+.snow-billing-warning{margin:0;padding:16px;border:1px solid rgba(255,189,82,.56);border-radius:12px;background:rgba(255,189,82,.12);color:#ffe2ae;line-height:1.55;font-size:.94rem}
+.snow-billing-warning strong{color:#ffcb72}

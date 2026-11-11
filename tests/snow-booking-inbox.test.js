@@ -26,6 +26,6 @@ test("operator cannot roll a round over while offline time entries remain", () =
 });
 
 test("CSS and JS URLs change to refresh outdated browser caches", () => {
-  assert.match(html, /broyting\.css\?v=20261111-inbox1/);
-  assert.match(html, /broyting\.js\?v=20261111-inbox1/);
+  assert.match(html, /broyting\.css\?v=20261111-callout1/);
+  assert.match(html, /broyting\.js\?v=20261111-callout1/);
 });
