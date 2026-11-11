@@ -340,6 +340,17 @@
     const result = await criticalMutation(`/admin/snow/jobs/${encodeURIComponent(id)}/start`, body, () => optimisticStart(id, clientStartedAt));
     if (result?.error) await refresh({ quiet: true });
   }
+  function showMissingSnowFee(job, draftInvoiceId = "") {
+    openModal("Oppmøtegebyr manglar", `
+      <div class="snow-billing-summary">
+        <p class="snow-billing-warning"><strong>Feil pris:</strong> Dette eldre brøyteoppdraget er rekna etter feil sats. Riktig standardpris er 350 kr i oppmøte + 650 kr/time for faktisk arbeidstid. ${draftInvoiceId ? "Det eksisterande fakturautkastet blir retta utan å bli utstedt." : "Korrigeringa endrar ikkje timeregistreringa."}</p>
+        <button class="snow-primary snow-xl" type="button" data-apply-snow-fee="${esc(job._id)}">KORRIGER TIL 350 KR + 650 KR/TIME</button>
+        ${draftInvoiceId ? `<a class="snow-secondary" href="faktura-detalj.html?id=${encodeURIComponent(draftInvoiceId)}&from=snow">Vis fakturautkast</a>` : ""}
+        <button class="snow-secondary" type="button" data-close-snow-billing>Seinare</button>
+      </div>
+    `, "Prisretting");
+  }
+
   async function openBillingSummary(job) {
     const workOrderId = job?.workOrderId;
     if (!workOrderId) {
@@ -350,14 +361,8 @@
     openModal("Pris etter brøyting", '<div class="snow-billing-loading">Regner ut endelig pris…</div>', "Ferdig");
     try {
       const preview = await api(`/invoices/work-order/${encodeURIComponent(workOrderId)}`);
-      if (job.pricingMode === "hourly" && !(Number(job.fixedPrice) > 0)) {
-        openModal("Oppmøtegebyr manglar", `
-          <div class="snow-billing-summary">
-            <p class="snow-billing-warning"><strong>Feil pris:</strong> Dette eldre brøyteoppdraget manglar oppmøtegebyr på 350 kr. Kunden skal betale 350 kr + registrert arbeidstid. Ingen faktura er sendt herifrå.</p>
-            <button class="snow-primary snow-xl" type="button" data-apply-snow-fee="${esc(job._id)}">LEGG TIL 350 KR OPPMØTEGEBYR</button>
-            <button class="snow-secondary" type="button" data-close-snow-billing>Seinare</button>
-          </div>
-        `, "Prisretting");
+      if ((job.pricingMode === "hourly" && !(Number(job.fixedPrice) > 0) || (job.pricingMode === "hybrid" && Number(job.hourlyRate) === 850 && job.sourceType !== "recurring"))) {
+        showMissingSnowFee(job);
         return;
       }
       const total = Number(preview.totals?.amount);
@@ -384,6 +389,15 @@
     } catch (error) {
       const invoiceId = error.data?.invoiceId;
       if (invoiceId) {
+        if ((job.pricingMode === "hourly" && !(Number(job.fixedPrice) > 0) || (job.pricingMode === "hybrid" && Number(job.hourlyRate) === 850 && job.sourceType !== "recurring"))) {
+          try {
+            const invoiceData = await api(`/invoices/${encodeURIComponent(invoiceId)}`);
+            if (invoiceData.invoice?.status === "draft" && !invoiceData.invoice?.invoiceNumber) {
+              showMissingSnowFee(job, invoiceId);
+              return;
+            }
+          } catch (_) { /* If draft read fails, keep the normal invoice link. */ }
+        }
         openModal("Faktura finnes", `
           <div class="snow-billing-summary">
             <p>Denne brøytingen er allerede koblet til en faktura.</p>
@@ -464,7 +478,7 @@
   function openQuickAdd() {
     const round = state.data?.round;
     if (!round) return;
-    openModal("Ny brøyting", `<form id="quickSnowForm" class="snow-modal-grid">${customerSearchMarkup()}<label class="snow-field">Kilde<select name="sourceType"><option value="phone">Telefon</option><option value="sms">SMS</option><option value="manual">Manuell</option></select></label><label class="snow-field">Prioritet<select name="priority"><option value="normal">Normal</option><option value="high">Høy</option><option value="urgent">HASTER</option><option value="low">Lav</option></select></label><label class="snow-field">Navn<input name="name" required maxlength="160"></label><label class="snow-field">Telefon<input name="phone" inputmode="tel" maxlength="40"></label><label class="snow-field wide">Adresse<input name="address" required maxlength="220"></label><label class="snow-field">Prismodell<select name="pricingMode"><option value="hybrid" ${round.defaultPricingMode !== "fixed" ? "selected" : ""}>350 kr oppmøte + timepris</option><option value="fixed" ${round.defaultPricingMode === "fixed" ? "selected" : ""}>Avtalt fastpris utan tillegg</option></select></label><label class="snow-field" data-hourly-wrap>Timepris<input name="hourlyRate" type="number" min="1" value="${esc(round.defaultHourlyRate || 850)}"></label><label class="snow-field ${round.defaultPricingMode === "fixed" ? "" : "hidden"}" data-fixed-wrap>Fastpris<input name="fixedPrice" type="number" min="1" value="${esc(round.defaultPricingMode === "fixed" ? (round.defaultFixedPrice ?? "") : "")}"></label><label class="snow-field">Estimert tid<input name="estimatedServiceMinutes" type="number" min="1" max="480" value="${esc(round.defaultServiceMinutes || 15)}"></label><label class="snow-field wide">Kommentar<textarea name="note" maxlength="2000" placeholder="F.eks. foran garasje, pass på bil…"></textarea></label><p id="quickSnowError" class="snow-error wide"></p><button class="snow-primary snow-xl wide" type="submit">LEGG I KØ</button></form>`);
+    openModal("Ny brøyting", `<form id="quickSnowForm" class="snow-modal-grid">${customerSearchMarkup()}<label class="snow-field">Kilde<select name="sourceType"><option value="phone">Telefon</option><option value="sms">SMS</option><option value="manual">Manuell</option></select></label><label class="snow-field">Prioritet<select name="priority"><option value="normal">Normal</option><option value="high">Høy</option><option value="urgent">HASTER</option><option value="low">Lav</option></select></label><label class="snow-field">Navn<input name="name" required maxlength="160"></label><label class="snow-field">Telefon<input name="phone" inputmode="tel" maxlength="40"></label><label class="snow-field wide">Adresse<input name="address" required maxlength="220"></label><label class="snow-field">Prismodell<select name="pricingMode"><option value="hybrid" ${round.defaultPricingMode !== "fixed" ? "selected" : ""}>350 kr oppmøte + timepris</option><option value="fixed" ${round.defaultPricingMode === "fixed" ? "selected" : ""}>Avtalt fastpris utan tillegg</option></select></label><label class="snow-field" data-hourly-wrap>Timepris<input name="hourlyRate" type="number" min="1" value="${esc(Number(round.defaultHourlyRate) === 850 ? 650 : (round.defaultHourlyRate || 650))}"></label><label class="snow-field ${round.defaultPricingMode === "fixed" ? "" : "hidden"}" data-fixed-wrap>Fastpris<input name="fixedPrice" type="number" min="1" value="${esc(round.defaultPricingMode === "fixed" ? (round.defaultFixedPrice ?? "") : "")}"></label><label class="snow-field">Estimert tid<input name="estimatedServiceMinutes" type="number" min="1" max="480" value="${esc(round.defaultServiceMinutes || 15)}"></label><label class="snow-field wide">Kommentar<textarea name="note" maxlength="2000" placeholder="F.eks. foran garasje, pass på bil…"></textarea></label><p id="quickSnowError" class="snow-error wide"></p><button class="snow-primary snow-xl wide" type="submit">LEGG I KØ</button></form>`);
     const form = $("#quickSnowForm", els.modalBody);
     bindCustomerSearch(form);
     const togglePrice = () => {
@@ -509,7 +523,7 @@
   }
 
   function openAgreementForm() {
-    openModal("Ny fast brøytekunde", `<form id="snowAgreementForm" class="snow-modal-grid">${customerSearchMarkup()}<label class="snow-field wide">Adresse<input name="address" required maxlength="220"></label><label class="snow-field">Prioritet<select name="priority"><option value="normal">Normal</option><option value="high">Høy</option><option value="urgent">HASTER</option><option value="low">Lav</option></select></label><label class="snow-field">Ønsket tidsrom<input name="preferredWindow" placeholder="F.eks. før 06:00"></label><label class="snow-field">Prismodell<select name="pricingMode"><option value="hybrid">350 kr oppmøte + timepris</option><option value="fixed">Avtalt fastpris utan tillegg</option></select></label><label class="snow-field">Timepris<input name="hourlyRate" type="number" min="1" value="850"></label><label class="snow-field hidden" data-agreement-fixed>Fastpris<input name="fixedPrice" type="number" min="1"></label><label class="snow-field">Estimert tid<input name="estimatedServiceMinutes" type="number" min="1" max="480" value="15"></label><label class="snow-check wide"><input name="autoQueue" type="checkbox" checked> Legg automatisk i nye brøyterunder</label><label class="snow-field wide">Notat<textarea name="notes" placeholder="Hva må huskes hos kunden?"></textarea></label><p id="agreementError" class="snow-error wide"></p><button class="snow-primary snow-xl wide" type="submit">LAGRE FAST KUNDE</button></form>`);
+    openModal("Ny fast brøytekunde", `<form id="snowAgreementForm" class="snow-modal-grid">${customerSearchMarkup()}<label class="snow-field wide">Adresse<input name="address" required maxlength="220"></label><label class="snow-field">Prioritet<select name="priority"><option value="normal">Normal</option><option value="high">Høy</option><option value="urgent">HASTER</option><option value="low">Lav</option></select></label><label class="snow-field">Ønsket tidsrom<input name="preferredWindow" placeholder="F.eks. før 06:00"></label><label class="snow-field">Prismodell<select name="pricingMode"><option value="hybrid">350 kr oppmøte + timepris</option><option value="fixed">Avtalt fastpris utan tillegg</option></select></label><label class="snow-field">Timepris<input name="hourlyRate" type="number" min="1" value="650"></label><label class="snow-field hidden" data-agreement-fixed>Fastpris<input name="fixedPrice" type="number" min="1"></label><label class="snow-field">Estimert tid<input name="estimatedServiceMinutes" type="number" min="1" max="480" value="15"></label><label class="snow-check wide"><input name="autoQueue" type="checkbox" checked> Legg automatisk i nye brøyterunder</label><label class="snow-field wide">Notat<textarea name="notes" placeholder="Hva må huskes hos kunden?"></textarea></label><p id="agreementError" class="snow-error wide"></p><button class="snow-primary snow-xl wide" type="submit">LAGRE FAST KUNDE</button></form>`);
     const form = $("#snowAgreementForm", els.modalBody);
     bindCustomerSearch(form);
     form.elements.pricingMode.addEventListener("change", () => $("[data-agreement-fixed]", form).classList.toggle("hidden", form.elements.pricingMode.value !== "fixed"));
@@ -583,11 +597,25 @@
       if (!job) return showNotice("Oppdraget blei ikkje funne. Oppdater sida.", "error");
       applyFee.disabled = true;
       try {
-        await api(`/admin/snow/jobs/${encodeURIComponent(id)}/apply-callout-fee`, { method: "POST", body: "{}" });
+        const correction = await api(`/admin/snow/jobs/${encodeURIComponent(id)}/apply-callout-fee`, { method: "POST", body: "{}" });
         closeModal();
         await refresh({ quiet: true });
-        const updatedJob = (state.data?.done || []).find((item) => String(item._id) === String(id)) || { ...job, pricingMode: "hybrid", fixedPrice: 350 };
-        await openBillingSummary(updatedJob);
+        if (correction.draftInvoiceId) {
+          const refreshed = await api(`/invoices/${encodeURIComponent(correction.draftInvoiceId)}`);
+          const draft = refreshed.invoice;
+          openModal("Pris korrigert i fakturautkast", `
+            <div class="snow-billing-summary">
+              <p class="snow-billing-label">OPPMØTE 350 KR + 650 KR/TIME</p>
+              <div class="snow-billing-total">${formatMoney(draft.amount)}</div>
+              <p class="snow-billing-help">Eksisterande fakturautkast er oppdatert. Det er framleis eit utkast – ingenting er sendt til kunden.</p>
+              <a class="snow-primary snow-xl" href="faktura-detalj.html?id=${encodeURIComponent(correction.draftInvoiceId)}&from=snow">OPNE KORRIGERT FAKTURAUTKAST</a>
+              <button class="snow-secondary" type="button" data-close-snow-billing>Lukk</button>
+            </div>
+          `, "Prisretting");
+        } else {
+          const updatedJob = (state.data?.done || []).find((item) => String(item._id) === String(id)) || { ...job, pricingMode: "hybrid", fixedPrice: 350, hourlyRate: 650 };
+          await openBillingSummary(updatedJob);
+        }
       } catch (error) {
         showNotice(`Prisretting stoppa: ${error.message}. Ingen pris er endra.`, "error");
         applyFee.disabled = false;

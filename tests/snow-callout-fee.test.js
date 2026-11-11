@@ -21,7 +21,14 @@ test("completed old snow job cannot show an incorrect no-callout final bill", ()
   assert.match(app, /await openBillingSummary\(updatedJob\)/);
 });
 
+test("old invoice draft is recognized and corrected without issuing it", () => {
+  assert.match(app, /invoiceData\.invoice\?\.status === "draft"/);
+  assert.match(app, /showMissingSnowFee\(job, invoiceId\)/);
+  assert.match(app, /correction\.draftInvoiceId/);
+  assert.match(app, /Eksisterande fakturautkast er oppdatert/);
+});
+
 test("published snow page busts stale JS and CSS caches", () => {
-  assert.match(page, /broyting\.css\?v=20261111-callout1/);
-  assert.match(page, /broyting\.js\?v=20261111-callout1/);
+  assert.match(page, /broyting\.css\?v=20261111-rate650/);
+  assert.match(page, /broyting\.js\?v=20261111-rate650/);
 });
