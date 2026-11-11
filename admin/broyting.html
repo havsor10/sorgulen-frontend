@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="admin.css">
   <link rel="stylesheet" href="admin-shell.css?v=20261028-simple1">
   <link rel="stylesheet" href="admin-pages.css">
-  <link rel="stylesheet" href="broyting.css?v=20261025-billing1">
+  <link rel="stylesheet" href="broyting.css?v=20261111-inbox1">
 </head>
 <body>
   <div id="adminShell" data-page="snow"></div>
@@ -28,6 +28,20 @@
     </header>
 
     <div id="snowNotice" class="snow-notice hidden" role="status" aria-live="polite"></div>
+
+    <section id="snowInbox" class="snow-inbox admin-card hidden" aria-label="Bestillingar som ventar på brøyterunde">
+      <div class="snow-inbox-head">
+        <p class="section-kicker">Nye brøytebestillingar</p>
+        <h2><span id="snowInboxCount">0</span> bestillingar ventar på runde</h2>
+        <p id="snowInboxHint" class="snow-muted">Bestillingane er lagra og forsvinn ikkje fordi datoen på ei brøyterunde er ein annan.</p>
+      </div>
+      <div id="snowInboxList" class="snow-inbox-list"></div>
+      <p id="snowInboxMore" class="snow-muted hidden"></p>
+      <div class="snow-inbox-actions">
+        <button id="snowPrepareRoundBtn" type="button" class="snow-primary hidden">GJER KLAR BRØYTERUNDE</button>
+        <p id="snowPrepareHelp" class="snow-muted"></p>
+      </div>
+    </section>
 
     <section id="noRound" class="snow-launch admin-card hidden">
       <p class="section-kicker">Ny økt</p>
@@ -96,7 +110,7 @@
   </div>
 
   <script src="../config.js?v=20260904-snow1"></script>
-  <script src="broyting.js?v=20261025-billing1"></script>
+  <script src="broyting.js?v=20261111-inbox1"></script>
   <script src="broyting-portal.js?v=20260917-min-jobb2"></script>
 </body>
 </html>
