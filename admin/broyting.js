@@ -14,6 +14,9 @@
   const state = { data: null, knownIds: new Set(), timer: null, poll: null, location: null, flushing: false, searchTimer: null };
   const els = {
     noRound: $("#noRound"), activeRound: $("#activeRound"), notice: $("#snowNotice"), connection: $("#snowConnection"),
+    inbox: $("#snowInbox"), inboxCount: $("#snowInboxCount"), inboxHint: $("#snowInboxHint"),
+    inboxList: $("#snowInboxList"), inboxMore: $("#snowInboxMore"),
+    prepareRound: $("#snowPrepareRoundBtn"), prepareHelp: $("#snowPrepareHelp"),
     activeJob: $("#activeJobCard"), nextJob: $("#nextJobCard"), queue: $("#snowQueue"), deferred: $("#snowDeferred"), done: $("#snowDone"),
     queueSection: $("#queueSection"), deferredSection: $("#deferredSection"), sumQueued: $("#sumQueued"), sumDone: $("#sumDone"), sumRemaining: $("#sumRemaining"), queueCount: $("#queueCount"),
     modal: $("#snowModal"), modalTitle: $("#snowModalTitle"), modalEyebrow: $("#snowModalEyebrow"), modalBody: $("#snowModalBody"), subline: $("#snowSubline"),
@@ -112,7 +115,7 @@
     return `<div class="snow-focus-kicker"><span>PÅGÅR NÅ</span><span>${badges(job)}</span></div><h2>${esc(job.customerSnapshot?.name || "Kunde")}</h2><p class="snow-address">${esc(job.customerSnapshot?.address || "Adresse mangler")}</p>${job.note ? `<div class="snow-note">${esc(job.note)}</div>` : ""}<div id="snowLiveTimer" class="snow-timer">${formatDuration(elapsed(job))}</div><div class="snow-focus-actions"><a class="snow-secondary" href="${navigationUrl(job.customerSnapshot?.address)}" target="_blank" rel="noopener">NAVIGASJON</a><button class="snow-primary snow-xl" type="button" data-finish-job="${esc(job._id)}">FERDIG</button></div>`;
   }
   function nextMarkup(job) {
-    if (!job) return '<div class="snow-focus-kicker"><span>NESTE</span></div><h2>Køen er tom</h2><p class="snow-address">Nye nettbestillinger kommer automatisk inn her.</p>';
+    if (!job) return '<div class="snow-focus-kicker"><span>NESTE</span></div><h2>Ingen i denne runda</h2><p class="snow-address">Bestillingar for andre datoar blir viste under «Nye brøytebestillingar».</p>';
     const travel = job.estimatedTravelMinutes != null ? ` · ca. ${job.estimatedTravelMinutes} min kjøring` : "";
     return `<div class="snow-focus-kicker"><span>NESTE</span><span>${badges(job)}</span></div><h2>${esc(job.customerSnapshot?.name || "Kunde")}</h2><p class="snow-address">${esc(job.customerSnapshot?.address || "Adresse mangler")}${esc(travel)}</p>${job.note ? `<div class="snow-note">${esc(job.note)}</div>` : ""}<div class="snow-focus-actions"><a class="snow-secondary" href="${navigationUrl(job.customerSnapshot?.address)}" target="_blank" rel="noopener">NAVIGER</a><button class="snow-primary snow-xl" type="button" data-start-job="${esc(job._id)}">START BRØYTING</button></div>`;
   }
@@ -151,12 +154,57 @@
     `, "Kø");
   }
 
+  function formatDate(value) {
+    const parts = String(value || "").split("-");
+    return parts.length === 3 ? `${parts[2]}.${parts[1]}.${parts[0]}` : String(value || "");
+  }
+
+  function renderInbox(data) {
+    const total = Number(data?.unassignedBookings?.total || 0);
+    const items = Array.isArray(data?.unassignedBookings?.items) ? data.unassignedBookings.items : [];
+    els.inbox.classList.toggle("hidden", total === 0);
+    if (!total) { els.prepareRound.classList.add("hidden"); els.prepareRound.dataset.date = ""; return; }
+
+    els.inboxCount.textContent = String(total);
+    els.inboxHint.textContent = "Desse bestillingane er lagra, men ligg ikkje i ei brøyterunde enno. Dei blir ikkje borte sjølv om den aktive runda har ein annan dato.";
+    els.inboxList.innerHTML = items.map((booking) => {
+      const safePhone = String(booking.customerPhone || "").replace(/[^+0-9]/g, "");
+      return `<article class="snow-inbox-item">
+        <div>
+          <strong>${esc(booking.customerName || "Kunde")}</strong>
+          <span>${esc(booking.customerAddress || "Adresse manglar")}</span>
+          ${booking.comment ? `<span class="snow-inbox-note">${esc(booking.comment)}</span>` : ""}
+          ${safePhone ? `<a href="tel:${esc(safePhone)}">Ring kunden: ${esc(booking.customerPhone)}</a>` : ""}
+        </div>
+        <time datetime="${esc(booking.date)}">Bestilt ${esc(formatDate(booking.date))} kl. ${esc(booking.time || "–")}</time>
+      </article>`;
+    }).join("");
+    els.inboxMore.classList.toggle("hidden", total <= items.length);
+    els.inboxMore.textContent = total > items.length ? `Viser ${items.length} av ${total}. Alle er lagra i systemet.` : "";
+
+    const dates = items.map((booking) => booking.date).filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date) && date >= today()).sort();
+    const target = dates[0] || "";
+    const round = data.round;
+    const hasWork = Boolean(data.activeJob) || Number(data.summary?.queued || 0) > 0 || Number(data.summary?.deferred || 0) > 0;
+    const canPrepare = Boolean(target) && !hasWork && (!round || round.roundDate <= target);
+    els.prepareRound.classList.toggle("hidden", !canPrepare);
+    els.prepareRound.dataset.date = canPrepare ? target : "";
+    els.prepareRound.textContent = canPrepare ? `KLARGJER BRØYTERUNDE FOR ${formatDate(target)}` : "GJER KLAR BRØYTERUNDE";
+
+    if (!target) els.prepareHelp.textContent = "Bestillingane gjeld tidlegare datoar. Kontroller dei før du opprettar ei ny runde.";
+    else if (hasWork) els.prepareHelp.textContent = "Ei anna brøyterunde har uferdige kundar. Desse nye bestillingane blir ståande synlege til runda er avslutta.";
+    else if (round?.roundDate > target) els.prepareHelp.textContent = "Ei aktiv runde har ein seinare dato. Kontroller datoane før du byter runde.";
+    else if (round && round.roundDate !== target) els.prepareHelp.textContent = `Runda frå ${formatDate(round.roundDate)} blir avslutta, men alle ferdige oppdrag og fakturagrunnlag blir bevarte.`;
+    else els.prepareHelp.textContent = "Bestillingane blir lagde i køen for vald dato. Ingen faktura blir sendt.";
+  }
+
   function render(data, { fromServer = true } = {}) {
     if (!data) return;
     const previousIds = state.knownIds;
     const newWebsite = fromServer && state.data?.round ? (data.queue || []).filter((job) => job.sourceType === "website" && !previousIds.has(String(job._id))) : [];
     state.data = data;
     writeJson(CACHE_KEY, data);
+    renderInbox(data);
     state.knownIds = new Set([...(data.queue || []), ...(data.deferred || []), ...(data.done || []), ...(data.activeJob ? [data.activeJob] : [])].map((job) => String(job._id)));
     if (newWebsite.length) showNotice(`${newWebsite.length} ny ${newWebsite.length === 1 ? "nettbestilling" : "nettbestillinger"} lagt i køen.`, "success", 7000);
 
@@ -191,7 +239,7 @@
     let suffix = "";
     if (includeLocation && state.location) suffix = `?lat=${encodeURIComponent(state.location.lat)}&lng=${encodeURIComponent(state.location.lng)}&accuracy=${encodeURIComponent(state.location.accuracy || "")}`;
     try {
-      const data = await api(`/admin/snow/state${suffix}`);
+      const data = await api(`/admin/snow/state${suffix}`, { cache: "no-store" });
       setConnection(true);
       render(data);
       if (!quiet) showNotice("");
@@ -554,6 +602,28 @@
   $("#quickAddBtn").addEventListener("click", openQuickAdd);
   $("#agreementsBtn").addEventListener("click", openAgreements);
   $("#optimizeBtn").addEventListener("click", optimizeRoute);
+  els.prepareRound.addEventListener("click", async () => {
+    const date = els.prepareRound.dataset.date;
+    if (!date) return;
+    const offlinePending = readJson(PENDING_KEY, []);
+    if (offlinePending.length) {
+      showNotice("Synkroniser offline-registreringane før du byter brøyterunde. Ingenting blir sletta.", "error");
+      return;
+    }
+    const round = state.data?.round;
+    if (round && round.roundDate !== date && !confirm(`Avslutte runda frå ${formatDate(round.roundDate)} og lage ny runde for ${formatDate(date)}? Ferdige oppdrag og fakturagrunnlag blir bevarte.`)) return;
+    els.prepareRound.disabled = true;
+    try {
+      const result = await api("/admin/snow/rounds/rollover", {
+        method: "POST", body: JSON.stringify({ roundDate: date }),
+      });
+      render(result);
+      showNotice(`Brøyterunde for ${formatDate(date)} er klar. Nye bestillingar er lagde i køen.`, "success", 6500);
+    } catch (error) {
+      showNotice(`Kunne ikkje starte ny runde: ${error.message}. Bestillingane ligg framleis lagra.`, "error");
+      await refresh({ quiet: true });
+    } finally { els.prepareRound.disabled = false; }
+  });
   $("#snowRefresh").addEventListener("click", () => refresh());
   $("#finishRoundBtn").addEventListener("click", async () => {
     if (!state.data?.round) return;
