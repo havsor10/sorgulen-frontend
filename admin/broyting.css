@@ -54,3 +54,21 @@
 .snow-billing-help{margin:0;color:var(--admin-muted);font-size:.86rem;line-height:1.45}
 .snow-billing-actions{display:grid;gap:9px}
 .snow-billing-actions a{text-decoration:none;display:flex;align-items:center;justify-content:center}
+
+/* Nye kundeordrar skal alltid vere synlege, også utan ei aktiv runde for datoen. */
+.snow-inbox{padding:20px;margin:12px 0 18px;border:1px solid rgba(249,191,81,.52)!important;background:linear-gradient(165deg,rgba(249,191,81,.12),rgba(13,22,31,.96) 65%)!important;border-radius:16px}
+.snow-inbox-head h2{font-size:clamp(1.18rem,2.8vw,1.5rem);margin:6px 0 7px;line-height:1.3}
+.snow-inbox-head h2 span{color:#ffd58a}
+.snow-inbox-head .snow-muted{margin:0 0 16px;line-height:1.45}
+.snow-inbox-list{display:grid;gap:9px}
+.snow-inbox-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:12px 14px;border:1px solid rgba(255,255,255,.13);border-radius:12px;background:rgba(5,12,20,.65)}
+.snow-inbox-item strong{display:block;font-size:1rem;color:var(--admin-text);word-break:break-word}
+.snow-inbox-item span{display:block;font-size:.85rem;color:var(--admin-muted);margin-top:3px;overflow-wrap:anywhere}
+.snow-inbox-item time{color:#ffd58a;font-size:.83rem;font-weight:900;white-space:nowrap}
+.snow-inbox-item a{color:#a5cdfb;display:inline-flex;margin-top:6px;text-decoration:underline;text-underline-offset:2px;font-size:.83rem}
+.snow-inbox-item .snow-inbox-note{color:#d8dde6;margin-top:7px}
+.snow-inbox-actions{display:grid;gap:9px;margin-top:15px}
+.snow-inbox-actions button{width:100%;font-size:.96rem}
+.snow-inbox-actions p{margin:0;line-height:1.4;font-size:.8rem}
+#snowInboxMore{margin:10px 0 0}
+@media(max-width:700px){.snow-inbox{padding:15px}.snow-inbox-item{grid-template-columns:1fr}.snow-inbox-item time{grid-row:1}.snow-inbox-item strong{font-size:1.08rem}}
