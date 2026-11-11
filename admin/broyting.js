@@ -260,25 +260,37 @@
     state.flushing = true;
     const items = readJson(PENDING_KEY, []);
     const remaining = [];
+    let blocked = null;
     try {
+      // Start and finish are ordered operations. If one cannot be confirmed,
+      // do not execute later operations or discard the customer's work record.
       for (let index = 0; index < items.length; index += 1) {
         const item = items[index];
-        try { await api(item.path, { method: item.method, body: JSON.stringify(item.body) }); }
-        catch (error) {
-          if (isNetworkError(error)) { remaining.push(...items.slice(index)); break; }
-          if (![400, 409].includes(error.status)) remaining.push(item);
+        try {
+          await api(item.path, { method: item.method, body: JSON.stringify(item.body) });
+        } catch (error) {
+          remaining.push(...items.slice(index));
+          blocked = error;
+          break;
         }
       }
       writeJson(PENDING_KEY, remaining);
-      if (items.length && !remaining.length) showNotice("Offline-registreringene er synkronisert.", "success", 4000);
       await refresh({ quiet: true });
+      if (blocked && !isNetworkError(blocked)) {
+        showNotice(`VIKTIG: ${remaining.length} offline-registrering(er) er ikkje synkroniserte. Ingenting er sletta. Feil: ${blocked.message}. Kontroller før du held fram.`, "error");
+      } else if (blocked) {
+        showNotice(`${remaining.length} registrering(er) ventar framleis på nett. Dei ligg lagra på denne eininga.`, "warning");
+      } else if (items.length) {
+        showNotice("Alle offline-registreringane er stadfesta av serveren.", "success", 5000);
+      }
     } finally { state.flushing = false; }
   }
 
   async function startJob(id) {
     const clientStartedAt = new Date().toISOString();
     const body = { clientStartedAt, operationId: uuid("snow-start") };
-    await criticalMutation(`/admin/snow/jobs/${encodeURIComponent(id)}/start`, body, () => optimisticStart(id, clientStartedAt));
+    const result = await criticalMutation(`/admin/snow/jobs/${encodeURIComponent(id)}/start`, body, () => optimisticStart(id, clientStartedAt));
+    if (result?.error) await refresh({ quiet: true });
   }
   async function openBillingSummary(job) {
     const workOrderId = job?.workOrderId;
@@ -338,7 +350,10 @@
       showNotice("Ferdig lagret offline. Pris og faktura blir tilgjengelig når registreringen er synkronisert.", "warning", 6500);
       return;
     }
-    if (!result?.data) return;
+    if (!result?.data) {
+      if (result?.error) await refresh({ quiet: true });
+      return;
+    }
     const finishedJob = (result.data.done || []).find((job) => String(job._id) === String(id)) || activeJob;
     if (finishedJob?.workOrderId) await openBillingSummary(finishedJob);
   }
