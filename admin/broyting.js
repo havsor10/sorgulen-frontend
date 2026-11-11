@@ -340,6 +340,17 @@
     const result = await criticalMutation(`/admin/snow/jobs/${encodeURIComponent(id)}/start`, body, () => optimisticStart(id, clientStartedAt));
     if (result?.error) await refresh({ quiet: true });
   }
+  function showMissingSnowFee(job, draftInvoiceId = "") {
+    openModal("Oppmøtegebyr manglar", `
+      <div class="snow-billing-summary">
+        <p class="snow-billing-warning"><strong>Feil pris:</strong> Dette eldre brøyteoppdraget manglar oppmøtegebyr på 350 kr. Riktig pris er 350 kr i oppmøte pluss registrert arbeidstid. ${draftInvoiceId ? "Det eksisterande fakturautkastet blir retta utan å bli utstedt." : "Korrigeringa endrar ikkje timeregistreringa."}</p>
+        <button class="snow-primary snow-xl" type="button" data-apply-snow-fee="${esc(job._id)}">KORRIGER PRIS MED 350 KR OPPMØTE</button>
+        ${draftInvoiceId ? `<a class="snow-secondary" href="faktura-detalj.html?id=${encodeURIComponent(draftInvoiceId)}&from=snow">Vis fakturautkast</a>` : ""}
+        <button class="snow-secondary" type="button" data-close-snow-billing>Seinare</button>
+      </div>
+    `, "Prisretting");
+  }
+
   async function openBillingSummary(job) {
     const workOrderId = job?.workOrderId;
     if (!workOrderId) {
@@ -351,13 +362,7 @@
     try {
       const preview = await api(`/invoices/work-order/${encodeURIComponent(workOrderId)}`);
       if (job.pricingMode === "hourly" && !(Number(job.fixedPrice) > 0)) {
-        openModal("Oppmøtegebyr manglar", `
-          <div class="snow-billing-summary">
-            <p class="snow-billing-warning"><strong>Feil pris:</strong> Dette eldre brøyteoppdraget manglar oppmøtegebyr på 350 kr. Kunden skal betale 350 kr + registrert arbeidstid. Ingen faktura er sendt herifrå.</p>
-            <button class="snow-primary snow-xl" type="button" data-apply-snow-fee="${esc(job._id)}">LEGG TIL 350 KR OPPMØTEGEBYR</button>
-            <button class="snow-secondary" type="button" data-close-snow-billing>Seinare</button>
-          </div>
-        `, "Prisretting");
+        showMissingSnowFee(job);
         return;
       }
       const total = Number(preview.totals?.amount);
@@ -384,6 +389,15 @@
     } catch (error) {
       const invoiceId = error.data?.invoiceId;
       if (invoiceId) {
+        if (job.pricingMode === "hourly" && !(Number(job.fixedPrice) > 0)) {
+          try {
+            const invoiceData = await api(`/invoices/${encodeURIComponent(invoiceId)}`);
+            if (invoiceData.invoice?.status === "draft" && !invoiceData.invoice?.invoiceNumber) {
+              showMissingSnowFee(job, invoiceId);
+              return;
+            }
+          } catch (_) { /* If draft read fails, keep the normal invoice link. */ }
+        }
         openModal("Faktura finnes", `
           <div class="snow-billing-summary">
             <p>Denne brøytingen er allerede koblet til en faktura.</p>
@@ -583,11 +597,25 @@
       if (!job) return showNotice("Oppdraget blei ikkje funne. Oppdater sida.", "error");
       applyFee.disabled = true;
       try {
-        await api(`/admin/snow/jobs/${encodeURIComponent(id)}/apply-callout-fee`, { method: "POST", body: "{}" });
+        const correction = await api(`/admin/snow/jobs/${encodeURIComponent(id)}/apply-callout-fee`, { method: "POST", body: "{}" });
         closeModal();
         await refresh({ quiet: true });
-        const updatedJob = (state.data?.done || []).find((item) => String(item._id) === String(id)) || { ...job, pricingMode: "hybrid", fixedPrice: 350 };
-        await openBillingSummary(updatedJob);
+        if (correction.draftInvoiceId) {
+          const refreshed = await api(`/invoices/${encodeURIComponent(correction.draftInvoiceId)}`);
+          const draft = refreshed.invoice;
+          openModal("Pris korrigert i fakturautkast", `
+            <div class="snow-billing-summary">
+              <p class="snow-billing-label">OPPMØTE 350 KR + ARBEIDSTID</p>
+              <div class="snow-billing-total">${formatMoney(draft.amount)}</div>
+              <p class="snow-billing-help">Eksisterande fakturautkast er oppdatert. Det er framleis eit utkast – ingenting er sendt til kunden.</p>
+              <a class="snow-primary snow-xl" href="faktura-detalj.html?id=${encodeURIComponent(correction.draftInvoiceId)}&from=snow">OPNE KORRIGERT FAKTURAUTKAST</a>
+              <button class="snow-secondary" type="button" data-close-snow-billing>Lukk</button>
+            </div>
+          `, "Prisretting");
+        } else {
+          const updatedJob = (state.data?.done || []).find((item) => String(item._id) === String(id)) || { ...job, pricingMode: "hybrid", fixedPrice: 350 };
+          await openBillingSummary(updatedJob);
+        }
       } catch (error) {
         showNotice(`Prisretting stoppa: ${error.message}. Ingen pris er endra.`, "error");
         applyFee.disabled = false;
