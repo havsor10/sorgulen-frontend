@@ -43,6 +43,7 @@ function copyTree(source, target) {
           console.warn("WARNING: HTML missing head:", path.relative(repoRoot, input));
         } else {
           text = text.replace(/<head(?:\s[^>]*)?>/i, (m) => m + notice);
+          text = text.replace(/<body(?:\s[^>]*)?>/i, (m) => m + '<aside role="status" style="position:sticky;top:0;z-index:2147483647;box-sizing:border-box;width:100%;padding:11px 18px;background:#8f2c15;color:#fff;text-align:center;font:700 14px/1.5 system-ui,sans-serif;border-bottom:2px solid #ffc966">TESTMILJØ – FØREBELS BERRE VISNING. Bestilling, admin, betaling og utsending er sperra til eigen testdatabase er klar.</aside>');
         }
       }
       fs.writeFileSync(output, text);
