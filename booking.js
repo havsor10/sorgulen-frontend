@@ -167,7 +167,11 @@
     services = (data.services||[]).filter(s=>s.active!==false&&(s.bookable===true||["broyting","dekkskift"].includes(s.key)));
     if(!services.length)throw new Error("Ingen bookbare tenester.");
     serviceSelect.replaceChildren();
-    for(const service of services) serviceSelect.add(new Option(service.name+(service.priceText?" – "+service.priceText:""),service._id));
+    for(const service of services) {
+      const snowService = /(brøy|broy|snø|sno|plog)/i.test(String(service.name||service.key||""));
+      const price = snowService ? "350 kr oppmøte + 650 kr/time" : (service.priceText||"");
+      serviceSelect.add(new Option(service.name+(price?" – "+price:""),service._id));
+    }
     selectedService = services.find(s=>/^(brøyting|broyting)$/.test(requested)&&/(brøy|broy)/i.test(s.name))
       || services.find(s=>String(s.name||"").toLowerCase()===requested)
       || services[0];
