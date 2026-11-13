@@ -144,6 +144,7 @@
       slots.appendChild(btn);
     }
   }
+  let retryingMissingService = false;
   async function loadAvailability() {
     slotsWrap.classList.add("hidden");formWrap.classList.add("hidden");
     availableDay = false;selectedTime = "";
@@ -154,6 +155,13 @@
       const response = await fetch(API+"/availability?serviceId="+encodeURIComponent(selectedService._id)+"&date="+encodeURIComponent(bookingDate.value),{cache:"no-store"});
       const data = await response.json();
       if(expected!==selectedService._id+"|"+bookingDate.value)return;
+      if(response.status===404 && !retryingMissingService) {
+        // Ephemeral staging database may have restarted and re-seeded services.
+        // Refresh the catalogue once and ask the current day again.
+        retryingMissingService = true;
+        try { await loadServices(); } finally { retryingMissingService = false; }
+        return;
+      }
       if(!response.ok)throw new Error(data.error||"Kunne ikkje sjekke datoen.");
       if(isSnow()){
         if(data.mode!=="day" || !data.available){notify(data.message||"Denne dagen er full. Vel ein annan dag.","error");return;}
@@ -196,6 +204,7 @@
     } finally {
       loadingServices = false;
     }
+    const rememberedKey = selectedService?.key || "";
     services = (data.services||[]).filter(s=>s.active!==false&&(s.bookable===true||["broyting","dekkskift"].includes(s.key)));
     if(!services.length)throw new Error("Ingen bookbare tenester.");
     serviceSelect.replaceChildren();
@@ -204,7 +213,8 @@
       const price = snowService ? "350 kr oppmøte + 650 kr/time" : (service.priceText||"");
       serviceSelect.add(new Option(service.name+(price?" – "+price:""),service._id));
     }
-    selectedService = services.find(s=>/^(brøyting|broyting)$/.test(requested)&&/(brøy|broy)/i.test(s.name))
+    selectedService = services.find(s=>rememberedKey && s.key===rememberedKey)
+      || services.find(s=>/^(brøyting|broyting)$/.test(requested)&&/(brøy|broy)/i.test(s.name))
       || services.find(s=>String(s.name||"").toLowerCase()===requested)
       || services[0];
     serviceSelect.value=selectedService._id;
