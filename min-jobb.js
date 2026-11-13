@@ -127,6 +127,12 @@
     renderTimeline(job.timeline);
     document.getElementById("bookingDate").textContent = formatDate(job.bookingDate);
     document.getElementById("bookingTime").textContent = snow && job.bookingMode === "day" ? "I løpet av vald dag" : (job.bookingTime ? `kl. ${job.bookingTime}` : "Ikkje avtalt");
+    const pref = snow ? job.snowTimePreference : null;
+    const words = {before:"Helst før kl.",around:"Helst omkring kl.",after:"Helst etter kl."};
+    const wish = pref && words[pref.kind] && /^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(pref.time || "")
+      ? words[pref.kind] + " " + pref.time + " (ikkje garantert)" : "";
+    document.getElementById("snowTimeWishRow").classList.toggle("hidden",!wish);
+    if(wish) document.getElementById("snowTimeWishText").textContent = wish;
     document.getElementById("jobAddress").textContent = job.address || "Ikke oppgitt";
     document.getElementById("addressRow").classList.toggle("hidden", !job.address);
 
