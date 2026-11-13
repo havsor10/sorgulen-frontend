@@ -7,6 +7,7 @@
   const addressInput = $("customerAddress"), addressList = $("addressSuggestions");
   const addressHelp = $("addressHelp"), mapPanel = $("addressMapPanel");
   const submitBtn = $("submitBooking");
+  const timeKind = $("snowTimeKind"), timeClock = $("snowTimeClock"), timeClockWrap = $("snowTimeInputWrap");
   const message = $("message");
   const requested = new URLSearchParams(location.search).get("service")?.toLowerCase() || "";
   let services = [], selectedService = null, selectedTime = "", availableDay = false;
@@ -114,6 +115,7 @@
     $("bookingFact").textContent = snow ? "Brøyting i løpet av vald dag – ingen fast time" : "Timebestilling etter ledige tider";
     $("secondStepLabel").textContent = snow ? "Vel dag" : "Vel tid";
     $("dayBookingInfo").classList.toggle("hidden",!snow);
+    $("snowTimeWish").classList.toggle("hidden",!snow);
     slotsWrap.classList.add("hidden");
     formWrap.classList.add("hidden");
     if (bookingDate.value) loadAvailability();
@@ -220,12 +222,16 @@
       customerEmail:$("customerEmail").value.trim(),
       customerAddress:addressInput.value.trim(),
       comment:$("comment").value.trim(),
-      ...(snow?{addressGeo:pin}:{}),
+      ...(snow?{addressGeo:pin, snowTimePreference: { kind:timeKind.value, time:timeKind.value==="none"?"":timeClock.value }}:{}),
     };
     if(!payload.date||!payload.customerName||!payload.customerEmail||!payload.customerPhone||!payload.customerAddress){
       return notify("Fyll inn namn, telefon, e-post, adresse og dato.","error");
     }
     if(snow && (!availableDay||!pin))return notify("Stadfest innkøyrselen: vel adresse frå lista eller marker på kartet.","error");
+    if(snow && timeKind.value !== "none" &&
+        !/^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(timeClock.value)) {
+      return notify("Vel klokkeslett for tidsønsket, eller vel «når det passar i løpet av dagen».","error");
+    }
     if(!snow&&!selectedTime)return notify("Vel eit klokkeslett.","error");
     saving=true;submitBtn.disabled=true;submitBtn.textContent="Registrerer …";
     try{
@@ -238,7 +244,8 @@
       const summary={serviceName:payload.serviceName,date:payload.date,time:payload.time,
         bookingMode:snow?"day":"scheduled",customerName:payload.customerName,
         customerPhone:payload.customerPhone,customerEmail:payload.customerEmail,
-        customerAddress:payload.customerAddress,comment:payload.comment,portalUrl:data.portalUrl||""};
+        customerAddress:payload.customerAddress,comment:payload.comment,
+        snowTimePreference:snow?payload.snowTimePreference:null,portalUrl:data.portalUrl||""};
       sessionStorage.setItem("lastBookingSummary",JSON.stringify(summary));
       location.href="booking-bekreftelse.html";
     }catch(error){notify(error.message||"Ukjend feil. Prøv igjen.","error");}
@@ -247,6 +254,12 @@
   serviceSelect.addEventListener("change",()=>{
     selectedService=services.find(s=>s._id===serviceSelect.value)||null;
     applyServiceUI();
+  });
+  timeKind.addEventListener("change",()=>{
+    const wantsTime = timeKind.value !== "none";
+    timeClockWrap.classList.toggle("hidden",!wantsTime);
+    timeClock.required = wantsTime;
+    if (!wantsTime) timeClock.value = "";
   });
   bookingDate.addEventListener("change",loadAvailability);
   submitBtn.addEventListener("click",submitBooking);
