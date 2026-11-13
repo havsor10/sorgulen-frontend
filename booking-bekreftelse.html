@@ -109,19 +109,33 @@
     const fields = [
       ['Tjeneste', booking.serviceName || '-'],
       ['Dato', booking.date || '-'],
-      ['Tidspunkt', booking.time || '-'],
+      ['Tidspunkt', booking.bookingMode === 'day' ? 'I løpet av vald dag – etter kapasitet' : (booking.time || '-')],
+      ['Adresse', booking.customerAddress || '-'],
       ['Navn', booking.customerName || '-'],
       ['Telefon', booking.customerPhone || '-'],
       ['E-post', booking.customerEmail || '-'],
       ['Kommentar', booking.comment || '-', true],
     ];
 
-    summaryGrid.innerHTML = fields.map(([label, value, full]) => `
-      <div class="summary-item${full ? ' full' : ''}">
-        <span class="summary-label">${label}</span>
-        <div class="summary-value">${value}</div>
-      </div>
-    `).join('');
+    for (const [label, value, full] of fields) {
+      const item = document.createElement('div');
+      item.className = 'summary-item' + (full ? ' full' : '');
+      const title = document.createElement('span');
+      title.className = 'summary-label'; title.textContent = label;
+      const text = document.createElement('div');
+      text.className = 'summary-value'; text.textContent = value;
+      item.append(title, text); summaryGrid.appendChild(item);
+    }
+    if (booking.portalUrl) {
+      try {
+        const url = new URL(booking.portalUrl);
+        if (url.origin === location.origin && url.pathname.endsWith('/min-jobb.html')) {
+          const a = document.createElement('a');
+          a.href = url.href; a.className = 'btn primary'; a.textContent = 'Følg bestillinga på Min jobb';
+          document.querySelector('#summaryCard .cta-row').prepend(a);
+        }
+      } catch (_) {}
+    }
   })();
 </script>
 </body>
