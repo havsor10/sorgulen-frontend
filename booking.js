@@ -160,10 +160,40 @@
       renderSlots(data);
     }catch(error){notify(error.message||"Klarte ikkje å hente ledige dagar.","error");}
   }
+  // Render's free staging backend can sleep while unused. Retry automatically
+  // instead of incorrectly telling the customer there are no services.
+  let loadingServices = false;
   async function loadServices() {
-    const response = await fetch(API+"/services");
-    if(!response.ok)throw new Error("Tenestene er mellombels utilgjengelege.");
-    const data = await response.json();
+    if (loadingServices) return;
+    loadingServices = true;
+    let data = null;
+    try {
+      for (let attempt = 1; attempt <= 10; attempt++) {
+        notify(attempt === 1 ? "Hentar tenestene …" :
+          "Startar testserveren … prøver igjen (" + attempt + "/10).");
+        try {
+          const timeout = new AbortController();
+          const timer = setTimeout(() => timeout.abort(), 22000);
+          try {
+            const response = await fetch(API + "/services", {
+              cache: "no-store",
+              signal: timeout.signal
+            });
+            if (!response.ok) throw new Error("API svarte med " + response.status);
+            data = await response.json();
+            if (Array.isArray(data?.services) && data.services.length) break;
+            throw new Error("Tenestelista er tom.");
+          } finally { clearTimeout(timer); }
+        } catch (error) {
+          if (attempt === 10) throw error;
+          await new Promise(resolve => setTimeout(resolve, Math.min(attempt * 1500, 6000)));
+        }
+      }
+      if (!data) throw new Error("Fekk ikkje kontakt med testserveren.");
+      clearNotice();
+    } finally {
+      loadingServices = false;
+    }
     services = (data.services||[]).filter(s=>s.active!==false&&(s.bookable===true||["broyting","dekkskift"].includes(s.key)));
     if(!services.length)throw new Error("Ingen bookbare tenester.");
     serviceSelect.replaceChildren();
@@ -221,5 +251,16 @@
   bookingDate.addEventListener("change",loadAvailability);
   submitBtn.addEventListener("click",submitBooking);
   bookingDate.min=today();bookingDate.max=maxDate(30);
-  loadServices().catch(e=>notify(e.message,"error"));
+  function showServiceLoadError(error) {
+    notify("Klarte ikkje hente tenestene frå testserveren. " +
+      (error?.message || "Kontroller nettverket.") +
+      " Ingen bestilling er sendt.", "error");
+    const retry = document.createElement("button");
+    retry.type = "button";
+    retry.className = "btn secondary";
+    retry.textContent = "Prøv å hente tenestene på nytt";
+    retry.addEventListener("click", () => loadServices().catch(showServiceLoadError), {once:true});
+    message.appendChild(retry);
+  }
+  loadServices().catch(showServiceLoadError);
 })();
