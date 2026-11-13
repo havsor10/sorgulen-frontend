@@ -265,11 +265,28 @@
     selectedService=services.find(s=>s._id===serviceSelect.value)||null;
     applyServiceUI();
   });
+  function updateQuickTimeButtons() {
+    document.querySelectorAll("[data-snow-time]").forEach(button=>{
+      const selected = timeKind.value !== "none" && timeClock.value === button.dataset.snowTime;
+      button.classList.toggle("is-selected", selected);
+      button.setAttribute("aria-pressed", selected ? "true" : "false");
+    });
+  }
+  document.querySelectorAll("[data-snow-time]").forEach(button=>{
+    button.addEventListener("click",()=>{
+      timeClock.value = button.dataset.snowTime;
+      timeClock.dispatchEvent(new Event("change", { bubbles:true }));
+      updateQuickTimeButtons();
+    });
+  });
+  timeClock.addEventListener("input",updateQuickTimeButtons);
+  timeClock.addEventListener("change",updateQuickTimeButtons);
   timeKind.addEventListener("change",()=>{
     const wantsTime = timeKind.value !== "none";
     timeClockWrap.classList.toggle("hidden",!wantsTime);
     timeClock.required = wantsTime;
     if (!wantsTime) timeClock.value = "";
+    updateQuickTimeButtons();
   });
   bookingDate.addEventListener("change",loadAvailability);
   submitBtn.addEventListener("click",submitBooking);
