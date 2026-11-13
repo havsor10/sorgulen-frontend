@@ -107,17 +107,26 @@
   }
   function restartClock() { clearInterval(state.timer); updateClock(); state.timer = setInterval(updateClock, 1000); }
 
+  function timeWishLabel(pref) {
+    const words = { before: "Før kl.", around: "Omtrent kl.", after: "Etter kl." };
+    if (!pref || !words[pref.kind] || !/^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(pref.time || "")) return "";
+    return words[pref.kind] + " " + pref.time;
+  }
+  function timeWishMarkup(pref) {
+    const label = timeWishLabel(pref);
+    return label ? `<span class="snow-time-wish-badge">TIDSØNSKE · ${esc(label)} (ikkje garantert)</span>` : "";
+  }
   function badges(job) {
     return `<span class="snow-source-badge">${esc(sourceLabel(job.sourceType))}</span><span class="snow-priority-badge ${esc(job.priority)}">${esc(priorityLabel(job.priority))}</span>`;
   }
   function activeMarkup(job) {
     if (!job) return "";
-    return `<div class="snow-focus-kicker"><span>PÅGÅR NÅ</span><span>${badges(job)}</span></div><h2>${esc(job.customerSnapshot?.name || "Kunde")}</h2><p class="snow-address">${esc(job.customerSnapshot?.address || "Adresse mangler")}</p>${job.note ? `<div class="snow-note">${esc(job.note)}</div>` : ""}<div id="snowLiveTimer" class="snow-timer">${formatDuration(elapsed(job))}</div><div class="snow-focus-actions"><a class="snow-secondary" href="${navigationUrl(job.customerSnapshot?.address)}" target="_blank" rel="noopener">NAVIGASJON</a><button class="snow-primary snow-xl" type="button" data-finish-job="${esc(job._id)}">FERDIG</button></div>`;
+    return `<div class="snow-focus-kicker"><span>PÅGÅR NÅ</span><span>${badges(job)}</span></div><h2>${esc(job.customerSnapshot?.name || "Kunde")}</h2><p class="snow-address">${esc(job.customerSnapshot?.address || "Adresse mangler")}</p>${timeWishMarkup(job.snowTimePreference)}${job.note ? `<div class="snow-note">${esc(job.note)}</div>` : ""}<div id="snowLiveTimer" class="snow-timer">${formatDuration(elapsed(job))}</div><div class="snow-focus-actions"><a class="snow-secondary" href="${navigationUrl(job.customerSnapshot?.address)}" target="_blank" rel="noopener">NAVIGASJON</a><button class="snow-primary snow-xl" type="button" data-finish-job="${esc(job._id)}">FERDIG</button></div>`;
   }
   function nextMarkup(job) {
     if (!job) return '<div class="snow-focus-kicker"><span>NESTE</span></div><h2>Ingen i denne runda</h2><p class="snow-address">Bestillingar for andre datoar blir viste under «Nye brøytebestillingar».</p>';
     const travel = job.estimatedTravelMinutes != null ? ` · ca. ${job.estimatedTravelMinutes} min kjøring` : "";
-    return `<div class="snow-focus-kicker"><span>NESTE</span><span>${badges(job)}</span></div><h2>${esc(job.customerSnapshot?.name || "Kunde")}</h2><p class="snow-address">${esc(job.customerSnapshot?.address || "Adresse mangler")}${esc(travel)}</p>${job.note ? `<div class="snow-note">${esc(job.note)}</div>` : ""}<div class="snow-focus-actions"><a class="snow-secondary" href="${navigationUrl(job.customerSnapshot?.address)}" target="_blank" rel="noopener">NAVIGER</a><button class="snow-primary snow-xl" type="button" data-start-job="${esc(job._id)}">START BRØYTING</button></div>`;
+    return `<div class="snow-focus-kicker"><span>NESTE</span><span>${badges(job)}</span></div><h2>${esc(job.customerSnapshot?.name || "Kunde")}</h2><p class="snow-address">${esc(job.customerSnapshot?.address || "Adresse mangler")}${esc(travel)}</p>${timeWishMarkup(job.snowTimePreference)}${job.note ? `<div class="snow-note">${esc(job.note)}</div>` : ""}<div class="snow-focus-actions"><a class="snow-secondary" href="${navigationUrl(job.customerSnapshot?.address)}" target="_blank" rel="noopener">NAVIGER</a><button class="snow-primary snow-xl" type="button" data-start-job="${esc(job._id)}">START BRØYTING</button></div>`;
   }
   function queueMarkup(job, index) {
     const travel = job.estimatedTravelMinutes != null ? ` · ca. ${job.estimatedTravelMinutes} min kjøring` : "";
@@ -126,7 +135,7 @@
       <span class="snow-queue-main">
         <strong>${esc(job.customerSnapshot?.name || "Kunde")}</strong>
         <span class="snow-queue-address">${esc(job.customerSnapshot?.address || "Adresse mangler")}${esc(travel)}</span>
-        <span class="snow-queue-meta">${badges(job)}${job.note ? `<span class="snow-muted">${esc(job.note)}</span>` : ""}</span>
+        <span class="snow-queue-meta">${badges(job)}${timeWishMarkup(job.snowTimePreference)}${job.note ? `<span class="snow-muted">${esc(job.note)}</span>` : ""}</span>
       </span>
       <span class="snow-queue-manage">Endre ›</span>
     </button>`;
@@ -142,6 +151,7 @@
         <div class="snow-manage-customer">
           <strong>${esc(job.customerSnapshot?.name || "Kunde")}</strong>
           <span>${esc(job.customerSnapshot?.address || "Adresse mangler")}</span>
+          ${timeWishMarkup(job.snowTimePreference)}
           ${job.note ? `<p>${esc(job.note)}</p>` : ""}
         </div>
         <div class="snow-manage-actions">
@@ -173,10 +183,11 @@
         <div>
           <strong>${esc(booking.customerName || "Kunde")}</strong>
           <span>${esc(booking.customerAddress || "Adresse manglar")}</span>
+          ${timeWishMarkup(booking.snowTimePreference)}
           ${booking.comment ? `<span class="snow-inbox-note">${esc(booking.comment)}</span>` : ""}
           ${safePhone ? `<a href="tel:${esc(safePhone)}">Ring kunden: ${esc(booking.customerPhone)}</a>` : ""}
         </div>
-        <time datetime="${esc(booking.date)}">Bestilt ${esc(formatDate(booking.date))} kl. ${esc(booking.time || "–")}</time>
+        <time datetime="${esc(booking.date)}">${booking.bookingMode === "day" ? `Brøyting ${esc(formatDate(booking.date))} · i løpet av dagen` : `Bestilt ${esc(formatDate(booking.date))} kl. ${esc(booking.time || "–")}`}</time>
       </article>`;
     }).join("");
     els.inboxMore.classList.toggle("hidden", total <= items.length);
