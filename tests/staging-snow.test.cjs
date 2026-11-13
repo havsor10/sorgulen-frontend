@@ -37,3 +37,12 @@ test("Optional requested snow time is separate from reserved time slots",()=>{
   assert.match(jobHtml,/id="snowTimeWishRow"/);
   assert.match(job,/snowTimePreference/);
 });
+
+test("One-tap preferred clock values fill the native time input without affecting the address",()=>{
+  assert.match(html,/data-snow-time="08:00"/);
+  assert.match(html,/id="snowTimeClock" type="time"/);
+  assert.match(js,/timeClock\.value = button\.dataset\.snowTime/);
+  assert.match(js,/updateQuickTimeButtons\(\)/);
+  assert.equal((html.match(/id="snowTimeClock"/g)||[]).length,1);
+  assert.equal((html.match(/id="customerAddress"/g)||[]).length,1);
+});
