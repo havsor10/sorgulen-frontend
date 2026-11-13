@@ -106,10 +106,15 @@
       return;
     }
 
+    const pref = booking.bookingMode === "day" ? booking.snowTimePreference : null;
+    const timeWords = {before:"Helst før kl.",around:"Helst omkring kl.",after:"Helst etter kl."};
+    const desiredTime = pref && timeWords[pref.kind] && /^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(pref.time || "")
+      ? timeWords[pref.kind] + " " + pref.time + " (ikkje garantert)" : "";
     const fields = [
       ['Tjeneste', booking.serviceName || '-'],
       ['Dato', booking.date || '-'],
       ['Tidspunkt', booking.bookingMode === 'day' ? 'I løpet av vald dag – etter kapasitet' : (booking.time || '-')],
+      ...(desiredTime ? [['Ønskt tidspunkt', desiredTime]] : []),
       ['Adresse', booking.customerAddress || '-'],
       ['Navn', booking.customerName || '-'],
       ['Telefon', booking.customerPhone || '-'],
