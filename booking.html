@@ -39,6 +39,10 @@
     label{display:grid;gap:6px;font-size:14px}
     .cta-row{display:flex;gap:10px;flex-wrap:wrap}
 
+    .snow-time-wish{margin-top:18px;padding:16px;border-radius:14px;border:1px solid rgba(130,169,210,.3);background:rgba(24,49,78,.32);display:grid;gap:10px}
+    .snow-time-wish.hidden{display:none}
+    .snow-time-wish select,.snow-time-wish input{min-height:48px}
+    .snow-time-disclaimer{font-size:13px;line-height:1.5;color:#cad5e4;margin:0}
     .day-booking-info{margin:14px 0;padding:16px;border-radius:14px;background:rgba(95,211,141,.08);border:1px solid rgba(95,211,141,.28)}
     .day-booking-info strong{display:block;font-size:1rem;margin-bottom:6px}
     .address-picker{position:relative;min-width:0}
@@ -136,9 +140,23 @@
         </div>
       </div>
     </div>
+    <div id="snowTimeWish" class="snow-time-wish hidden">
+      <label for="snowTimeKind"><strong>Har du eit ønskt tidspunkt? (valfritt)</strong></label>
+      <select id="snowTimeKind">
+        <option value="none">Nei – når det passar i løpet av dagen</option>
+        <option value="before">Helst før eit klokkeslett</option>
+        <option value="around">Helst omkring eit klokkeslett</option>
+        <option value="after">Helst etter eit klokkeslett</option>
+      </select>
+      <div id="snowTimeInputWrap" class="hidden">
+        <label for="snowTimeClock">Klokkeslett du ønskjer</label>
+        <input id="snowTimeClock" type="time" step="300" autocomplete="off">
+      </div>
+      <p class="snow-time-disclaimer">Dette er berre eit ønske, ikkje ein stadfesta avtale. Vi prøver å ta omsyn til det når brøyterunda blir planlagd, men tidspunktet er ikkje garantert.</p>
+    </div>
     <div class="booking-grid one" style="margin-top:16px">
-      <label>Merknader og eventuelle tidsønske
-        <textarea id="comment" rows="4" placeholder="Til dømes: ønskjer før kl. 08 dersom mogleg, innkøyrsel bak huset, pass på steinkanten."></textarea>
+      <label>Merknader om brøytearbeidet
+        <textarea id="comment" rows="4" placeholder="Til dømes: innkøyrsel bak huset, pass på steinkanten, brøyt fram til garasjen."></textarea>
       </label>
     </div>
     <div class="cta-row" style="margin-top:16px">
