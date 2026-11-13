@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bestill tjeneste | Sørgulen Industriservice</title>
-  <meta name="description" content="Bestill brøyting hos Sørgulen Industriservice i Florø. Velg dato og tilgjengelig tidspunkt direkte på nett.">
+  <meta name="description" content="Bestill brøyting for vald dag i Florø. Vel adresse og innkøyrsel på kartet. Følg plassen din i brøytekøen.">
   <link rel="canonical" href="https://sorgulen.no/booking.html">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Bestill tjeneste | Sørgulen Industriservice">
@@ -19,6 +19,7 @@
 
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="maintenance.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <script src="maintenance.js" defer></script>
   <style>
     .booking-wrap{max-width:980px;margin:0 auto;padding:24px 18px 60px}
@@ -37,7 +38,22 @@
     textarea,input,select{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:#0e1523;color:#f3f6ff}
     label{display:grid;gap:6px;font-size:14px}
     .cta-row{display:flex;gap:10px;flex-wrap:wrap}
-    @media (max-width:720px){.booking-grid{grid-template-columns:1fr}}
+
+    .day-booking-info{margin:14px 0;padding:16px;border-radius:14px;background:rgba(95,211,141,.08);border:1px solid rgba(95,211,141,.28)}
+    .day-booking-info strong{display:block;font-size:1rem;margin-bottom:6px}
+    .address-picker{position:relative;min-width:0}
+    .address-list{position:absolute;z-index:1002;left:0;right:0;max-height:238px;overflow-y:auto;border:1px solid #67809e;border-radius:12px;background:#111d2b;box-shadow:0 16px 35px #0008;margin-top:3px}
+    .address-list button{display:block;text-align:left;width:100%;padding:13px 14px;cursor:pointer;border:none;border-bottom:1px solid #334155;background:transparent;color:#f7fbff;font:600 14px/1.4 system-ui}
+    .address-list button:hover,.address-list button:focus{background:#273950}
+    .address-help{font-size:13px;color:var(--muted);margin:5px 0 0;line-height:1.45}
+    .address-help.ok{color:#74e4a4}
+    .map-toggle{margin-top:10px;cursor:pointer;background:#13263b;border:1px solid #567493;color:#eef6ff;border-radius:10px;padding:11px 14px;font-weight:700}
+    .map-panel{margin-top:12px}
+    .map-panel #drivewayMap{height:290px;border-radius:12px;z-index:0;border:1px solid #54718e;background:#1e293b}
+    .map-panel .map-caption{font-size:13px;color:#c5d6e7;margin:7px 0}
+    .map-panel .leaflet-container{font:14px system-ui}
+    @media (max-width:720px){.booking-grid{grid-template-columns:1fr}.map-panel #drivewayMap{height:270px}}
+
   </style>
 </head>
 <body>
@@ -64,9 +80,9 @@
   <div class="hero-inner">
     <div>
       <h1 id="bookingTitle">Bestill tjeneste</h1>
-      <p class="lead">Velg tjeneste, dato og tidspunkt. Bestillingen sendes direkte til Sørgulen Industriservice, og du får bekreftelse på e-post.</p>
+      <p id="bookingLead" class="lead">Velg tjeneste, dato og tidspunkt. Bestillingen blir registrert direkte i Sørgulen Industriservice.</p>
       <div class="facts">
-        <div class="fact">Bookbare tider: 09:00–20:00</div>
+        <div id="bookingFact" class="fact">Andre tenester: bestill eit klokkeslett</div>
                 <div class="fact">Avbestilling via telefon</div>
       </div>
     </div>
@@ -75,7 +91,7 @@
 <main class="booking-wrap premium-booking-wrap">
   <section class="booking-steps" aria-label="Bestillingssteg">
     <div class="step active"><span>1</span><strong>Velg tjeneste</strong></div>
-    <div class="step"><span>2</span><strong>Velg tid</strong></div>
+    <div class="step"><span>2</span><strong id="secondStepLabel">Velg dag</strong></div>
     <div class="step"><span>3</span><strong>Send bestilling</strong></div>
   </section>
   <div class="booking-card">
@@ -88,6 +104,7 @@
       </label>
     </div>
     <div id="message" class="notice hidden"></div>
+    <div id="dayBookingInfo" class="day-booking-info hidden" role="status"><strong>Brøyting i løpet av vald dag</strong>Du treng ikkje velje klokkeslett. Vi samlar kundane i ei effektiv brøyterunde etter område og kapasitet. Du kan følgje køen på «Min jobb». Vi gir ikkje garanti om eit bestemt klokkeslett.</div>
     <div id="slotsWrap" class="hidden">
       <h3>Ledige tider</h3>
       <p class="muted">Hvis valgt tid er opptatt, foreslår vi neste ledige tider.</p>
@@ -107,20 +124,28 @@
       <label>E-post
         <input id="customerEmail" type="email" />
       </label>
-      <label>Adresse
-        <input id="customerAddress" type="text" />
-      </label>
+      <div class="address-picker">
+        <label for="customerAddress">Adresse / innkøyrsel</label>
+        <input id="customerAddress" type="text" autocomplete="street-address" placeholder="Skriv gate og husnummer, til dømes Kleiva 91B" aria-autocomplete="list" aria-controls="addressSuggestions" aria-expanded="false">
+        <div id="addressSuggestions" class="address-list hidden" role="listbox" aria-label="Adresseforslag"></div>
+        <p id="addressHelp" class="address-help">Skriv minst tre teikn og vel rett adresse frå lista.</p>
+        <button id="showDrivewayMap" type="button" class="map-toggle">Finn du ikkje adressa? Vel innkøyrsel på kart</button>
+        <div id="addressMapPanel" class="map-panel hidden">
+          <div id="drivewayMap" aria-label="Kart for å stadfeste eller plassere innkøyrselen"></div>
+          <p class="map-caption">Trykk på kartet der innkøyrselen faktisk er. Adresseteksten kan du skrive sjølv dersom husbokstaven manglar i adresselista.</p>
+        </div>
+      </div>
     </div>
     <div class="booking-grid one" style="margin-top:16px">
-      <label>Kommentar
-        <textarea id="comment" rows="4" placeholder="Tilleggsinformasjon til oppdraget"></textarea>
+      <label>Merknader og eventuelle tidsønske
+        <textarea id="comment" rows="4" placeholder="Til dømes: ønskjer før kl. 08 dersom mogleg, innkøyrsel bak huset, pass på steinkanten."></textarea>
       </label>
     </div>
     <div class="cta-row" style="margin-top:16px">
       <button id="submitBooking" class="btn primary" type="button">Send bestilling</button>
       <a class="btn secondary" href="kontakt.html">Kontakt oss</a>
     </div>
-    <p class="muted" style="margin-top:12px">For å avbestille eller flytte time må du kontakte oss direkte.</p>
+    <p class="muted" style="margin-top:12px">Du får brøyting i løpet av vald dag etter kapasitet. For endring eller avbestilling, kontakt oss.</p>
   </div>
 
   <div id="successWrap" class="booking-card success hidden">
@@ -131,6 +156,7 @@
 </main>
 <script src="config.js"></script>
 <script src="app.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script src="booking.js"></script>
 
 <footer class="site-footer-premium" role="contentinfo">
