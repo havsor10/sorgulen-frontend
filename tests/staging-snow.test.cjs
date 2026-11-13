@@ -24,3 +24,16 @@ test("Customer status shows private live queue",()=>{
   assert.match(job,/kundar framfor deg/);
   assert.match(job,/Du er neste i brøytekøen/);
 });
+
+test("Optional requested snow time is separate from reserved time slots",()=>{
+  const admin=fs.readFileSync("admin/broyting.js","utf8");
+  assert.match(html,/id="snowTimeKind"/);
+  assert.match(html,/id="snowTimeClock"/);
+  assert.match(html,/ikkje ein stadfesta avtale/);
+  assert.match(js,/snowTimePreference:/);
+  assert.match(js,/timeKind.value !== "none"/);
+  assert.match(admin,/TIDSØNSKE/);
+  assert.match(conf,/Ønskt tidspunkt/);
+  assert.match(jobHtml,/id="snowTimeWishRow"/);
+  assert.match(job,/snowTimePreference/);
+});
