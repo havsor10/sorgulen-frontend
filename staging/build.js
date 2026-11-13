@@ -67,3 +67,30 @@ fs.writeFileSync(path.join(destRoot, "config.js"), [
 
 console.log("Read-only staging snapshot ready:", destRoot);
 console.log("Production API and all form/network requests are blocked by CSP.");
+
+/*
+ * Retire the old, read-only staging hostname. It blocked API calls through
+ * connect-src 'none', causing "could not fetch services" on that address.
+ * Preserve path, query and private customer portal fragment on redirect.
+ * The new primary test site is isolated and functional.
+ */
+const canonicalTestSite = "https://sorgulen-testmiljo.onrender.com";
+const redirectPage = [
+  "<!doctype html><html lang=\"no\"><head><meta charset=\"utf-8\">",
+  "<meta name=\"robots\" content=\"noindex,nofollow\">",
+  "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">",
+  "<meta http-equiv=\"refresh\" content=\"1;url=" + canonicalTestSite + "\">",
+  "<title>Opnar det aktive testmiljøet …</title></head><body>",
+  "<p>Dette er ei gamal testadresse. Opnar <a href=\"" + canonicalTestSite + "\">Sørgulen testmiljø</a>.</p>",
+  "<script>location.replace(\"" + canonicalTestSite + "\"+location.pathname+location.search+location.hash);</script>",
+  "</body></html>"
+].join("");
+function retireOldPreview(dir) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes:true })) {
+    const target = path.join(dir, entry.name);
+    if (entry.isDirectory()) retireOldPreview(target);
+    else if (entry.isFile() && /\.html$/i.test(entry.name)) fs.writeFileSync(target, redirectPage, "utf8");
+  }
+}
+retireOldPreview(destRoot);
+console.log("Old read-only preview now redirects to the live, isolated test environment.");
