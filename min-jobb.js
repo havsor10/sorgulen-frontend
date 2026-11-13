@@ -90,9 +90,43 @@
     document.getElementById("statusText").textContent = job.statusText || "Bestillingen er mottatt";
     document.getElementById("statusHelp").textContent = job.statusHelp || "";
 
+    const queueCard = document.getElementById("snowQueueCard");
+    queueCard.classList.toggle("hidden", !snow);
+    if (snow) {
+      const q = job.queue || {};
+      const title = document.getElementById("snowQueueTitle");
+      const help = document.getElementById("snowQueueHelp");
+      const number = document.getElementById("snowQueueNumber");
+      number.classList.add("hidden");
+      if (job.stage === "on_the_way") {
+        title.textContent = "Vi er på veg til deg";
+        help.textContent = "Følg status her. Vi kan ikkje garantere eksakt ankomst.";
+      } else if (q.state === "next") {
+        title.textContent = "Du er neste i brøytekøen!";
+        help.textContent = "Vi avsluttar siste oppdrag før vi køyrer til deg.";
+        number.textContent = "1";number.classList.remove("hidden");
+      } else if (q.state === "queued" && Number.isInteger(q.ahead)) {
+        title.textContent = q.ahead === 1 ? "1 kunde framfor deg" : q.ahead + " kundar framfor deg";
+        help.textContent = "Brøyterunda er planlagd. Plasseringa blir oppdatert når oppdrag blir fullførte.";
+        number.textContent = String(q.position);number.classList.remove("hidden");
+      } else if (q.state === "in_progress") {
+        title.textContent = "Brøyting hos deg pågår";
+        help.textContent = "Arbeidet er i gang.";
+      } else if (q.state === "completed") {
+        title.textContent = "Brøytinga er ferdig";
+        help.textContent = "Takk for bestillinga.";
+      } else if (q.state === "deferred") {
+        title.textContent = "Brøytinga er utsett";
+        help.textContent = "Vi oppdaterer deg når ny runde blir planlagd.";
+      } else {
+        title.textContent = "Bestillinga er registrert";
+        help.textContent = "Vi klargjer brøyterunda. Køplassering kjem når ruta er planlagd.";
+      }
+    }
+
     renderTimeline(job.timeline);
     document.getElementById("bookingDate").textContent = formatDate(job.bookingDate);
-    document.getElementById("bookingTime").textContent = job.bookingTime ? `kl. ${job.bookingTime}` : "Ikke satt";
+    document.getElementById("bookingTime").textContent = snow && job.bookingMode === "day" ? "I løpet av vald dag" : (job.bookingTime ? `kl. ${job.bookingTime}` : "Ikkje avtalt");
     document.getElementById("jobAddress").textContent = job.address || "Ikke oppgitt";
     document.getElementById("addressRow").classList.toggle("hidden", !job.address);
 
