@@ -173,13 +173,13 @@
   // Render's free staging backend can sleep while unused. Retry automatically
   // instead of incorrectly telling the customer there are no services.
   let loadingServices = false;
-  async function loadServices() {
+  async function loadServices({ silent = false } = {}) {
     if (loadingServices) return;
     loadingServices = true;
     let data = null;
     try {
       for (let attempt = 1; attempt <= 10; attempt++) {
-        notify(attempt === 1 ? "Hentar tenestene …" :
+        if (!silent) notify(attempt === 1 ? "Hentar tenestene …" :
           "Startar testserveren … prøver igjen (" + attempt + "/10).");
         try {
           const timeout = new AbortController();
@@ -200,15 +200,30 @@
         }
       }
       if (!data) throw new Error("Fekk ikkje kontakt med testserveren.");
-      clearNotice();
+      if (!silent) clearNotice();
     } finally {
       loadingServices = false;
     }
+    const next = (data.services || []).filter(s=>s.active!==false &&
+      (s.bookable===true || ["broyting","dekkskift"].includes(s.key)));
+    if (!next.length) throw new Error("Ingen bookbare tenester.");
+    // Background refresh must never reset an in-progress customer's form.
+    const existing = selectedService;
+    const matching = next.find(s=>s.key === existing?.key);
+    if (silent && existing && matching?._id === existing._id) {
+      services = next;
+      selectedService = matching;
+      return;
+    }
+    presentServices(next);
+  }
+  function presentServices(incoming) {
     const rememberedKey = selectedService?.key || "";
-    services = (data.services||[]).filter(s=>s.active!==false&&(s.bookable===true||["broyting","dekkskift"].includes(s.key)));
-    if(!services.length)throw new Error("Ingen bookbare tenester.");
+    services = incoming.filter(s=>s.active!==false &&
+      (s.bookable===true || ["broyting","dekkskift"].includes(s.key)));
+    if (!services.length) throw new Error("Ingen bookbare tenester.");
     serviceSelect.replaceChildren();
-    for(const service of services) {
+    for (const service of services) {
       const snowService = /(brøy|broy|snø|sno|plog)/i.test(String(service.name||service.key||""));
       const price = snowService ? "350 kr oppmøte + 650 kr/time" : (service.priceText||"");
       serviceSelect.add(new Option(service.name+(price?" – "+price:""),service._id));
@@ -302,5 +317,17 @@
     retry.addEventListener("click", () => loadServices().catch(showServiceLoadError), {once:true});
     message.appendChild(retry);
   }
-  loadServices().catch(showServiceLoadError);
+  // Display staging's known, non-sensitive service catalogue instantly.
+  // API remains authoritative for capacity and the eventual booking.
+  if (Array.isArray(window.STAGING_SERVICE_CATALOG) && window.STAGING_SERVICE_CATALOG.length) {
+    try {
+      presentServices(window.STAGING_SERVICE_CATALOG);
+      loadServices({ silent:true }).catch(() => {
+        // Customer can still select a service while the free test backend starts.
+        // Date availability and submission never proceed without the backend.
+      });
+    } catch (error) { showServiceLoadError(error); }
+  } else {
+    loadServices().catch(showServiceLoadError);
+  }
 })();
