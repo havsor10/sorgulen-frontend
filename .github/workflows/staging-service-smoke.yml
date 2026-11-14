@@ -1,0 +1,42 @@
+name: Staging - Booking service smoke
+on:
+  push:
+    branches:
+      - staging/sorgulen-test
+  workflow_dispatch:
+jobs:
+  verify-staging-service-catalog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Build isolated staging site
+        run: node tools/build-staging.cjs
+      - name: Verify bundled config and stable service IDs
+        run: node --test tests/staging-service-catalog.test.cjs
+      - name: Check staging API service catalogue
+        run: |
+          node -e '
+            (async () => {
+              const url = "https://sorgulen-test-api.onrender.com/api/services";
+              const id = (await import("node:crypto")).createHash("sha256")
+                .update("sorgulen-staging-default-service:broyting").digest("hex").slice(0,24);
+              for (let attempt=0; attempt<4; attempt++) {
+                try {
+                  const response = await fetch(url,{signal:AbortSignal.timeout(60000)});
+                  if (!response.ok) throw new Error("API HTTP "+response.status);
+                  const data = await response.json();
+                  const snow = data.services?.find(s=>s.key==="broyting");
+                  if (!snow || snow._id!==id) throw new Error("Staging snow service is missing/stale");
+                  console.log("Test API has matching stable brøyting ID; ready.");
+                  return;
+                } catch(err) {
+                  console.log("Staging API wake attempt "+(attempt+1)+": "+err.message);
+                  if (attempt===3) throw err;
+                  await new Promise(resolve=>setTimeout(resolve,8000));
+                }
+              }
+            })().catch(err=>{console.error(err);process.exit(1)})
+          '
