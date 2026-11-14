@@ -68,6 +68,19 @@ function copy(from, rel = "") {
   }
 }
 copy(root);
+// Bust Safari/browser script caches whenever the staging booking code changes.
+// Only the isolated copy is modified; production HTML stays untouched.
+const bookingHash = createHash("sha256")
+  .update(fs.readFileSync(path.join(out,"booking.js")))
+  .digest("hex").slice(0,12);
+const bookingPagePath = path.join(out,"booking.html");
+let bookingPage = fs.readFileSync(bookingPagePath,"utf8");
+for (const script of ["config.js","booking.js"]) {
+  const oldTag = '<script src="' + script + '"></script>';
+  if (!bookingPage.includes(oldTag)) throw new Error("Missing script include: " + script);
+  bookingPage = bookingPage.replace(oldTag, '<script src="' + script + '?v=' + bookingHash + '"></script>');
+}
+fs.writeFileSync(bookingPagePath, bookingPage, "utf8");
 for (const rel of ["index.html","booking.html","admin/login.html","admin/broyting.html"]) {
   if (!fs.existsSync(path.join(out,rel))) throw new Error("Missing " + rel);
 }
