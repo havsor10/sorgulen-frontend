@@ -31,5 +31,6 @@ test("deployed staging booking code uses local services before any slow API call
   assert.match(js,/const response = await fetch\(API\+"\/availability/);
   const html = fs.readFileSync(path.join(dist,"booking.html"),"utf8");
   assert.match(html,/<select id="serviceSelect"><\/select>/);
-  assert.match(html,/<script src="config\.js"><\/script>/);
+  assert.match(html,/<script src="config\.js\?v=[a-f0-9]{12}"><\/script>/);
+  assert.match(html,/<script src="booking\.js\?v=[a-f0-9]{12}"><\/script>/);
 });
