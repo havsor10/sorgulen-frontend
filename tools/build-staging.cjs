@@ -72,6 +72,7 @@ copy(root);
 // Only the isolated copy is modified; production HTML stays untouched.
 const bookingHash = createHash("sha256")
   .update(fs.readFileSync(path.join(out,"booking.js")))
+  .update(fs.readFileSync(path.join(out,"config.js")))
   .digest("hex").slice(0,12);
 const bookingPagePath = path.join(out,"booking.html");
 let bookingPage = fs.readFileSync(bookingPagePath,"utf8");
