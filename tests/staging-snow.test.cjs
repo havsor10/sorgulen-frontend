@@ -46,3 +46,13 @@ test("One-tap preferred clock values fill the native time input without affectin
   assert.equal((html.match(/id="snowTimeClock"/g)||[]).length,1);
   assert.equal((html.match(/id="customerAddress"/g)||[]).length,1);
 });
+
+test("Staging shows the known service catalogue immediately while API sleeps",()=>{
+  const build=fs.readFileSync("tools/build-staging.cjs","utf8");
+  assert.match(build,/stagingServiceCatalog/);
+  assert.match(build,/stagingServiceId/);
+  assert.match(build,/STAGING_SERVICE_CATALOG/);
+  assert.match(js,/presentServices\(window\.STAGING_SERVICE_CATALOG\)/);
+  assert.match(js,/loadServices\(\{ silent:true \}\)/);
+  assert.match(js,/Date availability and submission never proceed without the backend/);
+});
