@@ -11,6 +11,16 @@ execFileSync(process.execPath, ["--test","tests/staging-snow.test.cjs"], { cwd: 
 const out = path.join(root, "staging-dist");
 const TEST_ORIGIN = "https://sorgulen-testmiljo.onrender.com";
 const TEST_API = "https://sorgulen-test-api.onrender.com";
+const { createHash } = require("node:crypto");
+function stagingServiceId(key) {
+  return createHash("sha256").update("sorgulen-staging-default-service:" + key).digest("hex").slice(0,24);
+}
+// Only a display fallback. All availability checks and bookings still require
+// the isolated backend to confirm capacity and persist the order.
+const stagingServiceCatalog = [
+  { _id: stagingServiceId("broyting"), key: "broyting", name: "Brøyting", bookable: true, active: true, priceText: "350 kr oppmøte + 650 kr/time" },
+  { _id: stagingServiceId("dekkskift"), key: "dekkskift", name: "Dekkskift", bookable: true, active: true, priceText: "450 kr" }
+];
 const excluded = new Set([".git", ".github", "node_modules", "staging-dist", "tests"]);
 const networkCsp = "connect-src 'self' " + TEST_API + "; form-action 'self'; base-uri 'self';";
 const meta = '<meta name="robots" content="noindex,nofollow,noarchive">\n<meta http-equiv="Content-Security-Policy" content="' + networkCsp + '">';
@@ -18,7 +28,8 @@ const warning = '<div role="status" style="position:sticky;top:0;z-index:2147483
 const config = '// Separate staging: no real Firebase, tokens or production API.\n' +
 'window.FB_CONFIG={apiKey:"",authDomain:"test.invalid",projectId:"sorgulen-staging-disabled"};\n' +
 'window.APP_ACCESS_TOKEN="sorgulen-staging-only";\n' +
-'window.CONFIG={API_BASE_URL:"' + TEST_API + '/api"};\n';
+'window.CONFIG={API_BASE_URL:"' + TEST_API + '/api"};\n' +
+'window.STAGING_SERVICE_CATALOG=' + JSON.stringify(stagingServiceCatalog) + ';\n';
 if (fs.existsSync(out)) fs.rmSync(out, { recursive: true, force: true });
 fs.mkdirSync(out, { recursive: true });
 let count = 0;
