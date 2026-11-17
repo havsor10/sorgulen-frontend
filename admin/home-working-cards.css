@@ -77,3 +77,5 @@
 .home-followup-panel.has-urgent{border-color:#a76351}
 .home-followup-panel.has-urgent>summary{background:linear-gradient(95deg,#3b231e,#151e29 78%)}
 .home-followup-panel.has-urgent .home-followup-label strong{color:#ffb8a4}
+
+.home-task-error{padding:15px;border:1px solid #ad6655;border-radius:11px;background:#38211d;color:#ffcfbd;font-size:13px;font-weight:800;line-height:1.55}
