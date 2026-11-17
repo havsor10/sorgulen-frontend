@@ -17,6 +17,30 @@
   let services = [];
   let selectedService = null;
   let selectedTime = null;
+  let availabilityRequest = 0;
+  let bookingPending = false;
+  let bookingSucceeded = false;
+
+  function osloParts(value = new Date()) {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Europe/Oslo", year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", hour12: false,
+    }).formatToParts(value);
+    const get = (type) => parts.find((part) => part.type === type)?.value || "00";
+    return { date: [get("year"), get("month"), get("day")].join("-"),
+      minutes: (Number(get("hour")) % 24) * 60 + Number(get("minute")) };
+  }
+
+  function getOperationId(payload) {
+    const key = [payload.serviceId, payload.date, payload.time].join("|");
+    let previous = null;
+    try { previous = JSON.parse(sessionStorage.getItem("sorgulen_booking_retry") || "null"); } catch (_) {}
+    if (previous?.key === key && /^[A-Za-z0-9_-]{16,128}$/.test(previous.id || "")) return previous.id;
+    const id = window.crypto?.randomUUID?.()
+      || "booking_" + Date.now().toString(36) + "_" + Array.from(window.crypto.getRandomValues(new Uint32Array(4)), v => v.toString(36)).join("");
+    try { sessionStorage.setItem("sorgulen_booking_retry", JSON.stringify({ key, id })); } catch (_) {}
+    return id;
+  }
 
   function showMessage(text, type) {
     messageEl.textContent = text;
@@ -25,15 +49,10 @@
   }
   function hideMessage() { messageEl.classList.add('hidden'); }
 
-  function todayOslo() {
-    const now = new Date();
-    const oslo = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Oslo', year:'numeric', month:'2-digit', day:'2-digit' }).format(now);
-    return oslo;
-  }
+  function todayOslo() { return osloParts().date; }
   function maxDateOslo(days) {
-    const d = new Date();
-    d.setDate(d.getDate() + days);
-    return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Oslo', year:'numeric', month:'2-digit', day:'2-digit' }).format(d);
+    const day = todayOslo();
+    return new Date(Date.parse(day + "T12:00:00Z") + days * 86400000).toISOString().slice(0, 10);
   }
 
   function setDateLimits() {
@@ -42,30 +61,41 @@
   }
 
   async function loadServices() {
-    const res = await fetch(`${API_BASE}/services`);
+    const res = await fetch(`${API_BASE}/services`, { cache: "no-store" });
+    if (!res.ok) throw new Error("Tenestene kunne ikkje hentast.");
     const data = await res.json();
-    services = Array.isArray(data.services) ? data.services : [];
-    const allowed = services.filter((s) => s.active !== false && (s.bookable === true || ["broyting", "dekkskift"].includes(String(s.key || ""))));
-    serviceSelect.innerHTML = allowed.map(s => `<option value="${s._id}">${s.name} – ${s.priceText || ''}</option>`).join('');
+    if (!Array.isArray(data.services)) throw new Error("Ugyldig svar frå tenestelista.");
+    services = data.services;
+    const allowed = services.filter((service) => service.active !== false && service.bookable === true);
+    serviceSelect.replaceChildren();
+    // Tenestenamn er data frå serveren, aldri HTML som skal tolkast.
+    for (const service of allowed) {
+      const option = document.createElement("option");
+      option.value = String(service._id);
+      option.textContent = service.name + " – " + (service.priceText || "");
+      serviceSelect.appendChild(option);
+    }
     if (!allowed.length) {
-      showMessage('Ingen bookbare tjenester er tilgjengelige akkurat nå.', 'error');
+      serviceSelect.disabled = true;
+      bookingDate.disabled = true;
+      showMessage("Ingen tenester er opne for direkte bestilling. Send gjerne ei prisførespurnad i staden.", "error");
       return;
     }
-    const pre = allowed.find((s) => String(s.key || "") === requestedServiceKey)
-      || allowed.find((s) => String(s.name).trim().toLowerCase() === requestedServiceName)
+    const pre = allowed.find((service) => String(service.key || "") === requestedServiceKey)
+      || allowed.find((service) => String(service.name).trim().toLowerCase() === requestedServiceName)
       || allowed[0];
-    serviceSelect.value = pre._id;
+    serviceSelect.value = String(pre._id);
     selectedService = pre;
     bookingTitle.textContent = `Bestill ${pre.name}`;
+    if (bookingDate.value) await loadAvailability();
   }
 
   function isPastSlot(dateStr, timeStr) {
-    const now = new Date();
-    const osloNow = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Oslo' }));
-    const [y,m,d] = dateStr.split('-').map(Number);
-    const [hh,mm] = timeStr.split(':').map(Number);
-    const slot = new Date(y, m-1, d, hh, mm, 0);
-    return slot < osloNow;
+    const now = osloParts();
+    if (dateStr < now.date) return true;
+    if (dateStr > now.date) return false;
+    const [hh, mm] = String(timeStr).split(":").map(Number);
+    return hh * 60 + mm <= now.minutes;
   }
 
   function renderSlots(data) {
@@ -110,66 +140,96 @@
   }
 
   async function loadAvailability() {
-    if (!selectedService || !bookingDate.value) return;
-    showMessage('Laster ledige tider …');
-    const res = await fetch(`${API_BASE}/availability?serviceId=${encodeURIComponent(selectedService._id)}&date=${encodeURIComponent(bookingDate.value)}`);
-    const data = await res.json();
-    renderSlots(data);
+    const seq = ++availabilityRequest;
+    selectedTime = null;
+    slotsEl.replaceChildren();
+    slotsWrap.classList.add("hidden");
+    formWrap.classList.add("hidden");
+    if (!selectedService || !bookingDate.value) { hideMessage(); return; }
+    const serviceId = String(selectedService._id);
+    const day = bookingDate.value;
+    showMessage("Hentar ledige tider …");
+    try {
+      const res = await fetch(`${API_BASE}/availability?serviceId=${encodeURIComponent(serviceId)}&date=${encodeURIComponent(day)}`, { cache: "no-store" });
+      const data = await res.json().catch(() => ({}));
+      if (seq !== availabilityRequest) return;
+      if (!res.ok || !Array.isArray(data.allSlots) || !Array.isArray(data.bookedTimes)) {
+        throw new Error(data.error || "Kunne ikkje hente ledige tider. Prøv igjen.");
+      }
+      if (!selectedService || String(selectedService._id) !== serviceId || bookingDate.value !== day) return;
+      renderSlots(data);
+    } catch (error) {
+      if (seq !== availabilityRequest) return;
+      showMessage(error.message || "Kunne ikkje hente ledige tider. Prøv igjen.", "error");
+    }
   }
 
   async function submitBooking() {
+    if (bookingPending || bookingSucceeded) return;
+    if (!selectedService || !selectedTime) {
+      showMessage("Vel ei teneste, dato og ledig tid først.", "error");
+      return;
+    }
     const payload = {
       serviceId: selectedService._id,
       serviceName: selectedService.name,
       date: bookingDate.value,
       time: selectedTime,
-      customerName: document.getElementById('customerName').value.trim(),
-      customerPhone: document.getElementById('customerPhone').value.trim(),
-      customerEmail: document.getElementById('customerEmail').value.trim(),
-      customerAddress: document.getElementById('customerAddress').value.trim(),
-      comment: document.getElementById('comment').value.trim(),
+      customerName: document.getElementById("customerName").value.trim(),
+      customerPhone: document.getElementById("customerPhone").value.trim(),
+      customerEmail: document.getElementById("customerEmail").value.trim(),
+      customerAddress: document.getElementById("customerAddress").value.trim(),
+      comment: document.getElementById("comment").value.trim(),
     };
-
     if (!payload.customerName || !payload.customerPhone || !payload.customerEmail || !payload.customerAddress || !payload.date || !payload.time) {
-      showMessage('Fyll inn navn, telefon, e-post, adresse, dato og tid.', 'error');
+      showMessage("Fyll inn namn, telefon, e-post, adresse, dato og tid.", "error");
       return;
     }
-
-    const res = await fetch(`${API_BASE}/bookings`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await res.json().catch(() => ({}));
-    if (res.ok && data.ok) {
-      const bookingSummary = {
-        serviceName: payload.serviceName,
-        date: payload.date,
-        time: payload.time,
-        customerName: payload.customerName,
-        customerPhone: payload.customerPhone,
-        customerEmail: payload.customerEmail,
-        comment: payload.comment,
-      };
-
-      try {
-        sessionStorage.setItem('lastBookingSummary', JSON.stringify(bookingSummary));
-      } catch (_) {
-        localStorage.setItem('lastBookingSummary', JSON.stringify(bookingSummary));
+    payload.operationId = getOperationId(payload);
+    bookingPending = true;
+    submitBtn.disabled = true;
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = "Sender bestilling …";
+    try {
+      const res = await fetch(`${API_BASE}/bookings`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.ok && data.bookingId) {
+        bookingSucceeded = true;
+        const summary = {
+          serviceName: payload.serviceName, date: payload.date, time: payload.time,
+          customerName: payload.customerName, customerPhone: payload.customerPhone,
+          customerEmail: payload.customerEmail, comment: payload.comment,
+        };
+        try {
+          sessionStorage.setItem("lastBookingSummary", JSON.stringify(summary));
+          sessionStorage.removeItem("sorgulen_booking_retry");
+        } catch (_) {
+          try { localStorage.setItem("lastBookingSummary", JSON.stringify(summary)); } catch (_) {}
+        }
+        window.location.href = "booking-bekreftelse.html";
+        return;
       }
-
-      window.location.href = 'booking-bekreftelse.html';
-      return;
+      if (res.status === 409) {
+        showMessage(data.error || "Tida er ikkje ledig lenger. Vel ei ny tid.", "error");
+        await loadAvailability();
+        return;
+      }
+      showMessage(data.error || "Bestillinga kunne ikkje stadfestast. Prøv igjen.", "error");
+    } catch (error) {
+      // Retrying uses the *same* operationId, so an accepted request is
+      // recognized instead of generating another booking and another email.
+      showMessage("Nettverksfeil. Vi veit ikkje om bestillinga vart motteken. Prøv Send bestilling igjen – det blir ikkje oppretta ei ny dersom den første vart lagra.", "error");
+    } finally {
+      bookingPending = false;
+      if (!bookingSucceeded) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
     }
-
-    if (res.status === 409) {
-      showMessage('Valgt tid er opptatt. Her er neste ledige tider.', 'error');
-      await loadAvailability();
-      return;
-    }
-
-    showMessage(data.error || 'Kunne ikke sende booking akkurat nå.', 'error');
   }
 
   serviceSelect.addEventListener('change', () => {
