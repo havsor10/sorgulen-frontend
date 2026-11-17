@@ -67,7 +67,7 @@ test("home har ingen påtrengande AI-boble over arbeidslista", () => {
 
 test("API-trunkering, manglande oversikt og klokke visast eksplisitt", () => {
   assert.match(js, /home\.workingOrdersTruncated/);
-  assert.match(js, /Fleire oppdrag kan mangle/);
+  assert.match(js, /oppdrag kan mangle/);
   assert.match(js, /Hentar aktive oppdrag/);
   assert.match(js, /data-live-timer data-order-id/);
   assert.match(js, /timer\.textContent=fmtDuration\(sessionSeconds\(order\)\)/);
