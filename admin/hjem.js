@@ -4,7 +4,7 @@
   const timeTools = window.SorgulenWorkOrderTime;
   const el = (id) => document.getElementById(id);
   const taskList=el("taskList"), homeStatus=el("homeStatus"),ongoingProjects=el("ongoingProjects"),ongoingSection=el("ongoingSection");
-  let home=null, selectedWorkId=null, serverOffset=0, busy=false, quickType=null, confirmRun=null, tasksExpanded=false;
+  let home=null, selectedWorkId=null, serverOffset=0, busy=false, quickType=null, confirmRun=null, tasksExpanded=false, homeLoadSequence=0;
 
   const escapeHtml=(v)=>String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
   const fmtDate=(value)=>{ if(!value)return ""; const d=new Date(`${value}T12:00:00`); return new Intl.DateTimeFormat("no-NO",{timeZone:"Europe/Oslo",weekday:"short",day:"numeric",month:"short"}).format(d); };
@@ -179,13 +179,37 @@
     finally{busy=false;button.disabled=false;}
   }
   async function load(show=true){
+    const sequence=++homeLoadSequence;
     if(show)setStatus("Hentar aktive oppdrag…");
-    home=await api("/admin/assistant/home");
+    const workData=await api("/admin/assistant/home?fast=1");
+    if(sequence!==homeLoadSequence)return;
+    home=workData;
+    // Den viktige arbeidslista blir synleg FØR valfrie varsel blir henta.
     renderWorking();
-    renderTasks();
-    if(home.workingOrdersTruncated) setStatus("Det finst over 500 opne oppdrag. Bruk Oppdrag for å sjå resten.", "error");
-    else if(!Array.isArray(home.workingOrders)) setStatus("Arbeidslista er mellombels henta frå den eldre oversikta. Fleire oppdrag kan mangle.", "error");
-    else setStatus("");
+    const workWarning=home.workingOrdersTruncated
+      ? "Det finst over 500 opne oppdrag. Bruk Oppdrag for å sjå resten."
+      : !Array.isArray(home.workingOrders)
+        ? "Arbeidslista kjem frå eldre API. Nokre oppdrag kan mangle."
+        : "";
+    setStatus(workWarning,workWarning?"error":"");
+    const title=el("tasksTitle");
+    if(title)title.textContent="Kontrollerer varslingar…";
+    taskList.innerHTML='<div class="empty-home">Hentar oppfølgingssaker…</div>';
+    try {
+      const result=await api("/admin/assistant/overview");
+      if(sequence!==homeLoadSequence)return;
+      if(!Array.isArray(result.overview?.tasks))throw new Error("Ufullstendig varslingssvar");
+      home.overview=result.overview;
+      renderTasks();
+    } catch(error){
+      if(sequence!==homeLoadSequence)return;
+      // Eit problem med varslingsmotoren må ALDRI visast som «Alt under kontroll».
+      home.overview=null;
+      if(title)title.textContent="Varslingar ikkje tilgjengelege";
+      taskList.innerHTML='<div class="home-task-error">Varslingssystemet kunne ikkje kontrollerast. Opne Oppdrag og Økonomi for manuell oppfølging. Prøv å oppdatere her seinare.</div>';
+      el("followupPanel")?.classList.add("has-urgent");
+      setStatus([workWarning,"Varslingane er ikkje tilgjengelege: "+error.message].filter(Boolean).join(" "),"error");
+    }
     await loadResolvedTasks();
   }
 
