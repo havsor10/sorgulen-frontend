@@ -89,3 +89,12 @@ const settings = fs.readFileSync(path.join(out,"config.js"),"utf8");
 if (settings.includes("sorgulen-backend-2") || settings.includes("sorgulen-industriservice.firebaseapp.com"))
   throw new Error("Live config accidentally copied");
 console.log("Staging site built:", count, "files; no production API.");
+
+
+// Regression guard: public service-card destinations must exist in the build.
+const homeHtml = fs.readFileSync(path.join(out, "index.html"), "utf8");
+for (const rel of ["tjenester/broyting-pris-info.html", "tjenester/takrennevask-pris-info.html", "tjenester/dunkvask-pris-info.html"]) {
+  if (!homeHtml.includes('href="' + rel + '"')) throw new Error("Missing service-card link: " + rel);
+  if (!fs.existsSync(path.join(out, rel))) throw new Error("Broken service-card link: " + rel);
+}
+console.log("Service-card destination regression checks passed.");
