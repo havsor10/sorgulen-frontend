@@ -299,12 +299,6 @@
     return match ? { orderId: match[1], entryId: match[2] } : null;
   }
 
-  function expenseSource(line) {
-    const key = String(line?.sourceEntryKey || "");
-    const match = /^([a-f0-9]{24}):expense:([A-Za-z0-9_-]{8,100})$/i.exec(key);
-    return match ? { orderId: match[1], entryId: match[2] } : null;
-  }
-
   function render(inv) {
     const linesRows = (inv.lines || []).map((line) => `
       <tr>
@@ -312,7 +306,6 @@
           ${escapeHtml(line.item || "")}
           ${line.description ? `<br><small>${escapeHtml(line.description)}</small>` : ""}
           ${line.receiptUrl ? `<br><a class="fd-receipt-link" href="${escapeHtml(line.receiptUrl)}" target="_blank" rel="noopener">🧾 Se innkjøpskvittering</a>` : ""}
-          ${expenseSource(line) ? `<br><button type="button" class="fd-receipt-manage" data-receipt-order="${escapeHtml(expenseSource(line).orderId)}" data-receipt-entry="${escapeHtml(expenseSource(line).entryId)}">${line.receiptUrl ? "Endre / fjern kvittering på oppdrag" : "+ Legg til kvittering på oppdrag"}</button>` : ""}
           ${expenseSource(line) ? `<br><button type="button" class="fd-receipt-manage" data-receipt-order="${escapeHtml(expenseSource(line).orderId)}" data-receipt-entry="${escapeHtml(expenseSource(line).entryId)}">${line.receiptUrl ? "Endre / fjern kvittering på oppdrag" : "+ Legg til kvittering på oppdrag"}</button>` : ""}
         </td>
         <td>${line.quantity != null && line.unitPrice != null ? `${escapeHtml(lineQuantityText(line))} × ${money(line.unitPrice)}` : ""}</td>
@@ -381,21 +374,6 @@
         ${inv.creditNoteId ? `<div class="fd-section"><a class="btn-edit" href="faktura-detalj.html?id=${encodeURIComponent(inv.creditNoteId)}">Åpne tilhørende kreditnota</a></div>` : ""}
         ${lifecycle(inv)}
       </div>`;
-
-    content.querySelectorAll("[data-receipt-order][data-receipt-entry]").forEach((button) => {
-      button.addEventListener("click", async () => {
-        button.disabled = true;
-        try {
-          if (!window.SorgulenOperations?.openReceipt) throw new Error("Kvitteringsverktøyet er ikke tilgjengelig. Oppdater siden.");
-          await window.SorgulenOperations.openReceipt({
-            orderId: button.dataset.receiptOrder,
-            entryId: button.dataset.receiptEntry,
-          });
-        } catch (error) {
-          setMessage(error?.message || "Kunne ikke åpne kvitteringsbehandlingen.", "error");
-        } finally { button.disabled = false; }
-      });
-    });
 
     content.querySelectorAll("[data-receipt-order][data-receipt-entry]").forEach((button) => {
       button.addEventListener("click", async () => {
