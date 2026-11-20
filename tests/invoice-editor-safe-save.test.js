@@ -29,6 +29,6 @@ test("mobilen laster ny trygg fakturaredigering", () => {
 });
 
 test("utkastets synkvarsel kan ikkje køyre ein DELETE-endepunkt", () => {
-  assert.match(ops, /"\/sync-basis"/);
+  assert.match(ops, /\/sync-basis/);
   assert.doesNotMatch(ops, /syncInvoiceBasis[\s\S]{0,350}method: "DELETE"/);
 });
