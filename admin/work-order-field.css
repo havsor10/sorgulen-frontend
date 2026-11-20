@@ -129,3 +129,7 @@ body.field-add-open{overflow:hidden}
     font-size: 17px;
   }
 }
+
+/* Bilag skal være tilgjengelige på alle registrerte utgifter, også låste oppdrag. */
+.field-receipt-button{grid-column:1/-1;justify-self:start;min-height:40px;padding:0 13px;border:1px solid #417869;border-radius:9px;background:#12342e;color:#b7f1de;font:inherit;font-size:13px;font-weight:800;cursor:pointer}
+.field-receipt-button:focus-visible{outline:3px solid #9be5ce;outline-offset:2px}
