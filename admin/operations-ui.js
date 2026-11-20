@@ -243,6 +243,80 @@
       }
     }
 
+    // Kvitteringer styres separat fra økonomisk redigering, slik at også gamle
+    // og fakturerte oppdrag kan få dokumentasjon uten å omskrive en utstedt faktura.
+    async function openReceipt({ orderId, entryId }) {
+      const order = await getOrder(orderId);
+      const item = (order.additionalCosts || []).find((entry) => entry.entryId === entryId);
+      if (!item) throw new Error("Innkjøpet finnes ikke lenger.");
+      const existing = String(item.receiptUrl || "");
+      const receiptLink = existing.startsWith("https://res.cloudinary.com/")
+        ? '<a href="' + esc(existing) + '" target="_blank" rel="noopener noreferrer">Se eksisterende kvittering</a>'
+        : "";
+      showModal({
+        title: "Kvittering – " + item.item,
+        subtitle: "Legg til, erstatt eller fjern bilag uten å slette utgiften.",
+        body: '<form id="operationReceiptForm">'
+          + '<div class="operation-field wide"><strong>' + esc(item.item) + '</strong>'
+          + '<p>' + (existing ? "Kvittering registrert. " + receiptLink : "Ingen kvittering registrert.") + '</p></div>'
+          + '<div class="operation-field wide"><label>Velg kvitteringsbilde</label>'
+          + '<input name="receiptImage" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif">'
+          + '<small>Velg fra bildebiblioteket eller ta et bilde. Maks 10 MB.</small></div>'
+          + '<p class="operation-source">En tidligere utstedt faktura endres ikke når du endrer bilag på oppdraget. Bilag som er overført til Fiken kan ikke endres her.</p>'
+          + '<p id="operationReceiptError" class="operation-error" role="alert"></p>'
+          + '<div class="operation-actions">'
+          + (existing ? '<button type="button" class="secondary-btn operation-danger" data-receipt-remove>Fjern kvittering</button>' : "")
+          + '<button type="button" class="secondary-btn" data-operation-close-2>Avbryt</button>'
+          + '<button type="submit" class="primary-btn">Lagre kvittering</button></div></form>',
+      });
+      const form = sheet.querySelector("#operationReceiptForm");
+      form.querySelector("[data-operation-close-2]").addEventListener("click", closeModal);
+      const error = form.querySelector("#operationReceiptError");
+      let saving = false;
+      async function updateReceipt(payload) {
+        if (saving) return;
+        saving = true;
+        const buttons = [...form.querySelectorAll("button")];
+        buttons.forEach((button) => { button.disabled = true; });
+        error.textContent = "";
+        try {
+          await api("/admin/operations/work-orders/" + encodeURIComponent(orderId)
+            + "/expenses/" + encodeURIComponent(entryId) + "/receipt", {
+            method: "PATCH", body: JSON.stringify(payload),
+          });
+          closeModal();
+          await window.SorgulenAdminShell?.refreshBadges?.();
+          location.reload();
+        } catch (problem) {
+          error.textContent = problem.message || "Kvitteringen kunne ikke lagres.";
+          buttons.forEach((button) => { button.disabled = false; });
+        } finally { saving = false; }
+      }
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (saving) return;
+        const file = form.elements.receiptImage.files?.[0];
+        if (!file) { error.textContent = "Velg et bilde først."; return; }
+        if (file.size > 10 * 1024 * 1024) {
+          error.textContent = "Bildet er for stort (maks 10 MB).";
+          return;
+        }
+        try {
+          const image = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error("Kunne ikke lese kvitteringsbildet."));
+            reader.readAsDataURL(file);
+          });
+          await updateReceipt({ receiptImage: image });
+        } catch (problem) { error.textContent = problem.message || "Kunne ikke lese bildet."; }
+      });
+      form.querySelector("[data-receipt-remove]")?.addEventListener("click", async () => {
+        if (!confirm("Fjerne kvitteringen fra dette innkjøpet? Beløp og utgift blir beholdt.")) return;
+        await updateReceipt({ removeReceipt: true });
+      });
+    }
+
     function expenseFormMarkup(orderId, item) {
       return `<form id="operationEditForm" data-kind="expense" data-order-id="${esc(orderId)}" data-entry-id="${esc(item.entryId)}"><div class="operation-grid">
         <div class="operation-field wide"><label>Beskrivelse</label><input name="description" value="${esc(item.item)}" required></div>
@@ -449,7 +523,7 @@
           : editActions("time", entry.entryId, entry.comment || "tidsregistreringen");
         return `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(entry.comment || categoryName(entry.category))}<span class="operation-source">${entry.source === "manual" ? "Manuell" : "Takstameter"}</span></strong><p>${esc(entry.workDate || dateValue(entry.startedAt))} · ${esc(durationText(seconds))} · ${esc(categoryName(entry.category))} · ${esc(money(rate))}/t · ${esc(money(amount))}${entry.billable === false ? " · Intern" : ""}</p></div><div class="operations-entry-actions">${actions}</div></div>`;
       }, "Ingen tid registrert.");
-      const expenseRows = list(expenses, (item) => `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(item.item)}</strong><p>${esc(dateValue(item.occurredAt))} · ${esc(money(item.amount))}${item.supplier ? ` · ${esc(item.supplier)}` : ""}${item.billable === false ? " · Intern" : ""}</p></div><div class="operations-entry-actions">${editActions("expense", item.entryId, item.item)}</div></div>`, "Ingen utgifter registrert.");
+      const expenseRows = list(expenses, (item) => `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(item.item)}</strong><p>${esc(dateValue(item.occurredAt))} · ${esc(money(item.amount))}${item.supplier ? ` · ${esc(item.supplier)}` : ""}${item.billable === false ? " · Intern" : ""}</p></div><div class="operations-entry-actions"><button type="button" class="secondary-btn" data-op-receipt="${esc(item.entryId)}">${item.receiptUrl ? "Vis / endre kvittering" : "+ Kvittering"}</button>${editActions("expense", item.entryId, item.item)}</div></div>`, "Ingen utgifter registrert.");
       const equipmentRows = list(equipment, (item) => `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(item.item || "Utstyr")}</strong><p>${esc(item.durationMinutes || 0)} min · ${esc(money(item.hourlyRateSnapshot || 0))}/t · ${esc(money(item.amount || 0))}${item.billable === false ? " · Intern" : ""}</p></div><div class="operations-entry-actions">${editActions("equipment", item.entryId, item.item || "utstyrsregistreringen")}</div></div>`, "Ingen utstyrsbruk registrert.");
       const materialRows = list(materials, (item) => `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(item.item)}</strong><p>${esc(item.quantity)} ${esc(item.unit || "stk")}${item.unitPrice != null ? ` · ${esc(money(Number(item.quantity) * Number(item.unitPrice)))}` : " · Pris ikke satt"}${item.billable === false ? " · Intern" : ""}</p></div><div class="operations-entry-actions">${editActions("material", item.entryId, item.item)}</div></div>`, "Ingen materialer registrert.");
       const noteRows = list(notes, (item) => `<div class="operations-entry"><div class="operations-entry-main"><strong>${esc(item.text)}</strong><p>${esc(dateValue(item.createdAt))}</p></div><div class="operations-entry-actions">${editActions("note", item.entryId, "notatet")}</div></div>`, "Ingen notater registrert.");
@@ -470,6 +544,12 @@
         sheet.querySelector("[data-op-edit-project]")?.addEventListener("click", () => openProjectEdit(orderId));
         sheet.onclick = async (event) => {
           const edit = event.target.closest("[data-op-edit]");
+          const receipt = event.target.closest("[data-op-receipt]");
+          if (receipt) {
+            try { await openReceipt({ orderId, entryId: receipt.dataset.opReceipt }); }
+            catch (problem) { alert(problem.message); }
+            return;
+          }
           const del = event.target.closest("[data-op-delete]");
           if (edit) {
             const kind = edit.dataset.opEdit;
@@ -639,7 +719,7 @@
     enhanceHomeFocus();
     setTimeout(enhanceInvoiceDetail, 300);
 
-    window.SorgulenOperations = { api, openManualTime, openEquipmentAdd, openManager, openRegistration, refreshBadges: () => window.SorgulenAdminShell?.refreshBadges?.() };
+    window.SorgulenOperations = { api, openManualTime, openEquipmentAdd, openManager, openRegistration, openReceipt, refreshBadges: () => window.SorgulenAdminShell?.refreshBadges?.() };
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true });
