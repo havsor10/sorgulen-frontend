@@ -39,3 +39,9 @@ test("oppdragsvisning laster nye filer og unngår gammel cache", () => {
   assert.match(orderPage, /operations-ui\.js\?v=20261004-lock2-receipts20261120/);
   assert.match(orderPage, /work-order-field\.css\?v=20261110-portalnav1-receipts20261120/);
 });
+
+test("fakturalinje får nøyaktig én kvitteringsknapp og én klikkbehandler", () => {
+  assert.equal((detail.match(/function expenseSource\(line\)/g) || []).length, 1);
+  assert.equal((detail.match(/data-receipt-order=/g) || []).length, 1);
+  assert.equal((detail.match(/querySelectorAll\("\[data-receipt-order\]/g) || []).length, 1);
+});
