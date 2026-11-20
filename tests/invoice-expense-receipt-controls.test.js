@@ -35,7 +35,7 @@ test("fakturalinje har direkte kontroll for relevante kildeutgifter", () => {
 });
 
 test("oppdragsvisning laster nye filer og unngår gammel cache", () => {
-  assert.match(orderPage, /work-order-field\.js\?v=20261120-receipts1/);
-  assert.match(orderPage, /operations-ui\.js\?v=20261120-receipts1/);
-  assert.match(orderPage, /work-order-field\.css\?v=20261120-receipts1/);
+  assert.match(orderPage, /work-order-field\.js\?v=20261110-fullscreen2-receipts20261120/);
+  assert.match(orderPage, /operations-ui\.js\?v=20261004-lock2-receipts20261120/);
+  assert.match(orderPage, /work-order-field\.css\?v=20261110-portalnav1-receipts20261120/);
 });
