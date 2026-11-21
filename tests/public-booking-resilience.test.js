@@ -171,6 +171,6 @@ test("bookable=false skal ikkje gi direkte booking på nettsida", async () => {
 });
 
 test("publisert HTML lastar nye booking-scriptet", () => {
-  assert.match(html, /booking\.js\?v=20261117-safe1/);
+  assert.match(html, /booking\.js\?v=20261121-shift1/);
   assert.doesNotMatch(html, /height="34" \/ decoding="async"/);
 });
