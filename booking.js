@@ -72,7 +72,10 @@
     for (const service of allowed) {
       const option = document.createElement("option");
       option.value = String(service._id);
-      option.textContent = service.name + " – " + (service.priceText || "");
+      // The live service catalogue still contains incomplete snow priceText ("Fra 350 kr").
+      // Show both agreed components without changing how backend pricing is calculated.
+      const publicPrice = service.key === "broyting" ? "350 kr oppmøte + 650 kr/time" : (service.priceText || "");
+      option.textContent = service.name + " – " + publicPrice;
       serviceSelect.appendChild(option);
     }
     if (!allowed.length) {
