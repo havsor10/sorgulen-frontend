@@ -214,6 +214,7 @@
     }
 
     reqList.innerHTML = list.map((r) => {
+      if (r.snowShiftRequest === true) return renderSnowRequest(r);
       const id = escapeHtml(r._id);
       const imgs = (r.imageUrls || []).map((u) =>
         `<a href="${escapeHtml(u)}" target="_blank" rel="noopener"><img src="${escapeHtml(u)}" alt="Bilde"></a>`
