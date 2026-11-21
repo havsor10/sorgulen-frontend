@@ -15,5 +15,5 @@ test("premium service badge has strong contrast over service images", () => {
 
 test("front page loads cache-busted badge styles", () => {
   assert.match(html, /style\.css\?v=20261111-badge1/);
-  assert.match(html, /<span class="badge premium-badge">Populær • Fra [^<]+<\/span>/);
+  assert.match(html, /<span class="badge premium-badge">Populær • 350 kr oppmøte \+ 650 kr\/time<\/span>/);
 });
