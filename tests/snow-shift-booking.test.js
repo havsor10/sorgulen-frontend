@@ -49,7 +49,7 @@ function makeHarness(mode) {
     "customerEmail", "customerAddress", "comment",
   ];
   const nodes = Object.fromEntries(ids.map(id => [id, element()]));
-  for (const id of ["slotsWrap", "formWrap", "successWrap", "bookingModeNotice"]) nodes[id].classList.add("hidden");
+  for (const id of ["slotsWrap", "formWrap", "successWrap", "bookingModeNotice", "requestAcknowledgment", "bookingRequestWarning", "bookingFreeInfo"]) nodes[id].classList.add("hidden");
   nodes.customerName.value = "Testperson";
   nodes.customerPhone.value = "40000000";
   nodes.customerEmail.value = "test@example.invalid";
