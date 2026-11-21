@@ -11,12 +11,12 @@ const price = '350 kr oppmøte + 650 kr/time';
 
 test('public homepage and info page show accurate brøyting rate', () => {
   const homepage = read('index.html');
-  const info = read('tjenester/broyting-pris-info.html');
+  const info = read('tjenester/broyting/tjenester_broyting-pris-info.html');
   assert.match(homepage, /Brøyting – 350 kr oppmøte \+ 650 kr\/time/);
   assert.match(homepage, /Populær • 350 kr oppmøte \+ 650 kr\/time/);
   assert.match(info, /350 kr oppmøte \+ 650 kr\/time/);
   assert.match(homepage, /href="tjenester\/broyting-pris-info\.html"/);
-  assert.match(info, /href="\.\.\/booking\.html\?service=Brøyting"/);
+  assert.match(info, /href="\.\.\/\.\.\/booking\.html\?service=Brøyting"/);
 });
 
 test('FAQ text and structured FAQ agree, with no recurring contracts', () => {
@@ -34,7 +34,7 @@ test('FAQ text and structured FAQ agree, with no recurring contracts', () => {
 });
 
 test('legacy 1200 kr snow rate is absent from the public price sources', () => {
-  for (const name of ['index.html', 'sporsmal.html', 'tjenester/broyting-pris-info.html', 'site-consistency.js']) {
+  for (const name of ['index.html', 'sporsmal.html', 'tjenester/broyting/tjenester_broyting-pris-info.html', 'site-consistency.js']) {
     assert.doesNotMatch(read(name), /(?:1[\s\u00a0]?200|1200)\s*kr/i, name);
   }
 });
