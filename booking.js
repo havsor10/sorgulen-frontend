@@ -111,19 +111,21 @@
   function renderSlots(data) {
     bookingMode = data.bookingMode === "request" ? "request" : "booking";
     const isRequest = bookingMode === "request";
-    bookingModeNotice.textContent = isRequest
-      ? "Arbeidsdag: Her kan du sende ei førespurnad om brøyting. Det valde tidspunktet er berre eit ønske – ikkje ei stadfesta bestilling."
-      : "Fridag: Du kan bestille brøyting direkte på eit ledig tidspunkt.";
     const isSnow = selectedService?.key === "broyting" || /(brøy|broy|snø|sno|plog)/i.test(selectedService?.name || "");
-    // An older backend may not provide shift mode yet. Never claim a free day
-    // based on missing data during a staggered frontend/backend rollout.
+    // Legacy cached HTML may lack these explanatory nodes; booking still works.
+    // An older backend can lack bookingMode; never falsely label a day as free.
     const modeKnown = data.bookingMode === "request" || data.bookingMode === "booking";
-    bookingModeNotice.classList.toggle("hidden", !isSnow || !modeKnown);
-    slotHeading.textContent = isRequest ? "Ønskt tidspunkt (ikkje reservert)" : "Ledige tider";
-    slotHint.textContent = isRequest
+    if (bookingModeNotice) {
+      bookingModeNotice.textContent = isRequest
+        ? "Arbeidsdag: Her kan du sende ei førespurnad om brøyting. Det valde tidspunktet er berre eit ønske – ikkje ei stadfesta bestilling."
+        : "Fridag: Du kan bestille brøyting direkte på eit ledig tidspunkt.";
+      bookingModeNotice.classList.toggle("hidden", !isSnow || !modeKnown);
+    }
+    if (slotHeading) slotHeading.textContent = isRequest ? "Ønskt tidspunkt (ikkje reservert)" : "Ledige tider";
+    if (slotHint) slotHint.textContent = isRequest
       ? "Vel tidspunktet du helst vil ha. Vi vurderer om vi kan ta oppdraget og kontaktar deg."
       : "Opptatte tidspunkt kan ikkje bestillast.";
-    formTitle.textContent = isRequest ? "Send brøyteførespurnad" : "Fullfør bestilling";
+    if (formTitle) formTitle.textContent = isRequest ? "Send brøyteførespurnad" : "Fullfør bestilling";
     submitBtn.textContent = isRequest ? "Send førespurnad" : "Send bestilling";
     slotsEl.innerHTML = '';
     selectedTime = null;
@@ -169,7 +171,7 @@
     const seq = ++availabilityRequest;
     selectedTime = null;
     bookingMode = "booking";
-    bookingModeNotice.classList.add("hidden");
+    if (bookingModeNotice) bookingModeNotice.classList.add("hidden");
     slotsEl.replaceChildren();
     slotsWrap.classList.add("hidden");
     formWrap.classList.add("hidden");
