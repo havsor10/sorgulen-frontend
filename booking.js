@@ -115,7 +115,10 @@
       ? "Arbeidsdag: Her kan du sende ei førespurnad om brøyting. Det valde tidspunktet er berre eit ønske – ikkje ei stadfesta bestilling."
       : "Fridag: Du kan bestille brøyting direkte på eit ledig tidspunkt.";
     const isSnow = selectedService?.key === "broyting" || /(brøy|broy|snø|sno|plog)/i.test(selectedService?.name || "");
-    bookingModeNotice.classList.toggle("hidden", !isSnow);
+    // An older backend may not provide shift mode yet. Never claim a free day
+    // based on missing data during a staggered frontend/backend rollout.
+    const modeKnown = data.bookingMode === "request" || data.bookingMode === "booking";
+    bookingModeNotice.classList.toggle("hidden", !isSnow || !modeKnown);
     slotHeading.textContent = isRequest ? "Ønskt tidspunkt (ikkje reservert)" : "Ledige tider";
     slotHint.textContent = isRequest
       ? "Vel tidspunktet du helst vil ha. Vi vurderer om vi kan ta oppdraget og kontaktar deg."
