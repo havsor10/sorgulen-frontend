@@ -32,6 +32,15 @@
     .muted{color:var(--muted)}
     .notice{padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);margin:10px 0}
     .success{background:rgba(95,211,141,.08);border-color:rgba(95,211,141,.35)}
+    .snow-shift-alert{border:3px solid #ffb84f!important;background:#302315!important;color:#fff4d9!important;padding:18px 18px 20px!important;box-shadow:0 4px 18px rgba(0,0,0,.2)}
+    .snow-shift-alert h3{display:flex;align-items:flex-start;gap:10px;font-size:clamp(1.15rem,3.8vw,1.45rem);line-height:1.3;font-weight:900;margin:0 0 12px;color:#fff4d9}
+    .snow-shift-alert p{font-size:1rem;line-height:1.5;margin:10px 0}
+    .snow-shift-alert strong{color:#fff9ed;font-weight:900}
+    .snow-shift-alert .snow-warning-final{border-top:1px solid rgba(255,184,79,.5);padding-top:11px;margin-bottom:0}
+    .snow-acknowledge{display:flex;gap:12px;align-items:flex-start;border:2px solid #ffb84f;border-radius:12px;background:#302315;padding:14px 16px;margin:18px 0;color:#fff4d9;font-weight:800;line-height:1.45;cursor:pointer}
+    .snow-acknowledge input{width:24px!important;height:24px;min-width:24px;min-height:24px;accent-color:#ffb84f;margin:2px 0 0;flex:0 0 auto}
+    .snow-shift-free{background:rgba(95,211,141,.08);border-color:rgba(95,211,141,.35);font-weight:700}
+    @media(max-width:720px){.snow-shift-alert h3{font-size:1.2rem}.snow-shift-alert{padding:15px!important}}
     .error{background:rgba(255,184,76,.08);border-color:rgba(255,184,76,.35)}
     .hidden{display:none}
     textarea,input,select{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:#0e1523;color:#f3f6ff}
@@ -88,7 +97,15 @@
       </label>
     </div>
     <div id="message" class="notice hidden"></div>
-    <div id="bookingModeNotice" class="notice hidden" role="status" aria-live="polite"></div>
+    <div id="bookingModeNotice" class="notice hidden" role="status" aria-live="polite">
+      <div id="bookingRequestWarning" class="hidden snow-shift-alert" role="alert">
+        <h3><span aria-hidden="true">⚠</span> VIKTIG: Brøyting kan ikke garanteres denne dagen</h3>
+        <p>Vi er på vakt i vår faste fulltidsjobb denne dagen og har derfor begrenset kapasitet.</p>
+        <p>Du kan likevel sende en forespørsel. Vi undersøker om vi kan hjelpe etter arbeidstid eller med ekstra mannskap.</p>
+        <p class="snow-warning-final"><strong>Dette er ikke en bestilling.</strong> Du får en egen bekreftelse dersom vi kan ta oppdraget.</p>
+      </div>
+      <div id="bookingFreeInfo" class="hidden snow-shift-free">Denne dagen er åpen for direkte bestilling. Velg et ledig tidspunkt.</div>
+    </div>
     <div id="slotsWrap" class="hidden">
       <h3 id="slotHeading">Ledige tider</h3>
       <p id="slotHint" class="muted">Hvis valgt tid er opptatt, foreslår vi neste ledige tider.</p>
@@ -117,11 +134,15 @@
         <textarea id="comment" rows="4" placeholder="Tilleggsinformasjon til oppdraget"></textarea>
       </label>
     </div>
+    <label id="bookingRequestAcknowledgment" class="snow-acknowledge hidden" for="requestAcknowledged">
+      <input id="requestAcknowledged" type="checkbox" />
+      <span>Jeg forstår at dette bare er en forespørsel, og at brøyting ikke er bestilt eller avtalt.</span>
+    </label>
     <div class="cta-row" style="margin-top:16px">
       <button id="submitBooking" class="btn primary" type="button">Send bestilling</button>
       <a class="btn secondary" href="kontakt.html">Kontakt oss</a>
     </div>
-    <p class="muted" style="margin-top:12px">For å avbestille eller flytte time må du kontakte oss direkte.</p>
+    <p id="bookingChangeHint" class="muted" style="margin-top:12px">For å avbestille eller flytte time må du kontakte oss direkte.</p>
   </div>
 
   <div id="successWrap" class="booking-card success hidden">
@@ -132,7 +153,7 @@
 </main>
 <script src="config.js"></script>
 <script src="app.js"></script>
-<script src="booking.js?v=20261121-shift1"></script>
+<script src="booking.js?v=20261122-notice1"></script>
 
 <footer class="site-footer-premium" role="contentinfo">
   <div class="footer-inner">
