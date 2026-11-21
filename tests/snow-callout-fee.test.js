@@ -29,6 +29,6 @@ test("old invoice draft is recognized and corrected without issuing it", () => {
 });
 
 test("published snow page busts stale JS and CSS caches", () => {
-  assert.match(page, /broyting\.css\?v=20261111-rate650/);
-  assert.match(page, /broyting\.js\?v=20261111-rate650/);
+  assert.match(page, /broyting\.css\?v=20261121-shift1/);
+  assert.match(page, /broyting\.js\?v=20261121-shift1/);
 });
