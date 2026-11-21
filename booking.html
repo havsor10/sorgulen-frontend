@@ -88,15 +88,16 @@
       </label>
     </div>
     <div id="message" class="notice hidden"></div>
+    <div id="bookingModeNotice" class="notice hidden" role="status" aria-live="polite"></div>
     <div id="slotsWrap" class="hidden">
-      <h3>Ledige tider</h3>
-      <p class="muted">Hvis valgt tid er opptatt, foreslår vi neste ledige tider.</p>
+      <h3 id="slotHeading">Ledige tider</h3>
+      <p id="slotHint" class="muted">Hvis valgt tid er opptatt, foreslår vi neste ledige tider.</p>
       <div id="slots" class="slot-grid"></div>
     </div>
   </div>
 
   <div id="formWrap" class="booking-card hidden">
-    <h3>Fullfør bestilling</h3>
+    <h3 id="formTitle">Fullfør bestilling</h3>
     <div class="booking-grid">
       <label>Navn
         <input id="customerName" type="text" />
@@ -124,14 +125,14 @@
   </div>
 
   <div id="successWrap" class="booking-card success hidden">
-    <h3>Bestillingen er registrert</h3>
-    <p>Du vil motta e-postbekreftelse. Vi har også sendt varsel til administrator.</p>
+    <h3 id="successTitle">Bestillingen er registrert</h3>
+    <p id="successText">Du vil motta e-postbekreftelse. Vi har også sendt varsel til administrator.</p>
     <a href="index.html" class="btn">Tilbake til forsiden</a>
   </div>
 </main>
 <script src="config.js"></script>
 <script src="app.js"></script>
-<script src="booking.js?v=20261117-safe1"></script>
+<script src="booking.js?v=20261121-shift1"></script>
 
 <footer class="site-footer-premium" role="contentinfo">
   <div class="footer-inner">
