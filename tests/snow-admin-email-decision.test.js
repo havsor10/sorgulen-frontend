@@ -123,7 +123,7 @@ test("SMTP failure does not show false success; retry uses dedicated endpoint on
   assert.equal(h.entry().status, "accepted");
   assert.equal(h.entry().snowDecisionEmailStatus, "failed");
   assert.match(h.statusMessage.textContent, /IKKE bekreftet sendt/);
-  assert.match(h.html, /Prøv å sende svarmail igjen/);
+  assert.match(h.html, /Send svarmail på nytt/);
   await h.click("snow-retry-decision");
   assert.equal(h.entry().snowDecisionEmailStatus, "sent");
   assert.match(h.statusMessage.textContent, /nå sendt/);
