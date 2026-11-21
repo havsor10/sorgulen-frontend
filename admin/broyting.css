@@ -76,3 +76,13 @@
 /* Missing callout must never be presented as the customer's final amount. */
 .snow-billing-warning{margin:0;padding:16px;border:1px solid rgba(255,189,82,.56);border-radius:12px;background:rgba(255,189,82,.12);color:#ffe2ae;line-height:1.55;font-size:.94rem}
 .snow-billing-warning strong{color:#ffcb72}
+
+
+/* Keep requests visually and semantically separate from confirmed bookings. */
+.snow-requests{border:2px solid rgba(255,175,75,.75);box-shadow:0 0 0 1px rgba(255,175,75,.12),0 8px 28px rgba(0,0,0,.12)}
+.snow-requests .section-kicker{color:#ffcb82;font-weight:900}
+.snow-request-item{border-left:4px solid #ffb04f;align-items:start}
+.snow-request-item>div{display:flex;flex-direction:column;gap:6px;min-width:0}
+.snow-request-item strong{font-size:1.12rem}
+.snow-request-item a{color:#d0e9ff}
+.snow-request-action{display:inline-flex;align-items:center;justify-content:center;margin-top:8px;text-decoration:none;min-height:46px}
