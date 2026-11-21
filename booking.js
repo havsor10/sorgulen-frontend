@@ -114,7 +114,8 @@
     bookingModeNotice.textContent = isRequest
       ? "Arbeidsdag: Her kan du sende ei førespurnad om brøyting. Det valde tidspunktet er berre eit ønske – ikkje ei stadfesta bestilling."
       : "Fridag: Du kan bestille brøyting direkte på eit ledig tidspunkt.";
-    bookingModeNotice.classList.remove("hidden");
+    const isSnow = selectedService?.key === "broyting" || /(brøy|broy|snø|sno|plog)/i.test(selectedService?.name || "");
+    bookingModeNotice.classList.toggle("hidden", !isSnow);
     slotHeading.textContent = isRequest ? "Ønskt tidspunkt (ikkje reservert)" : "Ledige tider";
     slotHint.textContent = isRequest
       ? "Vel tidspunktet du helst vil ha. Vi vurderer om vi kan ta oppdraget og kontaktar deg."
