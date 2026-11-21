@@ -14,6 +14,7 @@
   const state = { data: null, knownIds: new Set(), timer: null, poll: null, location: null, flushing: false, searchTimer: null };
   const els = {
     noRound: $("#noRound"), activeRound: $("#activeRound"), notice: $("#snowNotice"), connection: $("#snowConnection"),
+    requests: $("#snowRequests"), requestCount: $("#snowRequestCount"), requestList: $("#snowRequestList"), requestMore: $("#snowRequestMore"),
     inbox: $("#snowInbox"), inboxCount: $("#snowInboxCount"), inboxHint: $("#snowInboxHint"),
     inboxList: $("#snowInboxList"), inboxMore: $("#snowInboxMore"),
     prepareRound: $("#snowPrepareRoundBtn"), prepareHelp: $("#snowPrepareHelp"),
@@ -159,6 +160,38 @@
     return parts.length === 3 ? `${parts[2]}.${parts[1]}.${parts[0]}` : String(value || "");
   }
 
+  function renderEnquiries(data) {
+    const total = Number(data?.unassignedEnquiries?.total || 0);
+    const items = Array.isArray(data?.unassignedEnquiries?.items) ? data.unassignedEnquiries.items : [];
+    const loadError = data?.unassignedEnquiries?.loadError;
+    els.requests.classList.toggle("hidden", !total && !loadError);
+    if (loadError) {
+      els.requestCount.textContent = "!";
+      els.requestList.textContent = "Klarte ikkje hente førespurnadene. Trykk Oppdater, eller sjekk Forespurnader i admin. Vanlege brøytebestillingar er framleis tilgjengelege.";
+      els.requestMore.classList.add("hidden");
+      return;
+    }
+    if (!total) return;
+    els.requestCount.textContent = String(total);
+    els.requestList.innerHTML = items.map((entry) => {
+      const phone = String(entry.customerPhone || "").replace(/[^+0-9]/g, "");
+      const id = encodeURIComponent(String(entry._id || ""));
+      return `<article class="snow-inbox-item snow-request-item">
+        <div>
+          <strong>${esc(entry.customerName || "Kunde")}</strong>
+          <span>NY FØRESPURNAD – ${esc(formatDate(entry.snowRequestedDate))} · ønskt kl. ${esc(entry.snowRequestedTime || "–")}</span>
+          <span>${esc(entry.customerAddress || "Adresse manglar")}</span>
+          ${entry.intakeSummary ? `<span class="snow-inbox-note">${esc(entry.intakeSummary)}</span>` : ""}
+          ${phone ? `<a href="tel:${esc(phone)}">Ring kunden: ${esc(entry.customerPhone)}</a>` : ""}
+          ${entry.customerEmail ? `<span>E-post: ${esc(entry.customerEmail)}</span>` : ""}
+          <a class="snow-secondary snow-request-action" href="foresporsler.html?open=${id}">Behandle førespurnad</a>
+        </div>
+      </article>`;
+    }).join("");
+    els.requestMore.classList.toggle("hidden", total <= items.length);
+    if (total > items.length) els.requestMore.textContent = `Viser ${items.length} av ${total}. Resten finn du under Forespurnader.`;
+  }
+
   function renderInbox(data) {
     const total = Number(data?.unassignedBookings?.total || 0);
     const items = Array.isArray(data?.unassignedBookings?.items) ? data.unassignedBookings.items : [];
@@ -204,6 +237,7 @@
     const newWebsite = fromServer && state.data?.round ? (data.queue || []).filter((job) => job.sourceType === "website" && !previousIds.has(String(job._id))) : [];
     state.data = data;
     writeJson(CACHE_KEY, data);
+    renderEnquiries(data);
     renderInbox(data);
     state.knownIds = new Set([...(data.queue || []), ...(data.deferred || []), ...(data.done || []), ...(data.activeJob ? [data.activeJob] : [])].map((job) => String(job._id)));
     if (newWebsite.length) showNotice(`${newWebsite.length} ny ${newWebsite.length === 1 ? "nettbestilling" : "nettbestillinger"} lagt i køen.`, "success", 7000);
