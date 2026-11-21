@@ -44,12 +44,12 @@ function makeHarness(mode) {
     "serviceSelect", "bookingDate", "slotsWrap", "slots", "formWrap",
     "successWrap", "message", "submitBooking", "bookingTitle",
     "bookingModeNotice", "bookingRequestWarning", "bookingFreeInfo",
-    "requestAcknowledgment", "requestAcknowledged", "bookingChangeHint", "slotHeading", "slotHint", "formTitle",
+    "bookingRequestAcknowledgment", "requestAcknowledged", "bookingChangeHint", "slotHeading", "slotHint", "formTitle",
     "successTitle", "successText", "customerName", "customerPhone",
     "customerEmail", "customerAddress", "comment",
   ];
   const nodes = Object.fromEntries(ids.map(id => [id, element()]));
-  for (const id of ["slotsWrap", "formWrap", "successWrap", "bookingModeNotice", "requestAcknowledgment", "bookingRequestWarning", "bookingFreeInfo"]) nodes[id].classList.add("hidden");
+  for (const id of ["slotsWrap", "formWrap", "successWrap", "bookingModeNotice", "bookingRequestAcknowledgment", "bookingRequestWarning", "bookingFreeInfo"]) nodes[id].classList.add("hidden");
   nodes.customerName.value = "Testperson";
   nodes.customerPhone.value = "40000000";
   nodes.customerEmail.value = "test@example.invalid";
@@ -111,7 +111,7 @@ test("on a workday customer sends enquiry; it never confirms a booking", async (
   const h = makeHarness("request");
   await h.chooseDate();
   assert.equal(h.nodes.bookingRequestWarning.classList.contains("hidden"), false);
-  assert.equal(h.nodes.requestAcknowledgment.classList.contains("hidden"), false);
+  assert.equal(h.nodes.bookingRequestAcknowledgment.classList.contains("hidden"), false);
   assert.equal(h.nodes.requestAcknowledged.checked, false);
   assert.match(h.nodes.slotHeading.textContent, /Når ønsker du brøyting/);
   assert.equal(h.nodes.submitBooking.textContent, "Send forespørsel – ikke bestilling");
@@ -138,7 +138,7 @@ test("on a free day existing direct booking and confirmation are preserved", asy
   const h = makeHarness("booking");
   await h.chooseDate();
   assert.equal(h.nodes.bookingFreeInfo.classList.contains("hidden"), false);
-  assert.equal(h.nodes.requestAcknowledgment.classList.contains("hidden"), true);
+  assert.equal(h.nodes.bookingRequestAcknowledgment.classList.contains("hidden"), true);
   assert.equal(h.nodes.submitBooking.textContent, "Send bestilling");
   await h.submit();
   assert.equal(h.calls.filter(x => x.opts.method === "POST").length, 1);
