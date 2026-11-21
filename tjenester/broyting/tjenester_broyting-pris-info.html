@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Brøyting i Florø fra 1 200 kr | Sørgulen Industriservice</title>
-  <meta name="description" content="Brøyting i Florø og Kinn fra 1 200 kr. Snørydding av oppkjørsler, adkomst og parkeringsområder med enkel bestilling.">
+  <title>Brøyting i Florø – 350 kr oppmøte + 650 kr/time | Sørgulen Industriservice</title>
+  <meta name="description" content="Brøyting i Florø og Kinn: 350 kr i oppmøte og 650 kr/time etter faktisk tidsbruk. Bestill enkeltoppdrag direkte.">
   <meta name="theme-color" content="#0a0f18" />
   <!-- Vedlikeholdsfil: vis overlay ved utvikling. -->
   <link rel="stylesheet" href="../../maintenance.css" />
@@ -176,7 +176,7 @@
         <h3>Dette tilbyr vi</h3>
         <div class="list">
           <div>Brøyting av oppkjørsler, parkeringsplasser og adkomstveier</div>
-          <div>Fleksible avtaler: enkeltoppdrag</div>
+          <div>Enkeltoppdrag etter bestilling – ingen faste brøyteavtaler</div>
           
         </div>
         <p class="small">Dekningsområde: Florø og nærområder. Utvidelse kan avtales.</p>
@@ -185,7 +185,7 @@
       <div class="box">
         <h3>Info</h3>
         <div class="list">
-          <div>Vi jobber kontinuerlig med å utvikle nettsiden, og planlegger et system som skal beregne mer nøyaktige priser for hvert oppdrag.</div>
+          <div>Brøyting prises etter faktisk tidsbruk, med 350 kr for oppmøte og 650 kr per time.</div>
           <div>Lenger ned på siden finner du en enkel prisoversikt.</div>
           <div>For et presist pristilbud kan du kontakte oss på:</div>
           <div>Telefon: 407&nbsp;30&nbsp;187</div>
@@ -199,14 +199,14 @@
 <section id="priser" class="wrap">
     <div class="section-title">
       <h2>Priser</h2>
-      <span class="note">Estimater. Endelig pris bekreftes ved bestilling eller avtale.</span>
+      <span class="note">350 kr for oppmøte. Arbeid blir beregnet etter faktisk medgått tid.</span>
     </div>
 
     <div class="prices">
       <div class="price-card">
-        <h3>Brøyting fra 1 200 kr</h3>
-        <p>Prisen gjelder som fra-pris for enkeltoppdrag. Endelig pris avhenger blant annet av størrelse på området, adkomst, snømengde og behov for ekstra arbeid.</p>
-        <p>Du får pris bekreftet ved bestilling eller avtale. For større områder og faste avtaler vurderes pris individuelt.</p>
+        <h3>350 kr oppmøte + 650 kr/time</h3>
+        <p>Det tilkommer 350 kr i oppmøte per enkeltoppdrag. Brøytearbeidet koster 650 kr per time og beregnes etter faktisk tidsbruk. Totalen avhenger av hvor lenge brøytingen tar.</p>
+        <p>Eventuelle særskilte tillegg avklares når det er aktuelt. Vi tilbyr ikke faste brøyteavtaler.</p>
       </div>
     </div>
 
@@ -214,7 +214,7 @@
       <div class="box" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between">
         <div>
           <b>Klar for bestilling?</b>
-          <div class="note">Du får bekreftelse på e-post eller SMS innen 60 minutter i åpningstid.</div>
+          <div class="note">Når bestillingen er registrert, får du bestillingsbekreftelse på e-post.</div>
         </div>
         <div class="btns">
           <!-- Direkte bestilling uten egen bestillingsside -->
@@ -230,7 +230,7 @@
     <div class="faq">
       <div class="qa">
         <b>Kommer dere automatisk når det snør?</b>
-        Nei. Du bestiller selv når du trenger brøyting. Kontakt oss for mer informasjon om avtaler og tilgjengelighet.
+        Nei. Brøyting bestilles som enkeltoppdrag når du trenger det. Vi tilbyr ikke faste brøyteavtaler.
       </div>
       <div class="qa">
         <b>Må jeg være hjemme?</b>
@@ -294,8 +294,11 @@
     "offers": {
       "@type": "Offer",
       "priceCurrency": "NOK",
-      "price": "1200",
-      "category": "Fra-pris for enkeltoppdrag"
+      "description": "350 kr for oppmøte pluss 650 kr per time etter faktisk tidsbruk",
+      "priceSpecification": [
+        {"@type": "UnitPriceSpecification", "price": "350", "priceCurrency": "NOK", "unitText": "oppmøte"},
+        {"@type": "UnitPriceSpecification", "price": "650", "priceCurrency": "NOK", "unitText": "time"}
+      ]
     }
   }
   </script>
