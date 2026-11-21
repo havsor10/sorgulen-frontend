@@ -150,6 +150,63 @@
     </div>`;
   }
 
+  // Separate snow enquiry actions from the generic price-offer/invoice UI.
+  // Workday requests are NEVER bookings until personally accepted and planned.
+  function renderSnowRequest(r) {
+    const id = escapeHtml(r._id);
+    const isPending = ["new", "reviewed"].includes(r.status);
+    const approved = r.status === "accepted";
+    const declined = r.status === "declined";
+    const receipt = r.snowReceiptEmailStatus || "unknown";
+    const decisionMail = r.snowDecisionEmailStatus || "none";
+    const reply = approved ? "GODKJENT – må planlegges" : declined ? "AVSLÅTT" : r.status === "archived" ? "ARKIVERT" : "AVVENTER DIN VURDERING";
+    const decisionMessage = decisionMail === "sent" ? "Svar sendt til kunden på e-post."
+      : decisionMail === "failed" ? "VIKTIG: Svaret er lagret, men e-posten feilet."
+      : decisionMail === "sending" ? "E-post under sending – kontroller før nytt forsøk."
+      : "Avgjørelsen er lagret. E-post er ikke bekreftet sendt.";
+    return `<article class="req-card snow-req-card" data-id="${id}"
+      style="border:2px solid ${isPending ? "#ffb84f" : approved ? "#56d89e" : "#8796ab"};border-radius:14px;padding:18px;background:#141b27;">
+      <div class="req-head">
+        <div>
+          <p class="req-customer">${escapeHtml(r.customerName)}${r.refNumber ? ` · Ref #${escapeHtml(r.refNumber)}` : ""}</p>
+          <div class="req-meta">${escapeHtml(r.customerPhone || "")} · ${escapeHtml(r.customerEmail || "")}</div>
+        </div>
+        <span class="req-badge" style="background:${isPending ? "#7b4611" : approved ? "#185c43" : "#454b55"};color:#fff">${reply}</span>
+      </div>
+      <div style="margin:14px 0;font-size:1rem;line-height:1.65">
+        <strong>BRØYTEFORESPØRSEL – IKKE AUTOMATISK BESTILLING</strong>
+        <div>Ønsket dato: <strong>${escapeHtml(r.snowRequestedDate || "–")}</strong></div>
+        <div>Ønsket tidspunkt: <strong>${escapeHtml(r.snowRequestedTime || "–")}</strong> (ikke reservert)</div>
+        <div>Adresse: <strong>${escapeHtml(r.customerAddress || "–")}</strong></div>
+        ${r.intakeSummary ? `<div>Kommentar: ${escapeHtml(r.intakeSummary)}</div>` : ""}
+      </div>
+      <div class="req-actions" style="margin-bottom:12px">
+        ${r.customerPhone ? `<a href="tel:${escapeHtml(String(r.customerPhone).replace(/[^+0-9]/g, ""))}" class="snow-req-link">Ring kunde</a>` : ""}
+        ${r.customerEmail ? `<a href="mailto:${escapeHtml(r.customerEmail)}" class="snow-req-link">Skriv e-post</a>` : ""}
+      </div>
+      <div style="padding:11px 12px;border:1px solid #4b596d;border-radius:9px;margin:12px 0;color:#e3edf9">
+        Mottaksmelding til kunde: <strong>${receipt === "sent" ? "Sendt" : receipt === "failed" ? "FEILET" : receipt === "sending" ? "Uavklart – kontroller Gmail" : "Ikke bekreftet sendt"}</strong>
+        ${["pending", "failed"].includes(receipt) && isPending ? '<button type="button" data-action="snow-retry-received" class="snow-retry">Send mottaksmelding</button>' : ""}
+      </div>
+      ${isPending ? `<div style="padding:14px;border-radius:10px;background:#292217;border:1px solid #ffb84f">
+        <strong>Velg hva du kan tilby kunden</strong>
+        <p>Godkjenning betyr at du kan ta oppdraget. Ønsket klokkeslett er fortsatt ikke avtalt, og må planlegges med kunden.</p>
+        <label for="decision-note-${id}">Beskjed i svarmail (valgfritt)</label>
+        <textarea id="decision-note-${id}" class="snowDecisionNote" maxlength="500" rows="2" placeholder="For eksempel: Vi tar kontakt for å avtale tidspunkt." style="width:100%;margin:8px 0 12px;border-radius:8px;padding:10px;background:#0f1520;color:#fff"></textarea>
+        <div class="req-actions">
+          <button type="button" data-action="snow-approve" style="background:#127b52;color:#fff">Godkjenn og send e-post</button>
+          <button type="button" data-action="snow-decline" style="background:#8e4138;color:#fff">Avslå og send e-post</button>
+        </div>
+      </div>` : `<div style="padding:12px;border-radius:9px;border:1px solid #445165">
+        <strong>${decisionMessage}</strong>
+        ${["pending", "failed"].includes(decisionMail) ? '<button type="button" data-action="snow-retry-decision" class="snow-retry">Send svarmail på nytt</button>' : ""}
+        ${approved ? '<p>Oppdraget er akseptert, men ikke automatisk lagt i en brøyterunde. Avtal tidspunkt og planlegg gjennomføring.</p><a href="broyting.html" class="snow-req-link">Åpne brøyteadmin</a>' : ""}
+        ${decisionMail === "sent" && (approved || declined) ? '<button type="button" data-action="snow-archive" class="snow-retry">Arkiver etter oppfølging</button>' : ""}
+        ${r.snowDecisionNote ? `<p>Beskjed til kunde: ${escapeHtml(r.snowDecisionNote)}</p>` : ""}
+      </div>`}
+    </article>`;
+  }
+
   function render() {
     const list = filtered();
     if (!list.length) {
@@ -158,6 +215,7 @@
     }
 
     reqList.innerHTML = list.map((r) => {
+      if (r.snowShiftRequest === true) return renderSnowRequest(r);
       const id = escapeHtml(r._id);
       const imgs = (r.imageUrls || []).map((u) =>
         `<a href="${escapeHtml(u)}" target="_blank" rel="noopener"><img src="${escapeHtml(u)}" alt="Bilde"></a>`
@@ -340,6 +398,50 @@
     const card = btn.closest(".req-card");
     const id = card.getAttribute("data-id");
     const action = btn.getAttribute("data-action");
+
+    if (action.startsWith("snow-")) {
+      const request = requests.find((entry) => String(entry._id) === String(id));
+      if (!request || request.snowShiftRequest !== true || btn.disabled) return;
+
+      const decision = action === "snow-approve" ? "approve" : action === "snow-decline" ? "decline" : null;
+      if (decision) {
+        const verb = decision === "approve" ? "GODKJENNE" : "AVSLÅ";
+        if (!confirm(`${verb} brøyteforespørselen og sende riktig e-post til kunden? Dette er en ekte kundemelding.`)) return;
+      } else if (action === "snow-retry-received" || action === "snow-retry-decision") {
+        if (!confirm("En tidligere e-post ble registrert som feilet. Kontroller først Gmail Sent før du prøver igjen, så kunden ikke mottar dobbelt.")) return;
+      } else if (action === "snow-archive") {
+        if (request.snowDecisionEmailStatus !== "sent" || !["accepted", "declined"].includes(request.status)) return;
+        if (!confirm("Arkivere brøyteforespørselen etter at kunden er varslet og oppdraget er fulgt opp?")) return;
+      } else return;
+
+      btn.disabled = true;
+      setMessage("Lagrer avgjørelse og kontrollerer e-postsending …");
+      try {
+        const archive = action === "snow-archive";
+        const url = archive ? `${API_BASE}/requests/${encodeURIComponent(id)}`
+          : decision ? `${API_BASE}/admin/snow/enquiries/${encodeURIComponent(id)}/decision`
+          : `${API_BASE}/admin/snow/enquiries/${encodeURIComponent(id)}/email/retry`;
+        const body = archive ? { status: "archived" }
+          : decision ? { decision, note: card.querySelector(".snowDecisionNote")?.value.trim() || "" }
+          : { type: action === "snow-retry-received" ? "received" : "decision" };
+        const res = await fetch(url, { method: archive ? "PATCH" : "POST", headers: headers(), body: JSON.stringify(body) });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Kunne ikke behandle brøyteforespørselen");
+        await loadRequests();
+        if (archive) {
+          setMessage("Brøyteforespørselen er arkivert etter oppfølging.", "success");
+        } else if (data.emailStatus === "sent") {
+          setMessage(decision ? "Avgjørelsen er lagret og e-posten er sendt til kunden." : "Kundemeldingen er nå sendt.", "success");
+        } else {
+          setMessage("Avgjørelsen er lagret, men e-posten er IKKE bekreftet sendt. Sjekk status på forespørselen.", "error");
+        }
+      } catch (error) {
+        setMessage(error.message || "Kunne ikke oppdatere forespørselen", "error");
+      } finally {
+        btn.disabled = false;
+      }
+      return;
+    }
 
     try {
       if (action === "save") {

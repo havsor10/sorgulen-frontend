@@ -43,12 +43,13 @@ function makeHarness(mode) {
   const ids = [
     "serviceSelect", "bookingDate", "slotsWrap", "slots", "formWrap",
     "successWrap", "message", "submitBooking", "bookingTitle",
-    "bookingModeNotice", "slotHeading", "slotHint", "formTitle",
+    "bookingModeNotice", "bookingRequestWarning", "bookingFreeInfo",
+    "bookingRequestAcknowledgment", "requestAcknowledged", "bookingChangeHint", "slotHeading", "slotHint", "formTitle",
     "successTitle", "successText", "customerName", "customerPhone",
     "customerEmail", "customerAddress", "comment",
   ];
   const nodes = Object.fromEntries(ids.map(id => [id, element()]));
-  for (const id of ["slotsWrap", "formWrap", "successWrap", "bookingModeNotice"]) nodes[id].classList.add("hidden");
+  for (const id of ["slotsWrap", "formWrap", "successWrap", "bookingModeNotice", "bookingRequestAcknowledgment", "bookingRequestWarning", "bookingFreeInfo"]) nodes[id].classList.add("hidden");
   nodes.customerName.value = "Testperson";
   nodes.customerPhone.value = "40000000";
   nodes.customerEmail.value = "test@example.invalid";
@@ -109,9 +110,15 @@ function makeHarness(mode) {
 test("on a workday customer sends enquiry; it never confirms a booking", async () => {
   const h = makeHarness("request");
   await h.chooseDate();
-  assert.match(h.nodes.bookingModeNotice.textContent, /Arbeidsdag/);
-  assert.match(h.nodes.slotHeading.textContent, /Ønskt tidspunkt/);
-  assert.equal(h.nodes.submitBooking.textContent, "Send førespurnad");
+  assert.equal(h.nodes.bookingRequestWarning.classList.contains("hidden"), false);
+  assert.equal(h.nodes.bookingRequestAcknowledgment.classList.contains("hidden"), false);
+  assert.equal(h.nodes.requestAcknowledged.checked, false);
+  assert.match(h.nodes.slotHeading.textContent, /Når ønsker du brøyting/);
+  assert.equal(h.nodes.submitBooking.textContent, "Send forespørsel – ikke bestilling");
+  await h.submit();
+  assert.equal(h.calls.filter(x => x.opts.method === "POST").length, 0, "no enquiry without acknowledgment");
+  assert.match(h.nodes.message.textContent, /ikke en bestilling/);
+  h.nodes.requestAcknowledged.checked = true;
   await h.submit();
   const creates = h.calls.filter(x => x.opts.method === "POST");
   assert.equal(creates.length, 1);
@@ -121,15 +128,17 @@ test("on a workday customer sends enquiry; it never confirms a booking", async (
   for (const key of ["customerName", "customerEmail", "customerPhone", "customerAddress", "operationId", "date", "time"]) {
     assert.ok(body[key], key + " required");
   }
+  assert.equal(body.acknowledgedNonBinding, true);
   assert.equal(h.nodes.successWrap.classList.contains("hidden"), false);
-  assert.match(h.nodes.successText.textContent, /ikkje ei stadfesta bestilling/);
+  assert.match(h.nodes.successText.textContent, /ikke avtalt/);
   assert.ok(!h.window.location.href.includes("booking-bekreftelse"));
 });
 
 test("on a free day existing direct booking and confirmation are preserved", async () => {
   const h = makeHarness("booking");
   await h.chooseDate();
-  assert.match(h.nodes.bookingModeNotice.textContent, /Fridag/);
+  assert.equal(h.nodes.bookingFreeInfo.classList.contains("hidden"), false);
+  assert.equal(h.nodes.bookingRequestAcknowledgment.classList.contains("hidden"), true);
   assert.equal(h.nodes.submitBooking.textContent, "Send bestilling");
   await h.submit();
   assert.equal(h.calls.filter(x => x.opts.method === "POST").length, 1);
@@ -146,6 +155,7 @@ test("old availability API does not falsely claim a date is free", async () => {
 test("workday enquiries refuse incomplete contact details before POST", async () => {
   const h = makeHarness("request");
   await h.chooseDate();
+  h.nodes.requestAcknowledged.checked = true;
   h.nodes.customerAddress.value = "";
   await h.submit();
   assert.equal(h.calls.some(x => x.opts.method === "POST"), false);
@@ -162,6 +172,6 @@ test("snow admin keeps requests separate from booked jobs, with a direct review 
   assert.match(script, /foresporsler\.html\?open=/);
   assert.match(script, /renderEnquiries\(data\)/);
   assert.match(script, /renderInbox\(data\)/);
-  assert.match(html, /broyting\.js\?v=20261121-shift1/);
-  assert.match(read("booking.html"), /booking\.js\?v=20261121-shift1/);
+  assert.match(html, /broyting\.js\?v=20261122-decisions1/);
+  assert.match(read("booking.html"), /booking\.js\?v=20261122-notice1/);
 });

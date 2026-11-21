@@ -15,6 +15,11 @@
   const formTitle = document.getElementById("formTitle");
   const successTitle = document.getElementById("successTitle");
   const successText = document.getElementById("successText");
+  const bookingRequestWarning = document.getElementById("bookingRequestWarning");
+  const bookingFreeInfo = document.getElementById("bookingFreeInfo");
+  const requestAcknowledgment = document.getElementById("bookingRequestAcknowledgment");
+  const requestAcknowledged = document.getElementById("requestAcknowledged");
+  const bookingChangeHint = document.getElementById("bookingChangeHint");
 
   const params = new URLSearchParams(window.location.search);
   const requestedServiceName = (params.get("service") || "").trim().toLowerCase();
@@ -116,17 +121,29 @@
     // An older backend can lack bookingMode; never falsely label a day as free.
     const modeKnown = data.bookingMode === "request" || data.bookingMode === "booking";
     if (bookingModeNotice) {
-      bookingModeNotice.textContent = isRequest
-        ? "Arbeidsdag: Her kan du sende ei førespurnad om brøyting. Det valde tidspunktet er berre eit ønske – ikkje ei stadfesta bestilling."
-        : "Fridag: Du kan bestille brøyting direkte på eit ledig tidspunkt.";
+      // Preserve visible static warning markup instead of replacing it with a
+      // generic status message. Legacy cached HTML gets the safe fallback.
+      if (bookingRequestWarning && bookingFreeInfo) {
+        bookingRequestWarning.classList.toggle("hidden", !isRequest);
+        bookingFreeInfo.classList.toggle("hidden", isRequest);
+      } else {
+        bookingModeNotice.textContent = isRequest
+          ? "VIKTIG: Dette er bare en forespørsel, IKKE en bekreftet bestilling."
+          : "Denne dagen er åpen for direkte bestilling.";
+      }
       bookingModeNotice.classList.toggle("hidden", !isSnow || !modeKnown);
     }
-    if (slotHeading) slotHeading.textContent = isRequest ? "Ønskt tidspunkt (ikkje reservert)" : "Ledige tider";
+    if (requestAcknowledgment) requestAcknowledgment.classList.toggle("hidden", !isRequest);
+    if (requestAcknowledged) requestAcknowledged.checked = false;
+    if (bookingChangeHint) bookingChangeHint.textContent = isRequest
+      ? "Forespørselen innebærer ingen reservasjon eller avtale."
+      : "For å avbestille eller flytte time må du kontakte oss direkte.";
+    if (slotHeading) slotHeading.textContent = isRequest ? "Når ønsker du brøyting?" : "Ledige tider";
     if (slotHint) slotHint.textContent = isRequest
-      ? "Vel tidspunktet du helst vil ha. Vi vurderer om vi kan ta oppdraget og kontaktar deg."
+      ? "Velg ønsket tidspunkt. Dette er ikke en reservert tid."
       : "Opptatte tidspunkt kan ikkje bestillast.";
-    if (formTitle) formTitle.textContent = isRequest ? "Send brøyteførespurnad" : "Fullfør bestilling";
-    submitBtn.textContent = isRequest ? "Send førespurnad" : "Send bestilling";
+    if (formTitle) formTitle.textContent = isRequest ? "Send forespørsel om brøyting" : "Fullfør bestilling";
+    submitBtn.textContent = isRequest ? "Send forespørsel – ikke bestilling" : "Send bestilling";
     slotsEl.innerHTML = '';
     selectedTime = null;
     formWrap.classList.add('hidden');
@@ -172,6 +189,8 @@
     selectedTime = null;
     bookingMode = "booking";
     if (bookingModeNotice) bookingModeNotice.classList.add("hidden");
+    if (requestAcknowledgment) requestAcknowledgment.classList.add("hidden");
+    if (requestAcknowledged) requestAcknowledged.checked = false;
     slotsEl.replaceChildren();
     slotsWrap.classList.add("hidden");
     formWrap.classList.add("hidden");
@@ -201,6 +220,11 @@
       return;
     }
     const isRequest = bookingMode === "request";
+    if (isRequest && (!requestAcknowledged || !requestAcknowledged.checked)) {
+      showMessage("Bekreft at du forstår at dette er en forespørsel, ikke en bestilling.", "error");
+      requestAcknowledged?.focus?.();
+      return;
+    }
     const payload = {
       serviceId: selectedService._id,
       serviceName: selectedService.name,
@@ -216,6 +240,7 @@
       showMessage("Fyll inn namn, telefon, e-post, adresse, dato og tid.", "error");
       return;
     }
+    if (isRequest) payload.acknowledgedNonBinding = true;
     payload.operationId = getOperationId(payload);
     bookingPending = true;
     submitBtn.disabled = true;
@@ -233,8 +258,8 @@
         if (isRequest) {
           // A request must never display the confirmed booking page.
           try { sessionStorage.removeItem("sorgulen_booking_retry"); } catch (_) {}
-          successTitle.textContent = "Førespurnaden er motteken";
-          successText.textContent = "Dette er ikkje ei stadfesta bestilling. Vi vurderer ønskt dag og tidspunkt og kontaktar deg.";
+          successTitle.textContent = "Forespørselen er mottatt – IKKE bestilt";
+          successText.textContent = "Brøyting er ikke avtalt. Vi vurderer kapasiteten og gir deg en egen tilbakemelding. Du får også en e-post om at forespørselen er mottatt.";
           slotsWrap.classList.add("hidden");
           formWrap.classList.add("hidden");
           successWrap.classList.remove("hidden");

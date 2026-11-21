@@ -15,6 +15,7 @@
   const els = {
     noRound: $("#noRound"), activeRound: $("#activeRound"), notice: $("#snowNotice"), connection: $("#snowConnection"),
     requests: $("#snowRequests"), requestCount: $("#snowRequestCount"), requestList: $("#snowRequestList"), requestMore: $("#snowRequestMore"),
+    approved: $("#snowApproved"), approvedCount: $("#snowApprovedCount"), approvedList: $("#snowApprovedList"),
     inbox: $("#snowInbox"), inboxCount: $("#snowInboxCount"), inboxHint: $("#snowInboxHint"),
     inboxList: $("#snowInboxList"), inboxMore: $("#snowInboxMore"),
     prepareRound: $("#snowPrepareRoundBtn"), prepareHelp: $("#snowPrepareHelp"),
@@ -160,6 +161,26 @@
     return parts.length === 3 ? `${parts[2]}.${parts[1]}.${parts[0]}` : String(value || "");
   }
 
+  function renderAcceptedEnquiries(data) {
+    const items = Array.isArray(data?.unassignedEnquiries?.approved) ? data.unassignedEnquiries.approved : [];
+    const total = Number(data?.unassignedEnquiries?.approvedTotal || 0);
+    els.approved.classList.toggle("hidden", total === 0);
+    if (!total) return;
+    els.approvedCount.textContent = String(total);
+    els.approvedList.innerHTML = items.map((entry) => {
+      const id = encodeURIComponent(String(entry._id || ""));
+      return `<article class="snow-inbox-item snow-accepted-item">
+        <div>
+          <strong>${esc(entry.customerName || "Kunde")}</strong>
+          <span>${esc(entry.customerAddress || "Adresse manglar")}</span>
+          <span>Ønskt ${esc(formatDate(entry.snowRequestedDate))} kl. ${esc(entry.snowRequestedTime || "–")} – tidspunktet er ikkje reservert</span>
+          ${entry.snowDecisionEmailStatus !== "sent" ? '<strong>VIKTIG: Kundesvar ikkje stadfesta sendt. Kontroller e-poststatus.</strong>' : ""}
+          <a class="snow-secondary snow-request-action" href="foresporsler.html?open=${id}">Følg opp / planlegg brøyting</a>
+        </div>
+      </article>`;
+    }).join("");
+  }
+
   function renderEnquiries(data) {
     const total = Number(data?.unassignedEnquiries?.total || 0);
     const items = Array.isArray(data?.unassignedEnquiries?.items) ? data.unassignedEnquiries.items : [];
@@ -184,6 +205,7 @@
           ${entry.intakeSummary ? `<span class="snow-inbox-note">${esc(entry.intakeSummary)}</span>` : ""}
           ${phone ? `<a href="tel:${esc(phone)}">Ring kunden: ${esc(entry.customerPhone)}</a>` : ""}
           ${entry.customerEmail ? `<span>E-post: ${esc(entry.customerEmail)}</span>` : ""}
+          ${entry.snowReceiptEmailStatus === "failed" ? "<strong>VIKTIG: Mottaksmelding til kunden feila.</strong>" : ""}
           <a class="snow-secondary snow-request-action" href="foresporsler.html?open=${id}">Behandle førespurnad</a>
         </div>
       </article>`;
@@ -237,6 +259,7 @@
     const newWebsite = fromServer && state.data?.round ? (data.queue || []).filter((job) => job.sourceType === "website" && !previousIds.has(String(job._id))) : [];
     state.data = data;
     writeJson(CACHE_KEY, data);
+    renderAcceptedEnquiries(data);
     renderEnquiries(data);
     renderInbox(data);
     state.knownIds = new Set([...(data.queue || []), ...(data.deferred || []), ...(data.done || []), ...(data.activeJob ? [data.activeJob] : [])].map((job) => String(job._id)));
