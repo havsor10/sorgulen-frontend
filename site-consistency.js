@@ -6,11 +6,16 @@
 
   var PRICES = Object.freeze({
     snowPlowingFrom: 350,
+    snowPlowingHourly: 650,
     tireChange: 450,
     otherWorkHourlyFrom: 650,
     gutterCleaningFrom: 500,
     binWashFrom: 250
   });
+
+  // This is the published snow-clearing rate even when the service catalogue
+  // still carries an older, incomplete priceText such as 'Fra 350 kr'.
+  var SNOW_PRICE_TEXT = "350 kr oppmøte + 650 kr/time";
 
   var SITE = Object.freeze({
     phoneDisplay: "407 30 187",
@@ -108,6 +113,7 @@
   }
 
   function publicPriceText(service) {
+    if (service.key === "broyting") return SNOW_PRICE_TEXT;
     if (service.priceText) return String(service.priceText);
     var suffix = service.priceUnit === "hour" ? " kr/time" : service.priceUnit === "item" ? " kr/stk" : " kr";
     return (service.priceFrom ? "Fra " : "") + Number(service.price || 0) + suffix;
@@ -125,7 +131,7 @@
   }
 
   function applyFallbackPrices() {
-    setFallbackCard("Brøyting", "Populær • Fra " + PRICES.snowPlowingFrom + " kr");
+    setFallbackCard("Brøyting", "Populær • " + SNOW_PRICE_TEXT);
     setFallbackCard("Dekkskift", PRICES.tireChange + " kr");
     setFallbackCard("Diverse arbeid", "Fra " + PRICES.otherWorkHourlyFrom + " kr/time");
     setFallbackCard("Takrennevask og rens", "Fra " + PRICES.gutterCleaningFrom + " kr");
@@ -133,7 +139,7 @@
 
     var heroTitle = document.querySelector(".hero-panel h2");
     if (heroTitle && /brøyting/i.test(heroTitle.textContent)) {
-      heroTitle.textContent = "Brøyting fra " + PRICES.snowPlowingFrom + " kr";
+      heroTitle.textContent = "Brøyting – " + SNOW_PRICE_TEXT;
     }
     var heroCopy = document.querySelector(".hero-panel p");
     if (heroCopy && /dekkskift/i.test(heroCopy.textContent)) {
