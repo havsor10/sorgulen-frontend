@@ -86,3 +86,9 @@
 .snow-request-item strong{font-size:1.12rem}
 .snow-request-item a{color:#d0e9ff}
 .snow-request-action{display:inline-flex;align-items:center;justify-content:center;margin-top:8px;text-decoration:none;min-height:46px}
+
+/* Approved enquiries must remain visible until manually scheduled. */
+.snow-approved{border:2px solid rgba(71,200,142,.55)}
+.snow-approved .section-kicker{color:#78eab6;font-weight:900}
+.snow-accepted-item{border-left:4px solid #4ed59a}
+.snow-accepted-item>div{display:flex;flex-direction:column;gap:7px}
