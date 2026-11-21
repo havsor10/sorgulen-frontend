@@ -137,6 +137,7 @@ test("booking page requires unconfirmed-acknowledgment before workday request", 
   const html = fs.readFileSync(path.join(__dirname, "../booking.html"), "utf8");
   const js = fs.readFileSync(path.join(__dirname, "../booking.js"), "utf8");
   assert.match(html, /VIKTIG: Brøyting kan ikke garanteres denne dagen/);
+  assert.match(html, /Jeg driver Sørgulen Industriservice ved siden av en fulltidsjobb/);
   assert.match(html, /Dette er ikke en bestilling/);
   assert.match(html, /id="requestAcknowledged" type="checkbox"/);
   assert.match(js, /acknowledgedNonBinding = true/);
