@@ -159,7 +159,7 @@
     const declined = r.status === "declined";
     const receipt = r.snowReceiptEmailStatus || "unknown";
     const decisionMail = r.snowDecisionEmailStatus || "none";
-    const reply = approved ? "GODKJENT – må planlegges" : declined ? "AVSLÅTT" : "AVVENTER DIN VURDERING";
+    const reply = approved ? "GODKJENT – må planlegges" : declined ? "AVSLÅTT" : r.status === "archived" ? "ARKIVERT" : "AVVENTER DIN VURDERING";
     const decisionMessage = decisionMail === "sent" ? "Svar sendt til kunden på e-post."
       : decisionMail === "failed" ? "VIKTIG: Svaret er lagret, men e-posten feilet."
       : decisionMail === "sending" ? "E-post under sending – kontroller før nytt forsøk."
