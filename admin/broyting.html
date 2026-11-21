@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="admin.css">
   <link rel="stylesheet" href="admin-shell.css?v=20261028-simple1">
   <link rel="stylesheet" href="admin-pages.css">
-  <link rel="stylesheet" href="broyting.css?v=20261111-rate650">
+  <link rel="stylesheet" href="broyting.css?v=20261121-shift1">
 </head>
 <body>
   <div id="adminShell" data-page="snow"></div>
@@ -28,6 +28,16 @@
     </header>
 
     <div id="snowNotice" class="snow-notice hidden" role="status" aria-live="polite"></div>
+
+    <section id="snowRequests" class="snow-inbox snow-requests admin-card hidden" aria-label="Brøyteførespurnader som må behandlast">
+      <div class="snow-inbox-head">
+        <p class="section-kicker">FØRESPURNADER – IKKJE BESTILLINGAR</p>
+        <h2><span id="snowRequestCount">0</span> førespurnader ventar på svar</h2>
+        <p class="snow-muted">Desse gjeld arbeidsdagar. Tidspunkta er berre ønske og ingen kundar er automatisk stadfesta.</p>
+      </div>
+      <div id="snowRequestList" class="snow-inbox-list"></div>
+      <p id="snowRequestMore" class="snow-muted hidden"></p>
+    </section>
 
     <section id="snowInbox" class="snow-inbox admin-card hidden" aria-label="Bestillingar som ventar på brøyterunde">
       <div class="snow-inbox-head">
@@ -110,7 +120,7 @@
   </div>
 
   <script src="../config.js?v=20260904-snow1"></script>
-  <script src="broyting.js?v=20261111-rate650"></script>
+  <script src="broyting.js?v=20261121-shift1"></script>
   <script src="broyting-portal.js?v=20260917-min-jobb2"></script>
 </body>
 </html>
