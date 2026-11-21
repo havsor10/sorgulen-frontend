@@ -9,6 +9,12 @@
   const messageEl = document.getElementById("message");
   const submitBtn = document.getElementById("submitBooking");
   const bookingTitle = document.getElementById("bookingTitle");
+  const bookingModeNotice = document.getElementById("bookingModeNotice");
+  const slotHeading = document.getElementById("slotHeading");
+  const slotHint = document.getElementById("slotHint");
+  const formTitle = document.getElementById("formTitle");
+  const successTitle = document.getElementById("successTitle");
+  const successText = document.getElementById("successText");
 
   const params = new URLSearchParams(window.location.search);
   const requestedServiceName = (params.get("service") || "").trim().toLowerCase();
@@ -20,6 +26,7 @@
   let availabilityRequest = 0;
   let bookingPending = false;
   let bookingSucceeded = false;
+  let bookingMode = "booking"; // Set only from validated backend availability.
 
   function osloParts(value = new Date()) {
     const parts = new Intl.DateTimeFormat("en-CA", {
@@ -102,6 +109,24 @@
   }
 
   function renderSlots(data) {
+    bookingMode = data.bookingMode === "request" ? "request" : "booking";
+    const isRequest = bookingMode === "request";
+    const isSnow = selectedService?.key === "broyting" || /(brøy|broy|snø|sno|plog)/i.test(selectedService?.name || "");
+    // Legacy cached HTML may lack these explanatory nodes; booking still works.
+    // An older backend can lack bookingMode; never falsely label a day as free.
+    const modeKnown = data.bookingMode === "request" || data.bookingMode === "booking";
+    if (bookingModeNotice) {
+      bookingModeNotice.textContent = isRequest
+        ? "Arbeidsdag: Her kan du sende ei førespurnad om brøyting. Det valde tidspunktet er berre eit ønske – ikkje ei stadfesta bestilling."
+        : "Fridag: Du kan bestille brøyting direkte på eit ledig tidspunkt.";
+      bookingModeNotice.classList.toggle("hidden", !isSnow || !modeKnown);
+    }
+    if (slotHeading) slotHeading.textContent = isRequest ? "Ønskt tidspunkt (ikkje reservert)" : "Ledige tider";
+    if (slotHint) slotHint.textContent = isRequest
+      ? "Vel tidspunktet du helst vil ha. Vi vurderer om vi kan ta oppdraget og kontaktar deg."
+      : "Opptatte tidspunkt kan ikkje bestillast.";
+    if (formTitle) formTitle.textContent = isRequest ? "Send brøyteførespurnad" : "Fullfør bestilling";
+    submitBtn.textContent = isRequest ? "Send førespurnad" : "Send bestilling";
     slotsEl.innerHTML = '';
     selectedTime = null;
     formWrap.classList.add('hidden');
@@ -145,6 +170,8 @@
   async function loadAvailability() {
     const seq = ++availabilityRequest;
     selectedTime = null;
+    bookingMode = "booking";
+    if (bookingModeNotice) bookingModeNotice.classList.add("hidden");
     slotsEl.replaceChildren();
     slotsWrap.classList.add("hidden");
     formWrap.classList.add("hidden");
@@ -173,6 +200,7 @@
       showMessage("Vel ei teneste, dato og ledig tid først.", "error");
       return;
     }
+    const isRequest = bookingMode === "request";
     const payload = {
       serviceId: selectedService._id,
       serviceName: selectedService.name,
@@ -192,16 +220,26 @@
     bookingPending = true;
     submitBtn.disabled = true;
     const originalText = submitBtn.textContent;
-    submitBtn.textContent = "Sender bestilling …";
+    submitBtn.textContent = isRequest ? "Sender førespurnad …" : "Sender bestilling …";
     try {
-      const res = await fetch(`${API_BASE}/bookings`, {
+      const res = await fetch(`${API_BASE}${isRequest ? "/requests/snow" : "/bookings"}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => ({}));
-      if (res.ok && data.ok && data.bookingId) {
+      if (res.ok && data.ok && (isRequest ? data.requestId : data.bookingId)) {
         bookingSucceeded = true;
+        if (isRequest) {
+          // A request must never display the confirmed booking page.
+          try { sessionStorage.removeItem("sorgulen_booking_retry"); } catch (_) {}
+          successTitle.textContent = "Førespurnaden er motteken";
+          successText.textContent = "Dette er ikkje ei stadfesta bestilling. Vi vurderer ønskt dag og tidspunkt og kontaktar deg.";
+          slotsWrap.classList.add("hidden");
+          formWrap.classList.add("hidden");
+          successWrap.classList.remove("hidden");
+          return;
+        }
         const summary = {
           serviceName: payload.serviceName, date: payload.date, time: payload.time,
           customerName: payload.customerName, customerPhone: payload.customerPhone,
@@ -221,11 +259,11 @@
         await loadAvailability();
         return;
       }
-      showMessage(data.error || "Bestillinga kunne ikkje stadfestast. Prøv igjen.", "error");
+      showMessage(data.error || (isRequest ? "Førespurnaden kunne ikkje sendast." : "Bestillinga kunne ikkje stadfestast. Prøv igjen."), "error");
     } catch (error) {
       // Retrying uses the *same* operationId, so an accepted request is
       // recognized instead of generating another booking and another email.
-      showMessage("Nettverksfeil. Vi veit ikkje om bestillinga vart motteken. Prøv Send bestilling igjen – det blir ikkje oppretta ei ny dersom den første vart lagra.", "error");
+      showMessage("Nettverksfeil. Vi veit ikkje om innsendinga vart motteken. Prøv same knapp igjen – den same førespurnads-/bestillings-ID-en hindrar duplikat.", "error");
     } finally {
       bookingPending = false;
       if (!bookingSucceeded) {
