@@ -186,7 +186,7 @@
       </div>
       <div style="padding:11px 12px;border:1px solid #4b596d;border-radius:9px;margin:12px 0;color:#e3edf9">
         Mottaksmelding til kunde: <strong>${receipt === "sent" ? "Sendt" : receipt === "failed" ? "FEILET" : receipt === "sending" ? "Uavklart – kontroller Gmail" : "Ikke bekreftet sendt"}</strong>
-        ${receipt === "failed" && isPending ? '<button type="button" data-action="snow-retry-received" class="snow-retry">Prøv mottaksmelding igjen</button>' : ""}
+        ${["pending", "failed"].includes(receipt) && isPending ? '<button type="button" data-action="snow-retry-received" class="snow-retry">Send mottaksmelding</button>' : ""}
       </div>
       ${isPending ? `<div style="padding:14px;border-radius:10px;background:#292217;border:1px solid #ffb84f">
         <strong>Velg hva du kan tilby kunden</strong>
@@ -199,8 +199,9 @@
         </div>
       </div>` : `<div style="padding:12px;border-radius:9px;border:1px solid #445165">
         <strong>${decisionMessage}</strong>
-        ${decisionMail === "failed" ? '<button type="button" data-action="snow-retry-decision" class="snow-retry">Prøv å sende svarmail igjen</button>' : ""}
+        ${["pending", "failed"].includes(decisionMail) ? '<button type="button" data-action="snow-retry-decision" class="snow-retry">Send svarmail på nytt</button>' : ""}
         ${approved ? '<p>Oppdraget er akseptert, men ikke automatisk lagt i en brøyterunde. Avtal tidspunkt og planlegg gjennomføring.</p><a href="broyting.html" class="snow-req-link">Åpne brøyteadmin</a>' : ""}
+        ${decisionMail === "sent" && (approved || declined) ? '<button type="button" data-action="snow-archive" class="snow-retry">Arkiver etter oppfølging</button>' : ""}
         ${r.snowDecisionNote ? `<p>Beskjed til kunde: ${escapeHtml(r.snowDecisionNote)}</p>` : ""}
       </div>`}
     </article>`;
@@ -408,22 +409,28 @@
         if (!confirm(`${verb} brøyteforespørselen og sende riktig e-post til kunden? Dette er en ekte kundemelding.`)) return;
       } else if (action === "snow-retry-received" || action === "snow-retry-decision") {
         if (!confirm("En tidligere e-post ble registrert som feilet. Kontroller først Gmail Sent før du prøver igjen, så kunden ikke mottar dobbelt.")) return;
+      } else if (action === "snow-archive") {
+        if (request.snowDecisionEmailStatus !== "sent" || !["accepted", "declined"].includes(request.status)) return;
+        if (!confirm("Arkivere brøyteforespørselen etter at kunden er varslet og oppdraget er fulgt opp?")) return;
       } else return;
 
       btn.disabled = true;
       setMessage("Lagrer avgjørelse og kontrollerer e-postsending …");
       try {
-        const url = decision
-          ? `${API_BASE}/admin/snow/enquiries/${encodeURIComponent(id)}/decision`
+        const archive = action === "snow-archive";
+        const url = archive ? `${API_BASE}/requests/${encodeURIComponent(id)}`
+          : decision ? `${API_BASE}/admin/snow/enquiries/${encodeURIComponent(id)}/decision`
           : `${API_BASE}/admin/snow/enquiries/${encodeURIComponent(id)}/email/retry`;
-        const body = decision
-          ? { decision, note: card.querySelector(".snowDecisionNote")?.value.trim() || "" }
+        const body = archive ? { status: "archived" }
+          : decision ? { decision, note: card.querySelector(".snowDecisionNote")?.value.trim() || "" }
           : { type: action === "snow-retry-received" ? "received" : "decision" };
-        const res = await fetch(url, { method: "POST", headers: headers(), body: JSON.stringify(body) });
+        const res = await fetch(url, { method: archive ? "PATCH" : "POST", headers: headers(), body: JSON.stringify(body) });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || "Kunne ikke behandle brøyteforespørselen");
         await loadRequests();
-        if (data.emailStatus === "sent") {
+        if (archive) {
+          setMessage("Brøyteforespørselen er arkivert etter oppfølging.", "success");
+        } else if (data.emailStatus === "sent") {
           setMessage(decision ? "Avgjørelsen er lagret og e-posten er sendt til kunden." : "Kundemeldingen er nå sendt.", "success");
         } else {
           setMessage("Avgjørelsen er lagret, men e-posten er IKKE bekreftet sendt. Sjekk status på forespørselen.", "error");
