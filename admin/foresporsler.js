@@ -398,6 +398,44 @@
     const id = card.getAttribute("data-id");
     const action = btn.getAttribute("data-action");
 
+    if (action.startsWith("snow-")) {
+      const request = requests.find((entry) => String(entry._id) === String(id));
+      if (!request || request.snowShiftRequest !== true || btn.disabled) return;
+
+      const decision = action === "snow-approve" ? "approve" : action === "snow-decline" ? "decline" : null;
+      if (decision) {
+        const verb = decision === "approve" ? "GODKJENNE" : "AVSLÅ";
+        if (!confirm(`${verb} brøyteforespørselen og sende riktig e-post til kunden? Dette er en ekte kundemelding.`)) return;
+      } else if (action === "snow-retry-received" || action === "snow-retry-decision") {
+        if (!confirm("En tidligere e-post ble registrert som feilet. Kontroller først Gmail Sent før du prøver igjen, så kunden ikke mottar dobbelt.")) return;
+      } else return;
+
+      btn.disabled = true;
+      setMessage("Lagrer avgjørelse og kontrollerer e-postsending …");
+      try {
+        const url = decision
+          ? `${API_BASE}/admin/snow/enquiries/${encodeURIComponent(id)}/decision`
+          : `${API_BASE}/admin/snow/enquiries/${encodeURIComponent(id)}/email/retry`;
+        const body = decision
+          ? { decision, note: card.querySelector(".snowDecisionNote")?.value.trim() || "" }
+          : { type: action === "snow-retry-received" ? "received" : "decision" };
+        const res = await fetch(url, { method: "POST", headers: headers(), body: JSON.stringify(body) });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Kunne ikke behandle brøyteforespørselen");
+        await loadRequests();
+        if (data.emailStatus === "sent") {
+          setMessage(decision ? "Avgjørelsen er lagret og e-posten er sendt til kunden." : "Kundemeldingen er nå sendt.", "success");
+        } else {
+          setMessage("Avgjørelsen er lagret, men e-posten er IKKE bekreftet sendt. Sjekk status på forespørselen.", "error");
+        }
+      } catch (error) {
+        setMessage(error.message || "Kunne ikke oppdatere forespørselen", "error");
+      } finally {
+        btn.disabled = false;
+      }
+      return;
+    }
+
     try {
       if (action === "save") {
         const low = card.querySelector(".adminLow").value;
