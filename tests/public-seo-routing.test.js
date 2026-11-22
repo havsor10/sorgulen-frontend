@@ -76,6 +76,8 @@ test('offentlig bedriftsinfo bruker serviceområdeprofil, offisiell identitet og
   assert.doesNotMatch(index, /"postalCode": "6906"/);
   assert.match(index, /\+4740730187/);
   assert.match(index, /Brøyting – 350 kr oppmøte \+ 650 kr\/time/);
+  assert.match(index, /<span class="badge premium-badge">Fra 350 kr<\/span>/);
+  assert.doesNotMatch(index, /Populær • 350 kr oppmøte \+ 650 kr\/time/);
   assert.doesNotMatch(index, /Brøyting fra 1 200 kr/);
   assert.doesNotMatch(index, /Dekkskift 450 kr/);
 });

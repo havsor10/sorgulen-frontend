@@ -16,6 +16,7 @@
   // This is the published snow-clearing rate even when the service catalogue
   // still carries an older, incomplete priceText such as 'Fra 350 kr'.
   var SNOW_PRICE_TEXT = "350 kr oppmøte + 650 kr/time";
+  var SNOW_CARD_PRICE_TEXT = "Fra 350 kr";
 
   var SITE = Object.freeze({
     phoneDisplay: "407 30 187",
@@ -120,6 +121,7 @@
   }
 
   function badgeText(service) {
+    if (service.key === "broyting") return SNOW_CARD_PRICE_TEXT;
     var price = publicPriceText(service);
     return service.badgeLabel ? String(service.badgeLabel) + " • " + price : price;
   }
@@ -131,7 +133,7 @@
   }
 
   function applyFallbackPrices() {
-    setFallbackCard("Brøyting", "Populær • " + SNOW_PRICE_TEXT);
+    setFallbackCard("Brøyting", SNOW_CARD_PRICE_TEXT);
     setFallbackCard("Dekkskift", PRICES.tireChange + " kr");
     setFallbackCard("Diverse arbeid", "Fra " + PRICES.otherWorkHourlyFrom + " kr/time");
     setFallbackCard("Takrennevask og rens", "Fra " + PRICES.gutterCleaningFrom + " kr");
