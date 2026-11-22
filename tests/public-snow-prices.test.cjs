@@ -13,7 +13,7 @@ test('public homepage and info page show accurate brøyting rate', () => {
   const homepage = read('index.html');
   const info = read('tjenester/broyting/tjenester_broyting-pris-info.html');
   assert.match(homepage, /Brøyting – 350 kr oppmøte \+ 650 kr\/time/);
-  assert.match(homepage, /Populær • 350 kr oppmøte \+ 650 kr\/time/);
+  assert.match(homepage, /<span class="badge premium-badge">Fra 350 kr<\/span>/);
   assert.match(info, /350 kr oppmøte \+ 650 kr\/time/);
   assert.match(homepage, /href="tjenester\/broyting-pris-info\.html"/);
   assert.match(info, /href="\.\.\/\.\.\/booking\.html\?service=Brøyting"/);
@@ -78,6 +78,6 @@ test('outdated API priceText cannot override correct visible brøyting price', a
     key: 'broyting', name: 'Brøyting', badgeLabel: 'Populær',
     active: true, price: 350, priceFrom: true, priceUnit: 'fixed', priceText: 'Fra 350 kr'
   });
-  assert.equal(display.badge, 'Populær • ' + price);
+  assert.equal(display.badge, 'Fra 350 kr');
   assert.equal(display.hero, 'Brøyting ' + price);
 });
