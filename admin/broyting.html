@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="admin.css">
   <link rel="stylesheet" href="admin-shell.css?v=20261028-simple1">
   <link rel="stylesheet" href="admin-pages.css">
-  <link rel="stylesheet" href="broyting.css?v=field-20261125">
+  <link rel="stylesheet" href="broyting.css?v=field-20261125-today">
 </head>
 <body>
   <div id="adminShell" data-page="snow"></div>
@@ -27,6 +27,12 @@
       </div>
     </header>
 
+    <section class="today-home" aria-label="Dagens brøyting">
+      <h2 id="todayHeading">I dag</h2>
+      <p id="todayCount" role="status">Hentar dagens bestillingar …</p>
+      <button type="button" id="todayCustomers">Sjå dagens kundar</button>
+      <button type="button" id="todayRound">Start dagens brøyterunde</button>
+    </section>
     <div id="snowNotice" class="snow-notice hidden" role="status" aria-live="polite"></div>
 
     <div id="activeRound" class="hidden">
@@ -129,7 +135,7 @@
   </div>
 
   <script src="../config.js?v=20260904-snow1"></script>
-  <script src="broyting.js?v=field-20261125"></script>
+  <script src="broyting.js?v=field-20261125-today"></script>
   <script src="broyting-portal.js?v=20260917-min-jobb2"></script>
 </body>
 </html>
