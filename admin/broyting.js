@@ -243,7 +243,7 @@
     els.subline.textContent = `${data.round.title || "Brøyterunde"} · ${data.round.roundDate || ""}`;
     els.activeJob.classList.toggle("hidden", !data.activeJob);
     els.activeJob.innerHTML = activeMarkup(data.activeJob);
-    els.nextJob.innerHTML = data.activeJob ? `<div class="snow-focus-kicker"><span>NESTE ETTER DENNE</span></div>${data.nextJob ? `<h2>${esc(data.nextJob.customerSnapshot?.name || "Kunde")}</h2><p class="snow-address">${esc(data.nextJob.customerSnapshot?.address || "")}</p>${notesMarkup(data.nextJob)}` : "<h2>Køen er tom</h2>"}` : nextMarkup(data.nextJob);
+    els.nextJob.innerHTML = data.activeJob ? `<div class="snow-focus-kicker"><span>NESTE ETTER DENNE</span></div>${data.nextJob ? `<h2>${esc(data.nextJob.customerSnapshot?.name || "Kunde")}</h2><p class="snow-address">${esc(data.nextJob.customerSnapshot?.address || "")}</p>${timeWishMarkup(data.nextJob.snowTimePreference)}${notesMarkup(data.nextJob)}${cancelButton(data.nextJob)}` : "<h2>Køen er tom</h2>"}` : nextMarkup(data.nextJob);
 
     const nextId = data.nextJob?._id ? String(data.nextJob._id) : "";
     const laterQueue = (data.queue || []).filter((job) => String(job._id) !== nextId);
@@ -268,6 +268,7 @@
     if (includeLocation && state.location) suffix = `?lat=${encodeURIComponent(state.location.lat)}&lng=${encodeURIComponent(state.location.lng)}&accuracy=${encodeURIComponent(state.location.accuracy || "")}`;
     try {
       const data = await api(`/admin/snow/state${suffix}`, { cache: "no-store" });
+      if (readJson(PENDING_KEY, []).length) { await flushPending(); return; }
       setConnection(true);
       render(data);
       if (!quiet) showNotice("");
@@ -307,58 +308,43 @@
     render(data, { fromServer: false });
   }
 
-  function queueOffline(path, body, optimistic) {
-    const items = readJson(PENDING_KEY, []);
-    if (!items.some((item) => item.body?.operationId === body.operationId)) items.push({ path, method: "POST", body, createdAt: new Date().toISOString() });
-    writeJson(PENDING_KEY, items);
-    optimistic();
-    setConnection(false);
-    showNotice("Lagret offline. Synkroniseres automatisk når nettet er tilbake.", "warning");
+  function savePending(items) {
+    localStorage.setItem(PENDING_KEY, JSON.stringify(items));
   }
 
   async function criticalMutation(path, body, optimistic) {
+    const items = readJson(PENDING_KEY, []);
     try {
-      const data = await api(path, { method: "POST", body: JSON.stringify(body) });
-      render(data);
-      return { data, offline: false };
+      savePending([...items, { path, method:"POST", body, createdAt: new Date().toISOString() }]);
     } catch (error) {
-      if (isNetworkError(error)) {
-        queueOffline(path, body, optimistic);
-        return { data: null, offline: true };
-      }
-      showNotice(error.message, "error");
-      return { data: null, offline: false, error };
+      showNotice("Telefonen kunne ikkje lagre registreringa. Frigjer lagringsplass og prøv igjen.", "error");
+      return { error };
     }
+    optimistic();
+    const result = await flushPending();
+    if (!result?.data) {
+      if (!result?.error) showNotice("Lagra på telefonen. Ventar på synkronisering.", "warning");
+      return { offline: !result?.error, error: result?.error };
+    }
+    return result;
   }
 
   async function flushPending() {
     if (state.flushing || !navigator.onLine) return;
     state.flushing = true;
-    const items = readJson(PENDING_KEY, []);
-    const remaining = [];
-    let blocked = null;
+    let data;
     try {
-      // Start and finish are ordered operations. If one cannot be confirmed,
-      // do not execute later operations or discard the customer's work record.
-      for (let index = 0; index < items.length; index += 1) {
-        const item = items[index];
-        try {
-          await api(item.path, { method: item.method, body: JSON.stringify(item.body) });
-        } catch (error) {
-          remaining.push(...items.slice(index));
-          blocked = error;
-          break;
-        }
+      let item;
+      while ((item = readJson(PENDING_KEY, [])[0])) {
+        data = await api(item.path, { method:item.method, body:JSON.stringify(item.body) });
+        // Read again after the network call. A stop can be recorded while start is in flight.
+        savePending(readJson(PENDING_KEY, []).filter(entry => entry.body.operationId !== item.body.operationId));
       }
-      writeJson(PENDING_KEY, remaining);
-      await refresh({ quiet: true });
-      if (blocked && !isNetworkError(blocked)) {
-        showNotice(`VIKTIG: ${remaining.length} offline-registrering(er) er ikkje synkroniserte. Ingenting er sletta. Feil: ${blocked.message}. Kontroller før du held fram.`, "error");
-      } else if (blocked) {
-        showNotice(`${remaining.length} registrering(er) ventar framleis på nett. Dei ligg lagra på denne eininga.`, "warning");
-      } else if (items.length) {
-        showNotice("Alle offline-registreringane er stadfesta av serveren.", "success", 5000);
-      }
+      if (data) { render(data); setConnection(true); showNotice("Registreringa er synkronisert.", "success", 3500); }
+      return {data};
+    } catch (error) {
+      showNotice("Ikkje synkronisert. Ingenting er sletta. " + error.message, "warning");
+      return isNetworkError(error) ? {offline:true} : {error};
     } finally { state.flushing = false; }
   }
 
@@ -520,6 +506,8 @@
       event.preventDefault();
       const error = $("#quickSnowError", form);
       const button = $("button[type=submit]", form);
+      if (form.dataset.saving) return;
+      form.dataset.saving = "1";
       error.textContent = ""; button.disabled = true;
       const payload = {
         roundId: round._id, customerId: form.elements.customerId.value || undefined,
@@ -538,7 +526,7 @@
         else showNotice("Kunden er lagt i brøytekøen.", "success", 3500);
       }
       catch (err) { error.textContent = err.message; }
-      finally { button.disabled = false; }
+      finally { delete form.dataset.saving; button.disabled = false; }
     });
   }
 

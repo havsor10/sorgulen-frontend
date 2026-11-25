@@ -79,3 +79,9 @@
 /* Missing callout must never be presented as the customer's final amount. */
 .snow-billing-warning{margin:0;padding:16px;border:1px solid rgba(255,189,82,.56);border-radius:12px;background:rgba(255,189,82,.12);color:#ffe2ae;line-height:1.55;font-size:.94rem}
 .snow-billing-warning strong{color:#ffcb72}
+
+
+#quickAddBtn { width:100%; margin:12px 0; }
+.snow-summary { grid-template-columns:repeat(4,minmax(0,1fr)); }
+.snow-note,.snow-modal-card { overflow-wrap:anywhere; }
+@media(max-width:700px) { .snow-summary { grid-template-columns:repeat(2,minmax(0,1fr)); } }
