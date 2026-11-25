@@ -494,6 +494,7 @@
     if (!round) return;
     openModal("Ny brøyting", `<form id="quickSnowForm" class="snow-modal-grid">${customerSearchMarkup()}<label class="snow-field">Kilde<select name="sourceType"><option value="phone">Telefon</option><option value="sms">SMS</option><option value="manual">Manuell</option></select></label><label class="snow-field">Prioritet<select name="priority"><option value="normal">Normal</option><option value="high">Høy</option><option value="urgent">HASTER</option><option value="low">Lav</option></select></label><label class="snow-field">Navn<input name="name" required maxlength="160"></label><label class="snow-field">Telefon<input name="phone" inputmode="tel" maxlength="40"></label><label class="snow-field wide">Adresse<input name="address" required maxlength="220"></label><label class="snow-field">Prismodell<select name="pricingMode"><option value="hybrid" ${round.defaultPricingMode !== "fixed" ? "selected" : ""}>350 kr oppmøte + timepris</option><option value="fixed" ${round.defaultPricingMode === "fixed" ? "selected" : ""}>Avtalt fastpris utan tillegg</option></select></label><label class="snow-field" data-hourly-wrap>Timepris<input name="hourlyRate" type="number" min="1" value="${esc(Number(round.defaultHourlyRate) === 850 ? 650 : (round.defaultHourlyRate || 650))}"></label><label class="snow-field ${round.defaultPricingMode === "fixed" ? "" : "hidden"}" data-fixed-wrap>Fastpris<input name="fixedPrice" type="number" min="1" value="${esc(round.defaultPricingMode === "fixed" ? (round.defaultFixedPrice ?? "") : "")}"></label><label class="snow-field">Estimert tid<input name="estimatedServiceMinutes" type="number" min="1" max="480" value="${esc(round.defaultServiceMinutes || 15)}"></label><label class="snow-field wide">Kommentar<textarea name="note" maxlength="2000" placeholder="F.eks. foran garasje, pass på bil…"></textarea></label><p id="quickSnowError" class="snow-error wide"></p><button class="snow-primary snow-xl wide" type="submit">LEGG I KØ</button><button type="submit" class="snow-secondary wide" value="start" ${state.data?.activeJob ? "disabled" : ""}>Start med ein gong</button></form>`);
     const form = $("#quickSnowForm", els.modalBody);
+    const creationId = crypto.randomUUID();
     bindCustomerSearch(form);
     const togglePrice = () => {
       const fixed = form.elements.pricingMode.value === "fixed";
@@ -510,7 +511,7 @@
       form.dataset.saving = "1";
       error.textContent = ""; button.disabled = true;
       const payload = {
-        roundId: round._id, customerId: form.elements.customerId.value || undefined,
+        operationId:creationId, roundId: round._id, customerId: form.elements.customerId.value || undefined,
         sourceType: form.elements.sourceType.value, priority: form.elements.priority.value,
         name: form.elements.name.value.trim(), phone: form.elements.phone.value.trim(), address: form.elements.address.value.trim(),
         pricingMode: form.elements.pricingMode.value, hourlyRate: Number(form.elements.hourlyRate.value || round.defaultHourlyRate),
@@ -700,6 +701,56 @@
   $("#snowModalClose").addEventListener("click", closeModal);
   els.modal.addEventListener("click", (event) => { if (event.target === els.modal) closeModal(); });
   $("#quickAddBtn").addEventListener("click", openQuickAdd);
+  async function reviewDay(date) {
+    const {rows} = await api("/admin/snow/review/" + encodeURIComponent(date));
+    const done = rows.filter(row => row.status === "done");
+    const drafts = done.filter(row => row.invoice?.status === "draft" && !row.invoice.snowSimulatedAt);
+    const pending = done.filter(row => row.workOrderId && !row.invoiceId);
+    openModal("Dagsoversikt " + formatDate(date),
+      '<p>' + done.length + ' ferdige · ' + (rows.length - done.length) + ' uferdige · ' +
+      formatDuration(done.reduce((n,r)=>n + (r.workSeconds || 0),0)) + ' · ' +
+      formatMoney(done.reduce((n,r)=>n+(r.amount || 0),0)) + ' før avrunding</p>' +
+      rows.map(row => '<article class="snow-note"><strong>' + esc(row.customerSnapshot?.name) + '</strong><p>' +
+        (row.status === "done" ? formatDuration(row.workSeconds) + ' · ' + formatMoney(row.invoice?.amount ?? row.amount) :
+        'Uferdig oppdrag') + '</p>' + (row.invoice ? '<a href="faktura-detalj.html?id=' + encodeURIComponent(row.invoiceId) +
+        '">' + (row.invoice.snowSimulatedAt ? 'Sending simulert' : 'Kontroller faktura') + '</a>' :
+        row.status === "done" ? '<button type="button" class="snow-secondary" data-correct="' + esc(row._id) + '">Korriger</button>' : '') +
+        '</article>').join("") +
+      '<button class="snow-primary" id="approveDay" ' + (pending.length ? '' : 'disabled') + '>Godkjenn alle – opprett utkast</button> ' +
+      '<button class="snow-secondary" id="sendDay" ' + (drafts.length && !pending.length ? '' : 'disabled') + '>Send alle (simulert)</button>');
+    for (const btn of $$("[data-correct]",els.modalBody)) btn.onclick = async () => {
+      const row = done.find(r=>r._id===btn.dataset.correct);
+      const sec = prompt("Arbeidstid i sekund", String(row.workSeconds)); if (sec===null) return;
+      const price = prompt("Avtalt totalpris. La stå tomt for berekna pris.",""); if(price===null) return;
+      const comment = prompt("Årsak til korrigering",""); if(comment===null) return;
+      try {
+        await api("/admin/snow/jobs/"+row._id+"/correction",{method:"PATCH",body:JSON.stringify({
+          seconds:Number(sec),price:price.trim() ? Number(price.replace(",",".")) : null,comment})});
+        await reviewDay(date);
+      } catch(error) { showNotice(error.message,"error"); }
+    };
+    async function applyAll(send) {
+      if (send && !confirm("Simuler sending av " + drafts.length + " kontrollerte utkast?")) return;
+      $("#approveDay").disabled = true; $("#sendDay").disabled = true;
+      let count = 0;
+      try {
+        for (const row of send ? drafts : pending) {
+          if (send) await api("/admin/snow/jobs/"+row._id+"/simulate-invoice", {method:"POST",
+            body:JSON.stringify({amount:row.invoice.amount,updatedAt:row.invoice.updatedAt})});
+          else await api("/invoices",{method:"POST",body:JSON.stringify({sourceType:"workOrder",sourceId:row.workOrderId,customerName:row.customerSnapshot.name})});
+          count++;
+        }
+        await reviewDay(date);
+        showNotice(count + (send ? " sendingar simulerte." : " utkast oppretta."),"success");
+      } catch(error) {
+        await reviewDay(date);
+        showNotice("Stoppa etter " + count + ". Kontroller attståande oppdrag. " + error.message,"error");
+      }
+    }
+    $("#approveDay").onclick = ()=>applyAll(false);
+    $("#sendDay").onclick = ()=>applyAll(true);
+  }
+  $("#reviewDay").onclick = () => reviewDay($("#bookingDayDate").value || today()).catch(error=>showNotice(error.message,"error"));
   $("#snowMessages").addEventListener("click", async () => {
     try {
       const date = $("#bookingDayDate").value || today();
@@ -768,3 +819,14 @@
   state.poll = setInterval(() => { if (!document.hidden && navigator.onLine) refresh({ quiet: true }); }, 12000);
 })();
 
+
+// A narrow scope leaves the admin push worker in control of the other pages.
+if ("serviceWorker" in navigator && window.isSecureContext) {
+  navigator.serviceWorker.register("snow-offline-sw.js", {scope:"./broyting.html"}).catch(() => {
+    const notice = document.getElementById("snowNotice");
+    if (notice) {
+      notice.className = "snow-notice is-warning";
+      notice.textContent = "Offline-opning er ikkje klar. Hald brøytesida open når dekninga er dårleg.";
+    }
+  });
+}

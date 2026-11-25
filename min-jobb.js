@@ -180,7 +180,7 @@
       const data = await response.json().catch(() => null);
       if (!response.ok) throw new Error(data?.error || "Kunne ikke hente jobben.");
       render(data.job);
-      if (["completed", "cancelled"].includes(data.job?.stage)) clearInterval(pollTimer);
+      if (["cancelled"].includes(data.job?.stage)) clearInterval(pollTimer);
     } catch (error) {
       if (!quiet || !currentJob) showError(error.message);
     }
@@ -189,7 +189,7 @@
   load();
   pollTimer = setInterval(() => load({ quiet: true }), 15000);
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible" && currentJob && !["completed", "cancelled"].includes(currentJob.stage)) load({ quiet: true });
+    if (document.visibilityState === "visible" && currentJob && currentJob.stage !== "cancelled") load({ quiet: true });
   });
 })();
 
