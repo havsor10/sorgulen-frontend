@@ -11,6 +11,7 @@
   const uuid = (prefix = "snow") => globalThis.crypto?.randomUUID?.() || `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const adminKey = () => (localStorage.getItem(ADMIN_KEY) || "").trim();
 
+  let nextMeterTap = 0;
   const state = { data: null, knownIds: new Set(), timer: null, poll: null, location: null, flushing: false, searchTimer: null };
   const els = {
     noRound: $("#noRound"), activeRound: $("#activeRound"), notice: $("#snowNotice"), connection: $("#snowConnection"),
@@ -143,14 +144,35 @@
       + '<button type="button" class="snow-secondary" data-job-note="'+esc(job._id)+'">Notat for dette oppdraget</button>'
       + (job.customerId ? '<button type="button" class="snow-secondary" data-add-note="' + esc(job.customerId) + '">Nytt internt kundenotat</button>' : "");
   }
+  function fieldComments(job) {
+    const comment = job.note ? '<div class="snow-note"><strong>Kundekommentar</strong><p>' + esc(job.note) + '</p></div>' : "";
+    const notes = [...(job.customerNotes || []), ...(job.internalNotes || [])];
+    return comment + (notes.length ? '<div class="snow-note"><strong>Interne notat</strong>' +
+      notes.map(n=>'<p>'+esc(n.text)+'</p>').join("")+'</div>' : "");
+  }
+  function jobDetailsButton(job) {
+    return '<button type="button" class="snow-secondary" data-field-details="'+esc(job._id)+'">Opne oppdrag ›</button>';
+  }
+  function renderFieldDock(active, next) {
+    const dock = $("#fieldDock");
+    const job = active || next;
+    dock.hidden = !job;
+    if (!job) { dock.replaceChildren(); return; }
+    const attr = active ? "data-finish-job" : "data-start-job";
+    const label = active ? "Stopp og fullfør" : "Start brøyting";
+    const existing = dock.firstElementChild;
+    if (existing?.getAttribute(attr) === String(job._id) &&
+        existing.querySelector("span")?.textContent === (job.customerSnapshot?.name || "Kunde")) return;
+    dock.innerHTML = '<button class="snow-primary" type="button" '+attr+'="'+esc(job._id)+'">'+label+'<span>'+esc(job.customerSnapshot?.name || "Kunde")+'</span></button>';
+  }
   function activeMarkup(job) {
     if (!job) return "";
-    return `<div class="snow-focus-kicker"><span>PÅGÅR NÅ</span><span>${badges(job)}</span></div><h2>${esc(job.customerSnapshot?.name || "Kunde")}</h2><p class="snow-address">${esc(job.customerSnapshot?.address || "Adresse mangler")}</p>${timeWishMarkup(job.snowTimePreference)}${notesMarkup(job)}<div id="snowLiveTimer" class="snow-timer">${formatDuration(elapsed(job))}</div><strong id="snowLivePrice"></strong><div class="snow-focus-actions"><a class="snow-secondary" href="${navigationUrl(job.customerSnapshot?.address)}" target="_blank" rel="noopener">NAVIGASJON</a><button class="snow-primary snow-xl" type="button" data-finish-job="${esc(job._id)}">FERDIG</button></div>`;
+    return `<div class="snow-focus-kicker"><span>Brøyting pågår</span><span>${badges(job)}</span></div><h2>${esc(job.customerSnapshot?.name || "Kunde")}</h2><p class="snow-address">${esc(job.customerSnapshot?.address || "Adresse mangler")}</p>${timeWishMarkup(job.snowTimePreference)}${fieldComments(job)}<div id="snowLiveTimer" class="snow-timer">${formatDuration(elapsed(job))}</div><strong id="snowLivePrice"></strong><div class="snow-focus-actions"><a class="snow-secondary" href="${navigationUrl(job.customerSnapshot?.address)}" target="_blank" rel="noopener">Vis veg til kunden</a><button class="snow-primary snow-xl" type="button" data-finish-job="${esc(job._id)}">Stopp og fullfør</button>${jobDetailsButton(job)}</div>`;
   }
   function nextMarkup(job) {
-    if (!job) return '<div class="snow-focus-kicker"><span>NESTE</span></div><h2>Ingen i denne runda</h2><p class="snow-address">Bestillingar for andre datoar blir viste under «Nye brøytebestillingar».</p>';
+    if (!job) return '<div class="snow-focus-kicker"><span>Neste kunde</span></div><h2>Ingen i denne runda</h2><p class="snow-address">Bestillingar for andre datoar blir viste under «Nye brøytebestillingar».</p>';
     const travel = job.estimatedTravelMinutes != null ? ` · ca. ${job.estimatedTravelMinutes} min kjøring` : "";
-    return `<div class="snow-focus-kicker"><span>NESTE</span><span>${badges(job)}</span></div><h2>${esc(job.customerSnapshot?.name || "Kunde")}</h2><p class="snow-address">${esc(job.customerSnapshot?.address || "Adresse mangler")}${esc(travel)}</p>${timeWishMarkup(job.snowTimePreference)}${notesMarkup(job)}<div class="snow-focus-actions"><a class="snow-secondary" href="${navigationUrl(job.customerSnapshot?.address)}" target="_blank" rel="noopener">NAVIGER</a><button class="snow-primary snow-xl" type="button" data-start-job="${esc(job._id)}">START BRØYTING</button>${cancelButton(job)}</div>`;
+    return `<div class="snow-focus-kicker"><span>Neste kunde</span><span>${badges(job)}</span></div><h2>${esc(job.customerSnapshot?.name || "Kunde")}</h2><p class="snow-address">${esc(job.customerSnapshot?.address || "Adresse mangler")}${esc(travel)}</p>${timeWishMarkup(job.snowTimePreference)}${fieldComments(job)}<div class="snow-focus-actions"><a class="snow-secondary" href="${navigationUrl(job.customerSnapshot?.address)}" target="_blank" rel="noopener">Vis veg til kunden</a><button class="snow-primary snow-xl" type="button" data-start-job="${esc(job._id)}">Start brøyting</button>${jobDetailsButton(job)}</div>`;
   }
   function queueMarkup(job, index) {
     const travel = job.estimatedTravelMinutes != null ? ` · ca. ${job.estimatedTravelMinutes} min kjøring` : "";
@@ -161,7 +183,7 @@
         <span class="snow-queue-address">${esc(job.customerSnapshot?.address || "Adresse mangler")}${esc(travel)}</span>
         <span class="snow-queue-meta">${badges(job)}${timeWishMarkup(job.snowTimePreference)}${job.note ? `<span class="snow-muted">${esc(job.note)}</span>` : ""}</span>
       </span>
-      <span class="snow-queue-manage">Endre ›</span>
+      <span class="snow-queue-manage">Opne ›</span>
     </button>`;
   }
 
@@ -239,7 +261,7 @@
     if (!data) return;
     const previousIds = state.knownIds;
     const newWebsite = fromServer && state.data?.round ? (data.queue || []).filter((job) => job.sourceType === "website" && !previousIds.has(String(job._id))) : [];
-    if (data.activeJob && !state.data?.activeJob) $("#driveControls").open = true;
+
     state.data = data;
     writeJson(CACHE_KEY, data);
     renderInbox(data);
@@ -252,13 +274,14 @@
     messageAlert.onclick = () => { $("#bookingDayDate").value = data.round.roundDate; loadDayBookings(); $("#snowMessages").click(); };
     const hasRound = Boolean(data.round);
     els.noRound.classList.toggle("hidden", hasRound);
+    renderFieldDock(data.activeJob, data.nextJob);
     els.activeRound.classList.toggle("hidden", !hasRound);
-    if (!hasRound) { clearInterval(state.timer); els.subline.textContent = "Én kø. Ett neste steg."; return; }
+    if (!hasRound) { clearInterval(state.timer); els.subline.textContent = "Vel dato for å sjå bestillingane."; return; }
 
     els.subline.textContent = `${data.round.title || "Brøyterunde"} · ${data.round.roundDate || ""}`;
     els.activeJob.classList.toggle("hidden", !data.activeJob);
     els.activeJob.innerHTML = activeMarkup(data.activeJob);
-    els.nextJob.innerHTML = data.activeJob ? `<div class="snow-focus-kicker"><span>NESTE ETTER DENNE</span></div>${data.nextJob ? `<h2>${esc(data.nextJob.customerSnapshot?.name || "Kunde")}</h2><p class="snow-address">${esc(data.nextJob.customerSnapshot?.address || "")}</p>${timeWishMarkup(data.nextJob.snowTimePreference)}${notesMarkup(data.nextJob)}${cancelButton(data.nextJob)}` : "<h2>Køen er tom</h2>"}` : nextMarkup(data.nextJob);
+    els.nextJob.innerHTML = data.activeJob ? `<div class="snow-focus-kicker"><span>Neste kunde</span></div>${data.nextJob ? `<h2>${esc(data.nextJob.customerSnapshot?.name || "Kunde")}</h2><p class="snow-address">${esc(data.nextJob.customerSnapshot?.address || "")}</p>${timeWishMarkup(data.nextJob.snowTimePreference)}${fieldComments(data.nextJob)}${jobDetailsButton(data.nextJob)}` : "<h2>Køen er tom</h2>"}` : nextMarkup(data.nextJob);
 
     const nextId = data.nextJob?._id ? String(data.nextJob._id) : "";
     const laterQueue = (data.queue || []).filter((job) => String(job._id) !== nextId);
@@ -456,7 +479,7 @@
       return;
     }
     const finishedJob = (result.data.done || []).find((job) => String(job._id) === String(id)) || activeJob;
-    if (finishedJob?.workOrderId) await openBillingSummary(finishedJob);
+    if (finishedJob) showNotice("Oppdrag fullført · " + (finishedJob.customerSnapshot?.name || "Kunde"), "success", 6500);
   }
 
   async function reorder(queue) {
@@ -580,6 +603,16 @@
   });
 
   document.addEventListener("click", async (event) => {
+    const detail = event.target.closest("[data-field-details]");
+    if (detail) {
+      const job = [state.data?.activeJob, state.data?.nextJob].find(j=>j && String(j._id)===detail.dataset.fieldDetails);
+      if (job) openModal(job.customerSnapshot?.name || "Oppdrag", '<p>'+esc(job.customerSnapshot?.address)+'</p>' +
+        timeWishMarkup(job.snowTimePreference) + notesMarkup(job) +
+        (job.status === "queued" ? '<div class="field-management"><button type="button" class="snow-secondary" id="fieldEdit">Rediger oppdrag</button>'+cancelButton(job)+'</div>' : ""));
+      const edit = $("#fieldEdit");
+      if (edit) edit.onclick = ()=>editDayEntry({j:job,b:job.bookingId ? {_id:job.bookingId,bookingMode:"day"} : null});
+      return;
+    }
     const decision = event.target.closest("[data-cancel-booking],[data-move-booking]");
     if (decision) {
       const id = decision.dataset.cancelBooking || decision.dataset.moveBooking;
@@ -623,18 +656,20 @@
       } catch (error) { showNotice(error.message, "error"); }
       return;
     }
-    const start = event.target.closest("[data-start-job]");
-    if (start) {
-      const job = state.data?.nextJob;
-      const name = job?.customerSnapshot?.name || "kunden";
-      if (!confirm(`Ønsker du å starte en ny arbeidsøkt hos ${name}?`)) return;
-      start.disabled = true;
-      await startJob(start.dataset.startJob);
+    const meterButton = event.target.closest("[data-start-job],[data-finish-job]");
+    if (meterButton) {
+      const starting = Boolean(meterButton.dataset.startJob);
+      const job = starting ? state.data?.nextJob : state.data?.activeJob;
+      const targetId = meterButton.dataset.startJob || meterButton.dataset.finishJob;
+      if (String(job?._id) !== targetId || (starting && state.data.activeJob)) return;
+      // The same thumb position changes from start to stop. Ignore a second tap.
+      if (performance.now() < nextMeterTap) return;
+      nextMeterTap = performance.now() + 900;
+      if (meterButton.closest("#snowModal")) closeModal();
+      if (starting) await startJob(targetId);
+      else await finishJob(targetId);
       return;
     }
-
-    const finish = event.target.closest("[data-finish-job]");
-    if (finish) { finish.disabled = true; await finishJob(finish.dataset.finishJob); return; }
 
     const applyFee = event.target.closest("[data-apply-snow-fee]");
     if (applyFee) {
@@ -797,7 +832,7 @@
         const status = j?.status || b?.status || "pending";
         const button = document.createElement("button");
         button.type = "button";
-        button.className = "snow-secondary";
+        button.className = "snow-secondary field-date-row";
         button.style.cssText = "width:100%;display:grid;gap:.25rem;text-align:left;margin:.25rem 0;overflow-wrap:anywhere";
         button.innerHTML = "<strong>"+esc(b?.customerName || j.customerSnapshot.name)+"</strong><span>"+esc(b?.customerAddress || j?.customerSnapshot?.address)+"</span><small>"+esc(statusNames[status] || status)+"</small>";
         button.onclick = ()=>openDayEntry(entry);
@@ -825,7 +860,12 @@
       + line("Interne oppdragsnotat",j?.internalNotes?.map(n=>n.text).join(" · "))
       + line("Interne kundenotat",j?.customerNotes?.map(n=>n.text).join(" · "))
       + line("Årsak til avbestilling",b?.snowChanges?.filter(x=>x.action==="cancel").at(-1)?.reason || j?.cancelReason);
-    openModal(b?.customerName || j.customerSnapshot.name,details + (editable ?
+    const active = state.data?.activeJob;
+    const target = active || state.data?.nextJob;
+    const meter = j && target && String(j._id) === String(target._id)
+      ? '<button type="button" class="snow-primary field-detail-meter" ' + (active ? 'data-finish-job' : 'data-start-job') +
+        '="'+esc(j._id)+'">'+(active ? 'Stopp og fullfør' : 'Start brøyting')+'</button>' : "";
+    openModal(b?.customerName || j.customerSnapshot.name,details + meter + (editable ?
       '<button id="editDayEntry" class="snow-primary">Rediger oppdrag</button> ' +
       (b?.bookingMode==="day" ? '<button class="snow-secondary" data-cancel-booking="'+esc(b._id)+'">Avbestill oppdrag</button>' : j ? cancelButton(j) : '') : '') +
       (status==="done" ? '<button id="daySettlement" class="snow-secondary">Opne dagsoppgjer</button>' : ''),
@@ -933,4 +973,5 @@ if ("serviceWorker" in navigator && window.isSecureContext) {
     }
   });
 }
+
 
