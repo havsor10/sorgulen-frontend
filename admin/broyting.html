@@ -18,7 +18,7 @@
     <header class="snow-topbar">
       <div>
         <p class="admin-eyebrow">Vinterdrift</p>
-        <h1>Brøytemodus</h1>
+        <h1>Brøytebestillingar</h1>
         <p id="snowSubline">Én kø. Ett neste steg.</p>
       </div>
       <div class="snow-top-actions">
@@ -29,14 +29,21 @@
 
     <div id="snowNotice" class="snow-notice hidden" role="status" aria-live="polite"></div>
 
+    <section class="admin-card snow-form-grid" aria-label="Bestillingar etter dato">
+      <label for="bookingDayDate">Vel dato<input type="date" id="bookingDayDate"></label>
+      <div class="wide" id="dateBookingList" aria-live="polite"></div>
+    </section>
     <button id="snowMessageAlert" type="button" class="snow-notice is-warning hidden"></button>
+    <details class="admin-section"><summary>Dagsoppgjer og innstillingar</summary>
     <button id="reviewDay" class="snow-secondary" type="button">Kontroller og fakturer dagen</button>
     <details class="admin-section"><summary>Opne eller steng bestillingsdag</summary>
-      <label>Bestillingsdato <input type="date" id="bookingDayDate"></label>
+      <p>Gjeld datoen du har valt over.</p>
       <button type="button" class="snow-secondary" data-day-closed="true">Steng dagen</button>
       <button type="button" class="snow-secondary" data-day-closed="false">Opne dagen</button>
       <button id="snowMessages" class="snow-secondary" type="button">SMS og e-post for vald dag</button>
     </details>
+    </details>
+    <details class="admin-section" id="driveControls"><summary>Brøyterunde og takstameter</summary>
     <section id="snowInbox" class="snow-inbox admin-card hidden" aria-label="Bestillingar som ventar på brøyterunde">
       <div class="snow-inbox-head">
         <p class="section-kicker">Nye brøytebestillingar</p>
@@ -106,6 +113,7 @@
         <button id="finishRoundBtn" class="snow-finish-round" type="button">Avslutt brøyterunden</button>
       </details>
     </div>
+    </details>
   </main>
 
   <div id="snowModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="snowModalTitle">
@@ -119,8 +127,9 @@
   </div>
 
   <script src="../config.js?v=20260904-snow1"></script>
-  <script src="broyting.js?v=20261111-rate650"></script>
+  <script src="broyting.js?v=20261125-datoliste"></script>
   <script src="broyting-portal.js?v=20260917-min-jobb2"></script>
 </body>
 </html>
+
 
