@@ -66,3 +66,6 @@ jobs:
       - name: Kjør frontendtester
         run: node --test tests/*.test.js
 
+      - name: Bygg den isolerte testversjonen
+        if: github.ref == 'refs/heads/work/snow-staging-20261125'
+        run: node tools/build-staging.cjs
