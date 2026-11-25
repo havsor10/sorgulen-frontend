@@ -115,3 +115,15 @@
   #activeRound .snow-focus h2 { font-size:1.55rem; }
 }
 #snowModalBody .field-detail-meter { display:block; width:100%; min-height:64px; font-size:1.2rem; }
+
+.today-home { display:grid; gap:12px; margin:0 0 20px; }
+.today-home h2 { margin:0; font-size:clamp(1.55rem,5vw,2.3rem); }
+.today-home p { margin:0 0 4px; font-size:1.25rem; font-weight:700; }
+.today-home button { width:100%; min-height:76px; padding:14px; border:0; border-radius:14px; color:white; font:inherit; font-size:1.3rem; font-weight:800; cursor:pointer; }
+#todayCustomers { background:#185ca8; }
+#todayRound { background:#137048; }
+#todayRound:disabled { opacity:.65; cursor:wait; }
+#activeRound { scroll-margin-top:7rem; }
+#dayBookings label, #dayBookings input, .field-date-row span, .field-date-row small { font-size:1.1rem; }
+.field-date-row strong { font-size:1.32rem; }
+#snowModalBody [data-cancel-job], #snowModalBody [data-cancel-booking] { background:#852f2b; color:white; margin-top:16px; min-height:64px; }
