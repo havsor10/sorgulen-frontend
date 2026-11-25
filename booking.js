@@ -258,6 +258,13 @@
       return notify("Vel klokkeslett for tidsønsket, eller vel «når det passar i løpet av dagen».","error");
     }
     if(!snow&&!selectedTime)return notify("Vel eit klokkeslett.","error");
+    if (snow) {
+      const fingerprint = JSON.stringify(payload);
+      let previous;
+      try { previous = JSON.parse(sessionStorage.getItem("snowPendingSubmission")); } catch {}
+      payload.operationId = previous?.fingerprint === fingerprint ? previous.key : crypto.randomUUID();
+      sessionStorage.setItem("snowPendingSubmission", JSON.stringify({fingerprint, key:payload.operationId}));
+    }
     saving=true;submitBtn.disabled=true;submitBtn.textContent="Registrerer …";
     try{
       const response=await fetch(API+"/bookings",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
@@ -272,6 +279,7 @@
         customerAddress:payload.customerAddress,comment:payload.comment,
         snowTimePreference:snow?payload.snowTimePreference:null,portalUrl:data.portalUrl||""};
       sessionStorage.setItem("lastBookingSummary",JSON.stringify(summary));
+      if (snow) sessionStorage.removeItem("snowPendingSubmission");
       location.href="booking-bekreftelse.html";
     }catch(error){notify(error.message||"Ukjend feil. Prøv igjen.","error");}
     finally{saving=false;submitBtn.disabled=false;submitBtn.textContent="Send bestilling";}
@@ -331,3 +339,4 @@
     loadServices().catch(showServiceLoadError);
   }
 })();
+

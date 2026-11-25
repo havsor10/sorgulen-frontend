@@ -29,6 +29,12 @@
 
     <div id="snowNotice" class="snow-notice hidden" role="status" aria-live="polite"></div>
 
+    <details class="admin-section"><summary>Opne eller steng bestillingsdag</summary>
+      <label>Bestillingsdato <input type="date" id="bookingDayDate"></label>
+      <button type="button" class="snow-secondary" data-day-closed="true">Steng dagen</button>
+      <button type="button" class="snow-secondary" data-day-closed="false">Opne dagen</button>
+      <button id="snowMessages" class="snow-secondary" type="button">SMS og e-post for vald dag</button>
+    </details>
     <section id="snowInbox" class="snow-inbox admin-card hidden" aria-label="Bestillingar som ventar på brøyterunde">
       <div class="snow-inbox-head">
         <p class="section-kicker">Nye brøytebestillingar</p>
@@ -46,26 +52,27 @@
     <section id="noRound" class="snow-launch admin-card hidden">
       <p class="section-kicker">Ny økt</p>
       <h2>Start brøyterunde</h2>
-      <p>Faste kunder og nye brøytebestillinger samles automatisk i samme kø. <strong>Standardpris: 350 kr i oppmøte + arbeidstid.</strong></p>
+      <p>Bestillingar for vald dato blir samla i køen. <strong>Standardpris: 350 kr i oppmøte + arbeidstid.</strong></p>
       <form id="startRoundForm" class="snow-form-grid">
         <label>Dato<input name="roundDate" type="date" required></label>
         <label>Standard tid pr. kunde<input name="defaultServiceMinutes" type="number" min="1" max="480" value="15" inputmode="numeric"></label>
         <label>Prismodell<select name="defaultPricingMode"><option value="hybrid">350 kr oppmøte + timepris</option><option value="fixed">Avtalt fastpris (utan tillegg)</option></select></label>
         <label>Standard timepris<input name="defaultHourlyRate" type="number" min="1" step="1" value="650" inputmode="decimal"></label>
         <label id="roundFixedWrap" class="hidden">Standard fastpris<input name="defaultFixedPrice" type="number" min="1" step="1" inputmode="decimal"></label>
-        <label class="snow-check wide"><input name="autoQueueAgreements" type="checkbox" checked> Legg aktive faste brøytekunder i køen</label>
         <p id="startRoundError" class="snow-error wide"></p>
         <button class="snow-primary snow-xl wide" type="submit">START BRØYTERUNDE</button>
       </form>
     </section>
 
     <div id="activeRound" class="hidden">
+      <button id="quickAddBtn" class="snow-primary snow-xl" type="button">+ Nytt brøyteoppdrag</button>
       <section id="activeJobCard" class="snow-focus snow-focus-active hidden"></section>
       <section id="nextJobCard" class="snow-focus snow-focus-next"></section>
 
       <section class="snow-summary" aria-label="Status for brøyterunden">
         <div><span>Venter</span><strong id="sumQueued">0</strong></div>
         <div><span>Ferdig</span><strong id="sumDone">0</strong></div>
+        <div><span>Opptent før fakturaavrunding</span><strong id="sumIncome">0 kr</strong></div>
         <div><span>Ca. igjen</span><strong id="sumRemaining">–</strong></div>
       </section>
 
@@ -90,9 +97,9 @@
       <details class="admin-section snow-round-tools">
         <summary>Administrer brøyterunden</summary>
         <div class="snow-command-row">
-          <button id="quickAddBtn" class="snow-secondary" type="button">+ Legg til kunde</button>
+
           <button id="optimizeBtn" class="snow-secondary" type="button">Finn beste rekkefølge</button>
-          <button id="agreementsBtn" class="snow-secondary" type="button">Faste kunder</button>
+
         </div>
         <button id="finishRoundBtn" class="snow-finish-round" type="button">Avslutt brøyterunden</button>
       </details>
@@ -114,3 +121,4 @@
   <script src="broyting-portal.js?v=20260917-min-jobb2"></script>
 </body>
 </html>
+

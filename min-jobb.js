@@ -124,6 +124,10 @@
       }
     }
 
+    document.getElementById("snowCommentRow").classList.toggle("hidden", !job.customerComment);
+    document.getElementById("snowComment").textContent = job.customerComment || "";
+    document.getElementById("snowPriceRow").classList.toggle("hidden", job.totalPrice == null);
+    document.getElementById("snowPrice").textContent = job.totalPrice == null ? "" : job.totalPrice + " kr";
     renderTimeline(job.timeline);
     document.getElementById("bookingDate").textContent = formatDate(job.bookingDate);
     document.getElementById("bookingTime").textContent = snow && job.bookingMode === "day" ? "I løpet av vald dag" : (job.bookingTime ? `kl. ${job.bookingTime}` : "Ikkje avtalt");
@@ -188,3 +192,4 @@
     if (document.visibilityState === "visible" && currentJob && !["completed", "cancelled"].includes(currentJob.stage)) load({ quiet: true });
   });
 })();
+

@@ -103,7 +103,14 @@
   function elapsed(job) { return Math.max(0, Math.floor((Date.now() - new Date(job?.startedAt || Date.now()).getTime()) / 1000)); }
   function updateClock() {
     const node = $("#snowLiveTimer");
-    if (node && state.data?.activeJob) node.textContent = formatDuration(elapsed(state.data.activeJob));
+    const job = state.data?.activeJob;
+    if (node && job) {
+      const seconds = elapsed(job);
+      node.textContent = formatDuration(seconds);
+      const amount = job.pricingMode === "fixed" ? Number(job.fixedPrice)
+        : Number(job.fixedPrice || 0) + seconds / 3600 * Number(job.hourlyRate);
+      $("#snowLivePrice").textContent = formatMoney(Math.round(amount * 100) / 100);
+    }
   }
   function restartClock() { clearInterval(state.timer); updateClock(); state.timer = setInterval(updateClock, 1000); }
 
@@ -119,14 +126,23 @@
   function badges(job) {
     return `<span class="snow-source-badge">${esc(sourceLabel(job.sourceType))}</span><span class="snow-priority-badge ${esc(job.priority)}">${esc(priorityLabel(job.priority))}</span>`;
   }
+  function cancelButton(job) {
+    return '<button type="button" class="snow-secondary" data-cancel-job="' + esc(job._id) + '">Avbestill oppdrag</button>';
+  }
+  function notesMarkup(job) {
+    const notes = (job.customerNotes || []).map(note => '<p>' + esc(note.text) + '</p>').join("");
+    return (job.note ? '<div class="snow-note"><strong>Kommentar til oppdraget</strong><p>' + esc(job.note) + '</p></div>' : "")
+      + (notes ? '<div class="snow-note"><strong>Interne kundenotat</strong>' + notes + '</div>' : "")
+      + (job.customerId ? '<button type="button" class="snow-secondary" data-add-note="' + esc(job.customerId) + '">Nytt internt kundenotat</button>' : "");
+  }
   function activeMarkup(job) {
     if (!job) return "";
-    return `<div class="snow-focus-kicker"><span>PÅGÅR NÅ</span><span>${badges(job)}</span></div><h2>${esc(job.customerSnapshot?.name || "Kunde")}</h2><p class="snow-address">${esc(job.customerSnapshot?.address || "Adresse mangler")}</p>${timeWishMarkup(job.snowTimePreference)}${job.note ? `<div class="snow-note">${esc(job.note)}</div>` : ""}<div id="snowLiveTimer" class="snow-timer">${formatDuration(elapsed(job))}</div><div class="snow-focus-actions"><a class="snow-secondary" href="${navigationUrl(job.customerSnapshot?.address)}" target="_blank" rel="noopener">NAVIGASJON</a><button class="snow-primary snow-xl" type="button" data-finish-job="${esc(job._id)}">FERDIG</button></div>`;
+    return `<div class="snow-focus-kicker"><span>PÅGÅR NÅ</span><span>${badges(job)}</span></div><h2>${esc(job.customerSnapshot?.name || "Kunde")}</h2><p class="snow-address">${esc(job.customerSnapshot?.address || "Adresse mangler")}</p>${timeWishMarkup(job.snowTimePreference)}${notesMarkup(job)}<div id="snowLiveTimer" class="snow-timer">${formatDuration(elapsed(job))}</div><strong id="snowLivePrice"></strong><div class="snow-focus-actions"><a class="snow-secondary" href="${navigationUrl(job.customerSnapshot?.address)}" target="_blank" rel="noopener">NAVIGASJON</a><button class="snow-primary snow-xl" type="button" data-finish-job="${esc(job._id)}">FERDIG</button></div>`;
   }
   function nextMarkup(job) {
     if (!job) return '<div class="snow-focus-kicker"><span>NESTE</span></div><h2>Ingen i denne runda</h2><p class="snow-address">Bestillingar for andre datoar blir viste under «Nye brøytebestillingar».</p>';
     const travel = job.estimatedTravelMinutes != null ? ` · ca. ${job.estimatedTravelMinutes} min kjøring` : "";
-    return `<div class="snow-focus-kicker"><span>NESTE</span><span>${badges(job)}</span></div><h2>${esc(job.customerSnapshot?.name || "Kunde")}</h2><p class="snow-address">${esc(job.customerSnapshot?.address || "Adresse mangler")}${esc(travel)}</p>${timeWishMarkup(job.snowTimePreference)}${job.note ? `<div class="snow-note">${esc(job.note)}</div>` : ""}<div class="snow-focus-actions"><a class="snow-secondary" href="${navigationUrl(job.customerSnapshot?.address)}" target="_blank" rel="noopener">NAVIGER</a><button class="snow-primary snow-xl" type="button" data-start-job="${esc(job._id)}">START BRØYTING</button></div>`;
+    return `<div class="snow-focus-kicker"><span>NESTE</span><span>${badges(job)}</span></div><h2>${esc(job.customerSnapshot?.name || "Kunde")}</h2><p class="snow-address">${esc(job.customerSnapshot?.address || "Adresse mangler")}${esc(travel)}</p>${timeWishMarkup(job.snowTimePreference)}${notesMarkup(job)}<div class="snow-focus-actions"><a class="snow-secondary" href="${navigationUrl(job.customerSnapshot?.address)}" target="_blank" rel="noopener">NAVIGER</a><button class="snow-primary snow-xl" type="button" data-start-job="${esc(job._id)}">START BRØYTING</button>${cancelButton(job)}</div>`;
   }
   function queueMarkup(job, index) {
     const travel = job.estimatedTravelMinutes != null ? ` · ca. ${job.estimatedTravelMinutes} min kjøring` : "";
@@ -154,7 +170,7 @@
           ${timeWishMarkup(job.snowTimePreference)}
           ${job.note ? `<p>${esc(job.note)}</p>` : ""}
         </div>
-        <div class="snow-manage-actions">
+        <div class="snow-manage-actions">${cancelButton(job)}
           <button class="snow-secondary" type="button" data-queue-action="up" data-job-id="${esc(job._id)}" ${index <= 0 ? "disabled" : ""}>Flytt én plass opp</button>
           <button class="snow-secondary" type="button" data-queue-action="down" data-job-id="${esc(job._id)}" ${index >= queue.length - 1 ? "disabled" : ""}>Flytt én plass ned</button>
           <button class="snow-secondary" type="button" data-queue-action="priority" data-job-id="${esc(job._id)}">${job.priority === "urgent" ? "Fjern HASTER" : "Merk HASTER"}</button>
@@ -227,7 +243,7 @@
     els.subline.textContent = `${data.round.title || "Brøyterunde"} · ${data.round.roundDate || ""}`;
     els.activeJob.classList.toggle("hidden", !data.activeJob);
     els.activeJob.innerHTML = activeMarkup(data.activeJob);
-    els.nextJob.innerHTML = data.activeJob ? `<div class="snow-focus-kicker"><span>NESTE ETTER DENNE</span></div>${data.nextJob ? `<h2>${esc(data.nextJob.customerSnapshot?.name || "Kunde")}</h2><p class="snow-address">${esc(data.nextJob.customerSnapshot?.address || "")}</p>` : "<h2>Køen er tom</h2>"}` : nextMarkup(data.nextJob);
+    els.nextJob.innerHTML = data.activeJob ? `<div class="snow-focus-kicker"><span>NESTE ETTER DENNE</span></div>${data.nextJob ? `<h2>${esc(data.nextJob.customerSnapshot?.name || "Kunde")}</h2><p class="snow-address">${esc(data.nextJob.customerSnapshot?.address || "")}</p>${notesMarkup(data.nextJob)}` : "<h2>Køen er tom</h2>"}` : nextMarkup(data.nextJob);
 
     const nextId = data.nextJob?._id ? String(data.nextJob._id) : "";
     const laterQueue = (data.queue || []).filter((job) => String(job._id) !== nextId);
@@ -240,6 +256,7 @@
       ${job.workOrderId ? `<button class="snow-done-billing" type="button" data-billing-job="${esc(job._id)}">Pris / faktura</button>` : ""}
     </div>`).join("") : '<p class="snow-muted">Ingen ferdige ennå.</p>';
     els.sumQueued.textContent = data.summary?.queued ?? 0;
+    $("#sumIncome").textContent = formatMoney((data.done || []).reduce((sum, job) => sum + Number(job.amount || 0), 0));
     els.sumDone.textContent = data.summary?.done ?? 0;
     els.sumRemaining.textContent = formatMinutes(data.summary?.estimatedMinutesRemaining || 0);
     els.queueCount.textContent = laterQueue.length;
@@ -489,7 +506,7 @@
   function openQuickAdd() {
     const round = state.data?.round;
     if (!round) return;
-    openModal("Ny brøyting", `<form id="quickSnowForm" class="snow-modal-grid">${customerSearchMarkup()}<label class="snow-field">Kilde<select name="sourceType"><option value="phone">Telefon</option><option value="sms">SMS</option><option value="manual">Manuell</option></select></label><label class="snow-field">Prioritet<select name="priority"><option value="normal">Normal</option><option value="high">Høy</option><option value="urgent">HASTER</option><option value="low">Lav</option></select></label><label class="snow-field">Navn<input name="name" required maxlength="160"></label><label class="snow-field">Telefon<input name="phone" inputmode="tel" maxlength="40"></label><label class="snow-field wide">Adresse<input name="address" required maxlength="220"></label><label class="snow-field">Prismodell<select name="pricingMode"><option value="hybrid" ${round.defaultPricingMode !== "fixed" ? "selected" : ""}>350 kr oppmøte + timepris</option><option value="fixed" ${round.defaultPricingMode === "fixed" ? "selected" : ""}>Avtalt fastpris utan tillegg</option></select></label><label class="snow-field" data-hourly-wrap>Timepris<input name="hourlyRate" type="number" min="1" value="${esc(Number(round.defaultHourlyRate) === 850 ? 650 : (round.defaultHourlyRate || 650))}"></label><label class="snow-field ${round.defaultPricingMode === "fixed" ? "" : "hidden"}" data-fixed-wrap>Fastpris<input name="fixedPrice" type="number" min="1" value="${esc(round.defaultPricingMode === "fixed" ? (round.defaultFixedPrice ?? "") : "")}"></label><label class="snow-field">Estimert tid<input name="estimatedServiceMinutes" type="number" min="1" max="480" value="${esc(round.defaultServiceMinutes || 15)}"></label><label class="snow-field wide">Kommentar<textarea name="note" maxlength="2000" placeholder="F.eks. foran garasje, pass på bil…"></textarea></label><p id="quickSnowError" class="snow-error wide"></p><button class="snow-primary snow-xl wide" type="submit">LEGG I KØ</button></form>`);
+    openModal("Ny brøyting", `<form id="quickSnowForm" class="snow-modal-grid">${customerSearchMarkup()}<label class="snow-field">Kilde<select name="sourceType"><option value="phone">Telefon</option><option value="sms">SMS</option><option value="manual">Manuell</option></select></label><label class="snow-field">Prioritet<select name="priority"><option value="normal">Normal</option><option value="high">Høy</option><option value="urgent">HASTER</option><option value="low">Lav</option></select></label><label class="snow-field">Navn<input name="name" required maxlength="160"></label><label class="snow-field">Telefon<input name="phone" inputmode="tel" maxlength="40"></label><label class="snow-field wide">Adresse<input name="address" required maxlength="220"></label><label class="snow-field">Prismodell<select name="pricingMode"><option value="hybrid" ${round.defaultPricingMode !== "fixed" ? "selected" : ""}>350 kr oppmøte + timepris</option><option value="fixed" ${round.defaultPricingMode === "fixed" ? "selected" : ""}>Avtalt fastpris utan tillegg</option></select></label><label class="snow-field" data-hourly-wrap>Timepris<input name="hourlyRate" type="number" min="1" value="${esc(Number(round.defaultHourlyRate) === 850 ? 650 : (round.defaultHourlyRate || 650))}"></label><label class="snow-field ${round.defaultPricingMode === "fixed" ? "" : "hidden"}" data-fixed-wrap>Fastpris<input name="fixedPrice" type="number" min="1" value="${esc(round.defaultPricingMode === "fixed" ? (round.defaultFixedPrice ?? "") : "")}"></label><label class="snow-field">Estimert tid<input name="estimatedServiceMinutes" type="number" min="1" max="480" value="${esc(round.defaultServiceMinutes || 15)}"></label><label class="snow-field wide">Kommentar<textarea name="note" maxlength="2000" placeholder="F.eks. foran garasje, pass på bil…"></textarea></label><p id="quickSnowError" class="snow-error wide"></p><button class="snow-primary snow-xl wide" type="submit">LEGG I KØ</button><button type="submit" class="snow-secondary wide" value="start" ${state.data?.activeJob ? "disabled" : ""}>Start med ein gong</button></form>`);
     const form = $("#quickSnowForm", els.modalBody);
     bindCustomerSearch(form);
     const togglePrice = () => {
@@ -512,7 +529,14 @@
         fixedPrice: form.elements.fixedPrice.value ? Number(form.elements.fixedPrice.value) : null,
         estimatedServiceMinutes: Number(form.elements.estimatedServiceMinutes.value), note: form.elements.note.value.trim(),
       };
-      try { await api("/admin/snow/jobs", { method: "POST", body: JSON.stringify(payload) }); closeModal(); showNotice("Kunden er lagt i brøytekøen.", "success", 3500); await refresh({ quiet: true }); }
+      try {
+        const created = await api("/admin/snow/jobs", { method: "POST", body: JSON.stringify(payload) });
+        const start = event.submitter?.value === "start";
+        closeModal();
+        await refresh({ quiet: true });
+        if (start) await startJob(created.job._id);
+        else showNotice("Kunden er lagt i brøytekøen.", "success", 3500);
+      }
       catch (err) { error.textContent = err.message; }
       finally { button.disabled = false; }
     });
@@ -576,7 +600,7 @@
       defaultPricingMode: startForm.elements.defaultPricingMode.value,
       defaultHourlyRate: Number(startForm.elements.defaultHourlyRate.value),
       defaultFixedPrice: startForm.elements.defaultFixedPrice.value ? Number(startForm.elements.defaultFixedPrice.value) : null,
-      autoQueueAgreements: startForm.elements.autoQueueAgreements.checked,
+      autoQueueAgreements: false,
     };
     try {
       render(await api("/admin/snow/rounds", { method: "POST", body: JSON.stringify(payload) }));
@@ -588,6 +612,26 @@
   });
 
   document.addEventListener("click", async (event) => {
+    const cancel = event.target.closest("[data-cancel-job]");
+    if (cancel) {
+      const reason = prompt("Avbestill dette oppdraget? Skriv eventuell årsak og trykk OK for å stadfeste.");
+      if (reason === null) return;
+      try {
+        await api("/admin/snow/jobs/" + encodeURIComponent(cancel.dataset.cancelJob) + "/cancel", {method:"POST",body:JSON.stringify({reason})});
+        closeModal(); await refresh({quiet:true});
+      } catch(error) { showNotice(error.message,"error"); }
+      return;
+    }
+    const noteButton = event.target.closest("[data-add-note]");
+    if (noteButton) {
+      const text = prompt("Internt kundenotat – berre synleg i admin");
+      if (!text?.trim()) return;
+      try {
+        await api("/admin/customers/" + encodeURIComponent(noteButton.dataset.addNote) + "/notes", { method: "POST", body: JSON.stringify({ text, operationId: uuid() }) });
+        await refresh({ quiet: true });
+      } catch (error) { showNotice(error.message, "error"); }
+      return;
+    }
     const start = event.target.closest("[data-start-job]");
     if (start) {
       const job = state.data?.nextJob;
@@ -668,7 +712,29 @@
   $("#snowModalClose").addEventListener("click", closeModal);
   els.modal.addEventListener("click", (event) => { if (event.target === els.modal) closeModal(); });
   $("#quickAddBtn").addEventListener("click", openQuickAdd);
-  $("#agreementsBtn").addEventListener("click", openAgreements);
+  $("#snowMessages").addEventListener("click", async () => {
+    try {
+      const date = $("#bookingDayDate").value || today();
+      const data = await api("/admin/snow/messages/" + encodeURIComponent(date));
+      openModal("Testmeldingar " + date, '<button class="snow-secondary" id="smsToggle">' +
+        (data.enabled ? "Slå av SMS" : "Slå på SMS") + '</button>' + data.messages.map(m =>
+        '<p><strong>' + esc(m.channel.toUpperCase() + " · " + ({simulated:"Simulert",disabled:"Avslått",missing_contact:"Manglar kontaktinformasjon",missing_link:"Manglar lenke"}[m.status] || m.status)) +
+        '</strong><br>' + esc(m.text) + '</p>').join(""));
+      $("#smsToggle").onclick = async () => {
+        try { await api("/admin/snow/sms", {method:"PATCH",body:JSON.stringify({enabled: !data.enabled})}); $("#snowMessages").click(); }
+        catch(error) { showNotice(error.message,"error"); }
+      };
+    } catch(error) { showNotice(error.message,"error"); }
+  });
+  $("#bookingDayDate").value = today();
+  for (const button of $$("[data-day-closed]")) button.addEventListener("click", async () => {
+    const date = $("#bookingDayDate").value;
+    if (!date) return showNotice("Vel dato først.", "error");
+    try {
+      const day = await api("/admin/snow/days/" + encodeURIComponent(date), { method: "PATCH", body: JSON.stringify({ closed: button.dataset.dayClosed === "true" }) });
+      showNotice(day.date + (day.closed ? " er stengd for nye bestillingar." : " er open for bestilling."), "success");
+    } catch (error) { showNotice(error.message, "error"); }
+  });
   $("#optimizeBtn").addEventListener("click", optimizeRoute);
   els.prepareRound.addEventListener("click", async () => {
     const date = els.prepareRound.dataset.date;
@@ -713,3 +779,4 @@
   flushPending();
   state.poll = setInterval(() => { if (!document.hidden && navigator.onLine) refresh({ quiet: true }); }, 12000);
 })();
+
