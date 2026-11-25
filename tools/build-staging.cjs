@@ -9,8 +9,8 @@ for (const name of ["booking.js","min-jobb.js","admin/broyting.js"]) {
 execFileSync(process.execPath, ["--test","tests/staging-snow.test.cjs"], { cwd: root, stdio: "inherit" });
 
 const out = path.join(root, "staging-dist");
-const TEST_ORIGIN = "https://sorgulen-testmiljo.onrender.com";
-const TEST_API = "https://sorgulen-test-api.onrender.com";
+const TEST_ORIGIN = (process.env.SNOW_FIELD_TEST === "true" ? "https://sorgulen-broyting-test.onrender.com" : "https://sorgulen-testmiljo.onrender.com");
+const TEST_API = (process.env.SNOW_FIELD_TEST === "true" ? "https://sorgulen-broyting-test-api.onrender.com" : "https://sorgulen-test-api.onrender.com");
 const { createHash } = require("node:crypto");
 function stagingServiceId(key) {
   return createHash("sha256").update("sorgulen-staging-default-service:" + key).digest("hex").slice(0,24);
