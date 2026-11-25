@@ -239,6 +239,7 @@
     if (!data) return;
     const previousIds = state.knownIds;
     const newWebsite = fromServer && state.data?.round ? (data.queue || []).filter((job) => job.sourceType === "website" && !previousIds.has(String(job._id))) : [];
+    if (data.activeJob && !state.data?.activeJob) $("#driveControls").open = true;
     state.data = data;
     writeJson(CACHE_KEY, data);
     renderInbox(data);
@@ -248,7 +249,7 @@
     const messageAlert = $("#snowMessageAlert");
     messageAlert.classList.toggle("hidden", !data.messageAlerts);
     messageAlert.textContent = (data.messageAlerts || 0) + " meldingar manglar kontaktinformasjon eller lenke. Sjå detaljar.";
-    messageAlert.onclick = () => { $("#bookingDayDate").value = data.round.roundDate; $("#snowMessages").click(); };
+    messageAlert.onclick = () => { $("#bookingDayDate").value = data.round.roundDate; loadDayBookings(); $("#snowMessages").click(); };
     const hasRound = Boolean(data.round);
     els.noRound.classList.toggle("hidden", hasRound);
     els.activeRound.classList.toggle("hidden", !hasRound);
@@ -590,11 +591,14 @@
         '<button class="snow-primary">Stadfest</button></form>');
       $("#snowDecision").onsubmit = async e => {
         e.preventDefault();
+        const submit = e.target.querySelector("button");
+        if (submit.disabled) return;
+        submit.disabled = true;
         const data = Object.fromEntries(new FormData(e.target));
         try {
           await api("/admin/snow/bookings/"+encodeURIComponent(id)+"/decision",{method:"POST",body:JSON.stringify({...data,action:cancel?"cancel":"move"})});
-          closeModal(); await refresh({quiet:true});
-        } catch(error) {showNotice(error.message,"error");}
+          closeModal(); await Promise.all([refresh({quiet:true}),loadDayBookings()]);
+        } catch(error) {submit.disabled=false; let alert=e.target.querySelector("[role=alert]"); if (!alert) {alert=document.createElement("p");alert.setAttribute("role","alert");e.target.append(alert);} alert.textContent=error.message;}
       };
       return;
     }
@@ -604,7 +608,7 @@
       if (reason === null) return;
       try {
         await api("/admin/snow/jobs/" + encodeURIComponent(cancel.dataset.cancelJob) + "/cancel", {method:"POST",body:JSON.stringify({reason})});
-        closeModal(); await refresh({quiet:true});
+        closeModal(); await Promise.all([refresh({quiet:true}),loadDayBookings()]);
       } catch(error) { showNotice(error.message,"error"); }
       return;
     }
@@ -763,7 +767,108 @@
       };
     } catch(error) { showNotice(error.message,"error"); }
   });
-  $("#bookingDayDate").value = today();
+  const dayPicker = $("#bookingDayDate");
+  const dayList = $("#dateBookingList");
+  const statusNames = {pending:"Ny", planned:"Planlagd", queued:"I kø", active:"Pågår", deferred:"Utsett", done:"Fullført", cancelled:"Avbestilt", failed:"Avvik"};
+  let dayVersion = 0;
+  async function bookingsForDay(date) {
+    const bookings = [];
+    for (let skip = 0; ; skip += 500) {
+      const page = await api("/admin/bookings?from="+date+"&to="+date+"&status=all&limit=500&skip="+skip);
+      bookings.push(...page.bookings.filter(b => b.bookingMode === "day" || /brøy|broy|plog/i.test(b.serviceName)));
+      if (page.bookings.length < 500) return bookings;
+    }
+  }
+  async function loadDayBookings() {
+    const version = ++dayVersion;
+    const date = dayPicker.value;
+    dayList.textContent = date ? "Hentar bestillingar …" : "Vel ein dato.";
+    if (!date) return;
+    try {
+      const [bookings, review] = await Promise.all([bookingsForDay(date), api("/admin/snow/review/"+date)]);
+      if (version !== dayVersion) return;
+      const byBooking = new Map(review.rows.filter(j=>j._id && j.bookingId).map(j=>[j.bookingId,j]));
+      const entries = bookings.map(b=>({b,j:byBooking.get(b._id)}));
+      entries.push(...review.rows.filter(j=>j._id && !j.bookingId).map(j=>({j})));
+      dayList.replaceChildren();
+      if (!entries.length) dayList.textContent = "Ingen brøytebestillingar denne dagen.";
+      for (const entry of entries) {
+        const {b,j} = entry;
+        const status = j?.status || b?.status || "pending";
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "snow-secondary";
+        button.style.cssText = "width:100%;display:grid;gap:.25rem;text-align:left;margin:.25rem 0;overflow-wrap:anywhere";
+        button.innerHTML = "<strong>"+esc(b?.customerName || j.customerSnapshot.name)+"</strong><span>"+esc(b?.customerAddress || j?.customerSnapshot?.address)+"</span><small>"+esc(statusNames[status] || status)+"</small>";
+        button.onclick = ()=>openDayEntry(entry);
+        dayList.append(button);
+      }
+    } catch(error) {
+      if (version !== dayVersion) return;
+      dayList.textContent = "Klarte ikkje hente bestillingane. ";
+      const retry = document.createElement("button");
+      retry.textContent = "Prøv igjen"; retry.onclick = loadDayBookings;
+      dayList.append(retry);
+    }
+  }
+  function openDayEntry(entry) {
+    const {b,j} = entry;
+    const status = j?.status || b.status;
+    const editable = ["queued","deferred","planned","pending"].includes(status) && !j?.workOrderId;
+    const line = (label,value)=>value ? "<p><strong>"+label+"</strong><br>"+esc(value)+"</p>" : "";
+    const details = line("Adresse",b?.customerAddress || j?.customerSnapshot?.address)
+      + line("Telefon",b?.customerPhone || j?.customerSnapshot?.phone)
+      + line("E-post",b?.customerEmail || j?.customerSnapshot?.email)
+      + line("Ønskt tidspunkt",timeWishLabel(b?.snowTimePreference || j?.snowTimePreference) || "Ingen tidsønske")
+      + line("Kundekommentar",b?.comment || "Ingen kommentar")
+      + (j?.note && j.note !== b?.comment ? line("Oppdragsmerknad",j.note) : "")
+      + line("Interne oppdragsnotat",j?.internalNotes?.map(n=>n.text).join(" · "))
+      + line("Interne kundenotat",j?.customerNotes?.map(n=>n.text).join(" · "))
+      + line("Årsak til avbestilling",b?.snowChanges?.filter(x=>x.action==="cancel").at(-1)?.reason || j?.cancelReason);
+    openModal(b?.customerName || j.customerSnapshot.name,details + (editable ?
+      '<button id="editDayEntry" class="snow-primary">Rediger oppdrag</button> ' +
+      (b?.bookingMode==="day" ? '<button class="snow-secondary" data-cancel-booking="'+esc(b._id)+'">Avbestill oppdrag</button>' : j ? cancelButton(j) : '') : '') +
+      (status==="done" ? '<button id="daySettlement" class="snow-secondary">Opne dagsoppgjer</button>' : ''),
+      formatDate(dayPicker.value)+" · "+(statusNames[status] || status));
+    if ($("#daySettlement")) $("#daySettlement").onclick=()=>$("#reviewDay").click();
+    if (editable) $("#editDayEntry").onclick=()=>editDayEntry(entry);
+    if (b?.customerId && !j?.customerNotes) {
+      const notes = document.createElement("div");
+      els.modalBody.append(notes);
+      api("/admin/customers/"+encodeURIComponent(b.customerId)).then(data=>{
+        notes.innerHTML=line("Interne kundenotat",data.customer?.notes?.map(n=>n.text).join(" · "));
+      }).catch(()=>{notes.textContent="Klarte ikkje hente kundenotata.";});
+    }
+  }
+  function editDayEntry({b,j}) {
+    const field = (label,name,value,type="text",limits="")=>'<label class="snow-field">'+label+'<input name="'+name+'" type="'+type+'" value="'+esc(value)+'" '+limits+'></label>';
+    const formFields = j ?
+      field("Estimert arbeidstid i minutt","estimatedServiceMinutes",j.estimatedServiceMinutes,"number",'required min="1" max="480"')
+      + '<label class="snow-field">Oppdragsmerknad<textarea name="note" maxlength="2000">'+esc(j.note)+'</textarea></label>' :
+      field("Namn","customerName",b.customerName,"text",'required maxlength="120"')
+      + field("Telefon","customerPhone",b.customerPhone,"tel",b.manualSnow?"":"required")
+      + field("E-post","customerEmail",b.customerEmail,"email",b.manualSnow?"":"required")
+      + '<label class="snow-field">Kundekommentar<textarea name="comment" maxlength="1000">'+esc(b.comment)+'</textarea></label>';
+    openModal("Rediger oppdrag",'<form id="dayEntryForm" class="snow-modal-grid">'+formFields+'<p role="alert"></p><button class="snow-primary">Lagre endringar</button></form>'+
+      (b?.bookingMode==="day"?moveButton(b._id):""));
+    $("#dayEntryForm").onsubmit = async event=>{
+      event.preventDefault();
+      const form = event.currentTarget, button=form.querySelector("button");
+      if (button.disabled) return;
+      button.disabled=true;
+      const changes = Object.fromEntries(new FormData(form));
+      for (const key of Object.keys(changes)) if (String((j || b)[key] ?? "")===changes[key]) delete changes[key];
+      try {
+        if (Object.keys(changes).length) await api(j?"/admin/snow/jobs/"+j._id:"/admin/bookings/"+b._id,{method:"PATCH",body:JSON.stringify(changes)});
+        closeModal(); await Promise.all([loadDayBookings(),refresh({quiet:true})]);
+        showNotice("Endringane er lagra.","success",3000);
+      } catch(error) {form.querySelector('[role="alert"]').textContent=error.message;button.disabled=false;}
+    };
+  }
+  dayPicker.value=today();
+  dayPicker.onchange=loadDayBookings;
+  loadDayBookings();
+
   for (const button of $$("[data-day-closed]")) button.addEventListener("click", async () => {
     const date = $("#bookingDayDate").value;
     if (!date) return showNotice("Vel dato først.", "error");
@@ -795,7 +900,7 @@
       await refresh({ quiet: true });
     } finally { els.prepareRound.disabled = false; }
   });
-  $("#snowRefresh").addEventListener("click", () => refresh());
+  $("#snowRefresh").addEventListener("click", () => {refresh();loadDayBookings();});
   $("#finishRoundBtn").addEventListener("click", async () => {
     if (!state.data?.round) return;
     const remaining = Number(state.data.summary?.queued || 0) + Number(state.data.summary?.deferred || 0);
@@ -828,3 +933,4 @@ if ("serviceWorker" in navigator && window.isSecureContext) {
     }
   });
 }
+
