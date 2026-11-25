@@ -51,7 +51,7 @@ test("snow main screen avoids duplicate next-customer cards and hides admin tool
   const html = read("admin/broyting.html");
   const js = read("admin/broyting.js");
   assert.match(html, /Administrer brøyterunden/);
-  assert.match(html, /Resten av køen/);
+  assert.match(html, /Vidare i køen/);
   assert.match(js, /const laterQueue = \(data\.queue \|\| \[\]\)\.filter/);
   assert.match(js, /String\(job\._id\) !== nextId/);
   assert.match(js, /queueSection\.classList\.toggle\("hidden", laterQueue\.length === 0\)/);
@@ -68,9 +68,9 @@ test("snow queue uses understandable labelled management instead of unexplained 
   assert.doesNotMatch(js, />!<\/button>/);
 });
 
-test("starting snow work requires explicit confirmation", () => {
-  const js = read("admin/broyting.js");
-  assert.match(js, /Ønsker du å starte en ny arbeidsøkt hos/);
-  assert.match(js, /if \(!confirm/);
+test("field meter checks the displayed job and ignores accidental repeat taps", () => {
+  assert.match(js, /String\(job\?\._id\) !== targetId/);
+  assert.match(js, /performance\.now\(\) < nextMeterTap/);
+  assert.doesNotMatch(js, /Ønsker du å starte en ny arbeidsøkt hos/);
 });
 
