@@ -19,30 +19,50 @@
         <input id="adminKey" type="password" placeholder="Admin-nøkkel" required>
         <button type="submit">Logg inn</button>
       </form>
-      <div id="loginMessage" class="status-message"></div>
+      <div id="loginMessage" class="status-message" role="status"></div>
     </section>
   </main>
 
   <script src="../config.js"></script>
   <script>
-    const API_BASE = (window.CONFIG && window.CONFIG.API_BASE_URL) || "https://sorgulen-backend-2.onrender.com/api";
-    const KEY_STORAGE = "sorgulen_admin_key";
+    const API_BASE = window.CONFIG.API_BASE_URL;
     const form = document.getElementById("loginForm");
+    const button = form.querySelector("button");
     const msg = document.getElementById("loginMessage");
+
+    // Start the isolated service while the operator enters the key.
+    const warmup = new AbortController();
+    const warmupLimit = setTimeout(() => warmup.abort(), 45000);
+    fetch(API_BASE + "/health", { signal: warmup.signal, cache: "no-store" })
+      .catch(() => {}).finally(() => clearTimeout(warmupLimit));
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
+      if (button.disabled) return;
+      button.disabled = true;
       const key = document.getElementById("adminKey").value.trim();
-      msg.textContent = "Sjekker tilgang...";
+      const request = new AbortController();
+      const notice = setTimeout(() => { msg.textContent = "Ventar på testserveren …"; }, 3000);
+      const limit = setTimeout(() => request.abort(), 45000);
+      msg.textContent = "Sjekkar tilgang …";
       msg.className = "status-message info";
       try {
-        const res = await fetch(`${API_BASE}/admin/ping`, { headers: { "x-admin-key": key } });
-        if (!res.ok) throw new Error("Feil admin-nøkkel");
-        localStorage.setItem(KEY_STORAGE, key);
-        window.location.href = "felt.html";
-      } catch (err) {
-        msg.textContent = err.message || "Innlogging feilet.";
+        const response = await fetch(API_BASE + "/admin/ping", {
+          headers: { "x-admin-key": key }, signal: request.signal, cache: "no-store"
+        });
+        if (response.status === 401 || response.status === 403) throw new Error("Feil admin-nøkkel.");
+        if (!response.ok) throw new Error("Testserveren er mellombels utilgjengeleg.");
+        localStorage.setItem("sorgulen_admin_key", key);
+        window.location.href = "broyting.html";
+      } catch (error) {
+        msg.textContent = error.name === "AbortError" ? "Testserveren brukte for lang tid." :
+          error instanceof TypeError ? "Fekk ikkje kontakt med testserveren." : error.message;
         msg.className = "status-message error";
+        button.textContent = "Prøv igjen";
+        button.disabled = false;
+      } finally {
+        clearTimeout(limit);
+        clearTimeout(notice);
       }
     });
   </script>
