@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main]
+    branches: [main, work/snow-staging-20261125]
 
 permissions:
   contents: read
@@ -65,3 +65,4 @@ jobs:
           node --check min-jobb.js
       - name: Kjør frontendtester
         run: node --test tests/*.test.js
+

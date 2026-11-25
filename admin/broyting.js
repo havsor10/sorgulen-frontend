@@ -48,6 +48,9 @@
       throw error;
     }
     const data = await response.json().catch(() => null);
+    if (response.ok && (!data || typeof data !== "object")) {
+      throw Object.assign(new Error("Svaret kunne ikkje lesast. Registreringa må stadfestast av serveren."),{network:true});
+    }
     if (response.status === 401 || response.status === 403) {
       localStorage.removeItem(ADMIN_KEY);
       location.href = "login.html";
@@ -126,8 +129,11 @@
   function badges(job) {
     return `<span class="snow-source-badge">${esc(sourceLabel(job.sourceType))}</span><span class="snow-priority-badge ${esc(job.priority)}">${esc(priorityLabel(job.priority))}</span>`;
   }
+  function moveButton(id) {
+    return id ? '<button type="button" class="snow-secondary" data-move-booking="'+esc(id)+'">Flytt til annan dag</button>' : "";
+  }
   function cancelButton(job) {
-    return '<button type="button" class="snow-secondary" data-cancel-job="' + esc(job._id) + '">Avbestill oppdrag</button>';
+    return '<button type="button" class="snow-secondary" data-cancel-job="' + esc(job._id) + '">Avbestill oppdrag</button>' + moveButton(job.bookingId);
   }
   function notesMarkup(job) {
     const notes = (job.customerNotes || []).map(note => '<p>' + esc(note.text) + '</p>').join("");
@@ -200,6 +206,8 @@
           <strong>${esc(booking.customerName || "Kunde")}</strong>
           <span>${esc(booking.customerAddress || "Adresse manglar")}</span>
           ${timeWishMarkup(booking.snowTimePreference)}
+          ${moveButton(booking._id)}
+          <button type="button" class="snow-secondary" data-cancel-booking="${esc(booking._id)}">Avbestill</button>
           ${booking.comment ? `<span class="snow-inbox-note">${esc(booking.comment)}</span>` : ""}
           ${safePhone ? `<a href="tel:${esc(safePhone)}">Ring kunden: ${esc(booking.customerPhone)}</a>` : ""}
         </div>
@@ -531,42 +539,6 @@
     });
   }
 
-  async function openAgreements() {
-    openModal("Faste brøytekunder", '<div id="snowAgreementsBody"><p class="snow-muted">Henter faste kunder…</p></div>');
-    const body = $("#snowAgreementsBody", els.modalBody);
-    try {
-      const data = await api("/admin/snow/agreements");
-      body.innerHTML = `<button id="addAgreementBtn" class="snow-primary" type="button">+ NY FAST KUNDE</button><div style="margin-top:14px">${(data.agreements || []).length ? data.agreements.map((agreement) => `<div class="snow-agreement"><div><strong>${esc(agreement.customerSnapshot?.name || "Kunde")}</strong><p>${esc(agreement.customerSnapshot?.address || "")} · ${esc(priorityLabel(agreement.priority))}${agreement.preferredWindow ? ` · ${esc(agreement.preferredWindow)}` : ""}</p></div><div class="snow-agreement-actions"><span class="snow-priority-badge ${esc(agreement.priority)}">${agreement.active ? "Aktiv" : "Av"}</span><button type="button" class="snow-mini" data-toggle-agreement="${esc(agreement._id)}" data-active="${agreement.active ? "1" : "0"}">${agreement.active ? "Av" : "På"}</button></div></div>`).join("") : '<p class="snow-muted">Ingen faste brøytekunder ennå.</p>'}</div>`;
-      $("#addAgreementBtn", body).addEventListener("click", openAgreementForm);
-      $$('[data-toggle-agreement]', body).forEach((button) => button.addEventListener("click", async () => {
-        button.disabled = true;
-        try { await api(`/admin/snow/agreements/${encodeURIComponent(button.dataset.toggleAgreement)}`, { method: "PATCH", body: JSON.stringify({ active: button.dataset.active !== "1" }) }); await openAgreements(); }
-        catch (error) { showNotice(error.message, "error"); button.disabled = false; }
-      }));
-    } catch (error) { body.innerHTML = `<p class="snow-error">${esc(error.message)}</p>`; }
-  }
-
-  function openAgreementForm() {
-    openModal("Ny fast brøytekunde", `<form id="snowAgreementForm" class="snow-modal-grid">${customerSearchMarkup()}<label class="snow-field wide">Adresse<input name="address" required maxlength="220"></label><label class="snow-field">Prioritet<select name="priority"><option value="normal">Normal</option><option value="high">Høy</option><option value="urgent">HASTER</option><option value="low">Lav</option></select></label><label class="snow-field">Ønsket tidsrom<input name="preferredWindow" placeholder="F.eks. før 06:00"></label><label class="snow-field">Prismodell<select name="pricingMode"><option value="hybrid">350 kr oppmøte + timepris</option><option value="fixed">Avtalt fastpris utan tillegg</option></select></label><label class="snow-field">Timepris<input name="hourlyRate" type="number" min="1" value="650"></label><label class="snow-field hidden" data-agreement-fixed>Fastpris<input name="fixedPrice" type="number" min="1"></label><label class="snow-field">Estimert tid<input name="estimatedServiceMinutes" type="number" min="1" max="480" value="15"></label><label class="snow-check wide"><input name="autoQueue" type="checkbox" checked> Legg automatisk i nye brøyterunder</label><label class="snow-field wide">Notat<textarea name="notes" placeholder="Hva må huskes hos kunden?"></textarea></label><p id="agreementError" class="snow-error wide"></p><button class="snow-primary snow-xl wide" type="submit">LAGRE FAST KUNDE</button></form>`);
-    const form = $("#snowAgreementForm", els.modalBody);
-    bindCustomerSearch(form);
-    form.elements.pricingMode.addEventListener("change", () => $("[data-agreement-fixed]", form).classList.toggle("hidden", form.elements.pricingMode.value !== "fixed"));
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const error = $("#agreementError", form);
-      if (!form.elements.customerId.value) { error.textContent = "Velg kunden fra søkeresultatet."; return; }
-      const button = $("button[type=submit]", form); button.disabled = true; error.textContent = "";
-      const payload = {
-        customerId: form.elements.customerId.value, address: form.elements.address.value.trim(), priority: form.elements.priority.value,
-        preferredWindow: form.elements.preferredWindow.value.trim(), pricingMode: form.elements.pricingMode.value,
-        hourlyRate: Number(form.elements.hourlyRate.value), fixedPrice: form.elements.fixedPrice.value ? Number(form.elements.fixedPrice.value) : null,
-        estimatedServiceMinutes: Number(form.elements.estimatedServiceMinutes.value), autoQueue: form.elements.autoQueue.checked, notes: form.elements.notes.value.trim(),
-      };
-      try { await api("/admin/snow/agreements", { method: "POST", body: JSON.stringify(payload) }); showNotice("Fast brøytekunde lagret.", "success", 3500); await openAgreements(); }
-      catch (err) { error.textContent = err.message; button.disabled = false; }
-    });
-  }
-
   async function optimizeRoute() {
     const button = $("#optimizeBtn"); button.disabled = true; showNotice("Finner smart rekkefølge…", "info");
     try {
@@ -601,6 +573,25 @@
   });
 
   document.addEventListener("click", async (event) => {
+    const decision = event.target.closest("[data-cancel-booking],[data-move-booking]");
+    if (decision) {
+      const id = decision.dataset.cancelBooking || decision.dataset.moveBooking;
+      const cancel = Boolean(decision.dataset.cancelBooking);
+      openModal(cancel ? "Avbestill oppdraget" : "Flytt bestillinga",
+        '<form id="snowDecision" class="snow-modal-grid">' + (cancel ? '' :
+        '<label class="snow-field">Ny dato<input name="date" type="date" required min="' + today() + '"></label>') +
+        '<label class="snow-field">Årsak (valfritt)<input name="reason" maxlength="500"></label>' +
+        '<button class="snow-primary">Stadfest</button></form>');
+      $("#snowDecision").onsubmit = async e => {
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(e.target));
+        try {
+          await api("/admin/snow/bookings/"+encodeURIComponent(id)+"/decision",{method:"POST",body:JSON.stringify({...data,action:cancel?"cancel":"move"})});
+          closeModal(); await refresh({quiet:true});
+        } catch(error) {showNotice(error.message,"error");}
+      };
+      return;
+    }
     const cancel = event.target.closest("[data-cancel-job]");
     if (cancel) {
       const reason = prompt("Avbestill dette oppdraget? Skriv eventuell årsak og trykk OK for å stadfeste.");
