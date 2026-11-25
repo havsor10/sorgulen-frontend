@@ -9,7 +9,7 @@
   const submitBtn = $("submitBooking");
   const timeKind = $("snowTimeKind"), timeClock = $("snowTimeClock"), timeClockWrap = $("snowTimeInputWrap");
   const message = $("message");
-  const requested = new URLSearchParams(location.search).get("service")?.toLowerCase() || "";
+  const requestedServiceKey = new URLSearchParams(location.search).get("service")?.toLowerCase() || "";
   let services = [], selectedService = null, selectedTime = "", availableDay = false;
   let pin = null, map = null, marker = null, debounce = null, currentSearch = 0, saving = false;
 
@@ -229,8 +229,9 @@
       serviceSelect.add(new Option(service.name+(price?" – "+price:""),service._id));
     }
     selectedService = services.find(s=>rememberedKey && s.key===rememberedKey)
-      || services.find(s=>/^(brøyting|broyting)$/.test(requested)&&/(brøy|broy)/i.test(s.name))
-      || services.find(s=>String(s.name||"").toLowerCase()===requested)
+      || services.find(s=>s.key?.toLowerCase()===requestedServiceKey)
+      || services.find(s=>/^(brøyting|broyting)$/.test(requestedServiceKey)&&/(brøy|broy)/i.test(s.name))
+      || services.find(s=>String(s.name||"").toLowerCase()===requestedServiceKey)
       || services[0];
     serviceSelect.value=selectedService._id;
     applyServiceUI();
