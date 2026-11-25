@@ -8,28 +8,70 @@
   <link rel="stylesheet" href="admin.css">
   <link rel="stylesheet" href="admin-shell.css?v=20261028-simple1">
   <link rel="stylesheet" href="admin-pages.css">
-  <link rel="stylesheet" href="broyting.css?v=20261111-rate650">
+  <link rel="stylesheet" href="broyting.css?v=field-20261125">
 </head>
 <body>
   <div id="adminShell" data-page="snow"></div>
-  <script src="admin-shell.js?v=20261028-simple1"></script>
+  <script src="admin-shell.js?v=field-20261125"></script>
 
   <main class="admin-main snow-main">
     <header class="snow-topbar">
       <div>
         <p class="admin-eyebrow">Vinterdrift</p>
         <h1>Brøytebestillingar</h1>
-        <p id="snowSubline">Én kø. Ett neste steg.</p>
+        <p id="snowSubline">Vel dato for å sjå bestillingane.</p>
       </div>
-      <div class="snow-top-actions">
+      <div class="snow-top-actions"><a href="#dayBookings" class="snow-date-link">Vel dato</a>
         <span id="snowConnection" class="snow-connection">Tilkoblet</span>
-        <button id="snowRefresh" type="button" class="admin-icon-button" aria-label="Oppdater">↻</button>
+        <button id="snowRefresh" type="button" class="admin-icon-button" aria-label="Oppdater bestillingane">Oppdater</button>
       </div>
     </header>
 
     <div id="snowNotice" class="snow-notice hidden" role="status" aria-live="polite"></div>
 
-    <section class="admin-card snow-form-grid" aria-label="Bestillingar etter dato">
+    <div id="activeRound" class="hidden">
+      <section id="activeJobCard" class="snow-focus snow-focus-active hidden"></section>
+      <section id="nextJobCard" class="snow-focus snow-focus-next"></section>
+
+      <section id="queueSection" class="admin-section snow-queue-section">
+        <div class="section-heading-row">
+          <div><p class="section-kicker">Køyrerekkjefølgje</p><h2>Vidare i køen</h2></div>
+          <span id="queueCount" class="snow-pill">0</span>
+        </div>
+        <div id="snowQueue" class="snow-queue"></div>
+      </section>
+
+      <button id="quickAddBtn" class="snow-primary snow-xl" type="button">+ Nytt brøyteoppdrag</button>
+      <section class="snow-summary" aria-label="Status for brøyterunden">
+        <div><span>Venter</span><strong id="sumQueued">0</strong></div>
+        <div><span>Ferdig</span><strong id="sumDone">0</strong></div>
+        <div><span>Opptent før fakturaavrunding</span><strong id="sumIncome">0 kr</strong></div>
+        <div><span>Ca. igjen</span><strong id="sumRemaining">–</strong></div>
+      </section>
+
+      <section id="deferredSection" class="admin-section hidden">
+        <div class="section-heading-row"><div><p class="section-kicker">Senere</p><h2>Utsatt</h2></div></div>
+        <div id="snowDeferred" class="snow-queue"></div>
+      </section>
+
+      <details class="admin-section snow-details">
+        <summary>Ferdige kunder</summary>
+        <div id="snowDone" class="snow-done-list"></div>
+      </details>
+
+      <details class="admin-section snow-round-tools">
+        <summary>Administrer brøyterunden</summary>
+        <div class="snow-command-row">
+
+          <button id="optimizeBtn" class="snow-secondary" type="button">Finn beste rekkefølge</button>
+
+        </div>
+        <button id="finishRoundBtn" class="snow-finish-round" type="button">Avslutt brøyterunden</button>
+      </details>
+      <div id="fieldDock" hidden></div>
+    </div>
+
+    <section id="dayBookings" class="admin-card snow-form-grid" aria-label="Bestillingar etter dato">
       <label for="bookingDayDate">Vel dato<input type="date" id="bookingDayDate"></label>
       <div class="wide" id="dateBookingList" aria-live="polite"></div>
     </section>
@@ -43,7 +85,7 @@
       <button id="snowMessages" class="snow-secondary" type="button">SMS og e-post for vald dag</button>
     </details>
     </details>
-    <details class="admin-section" id="driveControls"><summary>Brøyterunde og takstameter</summary>
+    <details class="admin-section" id="driveControls"><summary>Start eller klargjer brøyterunde</summary>
     <section id="snowInbox" class="snow-inbox admin-card hidden" aria-label="Bestillingar som ventar på brøyterunde">
       <div class="snow-inbox-head">
         <p class="section-kicker">Nye brøytebestillingar</p>
@@ -73,46 +115,6 @@
       </form>
     </section>
 
-    <div id="activeRound" class="hidden">
-      <button id="quickAddBtn" class="snow-primary snow-xl" type="button">+ Nytt brøyteoppdrag</button>
-      <section id="activeJobCard" class="snow-focus snow-focus-active hidden"></section>
-      <section id="nextJobCard" class="snow-focus snow-focus-next"></section>
-
-      <section class="snow-summary" aria-label="Status for brøyterunden">
-        <div><span>Venter</span><strong id="sumQueued">0</strong></div>
-        <div><span>Ferdig</span><strong id="sumDone">0</strong></div>
-        <div><span>Opptent før fakturaavrunding</span><strong id="sumIncome">0 kr</strong></div>
-        <div><span>Ca. igjen</span><strong id="sumRemaining">–</strong></div>
-      </section>
-
-      <section id="queueSection" class="admin-section snow-queue-section">
-        <div class="section-heading-row">
-          <div><p class="section-kicker">Etter neste</p><h2>Resten av køen</h2></div>
-          <span id="queueCount" class="snow-pill">0</span>
-        </div>
-        <div id="snowQueue" class="snow-queue"></div>
-      </section>
-
-      <section id="deferredSection" class="admin-section hidden">
-        <div class="section-heading-row"><div><p class="section-kicker">Senere</p><h2>Utsatt</h2></div></div>
-        <div id="snowDeferred" class="snow-queue"></div>
-      </section>
-
-      <details class="admin-section snow-details">
-        <summary>Ferdige kunder</summary>
-        <div id="snowDone" class="snow-done-list"></div>
-      </details>
-
-      <details class="admin-section snow-round-tools">
-        <summary>Administrer brøyterunden</summary>
-        <div class="snow-command-row">
-
-          <button id="optimizeBtn" class="snow-secondary" type="button">Finn beste rekkefølge</button>
-
-        </div>
-        <button id="finishRoundBtn" class="snow-finish-round" type="button">Avslutt brøyterunden</button>
-      </details>
-    </div>
     </details>
   </main>
 
@@ -127,9 +129,10 @@
   </div>
 
   <script src="../config.js?v=20260904-snow1"></script>
-  <script src="broyting.js?v=20261125-datoliste"></script>
+  <script src="broyting.js?v=field-20261125"></script>
   <script src="broyting-portal.js?v=20260917-min-jobb2"></script>
 </body>
 </html>
+
 
 
