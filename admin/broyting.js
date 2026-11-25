@@ -263,6 +263,7 @@
     const newWebsite = fromServer && state.data?.round ? (data.queue || []).filter((job) => job.sourceType === "website" && !previousIds.has(String(job._id))) : [];
 
     state.data = data;
+    $("#todayRound").textContent = data.round?.roundDate === today() ? "Fortset dagens brøyterunde" : "Start dagens brøyterunde";
     writeJson(CACHE_KEY, data);
     renderInbox(data);
     state.knownIds = new Set([...(data.queue || []), ...(data.deferred || []), ...(data.done || []), ...(data.activeJob ? [data.activeJob] : [])].map((job) => String(job._id)));
@@ -825,6 +826,13 @@
       const byBooking = new Map(review.rows.filter(j=>j._id && j.bookingId).map(j=>[j.bookingId,j]));
       const entries = bookings.map(b=>({b,j:byBooking.get(b._id)}));
       entries.push(...review.rows.filter(j=>j._id && !j.bookingId).map(j=>({j})));
+      if (date === today()) {
+        const customers = new Set(entries.filter(({b,j}) => (j?.status || b?.status) !== "cancelled")
+          .map(({b,j}) => String(b?.customerId || j?.customerId || b?._id || j._id)));
+        $("#todayCount").textContent = customers.size === 1 ? "1 kunde i dag" : customers.size + " kundar i dag";
+      }
+      const queue = review.rows.filter(j => j.status === "queued").sort((a,b)=>a.queuePosition-b.queuePosition);
+      const positions = new Map(queue.map((j,index)=>[j._id,index+1]));
       dayList.replaceChildren();
       if (!entries.length) dayList.textContent = "Ingen brøytebestillingar denne dagen.";
       for (const entry of entries) {
@@ -835,11 +843,17 @@
         button.className = "snow-secondary field-date-row";
         button.style.cssText = "width:100%;display:grid;gap:.25rem;text-align:left;margin:.25rem 0;overflow-wrap:anywhere";
         button.innerHTML = "<strong>"+esc(b?.customerName || j.customerSnapshot.name)+"</strong><span>"+esc(b?.customerAddress || j?.customerSnapshot?.address)+"</span><small>"+esc(statusNames[status] || status)+"</small>";
+        const info = [positions.has(j?._id) ? "Køplass " + positions.get(j._id) : "",
+          timeWishLabel(b?.snowTimePreference || j?.snowTimePreference), b?.comment || j?.note];
+        for (const detail of info.filter(Boolean)) {
+          const line = document.createElement("span"); line.textContent = detail; button.append(line);
+        }
         button.onclick = ()=>openDayEntry(entry);
         dayList.append(button);
       }
     } catch(error) {
       if (version !== dayVersion) return;
+      if (date === today()) $("#todayCount").textContent = "Fekk ikkje henta dagens kundar.";
       dayList.textContent = "Klarte ikkje hente bestillingane. ";
       const retry = document.createElement("button");
       retry.textContent = "Prøv igjen"; retry.onclick = loadDayBookings;
@@ -905,6 +919,36 @@
       } catch(error) {form.querySelector('[role="alert"]').textContent=error.message;button.disabled=false;}
     };
   }
+  $("#todayHeading").textContent = "I dag · " + formatDate(today());
+  $("#todayCustomers").onclick = () => {
+    dayPicker.value = today();
+    $("#dayBookings").scrollIntoView({block:"start"});
+    loadDayBookings();
+  };
+  $("#todayRound").onclick = async event => {
+    const button = event.currentTarget;
+    if (button.disabled) return;
+    const date = today();
+    if (state.data?.round?.roundDate === date) {
+      $("#activeRound").scrollIntoView({block:"start"});
+      return;
+    }
+    if (!navigator.onLine || readJson(PENDING_KEY, []).length) {
+      showNotice("Kople til nett og synkroniser registreringane før du startar ei ny runde.", "warning");
+      return;
+    }
+    button.disabled = true;
+    try {
+      const latest = await api("/admin/snow/state",{cache:"no-store"});
+      if (latest.round?.roundDate === date) render(latest);
+      else {
+        if (latest.round && !confirm("Byt frå runda " + formatDate(latest.round.roundDate) + " til dagens brøyterunde?")) return;
+        render(await api("/admin/snow/rounds/rollover",{method:"POST",body:JSON.stringify({roundDate:date})}));
+      }
+      $("#activeRound").scrollIntoView({block:"start"});
+    } catch (error) { showNotice(error.message,"error"); }
+    finally { button.disabled = false; }
+  };
   dayPicker.value=today();
   dayPicker.onchange=loadDayBookings;
   loadDayBookings();
