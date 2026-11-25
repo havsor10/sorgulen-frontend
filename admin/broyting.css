@@ -85,3 +85,33 @@
 .snow-summary { grid-template-columns:repeat(4,minmax(0,1fr)); }
 .snow-note,.snow-modal-card { overflow-wrap:anywhere; }
 @media(max-width:700px) { .snow-summary { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+
+
+/* Driving view: show the next stops in route order and keep the meter within reach. */
+#activeRound .snow-focus, #activeRound .snow-queue-open { width:100%; box-sizing:border-box; min-width:0; overflow-wrap:anywhere; }
+#activeRound .snow-queue-address { white-space:normal; overflow:visible; font-size:1rem; }
+#activeRound .snow-queue-open { min-height:76px; }
+#activeRound .snow-focus-kicker { font-size:1rem; }
+#activeRound .snow-focus-actions .snow-primary { order:-1; grid-column:1/-1; min-height:64px; font-size:1.2rem; }
+.snow-top-actions .snow-date-link, #snowRefresh { display:inline-flex; align-items:center; justify-content:center; min-height:48px; width:auto; padding:0 12px; font:inherit; font-weight:700; }
+#dayBookings { scroll-margin-top:8rem; }
+.field-management { display:grid; gap:12px; margin-top:20px; }
+#snowModalBody button { min-height:54px; margin-block:4px; }
+#snowModalBody [data-cancel-job], #snowModalBody [data-cancel-booking] { color:#ffc2b7; border-color:#a7625a; }
+.field-date-row { position:relative; padding-right:48px; }
+.field-date-row::after { content:"›"; position:absolute; right:18px; top:50%; transform:translateY(-50%); font-size:24px; }
+#fieldDock { display:none; }
+@media(max-width:700px){
+  .snow-topbar { flex-wrap:wrap; gap:6px; }
+  .snow-top-actions { flex-wrap:wrap; }
+  #activeRound .snow-focus-actions { display:grid; grid-template-columns:minmax(0,1fr); gap:8px; }
+  #activeRound .snow-focus-actions [data-start-job], #activeRound .snow-focus-actions [data-finish-job] { display:none; }
+  #fieldDock:not([hidden]) { display:block; position:sticky; z-index:42; bottom:calc(76px + env(safe-area-inset-bottom)); padding:6px 0; background:#0b0f14; }
+  #fieldDock button { width:100%; min-height:68px; font-size:1.25rem; line-height:1.2; touch-action:manipulation; }
+  #fieldDock button span { display:block; font-size:1rem; overflow-wrap:anywhere; }
+  #snowModalBody button, #snowModalBody .snow-secondary { width:100%; }
+  .snow-queue-meta { flex-wrap:wrap; }
+  .snow-main { padding-inline:10px; }
+  #activeRound .snow-focus h2 { font-size:1.55rem; }
+}
+#snowModalBody .field-detail-meter { display:block; width:100%; min-height:64px; font-size:1.2rem; }
