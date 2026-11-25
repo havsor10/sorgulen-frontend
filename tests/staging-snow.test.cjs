@@ -27,24 +27,15 @@ test("Customer status shows private live queue",()=>{
 
 test("Optional requested snow time is separate from reserved time slots",()=>{
   const admin=fs.readFileSync("admin/broyting.js","utf8");
-  assert.match(html,/id="snowTimeKind"/);
+  assert.doesNotMatch(html,/id="snowTimeKind"|data-snow-time=/);
   assert.match(html,/id="snowTimeClock"/);
-  assert.match(html,/ikkje ein stadfesta avtale/);
+  assert.match(html,/kan ikkje love eit bestemt klokkeslett/);
   assert.match(js,/snowTimePreference:/);
-  assert.match(js,/timeKind.value !== "none"/);
+  assert.match(js,/timeClock.value \? "around" : "none"/);
   assert.match(admin,/TIDSØNSKE/);
   assert.match(conf,/Ønskt tidspunkt/);
   assert.match(jobHtml,/id="snowTimeWishRow"/);
   assert.match(job,/snowTimePreference/);
-});
-
-test("One-tap preferred clock values fill the native time input without affecting the address",()=>{
-  assert.match(html,/data-snow-time="08:00"/);
-  assert.match(html,/id="snowTimeClock" type="time"/);
-  assert.match(js,/timeClock\.value = button\.dataset\.snowTime/);
-  assert.match(js,/updateQuickTimeButtons\(\)/);
-  assert.equal((html.match(/id="snowTimeClock"/g)||[]).length,1);
-  assert.equal((html.match(/id="customerAddress"/g)||[]).length,1);
 });
 
 test("Staging shows the known service catalogue immediately while API sleeps",()=>{
@@ -56,3 +47,4 @@ test("Staging shows the known service catalogue immediately while API sleeps",()
   assert.match(js,/loadServices\(\{ silent:true \}\)/);
   assert.match(js,/Date availability and submission never proceed without the backend/);
 });
+
