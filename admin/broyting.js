@@ -243,6 +243,10 @@
     state.knownIds = new Set([...(data.queue || []), ...(data.deferred || []), ...(data.done || []), ...(data.activeJob ? [data.activeJob] : [])].map((job) => String(job._id)));
     if (newWebsite.length) showNotice(`${newWebsite.length} ny ${newWebsite.length === 1 ? "nettbestilling" : "nettbestillinger"} lagt i køen.`, "success", 7000);
 
+    const messageAlert = $("#snowMessageAlert");
+    messageAlert.classList.toggle("hidden", !data.messageAlerts);
+    messageAlert.textContent = (data.messageAlerts || 0) + " meldingar manglar kontaktinformasjon eller lenke. Sjå detaljar.";
+    messageAlert.onclick = () => { $("#bookingDayDate").value = data.round.roundDate; $("#snowMessages").click(); };
     const hasRound = Boolean(data.round);
     els.noRound.classList.toggle("hidden", hasRound);
     els.activeRound.classList.toggle("hidden", !hasRound);
