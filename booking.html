@@ -146,26 +146,9 @@
       </div>
     </div>
     <div id="snowTimeWish" class="snow-time-wish hidden">
-      <label for="snowTimeKind"><strong>Har du eit ønskt tidspunkt? (valfritt)</strong></label>
-      <select id="snowTimeKind">
-        <option value="none">Nei – når det passar i løpet av dagen</option>
-        <option value="before">Helst før eit klokkeslett</option>
-        <option value="around">Helst omkring eit klokkeslett</option>
-        <option value="after">Helst etter eit klokkeslett</option>
-      </select>
-      <div id="snowTimeInputWrap" class="hidden">
-        <span class="snow-time-helper">Vel eit klokkeslett:</span>
-        <div class="snow-time-picks" role="group" aria-label="Vanlege klokkeslett">
-          <button type="button" data-snow-time="06:00">06:00</button>
-          <button type="button" data-snow-time="08:00">08:00</button>
-          <button type="button" data-snow-time="12:00">12:00</button>
-          <button type="button" data-snow-time="16:00">16:00</button>
-          <button type="button" data-snow-time="20:00">20:00</button>
-        </div>
-        <label for="snowTimeClock">Eller vel eit anna klokkeslett</label>
-        <input id="snowTimeClock" type="time" step="300" autocomplete="off">
-      </div>
-      <p class="snow-time-disclaimer">Dette er berre eit ønske, ikkje ein stadfesta avtale. Vi prøver å ta omsyn til det når brøyterunda blir planlagd, men tidspunktet er ikkje garantert.</p>
+      <label for="snowTimeClock"><strong>Her kan du legge til ønsket tidspunkt</strong> (valfritt)</label>
+      <input id="snowTimeClock" type="time" autocomplete="off" aria-describedby="snowWishHint">
+      <p id="snowWishHint" class="snow-time-disclaimer">Vi prøver å ta omsyn til ønsket ditt, men kan ikkje love eit bestemt klokkeslett.</p>
     </div>
     <div class="booking-grid one" style="margin-top:16px">
       <label>Merknader til oppdraget
