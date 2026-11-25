@@ -139,6 +139,8 @@
     const notes = (job.customerNotes || []).map(note => '<p>' + esc(note.text) + '</p>').join("");
     return (job.note ? '<div class="snow-note"><strong>Kommentar til oppdraget</strong><p>' + esc(job.note) + '</p></div>' : "")
       + (notes ? '<div class="snow-note"><strong>Interne kundenotat</strong>' + notes + '</div>' : "")
+      + (job.internalNotes || []).map(n=>'<div class="snow-note"><strong>Internt oppdragsnotat</strong><p>'+esc(n.text)+'</p></div>').join("")
+      + '<button type="button" class="snow-secondary" data-job-note="'+esc(job._id)+'">Notat for dette oppdraget</button>'
       + (job.customerId ? '<button type="button" class="snow-secondary" data-add-note="' + esc(job.customerId) + '">Nytt internt kundenotat</button>' : "");
   }
   function activeMarkup(job) {
@@ -606,12 +608,13 @@
       } catch(error) { showNotice(error.message,"error"); }
       return;
     }
-    const noteButton = event.target.closest("[data-add-note]");
+    const noteButton = event.target.closest("[data-add-note],[data-job-note]");
     if (noteButton) {
-      const text = prompt("Internt kundenotat – berre synleg i admin");
+      const text = prompt("Internt notat – berre synleg i admin");
       if (!text?.trim()) return;
       try {
-        await api("/admin/customers/" + encodeURIComponent(noteButton.dataset.addNote) + "/notes", { method: "POST", body: JSON.stringify({ text, operationId: uuid() }) });
+        const path = noteButton.dataset.jobNote ? "/admin/snow/jobs/" + encodeURIComponent(noteButton.dataset.jobNote) + "/internal-notes" : "/admin/customers/" + encodeURIComponent(noteButton.dataset.addNote) + "/notes";
+        await api(path, { method: "POST", body: JSON.stringify({ text, operationId: uuid() }) });
         await refresh({ quiet: true });
       } catch (error) { showNotice(error.message, "error"); }
       return;
