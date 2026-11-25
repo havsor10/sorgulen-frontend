@@ -4,10 +4,11 @@ const fs = require("node:fs");
 const html = fs.readFileSync("admin/broyting.html", "utf8");
 const js = fs.readFileSync("admin/broyting.js", "utf8");
 
-test("future bookings have an always-visible independent inbox before the active queue", () => {
+test("future bookings retain an independent inbox and date access below the driving queue", () => {
   const inbox = html.indexOf('id="snowInbox"');
   assert.ok(inbox > 0);
-  assert.ok(inbox < html.indexOf('id="activeRound"'));
+  assert.ok(inbox > html.indexOf('id="activeRound"'));
+  assert.match(html, /href="#dayBookings"/);
   assert.match(html, /id="snowInboxCount"/);
   assert.match(html, /id="snowInboxList"/);
   assert.match(html, /id="snowPrepareRoundBtn"/);
@@ -26,6 +27,6 @@ test("operator cannot roll a round over while offline time entries remain", () =
 });
 
 test("CSS and JS URLs change to refresh outdated browser caches", () => {
-  assert.match(html, /broyting\.css\?v=20261111-rate650/);
-  assert.match(html, /broyting\.js\?v=20261111-rate650/);
+  assert.match(html, /broyting\.css\?v=field-20261125/);
+  assert.match(html, /broyting\.js\?v=field-20261125/);
 });
