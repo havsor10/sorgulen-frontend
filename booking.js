@@ -7,7 +7,7 @@
   const addressInput = $("customerAddress"), addressList = $("addressSuggestions");
   const addressHelp = $("addressHelp"), mapPanel = $("addressMapPanel");
   const submitBtn = $("submitBooking");
-  const timeKind = $("snowTimeKind"), timeClock = $("snowTimeClock"), timeClockWrap = $("snowTimeInputWrap");
+  const timeClock = $("snowTimeClock");
   const message = $("message");
   const requestedServiceKey = new URLSearchParams(location.search).get("service")?.toLowerCase() || "";
   let services = [], selectedService = null, selectedTime = "", availableDay = false;
@@ -248,16 +248,12 @@
       customerEmail:$("customerEmail").value.trim(),
       customerAddress:addressInput.value.trim(),
       comment:$("comment").value.trim(),
-      ...(snow?{addressGeo:pin, snowTimePreference: { kind:timeKind.value, time:timeKind.value==="none"?"":timeClock.value }}:{}),
+      ...(snow?{addressGeo:pin, snowTimePreference: { kind:timeClock.value ? "around" : "none", time:timeClock.value }}:{}),
     };
     if(!payload.date||!payload.customerName||!payload.customerEmail||!payload.customerPhone||!payload.customerAddress){
       return notify("Fyll inn namn, telefon, e-post, adresse og dato.","error");
     }
     if(snow && (!availableDay||!pin))return notify("Stadfest innkøyrselen: vel adresse frå lista eller marker på kartet.","error");
-    if(snow && timeKind.value !== "none" &&
-        !/^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(timeClock.value)) {
-      return notify("Vel klokkeslett for tidsønsket, eller vel «når det passar i løpet av dagen».","error");
-    }
     if(!snow&&!selectedTime)return notify("Vel eit klokkeslett.","error");
     if (snow) {
       const fingerprint = JSON.stringify(payload);
@@ -289,29 +285,6 @@
     selectedService=services.find(s=>s._id===serviceSelect.value)||null;
     applyServiceUI();
   });
-  function updateQuickTimeButtons() {
-    document.querySelectorAll("[data-snow-time]").forEach(button=>{
-      const selected = timeKind.value !== "none" && timeClock.value === button.dataset.snowTime;
-      button.classList.toggle("is-selected", selected);
-      button.setAttribute("aria-pressed", selected ? "true" : "false");
-    });
-  }
-  document.querySelectorAll("[data-snow-time]").forEach(button=>{
-    button.addEventListener("click",()=>{
-      timeClock.value = button.dataset.snowTime;
-      timeClock.dispatchEvent(new Event("change", { bubbles:true }));
-      updateQuickTimeButtons();
-    });
-  });
-  timeClock.addEventListener("input",updateQuickTimeButtons);
-  timeClock.addEventListener("change",updateQuickTimeButtons);
-  timeKind.addEventListener("change",()=>{
-    const wantsTime = timeKind.value !== "none";
-    timeClockWrap.classList.toggle("hidden",!wantsTime);
-    timeClock.required = wantsTime;
-    if (!wantsTime) timeClock.value = "";
-    updateQuickTimeButtons();
-  });
   bookingDate.addEventListener("change",loadAvailability);
   submitBtn.addEventListener("click",submitBooking);
   bookingDate.min=today();bookingDate.max=maxDate(30);
@@ -340,4 +313,5 @@
     loadServices().catch(showServiceLoadError);
   }
 })();
+
 
