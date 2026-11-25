@@ -69,6 +69,7 @@ test("snow queue uses understandable labelled management instead of unexplained 
 });
 
 test("field meter checks the displayed job and ignores accidental repeat taps", () => {
+  const js = read("admin/broyting.js");
   assert.match(js, /String\(job\?\._id\) !== targetId/);
   assert.match(js, /performance\.now\(\) < nextMeterTap/);
   assert.doesNotMatch(js, /Ønsker du å starte en ny arbeidsøkt hos/);
