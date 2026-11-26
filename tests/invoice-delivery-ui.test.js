@@ -10,7 +10,7 @@ const listHtml = fs.readFileSync(path.join(root, "admin/fakturaer.html"), "utf8"
 const listJs = fs.readFileSync(path.join(root, "admin/fakturaer.js"), "utf8");
 
 test("fakturadetalj bruker én samlet motor uten delivery-overlay", () => {
-  assert.match(html, /faktura-detalj\.js\?v=20261004-invoice2/);
+  assert.match(html, /faktura-detalj\.js\?v=20261126-email-send1/);
   assert.doesNotMatch(html, /invoice-delivery-ui\.js/);
   assert.equal(fs.existsSync(path.join(root, "admin/invoice-delivery-ui.js")), false);
 });
