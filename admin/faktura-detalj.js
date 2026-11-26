@@ -232,7 +232,10 @@
     if (inv.status === "issued") {
       buttons.push('<button class="btn-send" data-action="share">📱 Del / send på melding</button>');
       buttons.push('<button class="btn-edit" data-action="show">👁 Vis til kunden</button>');
-      if (inv.customerEmail) buttons.push('<button class="btn-send" data-action="send">📧 Send på e-post</button>');
+      if (inv.customerEmail) {
+        buttons.push('<button class="btn-send" type="button" data-action="send">📧 Send på e-post</button>');
+        buttons.push('<p id="emailSendFeedback" role="status" aria-live="polite" style="display:none;flex:1 1 100%;width:100%;margin:8px 0 0;padding:12px 14px;border:2px solid #56b88a;border-radius:10px;font-size:16px;font-weight:700"></p>');
+      }
       buttons.push('<button class="btn-edit" data-action="mark-message">✓ Marker levert på melding</button>');
       if (!inv.isCreditNote) buttons.push('<button class="btn-delete" data-action="credit" style="background:#8a5a1f;">↩️ Krediter</button>');
     }
@@ -246,9 +249,33 @@
     return buttons.join("");
   }
 
+  // Same deterministic fallback as backend defaultInvoiceEmail. These are only
+  // local editable fields: no draft, accounting data or customer mail is
+  // written until the operator explicitly confirms the send action.
+  function defaultEmailDraft(inv) {
+    const kind = inv.isCreditNote ? "Kreditnota" : "Faktura";
+    const description = inv.description || "utført arbeid";
+    return {
+      subject: `${kind}${inv.invoiceNumber ? " " + inv.invoiceNumber : ""} – ${description}`.slice(0, 200),
+      body: `Hei ${inv.customerName || "kunde"},\n\nVedlagt følger ${kind.toLowerCase()} for ${description}.\n\nTa gjerne kontakt dersom du har spørsmål.\n\nMed vennlig hilsen\nSørgulen Industriservice`,
+    };
+  }
+
+  function setEmailFeedback(message, type = "info") {
+    const feedback = document.getElementById("emailSendFeedback");
+    if (!feedback) return;
+    feedback.textContent = message || "";
+    feedback.style.display = message ? "block" : "none";
+    feedback.style.color = type === "error" ? "#ffcebd" : "#b7f2d1";
+    feedback.style.borderColor = type === "error" ? "#ec886d" : "#56b88a";
+  }
+
   function emailComposer(inv) {
     if (inv.status !== "issued") return "";
     const failed = latestFailedEmail(inv);
+    const defaults = defaultEmailDraft(inv);
+    const subject = inv.emailDraft?.subject?.trim() || defaults.subject;
+    const body = inv.emailDraft?.body?.trim() || defaults.body;
     if (!inv.customerEmail) {
       return `<div class="fd-section"><p class="fd-warn">Fakturaen er utstedt, men kunden mangler e-post. PDF-en kan fortsatt åpnes og leveres på annen måte.</p></div>`;
     }
@@ -257,10 +284,11 @@
         <div class="fd-label">E-post til ${escapeHtml(inv.customerEmail)}</div>
         ${failed ? `<p class="fd-warn">Siste sending feilet: ${escapeHtml(failed.error || "ukjent feil")}. Fakturaen er fortsatt utstedt og kan sendes på nytt.</p>` : ""}
         <button class="btn-edit" type="button" data-action="email-suggestion">Lag e-postforslag</button>
+        <p class="fd-info">E-postteksten er fylt ut. Kontroller innholdet før du sender; PDF-fakturaen legges ved automatisk.</p>
         <label class="fd-label" for="emailSubject" style="display:block;margin-top:14px">Emne</label>
-        <textarea id="emailSubject" rows="2" style="width:100%">${escapeHtml(inv.emailDraft?.subject || "")}</textarea>
+        <textarea id="emailSubject" rows="2" style="width:100%">${escapeHtml(subject)}</textarea>
         <label class="fd-label" for="emailBody" style="display:block;margin-top:10px">Melding</label>
-        <textarea id="emailBody" rows="9" style="width:100%">${escapeHtml(inv.emailDraft?.body || "")}</textarea>
+        <textarea id="emailBody" rows="9" style="width:100%">${escapeHtml(body)}</textarea>
         <p class="fd-info">PDF og økonomiske data er allerede låst. E-postteksten kan redigeres uten å endre fakturaen.</p>
       </div>`;
   }
@@ -579,11 +607,23 @@
       }
 
       if (action === "send") {
-        const subject = document.getElementById("emailSubject")?.value.trim() || "";
-        const body = document.getElementById("emailBody")?.value.trim() || "";
-        if (!subject || !body) throw new Error("Lag eller skriv e-postemne og melding før sending.");
-        if (!confirm(`Send ${inv.isCreditNote ? "kreditnota" : "faktura"} ${inv.invoiceNumber} til ${inv.customerEmail}?`)) return;
+        // Editable fields are prefilled in the composer. The fallback also
+        // covers old cached markup with empty inputs, without changing data.
+        const defaults = defaultEmailDraft(inv);
+        const subjectInput = document.getElementById("emailSubject");
+        const bodyInput = document.getElementById("emailBody");
+        const subject = subjectInput?.value.trim() || defaults.subject;
+        const body = bodyInput?.value.trim() || defaults.body;
+        if (subjectInput && !subjectInput.value.trim()) subjectInput.value = subject;
+        if (bodyInput && !bodyInput.value.trim()) bodyInput.value = body;
+        if (!subject || !body) throw new Error("E-postemne eller melding mangler. Kontroller teksten før sending.");
+        setEmailFeedback("Klar til å sende faktura som PDF-vedlegg. Kontroller emne og melding nedenfor.");
+        if (!confirm(`Send ${inv.isCreditNote ? "kreditnota" : "faktura"} ${inv.invoiceNumber} til ${inv.customerEmail} med PDF vedlagt?`)) {
+          setEmailFeedback("Sending avbrutt. Ingen e-post er sendt.");
+          return;
+        }
         if (element) element.disabled = true;
+        setEmailFeedback("Sender faktura med PDF-vedlegg…");
         setMessage("Sender e-post…");
         const operationId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
         const res = await fetch(`${API_BASE}/invoices/${inv._id}/send`, {
@@ -592,7 +632,8 @@
           body: JSON.stringify({ operationId, subject, body }),
         });
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || "E-postsending feilet. Fakturaen er fortsatt utstedt og kan prøves sendt igjen.");
+        if (!res.ok) throw new Error(data.error || "E-postsendingen ble ikke bekreftet. Kontroller sendestatus før nytt forsøk.");
+        setEmailFeedback("E-postsending er bekreftet. Oppdaterer fakturastatus…", "success");
         setMessage(
           data.fikenDeferred
             ? "Dokumentet er sendt. Fiken var midlertidig utilgjengelig og synkroniseres automatisk senere. ✓"
@@ -664,6 +705,9 @@
       }
     } catch (err) {
       if (element) element.disabled = false;
+      if (action === "send") {
+        setEmailFeedback((err.message || "E-postsending feilet.") + " Dersom sending ble startet, kontroller fakturastatus før du prøver igjen.", "error");
+      }
       setMessage(err.message || "Noe gikk galt", "error");
     }
   }
