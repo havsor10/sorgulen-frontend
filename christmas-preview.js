@@ -8,21 +8,23 @@
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   const pointer = window.matchMedia('(hover: hover) and (pointer: fine)');
   let paused = reduced.matches;
+  let explicit = false;
   const resetParallax = () => {
     hero.style.removeProperty('--christmas-x');
     hero.style.removeProperty('--christmas-y');
   };
   const update = () => {
-    const running = !paused && !reduced.matches;
+    const running = !paused && (!reduced.matches || explicit);
+    body.classList.toggle('christmas-motion-explicit', explicit);
     body.classList.toggle('christmas-motion', running);
     toggle.hidden = false;
-    toggle.disabled = reduced.matches;
-    toggle.textContent = reduced.matches ? 'Julebevegelse deaktivert' : running ? 'Sett juleeffekter på pause' : 'Start juleeffekter';
+    toggle.disabled = false;
+    toggle.textContent = running ? 'Sett juleeffekter på pause' : 'Start juleeffekter';
     toggle.setAttribute('aria-pressed', String(!running));
     if (!running) resetParallax();
   };
-  toggle.addEventListener('click', () => {paused = !paused; update();});
-  const preferenceChanged = () => {paused = reduced.matches; update();};
+  toggle.addEventListener('click', () => {paused = !paused; explicit = !paused; update();});
+  const preferenceChanged = () => {explicit = false; paused = reduced.matches; update();};
   if (reduced.addEventListener) reduced.addEventListener('change', preferenceChanged);
   else if (reduced.addListener) reduced.addListener(preferenceChanged);
   document.addEventListener('visibilitychange', () => {

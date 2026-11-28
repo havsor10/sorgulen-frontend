@@ -141,3 +141,42 @@ body.christmas-preview > header::after {
   .christmas-preview.christmas-motion > header::after,.christmas-preview.christmas-motion .christmas-snow *,.christmas-preview.christmas-motion .christmas-tree *{animation:none!important;}
   .christmas-preview.christmas-motion .hero.premium-hero::before{transition:none;}
 }
+
+/* V3: unmistakable, mobile-first Christmas effects. */
+.christmas-preview .christmas-version {display:table;margin:0 0 14px;padding:8px 13px;border:1px solid #f2ca86;border-radius:9px;background:#432d16;color:#fff1c9;font-size:13px;font-weight:800;letter-spacing:.035em;}
+.christmas-preview .hero.premium-hero::before {z-index:0;animation:none;}
+.christmas-preview .hero.premium-hero::after {z-index:1;}
+.christmas-preview .christmas-snow {z-index:2;opacity:1;pointer-events:none;}
+.christmas-preview .premium-hero-inner {z-index:3;}
+.christmas-preview .christmas-flakes {inset:-35% -15% -12%;mask-image:none;}
+.christmas-preview .christmas-flakes-far {background-size:330px 260px;opacity:.9;}
+.christmas-preview .christmas-flakes-mid {background-size:560px 430px;opacity:.95;}
+.christmas-preview .christmas-flakes-near {background-size:820px 630px;opacity:.85;filter:none;}
+.christmas-preview .christmas-aurora {inset:-20% -10% 5% 0;opacity:1;background:radial-gradient(ellipse at 78% 12%,rgba(49,200,159,.38),transparent 55%),radial-gradient(ellipse at 48% 44%,rgba(81,155,211,.25),transparent 50%),radial-gradient(ellipse at 80% 75%,rgba(247,185,93,.17),transparent 45%);}
+.christmas-preview > header::after {height:36px;bottom:-23px;background-size:168px 28px;z-index:10;}
+.christmas-preview .christmas-sleigh {top:4%;width:170px;}
+.christmas-preview .christmas-star {top:9%;right:30%;}
+.christmas-preview.christmas-motion .christmas-flakes-far {animation:christmas-far-v3 17s linear infinite;}
+.christmas-preview.christmas-motion .christmas-flakes-mid {animation:christmas-mid-v3 13s linear infinite;}
+.christmas-preview.christmas-motion .christmas-flakes-near {animation:christmas-near-v3 10s linear infinite;}
+.christmas-preview.christmas-motion .christmas-sleigh {animation:christmas-sleigh-v3 25s linear infinite;}
+.christmas-preview.christmas-motion .christmas-star {animation:christmas-star 15s linear infinite;}
+@keyframes christmas-far-v3 {from{background-position:0 0}to{background-position:330px 520px}}
+@keyframes christmas-mid-v3 {from{background-position:0 0}to{background-position:560px 860px}}
+@keyframes christmas-near-v3 {from{background-position:0 0}to{background-position:820px 1260px}}
+@keyframes christmas-sleigh-v3 {0%,3%{opacity:0;transform:translateX(0)}6%{opacity:.95}35%{opacity:.95}40%,100%{opacity:0;transform:translateX(calc(100vw + 220px))}}
+@media(max-width:720px){
+ .christmas-preview .christmas-snow{opacity:.93;}
+ .christmas-preview .christmas-flakes-near{opacity:.76;}
+ .christmas-preview .christmas-sleigh{width:130px;top:3%;}
+ .christmas-preview .christmas-version{font-size:12px;}
+}
+/* Honor the OS preference until the visitor explicitly enables motion. */
+@media(prefers-reduced-motion:reduce){
+ .christmas-preview.christmas-motion.christmas-motion-explicit > header::after{animation:christmas-lights 5s ease-in-out infinite!important;}
+ .christmas-preview.christmas-motion.christmas-motion-explicit .christmas-flakes-far{animation:christmas-far-v3 17s linear infinite!important;}
+ .christmas-preview.christmas-motion.christmas-motion-explicit .christmas-flakes-mid{animation:christmas-mid-v3 13s linear infinite!important;}
+ .christmas-preview.christmas-motion.christmas-motion-explicit .christmas-flakes-near{animation:christmas-near-v3 10s linear infinite!important;}
+ .christmas-preview.christmas-motion.christmas-motion-explicit .christmas-sleigh{animation:christmas-sleigh-v3 25s linear infinite!important;}
+ .christmas-preview.christmas-motion.christmas-motion-explicit .christmas-star{animation:christmas-star 15s linear infinite!important;}
+}
