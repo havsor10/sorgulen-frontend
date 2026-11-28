@@ -36,8 +36,9 @@
 
   <link rel="stylesheet" href="style.css?v=20261111-badge1" />
   <link rel="stylesheet" href="maintenance.css" />
-  <link rel="stylesheet" href="christmas-preview.css?v=20261128-1" />
+  <link rel="stylesheet" href="christmas-preview.css?v=20261128-2" />
   <script src="maintenance.js" defer></script>
+  <script src="christmas-preview.js?v=20261128-2" defer></script>
 
 <script type="application/ld+json">
 {
@@ -129,7 +130,14 @@
   </header>
 
   <section id="hjem" class="hero premium-hero">
-    <div class="christmas-snow" aria-hidden="true"></div>
+    <div class="christmas-snow" aria-hidden="true">
+      <div class="christmas-aurora"></div>
+      <div class="christmas-flakes christmas-flakes-far"></div>
+      <div class="christmas-flakes christmas-flakes-mid"></div>
+      <div class="christmas-flakes christmas-flakes-near"></div>
+      <div class="christmas-star"></div>
+      <div class="christmas-sleigh"></div>
+    </div>
     <div class="hero-inner premium-hero-inner">
       <div class="hero-copy reveal-on-load">
         <span class="eyebrow">Lokalt • effektivt • trygt</span>
@@ -139,7 +147,10 @@
           <a href="booking.html?service=Brøyting" class="btn primary hero-cta">Bestill tjeneste</a>
           <a href="prisestimat.html" class="btn secondary">Få prisestimat</a>
         </div>
-        <p class="christmas-hero-note">Vi ønsker deg en fin førjulstid</p>
+        <div class="christmas-note-row">
+          <p class="christmas-hero-note">Vi ønsker deg en fin førjulstid</p>
+          <button type="button" class="christmas-motion-toggle" hidden aria-pressed="false">Sett juleeffekter på pause</button>
+        </div>
         <div class="trust-row" aria-label="Nøkkelfordeler">
           <div class="trust-pill"><strong>Ingen forskudd</strong><span>Betaling etter utført arbeid</span></div>
           <div class="trust-pill"><strong>Lokal service</strong><span>Florø og omegn</span></div>
@@ -391,6 +402,17 @@
 
 <section class="wrap christmas-greeting-wrap" aria-label="Julehilsen">
   <div class="christmas-greeting">
+    <div class="christmas-tree" aria-hidden="true">
+      <svg viewBox="0 0 100 116" width="72" height="84">
+        <path d="M50 15 27 49h12L17 75h15L8 99h84L68 75h15L61 49h12Z" fill="#205340" stroke="#679d79" stroke-width="1"/>
+        <path d="M50 15 50 99H8L32 75H17L39 49H27Z" fill="#153e31"/>
+        <path d="M45 99h10v12H45Z" fill="#8a6845"/>
+        <path d="M50 2 53 9 61 10 55 15 57 23 50 19 43 23 45 15 39 10 47 9Z" fill="#ffe6a6" class="christmas-tree-star"/>
+        <path d="M31 46q19 16 41 4M21 73q33 18 57-3M13 92q39 15 73-3" fill="none" stroke="#ba9a56" stroke-width="1.1" opacity=".8"/>
+        <g fill="#ffe7b4" class="christmas-tree-lights"><circle cx="38" cy="46" r="2.1"/><circle cx="59" cy="55" r="2.2"/><circle cx="29" cy="76" r="2.1"/><circle cx="49" cy="83" r="2.3"/><circle cx="72" cy="77" r="2.1"/></g>
+        <g fill="#eaa69b" class="christmas-tree-lights-alt"><circle cx="51" cy="36" r="2.1"/><circle cx="41" cy="65" r="2.2"/><circle cx="66" cy="92" r="2.2"/><circle cx="22" cy="94" r="2.2"/></g>
+      </svg>
+    </div>
     <span class="christmas-kicker">En hilsen fra oss</span>
     <h2>God jul og godt nytt år!</h2>
     <p>Takk for tilliten. Vi ønsker alle våre kunder en trygg og hyggelig juletid.</p>
