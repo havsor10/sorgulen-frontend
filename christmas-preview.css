@@ -1,0 +1,47 @@
+/* Christmas 2026 — isolated homepage preview. No changes to functional UI. */
+body.christmas-preview > header { border-bottom-color: rgba(224,183,105,.28); }
+body.christmas-preview > header::after {
+  content:""; position:absolute; left:0; right:0; bottom:-17px; height:28px;
+  background:url("assets/christmas-2026/lights.svg") repeat-x top center / 168px 28px;
+  pointer-events:none; z-index:1;
+}
+.christmas-preview .premium-hero { border-bottom-color:rgba(231,190,111,.24); }
+.christmas-preview .christmas-snow {
+  position:absolute; inset:0; z-index:1; pointer-events:none;
+  background:url("assets/christmas-2026/snow.svg") repeat;
+  opacity:.64; animation:christmas-drift 4.8s linear both;
+  mask-image:linear-gradient(90deg,rgba(0,0,0,.45),#000 70%);
+}
+@keyframes christmas-drift { from{background-position:0 -85px}to{background-position:16px 0} }
+.christmas-preview .hero-panel { border-color:rgba(236,195,119,.37); box-shadow:0 26px 75px rgba(0,0,0,.38),0 0 45px rgba(213,169,86,.09); }
+.christmas-preview .christmas-hero-note {
+  display:flex;align-items:center;gap:9px; color:#f2d39b;
+  font-size:14px;font-weight:600;margin:18px 0 0;letter-spacing:.015em;
+}
+.christmas-preview .christmas-hero-note::before {content:"✧";font-size:21px;line-height:1;}
+.christmas-preview .christmas-greeting {
+  position:relative; isolation:isolate; overflow:hidden;
+  box-sizing:border-box; max-width:var(--max); margin:0 auto;
+  padding:28px 60px; text-align:center;
+  background:linear-gradient(110deg,#10291f,#101b20 52%,#10291f);
+  border:1px solid rgba(231,190,111,.33); border-radius:20px;
+}
+.christmas-preview .christmas-greeting::before,.christmas-preview .christmas-greeting::after {
+  content:"";position:absolute;pointer-events:none;z-index:-1;
+  width:280px;height:100px;bottom:0;opacity:.88;
+  background:url("assets/christmas-2026/garland.svg") no-repeat center / contain;
+}
+.christmas-preview .christmas-greeting::before {left:0;}
+.christmas-preview .christmas-greeting::after {right:0;transform:scaleX(-1);}
+.christmas-preview .christmas-greeting h2 {margin:4px 0 8px;color:#f6dbab;font-size:clamp(24px,4vw,34px);letter-spacing:-.025em;}
+.christmas-preview .christmas-greeting p {margin:0 auto;max-width:42ch;color:#e1e8e3;font-size:16px;}
+.christmas-preview .christmas-greeting .christmas-kicker {font-size:12px;letter-spacing:.15em;font-weight:700;color:#e1bd7c;text-transform:uppercase;}
+.christmas-preview .christmas-greeting-wrap {padding-top:0;padding-bottom:16px;}
+.christmas-preview .site-footer-premium {border-top-color:rgba(231,190,111,.22);}
+@media(max-width:720px){
+  .christmas-preview .christmas-snow{opacity:.44;}
+  .christmas-preview .christmas-greeting{padding:27px 18px 38px;}
+  .christmas-preview .christmas-greeting::before,.christmas-preview .christmas-greeting::after{width:130px;height:48px;opacity:.48;}
+  .christmas-preview .christmas-hero-note{margin-top:13px;}
+}
+@media(prefers-reduced-motion:reduce){.christmas-preview .christmas-snow{animation:none;}}

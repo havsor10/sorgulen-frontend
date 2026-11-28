@@ -36,6 +36,7 @@
 
   <link rel="stylesheet" href="style.css?v=20261111-badge1" />
   <link rel="stylesheet" href="maintenance.css" />
+  <link rel="stylesheet" href="christmas-preview.css?v=20261128-1" />
   <script src="maintenance.js" defer></script>
 
 <script type="application/ld+json">
@@ -92,7 +93,7 @@
   <link rel="preconnect" href="https://sorgulen-backend-2.onrender.com" crossorigin>
   <link rel="dns-prefetch" href="https://sorgulen-backend-2.onrender.com">
 </head>
-<body>
+<body class="christmas-preview">
 
   <header>
     <div class="bar">
@@ -128,6 +129,7 @@
   </header>
 
   <section id="hjem" class="hero premium-hero">
+    <div class="christmas-snow" aria-hidden="true"></div>
     <div class="hero-inner premium-hero-inner">
       <div class="hero-copy reveal-on-load">
         <span class="eyebrow">Lokalt • effektivt • trygt</span>
@@ -137,6 +139,7 @@
           <a href="booking.html?service=Brøyting" class="btn primary hero-cta">Bestill tjeneste</a>
           <a href="prisestimat.html" class="btn secondary">Få prisestimat</a>
         </div>
+        <p class="christmas-hero-note">Vi ønsker deg en fin førjulstid</p>
         <div class="trust-row" aria-label="Nøkkelfordeler">
           <div class="trust-pill"><strong>Ingen forskudd</strong><span>Betaling etter utført arbeid</span></div>
           <div class="trust-pill"><strong>Lokal service</strong><span>Florø og omegn</span></div>
@@ -385,6 +388,14 @@
       });
     })();
   </script>
+
+<section class="wrap christmas-greeting-wrap" aria-label="Julehilsen">
+  <div class="christmas-greeting">
+    <span class="christmas-kicker">En hilsen fra oss</span>
+    <h2>God jul og godt nytt år!</h2>
+    <p>Takk for tilliten. Vi ønsker alle våre kunder en trygg og hyggelig juletid.</p>
+  </div>
+</section>
 
 <footer class="site-footer-premium" role="contentinfo">
   <div class="footer-inner">
