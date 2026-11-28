@@ -1,12 +1,25 @@
 <!doctype html>
-<html lang="no">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta http-equiv="refresh" content="0; url=hjem.html">
-  <title>Oversikt – Sørgulen admin</title>
-</head>
-<body>
-  <p>Denne siden er slått sammen med Hjem. <a href="hjem.html">Åpne Hjem</a>.</p>
-</body>
-</html>
+<html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow,noarchive"><title>Control Center – Sørgulen testadmin</title><link rel="stylesheet" href="enterprise.css?v=20261128-1"><script src="../config.js"></script><script defer src="enterprise-model.js?v=20261128-1"></script><script defer src="enterprise.js?v=20261128-1"></script></head>
+<body class="enterprise">
+<a class="skip" href="#content">Gå til innhold</a>
+<div class="enterprise-layout">
+<aside class="side" id="side"><a class="brand" href="#oversikt"><img src="../assets/logo.png" alt="" width="42" height="42"><span><strong>SØRGULEN</strong><small>INDUSTRISERVICE · TEST</small></span></a>
+<div class="side-label">VIRKSOMHET</div>
+<nav id="modules" aria-label="Arbeidsområder">
+<a data-view="oversikt" href="#oversikt"><span>◫</span> Control Center</a>
+<a data-view="oppdrag" href="#oppdrag"><span>▤</span> Oppdrag</a>
+<a data-view="plan" href="#plan"><span>▦</span> Planlegging</a>
+<a data-view="kunder" href="#kunder"><span>◎</span> Kunder og salg</a>
+<a data-view="okonomi" href="#okonomi"><span>◉</span> Økonomi</a>
+<a data-view="ressurser" href="#ressurser"><span>◇</span> Maskiner og lager</a>
+<a data-view="innboks" href="#innboks"><span>↘</span> Innboks og oppfølging</a>
+<a data-view="system" href="#system"><span>⚙</span> System</a>
+</nav>
+<div class="side-bottom"><a class="field-switch" href="felt.html">↔ Åpne feltadmin</a><a href="hjem.html">Mine aktive oppdrag</a><button type="button" id="logout">Logg ut av testadmin</button><small>Separat testdatabase<br>Ingen ekte regnskap eller utsendinger.</small></div></aside>
+<div class="workspace"><header class="top"><button id="menu" type="button" aria-expanded="false" aria-controls="side">☰ <span>Meny</span></button><div class="top-title"><span>VIRKSOMHETSSTYRING</span><strong id="crumb">Control Center</strong></div><button id="search-open" type="button">⌕ <span>Søk i admin</span></button><a class="top-field" href="felt.html">Feltadmin ↗</a></header>
+<main id="content" tabindex="-1"><div class="page-heading"><div><p class="eyebrow" id="date"></p><h1 id="page-title">Control Center</h1><p id="subtitle">Samlet kontroll over arbeidsdagen og virksomheten.</p></div><button class="button secondary" id="refresh" type="button">↻ Oppdater</button></div>
+<div id="status" role="status" class="status">Henter testdata …</div>
+<div id="view" aria-live="polite"></div></main>
+<nav class="mobile-nav" aria-label="Hurtignavigasjon"><a href="#oversikt">◫<small>Oversikt</small></a><a href="#oppdrag">▤<small>Oppdrag</small></a><a href="#plan">▦<small>Plan</small></a><a href="#okonomi">◉<small>Økonomi</small></a><a href="felt.html">↗<small>Felt</small></a></nav></div></div>
+<dialog id="search-dialog"><div class="dialog-head"><h2>Finn det du trenger</h2><button id="search-close" type="button" aria-label="Lukk søk">×</button></div><label for="global-search">Søk etter funksjon, kunde eller oppdrag</label><input id="global-search" type="search" autocomplete="off" placeholder="F.eks. kvittering, kunde, brøyting"><div id="search-results"></div></dialog>
+<noscript>JavaScript er nødvendig for denne arbeidsflaten. <a href="hjem.html">Åpne eksisterende admin</a>.</noscript></body></html>

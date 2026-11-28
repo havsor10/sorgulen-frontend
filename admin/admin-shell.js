@@ -74,6 +74,7 @@
           ${primaryNavItems.map((item) => `<a class="admin-nav-link${activeClass(item.key)}" href="${item.href}"${activeAttr(item.key)}><span>${item.label}</span>${badge(item.key)}</a>`).join("")}
         </nav>
         <div class="admin-header-actions">
+          <a class="admin-quiet-action admin-enterprise-link" href="oversikt.html">Control Center</a>
           <a class="admin-quiet-action" href="${modeSwitchHref}" data-admin-mode="${modeSwitchMode}"><span>${modeSwitchLabel}</span></a>
           <button class="admin-quiet-action admin-more-desktop${moreIsActive ? " is-active" : ""}" id="adminMoreDesktopButton" type="button" aria-expanded="false" aria-controls="adminMoreMenu">Mer ${badge("more")}</button>
         </div>
@@ -94,6 +95,11 @@
       <a class="admin-more-link admin-more-mode" href="${modeSwitchHref}" data-admin-mode="${modeSwitchMode}"><span>${modeSwitchLabel}</span><span aria-hidden="true">›</span></a>
 
       <div class="admin-more-group admin-more-group-primary">
+        <p class="admin-more-group-title">Virksomhetsstyring</p>
+        <a class="admin-more-link" href="oversikt.html"><span>Control Center</span><span aria-hidden="true">›</span></a>
+        <a class="admin-more-link" href="oversikt.html#plan"><span>Planlegging</span><span aria-hidden="true">›</span></a>
+        <a class="admin-more-link" href="oversikt.html#okonomi"><span>Økonomisenter</span><span aria-hidden="true">›</span></a>
+        <a class="admin-more-link" href="oversikt.html#ressurser"><span>Maskiner og lager</span><span aria-hidden="true">›</span></a>
         <p class="admin-more-group-title">Må håndteres</p>
         <a class="admin-more-link${pageClass("requests")}" href="foresporsler.html"><span>Prisforespørsler</span><span class="admin-more-tail">${badge("requests")}<span aria-hidden="true">›</span></span></a>
         <a class="admin-more-link${pageClass("bookings")}" href="admin-dashboard.html"><span>Bookinger</span><span class="admin-more-tail">${badge("bookings")}<span aria-hidden="true">›</span></span></a>

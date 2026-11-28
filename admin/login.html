@@ -14,7 +14,7 @@
   <main class="login-main">
     <section class="login-wrap">
       <h2>Logg inn</h2>
-      <p>Bruk admin-nøkkelen fra Render miljøvariabelen <strong>ADMIN_KEY</strong>.</p>
+      <p>Bruk den separate admin-nøkkelen for testmiljøet. Ikkje bruk produksjonsnøkkel.</p>
       <form id="loginForm" class="login-form">
         <input id="adminKey" type="password" placeholder="Admin-nøkkel" required>
         <button type="submit">Logg inn</button>
@@ -39,7 +39,7 @@
         const res = await fetch(`${API_BASE}/admin/ping`, { headers: { "x-admin-key": key } });
         if (!res.ok) throw new Error("Feil admin-nøkkel");
         localStorage.setItem(KEY_STORAGE, key);
-        window.location.href = "felt.html";
+        window.location.href = new URLSearchParams(location.search).get("return") === "oversikt" ? "oversikt.html" : "felt.html";
       } catch (err) {
         msg.textContent = err.message || "Innlogging feilet.";
         msg.className = "status-message error";

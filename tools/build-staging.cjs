@@ -3,10 +3,10 @@ const fs = require("node:fs");
 const path = require("node:path");
 const root = path.resolve(__dirname, "..");
 const { execFileSync } = require("node:child_process");
-for (const name of ["booking.js","min-jobb.js","admin/broyting.js"]) {
+for (const name of ["booking.js","min-jobb.js","admin/broyting.js","admin/enterprise.js","admin/enterprise-model.js"]) {
   execFileSync(process.execPath, ["--check", path.join(root, name)], { stdio: "inherit" });
 }
-execFileSync(process.execPath, ["--test","tests/staging-snow.test.cjs"], { cwd: root, stdio: "inherit" });
+execFileSync(process.execPath, ["--test","tests/staging-snow.test.cjs","tests/staging-enterprise.test.cjs"], { cwd: root, stdio: "inherit" });
 
 const out = path.join(root, "staging-dist");
 const TEST_ORIGIN = "https://sorgulen-testmiljo.onrender.com";
