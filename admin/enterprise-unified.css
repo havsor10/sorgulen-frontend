@@ -1,0 +1,186 @@
+/* Staging-only unified enterprise design. Original IDs, handlers and status visibility remain intact. */
+:root{--admin-bg:#0c1118;--admin-card:#141e2a;--admin-panel:#111a25;--admin-hover:#1e2e40;--admin-chip:#203042;--admin-border:#35465a;--admin-border-soft:#2a394b;--admin-text:#f3f6fb;--admin-text-soft:#e2eaf3;--admin-muted:#aab9ca;--admin-subtle:#95a6ba;--admin-action:#6ed9b2;--admin-info:#91c5ff;--admin-info-soft:#172e49;--admin-success:#6ed9b2;--admin-success-soft:#123b31;--admin-warning:#ffd291;--admin-warning-soft:#382c20;--admin-danger:#ffb0ab;--admin-danger-soft:#462b2a;--admin-radius:14px;--admin-card-padding:20px;--admin-max:1440px}
+html{background:var(--admin-bg);color-scheme:dark}
+body:not(.enterprise){font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body[data-admin-redesign]:not(.enterprise){background:var(--admin-bg);color:var(--admin-text)}
+body[data-admin-redesign] :is(button,a,input,select,textarea,summary):focus-visible{outline:3px solid #6ed9b2;outline-offset:3px}
+.enterprise-side{display:none}
+body.admin-app .admin-app-header{background:var(--admin-bg);border-color:var(--admin-border);backdrop-filter:none}
+body.admin-app .admin-header-inner{min-height:72px;padding-inline:24px}
+body.admin-app .admin-brand strong{font-size:19px}
+body.admin-app .admin-brand span{color:var(--admin-muted)}
+body.admin-app :is(.admin-main,.work-order-main,.customer-main,.detail-main,.portal-admin-main){min-width:0;max-width:1440px;width:100%;padding:28px clamp(16px,3vw,36px) 90px;margin:0 auto}
+body.admin-app :is(.admin-main--narrow,.home-main,.fd-wrap,.nf-wrap){max-width:1000px}
+body.admin-app .admin-page-header{align-items:center;gap:16px;margin:0 0 24px}
+body.admin-app .admin-page-header h1{font-size:clamp(28px,3.5vw,42px);letter-spacing:-.035em}
+body.admin-app .admin-page-header p:not(.admin-eyebrow){font-size:15px;line-height:1.55}
+body.admin-app :is(.admin-eyebrow,.eyebrow,.section-kicker){color:#a8bdcc;letter-spacing:.09em;font-size:11px}
+body.admin-app :is(.admin-card,.home-card,.task-list,.booking-list,.order-card,.detail-card,.create-form,.customer-section,.customer-card,.work-history-card,.meter-card,.req-card,.nf-card,.fd-card,.chart-card,.stat-card,.inv-stat){border-color:var(--admin-border);border-radius:var(--admin-radius);box-shadow:none}
+body.admin-app :is(.admin-card,.req-card,.nf-card,.fd-card,.customer-section,.detail-card,.stat-card){padding:clamp(15px,2vw,24px)}
+body.admin-app :is(.primary-btn,.primary-action,.btn-new,.btn-save,.work-btn-start,.work-btn-complete){background:#6ed9b2;border-color:#6ed9b2;color:#09251c;font-weight:800;min-height:50px}
+body.admin-app :is(.primary-btn,.primary-action):visited{color:#09251c}
+body.admin-app :is(.secondary-btn,.secondary-action,.btn-edit,.btn-cancel,.btn-add-line,.btn-preview,.btn-send,.btn-paid,.details-link,.btn-rates,.btn-lookup){min-height:48px;font-weight:730;border-radius:10px}
+body.admin-app :is(.danger-btn,.danger-action,.btn-delete,.deleteBookingBtn,.btn-remove-line){min-height:48px;border-color:#9c5b5d;color:#ffceca}
+body.admin-app :is(.admin-icon-button,.icon-btn,.icon-action){min-height:48px;min-width:48px}
+body.admin-app :is(input,select,textarea):not([type=checkbox]):not([type=radio]):not([type=hidden]){font-size:16px;min-height:48px;border-color:#465972}
+body.admin-app :is(input[type=checkbox],input[type=radio]){accent-color:#6ed9b2}
+body.admin-app :is(.admin-filter-tabs,.navbar){gap:8px}
+body.admin-app :is(.admin-filter-tabs .tab,.navbar .tab){min-height:46px;font-size:14px}
+body.admin-app :is(.admin-toolbar,.admin-tools,.customer-toolbar,.history-toolbar,.inv-toolbar){gap:12px}
+body.admin-app :is(.customer-card,.order-card,.work-history-card){overflow-wrap:anywhere}
+body.admin-app :is(.admin-more-link,.admin-more-mode){min-height:48px;font-size:15px}
+body.admin-app .admin-more-menu{background:var(--admin-panel);border-color:var(--admin-border)}
+body.admin-app :is(.modal-card,.home-sheet){border-color:#486078}
+body.admin-app .modal-header h2{font-size:clamp(20px,3vw,28px)}
+body.admin-app .work-order-detail-modal :is(.field-workspace,.field-hero,.field-log,.field-more){min-width:0}
+body.admin-app :is(.field-work-controls .work-btn,.field-add-main,.field-portal-action){min-height:56px;font-size:16px}
+body.admin-app .home-working-card .home-work-select{min-height:112px}
+body.admin-app .home-work-action{min-height:58px;font-size:16px}
+body.admin-app .home-work-more{min-height:49px;font-size:14px;display:flex;align-items:center}
+body.admin-app .home-work-name{font-size:clamp(20px,2.6vw,28px)}
+body.admin-app .home-work-current strong{font-variant-numeric:tabular-nums}
+body.admin-app .home-work-legend span{font-size:12px}
+body.admin-app .home-followup-label strong{font-size:18px}
+body.admin-app .home-followup-label small{font-size:14px}
+body.admin-app .task-item{min-height:60px}
+body.admin-app .task-row-actions button{min-height:44px}
+body.admin-app .req-customer{font-size:20px}
+body.admin-app .inv-stat{padding:16px;flex:1;min-width:125px}
+body.admin-app .inv-stat .num{font-size:clamp(23px,2.8vw,32px);font-variant-numeric:tabular-nums}
+body.admin-app .fd-num{font-size:30px}
+body.admin-app .nf-total{font-size:24px;font-variant-numeric:tabular-nums}
+body.admin-app .customer-card h2{font-size:20px}
+body.admin-app .customer-card p{font-size:14px}
+body.admin-app .customer-collapse>summary{min-height:58px}
+body.admin-app .customer-primary-actions :is(button,a){min-height:52px}
+body.admin-app .mailbox-tab,body.admin-app .mailbox-sync-btn,body.admin-app .studio-filter{min-height:48px}
+body.admin-app .portal-fullscreen-header :is(button,a),body.admin-app [role=tab]{min-height:48px}
+body.admin-app .snow-main{max-width:1120px}
+.snow-command-grid,.field-command-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 20px}
+.snow-command,.field-command{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:6px;min-width:0;min-height:98px;border:1px solid #536d87;border-radius:14px;padding:16px;text-align:left;text-decoration:none!important;font-family:inherit;color:#f4f8fd!important;background:#203245;cursor:pointer;overflow-wrap:anywhere}
+.snow-command strong,.field-command strong{font-size:18px;line-height:1.25;font-weight:850}
+.snow-command span,.field-command span{font-size:14px;line-height:1.35;color:#e1eaf6}
+.snow-command-blue,.field-command-blue{background:#214c76;border-color:#5b9bd9}
+.snow-command-green,.field-command-green{background:#1d654b;border-color:#72c7a4}
+.field-command-neutral{background:#203245;border-color:#536d87}
+body.admin-app .snow-topbar h1{font-size:clamp(28px,4vw,40px)}
+body.admin-app :is(.snow-focus,.snow-launch,.snow-inbox,.snow-queue-item){border-radius:16px;scroll-margin-top:120px}
+body.admin-app .snow-focus h2{font-size:clamp(25px,4vw,38px);overflow-wrap:anywhere}
+body.admin-app .snow-address{font-size:clamp(17px,2.5vw,21px)}
+body.admin-app .snow-timer{font-variant-numeric:tabular-nums}
+body.admin-app :is(.snow-primary,.snow-secondary,.snow-danger,.snow-finish-round){min-height:58px;font-size:16px;line-height:1.3;padding:12px 16px}
+body.admin-app .snow-primary{background:#6ed9b2;color:#09251c;border-color:#6ed9b2}
+body.admin-app .snow-danger,body.admin-app .snow-finish-round{background:#652c32;color:#fff;border-color:#c17879}
+body.admin-app .snow-queue-item{padding:15px;min-height:88px}
+body.admin-app .snow-queue-main strong,body.admin-app .snow-inbox-item strong{font-size:19px}
+body.admin-app .snow-queue-main p,body.admin-app .snow-inbox-item span{font-size:15px}
+body.admin-app :is(.snow-mini,.snow-queue-open,.snow-queue-manage){min-height:48px;min-width:48px}
+body.admin-app .snow-details>summary,body.admin-app .snow-round-tools>summary{min-height:52px;cursor:pointer}
+body.admin-app :is(#noRound,#activeRound,#snowInbox,#nextJobCard,#activeJobCard){scroll-margin-top:120px}
+body.field-body{--field-bg:#0c1118;--field-card:#141e2a;--field-panel:#111a25;--field-line:#3b4d62;--field-muted:#b4c3d3;--field-text:#f3f6fb;--field-accent:#6ed9b2;background:#0c1118;color:#f3f6fb}
+body.field-body .field-topbar{background:#111a25;border-color:#35465a}
+body.field-body .field-main{width:min(100%,1100px);max-width:1100px;padding-inline:clamp(14px,3vw,28px)}
+body.field-body .field-heading h1{font-size:clamp(31px,5vw,44px)}
+body.field-body .field-heading .field-kicker{font-size:12px}
+body.field-body .field-section-head h2{font-size:23px}
+body.field-body :is(.field-active-card,.field-job-card,.field-customer-card,.field-card){border-radius:16px;border-color:#40566d;background:#141e2a;padding:18px}
+body.field-body .field-active-card.is-running{border-color:#65cb9c;background:#142d28}
+body.field-body .field-active-top h2{font-size:clamp(26px,4vw,34px)}
+body.field-body .field-timer{font-size:clamp(44px,10vw,72px);font-variant-numeric:tabular-nums}
+body.field-body .field-timer-label{font-size:15px}
+body.field-body :is(.field-job-card-head h3,.field-customer-card-head h3){font-size:21px}
+body.field-body :is(.field-job-card-head p,.field-customer-card-head p,.field-job-meta span){font-size:15px;color:#c5d2df}
+body.field-body .field-state{font-size:13px;white-space:normal}
+body.field-body :is(.field-action-primary,.field-action-secondary,.field-primary-action,.field-primary-link,.field-primary-small,.field-text-btn,.field-quick-row button,.field-job-card-actions button,.field-job-card-actions a,.field-customer-actions button,.field-customer-actions a){min-height:58px;font-size:16px;font-weight:800;padding:12px;border-radius:12px}
+body.field-body .field-action-primary,body.field-body .field-job-card-actions .primary{background:#6ed9b2!important;color:#09251c!important;border-color:#6ed9b2!important}
+body.field-body .field-action-pause{background:#ffd291!important;color:#40280b!important;border-color:#ffd291!important}
+body.field-body .field-action-stop{background:#652c32!important;color:#fff!important;border-color:#c17879!important}
+body.field-body .field-sync-badge{min-height:48px;font-size:14px}
+body.field-body .field-mode-switch{min-height:48px;display:flex;align-items:center;font-size:14px}
+body.field-body .field-icon-btn{min-width:52px;min-height:52px}
+body.field-body .field-nav-item{min-height:58px;font-size:13px}
+body.field-body .field-plus{min-width:57px;min-height:57px}
+body.field-body .field-action-grid button{min-height:88px;font-size:17px}
+body.field-body .field-action-grid small{font-size:13px}
+body.field-body :is(.field-input,.field-select,.field-textarea,.field-search input){min-height:54px;font-size:17px}
+body.field-body #todayCustomers{scroll-margin-top:130px}
+body.field-body .field-snow-card .field-command+ .field-command{margin-top:12px}
+body[data-admin-redesign="login"]>header{background:#111a25;border-color:#35465a;padding:26px}
+.login-brand{display:flex;align-items:center;justify-content:center;gap:14px;text-align:left}
+.login-brand span{display:block;font-size:11px;letter-spacing:.12em;color:#b2c2d2}
+.login-brand h1{font-size:32px;letter-spacing:-.04em}
+body[data-admin-redesign="login"] .login-main{width:100%;padding:24px 16px}
+body[data-admin-redesign="login"] .login-wrap{width:min(100%,480px);max-width:480px;background:#141e2a;border:1px solid #35465a;border-radius:16px;padding:28px;margin:24px auto;text-align:left}
+body[data-admin-redesign="login"] .login-form{display:grid;gap:12px}
+body[data-admin-redesign="login"] .login-form input{min-height:56px;font-size:16px;width:100%}
+body[data-admin-redesign="login"] .login-form button{min-height:56px;background:#6ed9b2;color:#09251c;font-weight:800;border:0;border-radius:10px}
+.admin-entry{padding:24px;max-width:600px;margin:auto}.admin-entry a{display:block;padding:16px;margin:10px 0;background:#203245;color:white;text-decoration:none;border-radius:10px}
+@media(min-width:1024px){
+html:not(.portal-fullscreen) body.admin-app[data-admin-context="full"]{padding-left:244px;padding-bottom:0}
+html:not(.portal-fullscreen) body.admin-app[data-admin-context="full"] .enterprise-side{position:fixed;left:0;top:0;bottom:0;width:244px;z-index:790;background:#111a25;border-right:1px solid #35465a;display:flex;flex-direction:column;overflow-y:auto;padding:65px 13px 16px;gap:16px;text-align:left}
+.enterprise-side-brand{display:flex;gap:10px;align-items:center;padding:8px 8px 15px;border-bottom:1px solid #35465a;text-decoration:none}
+.enterprise-side-brand img{object-fit:contain}.enterprise-side-brand strong{display:block;letter-spacing:.07em;font-size:17px}.enterprise-side-brand small{display:block;color:#aab9ca;font-size:10px;letter-spacing:.04em}
+.enterprise-side nav{display:grid;gap:13px}.enterprise-side-group p{font-size:10px;font-weight:800;letter-spacing:.09em;color:#aab9ca;margin:0 0 5px;padding:0 8px}.enterprise-side-group a{display:flex;align-items:center;gap:10px;min-height:43px;padding:8px 9px;border-radius:9px;text-decoration:none;color:#b9c8d9;font-size:13px}.enterprise-side-group a strong{font-weight:650}.enterprise-side-group a>span:first-child{font-size:18px;width:20px;text-align:center}.enterprise-side-group a[aria-current=page]{background:#123b31;color:#6ed9b2;box-shadow:inset 3px 0 #6ed9b2}.enterprise-side-group a:hover{background:#203042;color:#fff}.enterprise-side-group .admin-nav-badge{margin-left:auto}
+.enterprise-side-foot{margin-top:auto;display:grid;gap:6px}.enterprise-side-foot a{padding:10px;background:#203042;border-radius:9px;text-decoration:none;min-height:44px;font-weight:700}.enterprise-side-foot small{padding:6px;color:#aab9ca}
+html:not(.portal-fullscreen) body.admin-app[data-admin-context="full"] .admin-desktop-nav{display:none}
+html:not(.portal-fullscreen) body.admin-app[data-admin-context="full"] .admin-header-actions{margin-left:auto}
+html:not(.portal-fullscreen) body.admin-app[data-admin-context="full"] .admin-more-desktop{display:none}
+body.field-body .field-command-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+body.field-body .field-view[data-view=jobs] .field-stack,body.field-body .field-view[data-view=customers] .field-stack{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:1023px){body.admin-app .admin-header-inner{padding-inline:14px}body.admin-app .admin-desktop-nav{gap:0}}
+@media(max-width:800px){
+body.admin-app :is(.admin-main,.work-order-main,.customer-main,.detail-main,.portal-admin-main){padding:20px 13px 105px;max-width:100%;min-width:0}
+body.admin-app .admin-page-header{display:grid;grid-template-columns:1fr;align-items:start;margin-bottom:19px}
+body.admin-app .admin-page-actions{justify-content:flex-start;display:flex;flex-wrap:wrap}
+body.admin-app .admin-page-actions .primary-btn{flex:1;min-height:54px}
+body.admin-app .admin-header-inner{min-height:64px}
+body.admin-app .admin-mobile-nav{min-height:74px;background:#111a25;border-color:#35465a}
+body.admin-app .admin-mobile-link{min-height:58px;border-radius:10px}
+body.admin-app .admin-mobile-label{font-size:12px}
+body.admin-app .admin-mobile-link.is-active{background:#123b31;color:#6ed9b2}
+body.admin-app .admin-more-menu{bottom:calc(84px + env(safe-area-inset-bottom));max-height:calc(100dvh - 155px)}
+body.admin-app .admin-card{padding:16px}
+body.admin-app :is(.admin-toolbar,.admin-tools,.customer-toolbar,.history-toolbar,.inv-toolbar){flex-wrap:wrap;align-items:stretch}
+body.admin-app :is(.admin-toolbar,.admin-tools,.customer-toolbar,.history-toolbar) input{min-width:0;flex-basis:100%}
+body.admin-app :is(.req-actions,.fd-actions,.nf-actions,.modal-actions,.confirm-actions){gap:10px;flex-wrap:wrap}
+body.admin-app :is(.req-actions,.fd-actions,.nf-actions) > :is(button,a){flex:1 1 140px;min-height:54px;font-size:15px;white-space:normal}
+body.admin-app :is(.modal-card,.home-sheet){width:100%;max-width:100%;padding:15px}
+body.admin-app .home-work-action-row{grid-template-columns:1fr}
+body.admin-app .home-work-action{min-height:62px;font-size:17px}
+body.admin-app .home-work-more{min-height:54px}
+body.admin-app .home-work-list{grid-template-columns:1fr}
+body.admin-app .home-work-state{font-size:12px}
+body.admin-app .home-work-service{font-size:14px}
+body.admin-app .home-work-total{font-size:13px}
+body.admin-app .home-work-total strong{font-size:17px}
+body.admin-app .snow-command-grid,body.field-body .field-command-grid{grid-template-columns:1fr;gap:9px}
+.snow-command,.field-command{min-height:76px;padding:14px 16px}
+.snow-command strong,.field-command strong{font-size:18px}
+body.admin-app .snow-focus-actions,body.admin-app .snow-command-row{grid-template-columns:1fr}
+body.admin-app .snow-focus-actions :is(button,a){min-height:68px;font-size:18px;width:100%}
+body.admin-app .snow-queue-item{grid-template-columns:minmax(0,1fr);gap:10px}
+body.admin-app .snow-queue-number{justify-self:start}
+body.admin-app .snow-queue-actions{width:100%;display:flex;flex-wrap:wrap}
+body.admin-app .snow-queue-actions :is(button,a){flex:1 1 100px;min-height:54px}
+body.admin-app .snow-inbox-item{grid-template-columns:1fr}
+body.field-body .field-main{padding-bottom:110px}
+body.field-body .field-main-actions,body.field-body .field-job-card-actions-simple{grid-template-columns:1fr!important}
+body.field-body :is(.field-action-primary,.field-action-secondary){min-height:67px;font-size:19px}
+body.field-body .field-quick-row button{min-height:58px}
+body.field-body .field-job-card-actions-simple a{min-height:54px;font-size:16px}
+body.field-body .field-job-card-actions-simple button{min-height:60px}
+body.field-body .field-active-top{gap:8px}
+body.field-body .field-job-card,body.field-body .field-customer-card{width:100%;padding:16px}
+body.field-body .field-action-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+body.field-body .field-action-grid button{min-height:96px}
+body.field-body .field-nav{padding-bottom:max(10px,env(safe-area-inset-bottom))}
+body.admin-app .portal-admin-main{padding-bottom:140px}
+html.portal-fullscreen body.admin-app .portal-admin-main{padding:0 0 28px;width:min(100% - 20px,880px)}
+}
+@media(min-width:721px) and (max-width:800px){body.admin-app .admin-header-actions{gap:4px}body.admin-app .admin-header-actions .admin-quiet-action{padding:0 7px}}
+@media(max-width:380px){body.field-body .field-action-grid{grid-template-columns:1fr}.snow-command strong,.field-command strong{font-size:17px}body.admin-app .admin-mobile-label{font-size:10px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+/* Preserve fullscreen portal isolation and never show content explicitly hidden by workflow. */
+html.portal-fullscreen body.admin-app{padding-left:0}
+body[data-admin-redesign] [hidden],body[data-admin-redesign] .hidden{display:none!important}

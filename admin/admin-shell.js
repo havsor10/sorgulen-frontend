@@ -18,8 +18,8 @@
   if (page === "home" && modeParams.get("from") !== "field") localStorage.setItem("sorgulen_admin_mode", "full");
 
   const fieldContext = modeParams.get("from") === "field" || localStorage.getItem("sorgulen_admin_mode") === "field";
-  const adminHomeHref = fieldContext ? "felt.html" : "hjem.html";
-  const modeSwitchHref = fieldContext ? "hjem.html" : "felt.html";
+  const adminHomeHref = fieldContext ? "felt.html" : "oversikt.html";
+  const modeSwitchHref = fieldContext ? "oversikt.html" : "felt.html";
   const modeSwitchLabel = fieldContext ? "Komplett admin" : "Feltadmin";
   const modeSwitchMode = fieldContext ? "full" : "field";
 
@@ -39,11 +39,11 @@
 
   const activeGroup = groupForPage(page);
   const navItems = [
-    { key: "home", href: adminHomeHref, label: "Hjem" },
+    { key: "home", href: adminHomeHref, label: fieldContext ? "Felt" : "Oversikt" },
     { key: "jobs", href: "oppdrag.html", label: "Oppdrag" },
     { key: "customers", href: "kunder.html", label: "Kunder" },
     { key: "incoming", href: "foresporsler.html", label: "Innkommende" },
-    { key: "economy", href: "fakturaer.html", label: "Økonomi" },
+    { key: "economy", href: "oversikt.html#okonomi", label: "Økonomi" },
   ];
   const primaryNavItems = navItems.filter((item) => ["home", "jobs", "customers", "economy"].includes(item.key));
   const mobileItems = primaryNavItems;
@@ -60,15 +60,28 @@
   const moreIsActive = secondaryPages.includes(page);
 
   document.body.classList.add("admin-app");
+  document.body.dataset.adminContext = fieldContext ? "field" : "full";
+  document.body.dataset.adminSection = page;
+  const deskGroups = [
+    ["VIRKSOMHET", [["control","◫","Control Center","oversikt.html"],["home","◷","Mine aktive oppdrag","hjem.html"],["jobs","▤","Oppdrag","oppdrag.html"],["plan","▦","Planlegging","oversikt.html#plan"],["customers","◎","Kunder","kunder.html"]]],
+    ["DRIFT OG SALG", [["snow","❄","Brøyting","broyting.html"+(fieldContext?"?from=field":"")],["bookings","▣","Bookinger","admin-dashboard.html"],["requests","↘","Prisforespørsler","foresporsler.html"],["rental-bookings","◇","Utleie","utleie-bestillinger.html"],["inventory","▧","Lager","lager.html"],["mailbox","✉","Innboks","innboks.html"]]],
+    ["ØKONOMI OG SYSTEM", [["economy","◉","Økonomisenter","oversikt.html#okonomi"],["invoices","▤","Fakturaer","fakturaer.html"],["fiken","◈","Fiken / bank","fiken.html"],["portal","↗","Kundeportal","kundeportal.html"],["website","◫","Nettside / AI","nettside.html"],["more","▥","Statistikk","statistikk.html"],["notifications","⚙","Varslinger","varslinger.html"],["autopilot","✦","Autopilot","autopilot.html"]]]
+  ];
+  const pageTitles = {home:"Mine aktive oppdrag",jobs:"Oppdrag",customers:"Kunder",snow:"Brøyting",bookings:"Bookinger",requests:"Prisforespørsler",mailbox:"Innboks",inventory:"Lager",invoices:"Fakturaer",fiken:"Fiken / bank",portal:"Kundeportal",website:"Nettside / AI",more:"Statistikk",notifications:"Varslinger","rental-bookings":"Utleie",autopilot:"Autopilot"};
   if (!["jobs", "customers", "home"].includes(page)) ensureAsset("script", { src: "ai-universal.js?v=20261002-u1" });
   ensureAsset("script", { src: "actionable-warnings.js?v=20261004-actions1" });
 
   mount.innerHTML = `
+    <aside class="enterprise-side" aria-label="Virksomhetsnavigasjon">
+      <a class="enterprise-side-brand" href="oversikt.html"><img src="../assets/logo.png" alt="" width="42" height="42"><span><strong>SØRGULEN</strong><small>INDUSTRISERVICE · TEST</small></span></a>
+      <nav>${deskGroups.map(([title,items])=>'<div class="enterprise-side-group"><p>'+title+'</p>'+items.map(([k,icon,label,href])=>`<a href="${href}"${k===page?' aria-current="page"':''}><span aria-hidden="true">${icon}</span><strong>${label}</strong>${badge(k)}</a>`).join("")+'</div>').join("")}</nav>
+      <div class="enterprise-side-foot"><a href="felt.html" data-admin-mode="field">↔ Feltadmin</a><a href="login.html" data-enterprise-logout>Logg ut</a><small>Isolert testmiljø</small></div>
+    </aside>
     <header class="admin-app-header">
       <div class="admin-header-inner">
         <a class="admin-brand" href="${adminHomeHref}" aria-label="Sørgulen admin – hjem">
           <span>Sørgulen Industriservice</span>
-          <strong>Admin</strong>
+          <strong>${pageTitles[page] || "Admin"}</strong>
         </a>
         <nav class="admin-desktop-nav" aria-label="Hovednavigasjon">
           ${primaryNavItems.map((item) => `<a class="admin-nav-link${activeClass(item.key)}" href="${item.href}"${activeAttr(item.key)}><span>${item.label}</span>${badge(item.key)}</a>`).join("")}
@@ -108,6 +121,8 @@
 
       <div class="admin-more-group">
         <p class="admin-more-group-title">Drift</p>
+        <a class="admin-more-link" href="hjem.html"><span>Mine aktive oppdrag</span><span aria-hidden="true">›</span></a>
+        <a class="admin-more-link" href="oppdrag.html"><span>Alle oppdrag</span><span aria-hidden="true">›</span></a>
         <a class="admin-more-link${pageClass("snow")}" href="broyting.html"><span>Brøyting</span><span class="admin-more-tail">${badge("snow")}<span aria-hidden="true">›</span></span></a>
         <a class="admin-more-link${pageClass("inventory")}" href="lager.html"><span>Lager</span><span class="admin-more-tail">${badge("inventory")}<span aria-hidden="true">›</span></span></a>
       </div>
@@ -122,6 +137,8 @@
         <summary>System og sjeldnere valg <span aria-hidden="true">⌄</span></summary>
         <div class="admin-more-advanced-body">
           <a class="admin-more-link${pageClass("rental-bookings")}" href="utleie-bestillinger.html"><span>Utleiebestillinger</span><span aria-hidden="true">›</span></a>
+          <a class="admin-more-link" href="autopilot.html"><span>Autopilot</span><span aria-hidden="true">›</span></a>
+          <a class="admin-more-link" href="ai-studio.html"><span>AI Studio</span><span aria-hidden="true">›</span></a>
           <a class="admin-more-link" href="statistikk.html"><span>Statistikk</span><span aria-hidden="true">›</span></a>
           <a class="admin-more-link${pageClass("website")}" href="nettside.html"><span>Nettside / priser</span><span aria-hidden="true">›</span></a>
           <a class="admin-more-link${pageClass("portal")}" href="kundeportal.html"><span>Kundeportal</span><span aria-hidden="true">›</span></a>
@@ -215,6 +232,7 @@
     if (event.key === "Escape" && moreMenu.classList.contains("is-open")) setMenu(false);
   });
 
+  document.querySelector("[data-enterprise-logout]")?.addEventListener("click", () => localStorage.removeItem("sorgulen_admin_key"));
   document.getElementById("logoutBtn")?.addEventListener("click", () => {
     localStorage.removeItem("sorgulen_admin_key");
   });

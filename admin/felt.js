@@ -339,12 +339,12 @@
 
   function activeActionButtons(job) {
     if (job.status === "active") {
-      return '<button class="field-action-primary" data-job-action="pause" data-id="' + esc(job._id) + '">PAUSE</button>' +
-        '<button class="field-action-secondary" data-job-action="stop" data-id="' + esc(job._id) + '">AVSLUTT ØKT</button>';
+      return '<button class="field-action-primary field-action-pause" data-job-action="pause" data-id="' + esc(job._id) + '">PAUSE</button>' +
+        '<button class="field-action-secondary field-action-stop" data-job-action="stop" data-id="' + esc(job._id) + '">AVSLUTT ØKT</button>';
     }
     if (job.status === "paused") {
       return '<button class="field-action-primary" data-job-action="resume" data-id="' + esc(job._id) + '">FORTSETT</button>' +
-        '<button class="field-action-secondary" data-job-action="stop" data-id="' + esc(job._id) + '">AVSLUTT ØKT</button>';
+        '<button class="field-action-secondary field-action-stop" data-job-action="stop" data-id="' + esc(job._id) + '">AVSLUTT ØKT</button>';
     }
     if (job.status === "stopped") {
       return '<button class="field-action-primary" data-job-action="resume" data-id="' + esc(job._id) + '">FORTSETT ARBEID</button>' +
@@ -401,9 +401,15 @@
     const root = el("todayQueue");
     const focus = state.home?.activeWorkOrder || state.home?.ongoingProject || state.home?.nextWorkOrder;
     const focusId = String(focus?._id || "");
-    const jobs = uniqueOpenJobs().filter((job) => String(job._id) !== focusId).slice(0, 7);
-    root.innerHTML = jobs.length ? jobs.map((job) => jobCard(job, true)).join("") : '<div class="field-empty">Ingen andre oppdrag i køen.</div>';
-    bindDynamic(root);
+    const all = uniqueOpenJobs().filter(job=>!job.isTest&&!job.trashedAt);
+    const date=osloToday();
+    const jobs=all.filter(job=>String(job._id)!==focusId&&job.jobDate===date);
+    const upcoming=all.filter(job=>String(job._id)!==focusId&&job.jobDate!==date);
+    root.innerHTML=jobs.length?jobs.map(job=>jobCard(job,true)).join(""):'<div class="field-empty">Ingen andre registrerte oppdrag i dag.</div>';
+    const next=el("upcomingQueue");
+    next.innerHTML=upcoming.length?upcoming.map(job=>jobCard(job,true)).join(""):'<div class="field-empty">Ingen andre åpne oppdrag i hentet liste.</div>';
+    el("fieldTodayCount").textContent=all.filter(job=>job.jobDate===date).length+" åpne oppdrag registrert i dag"+(state.workOrders.length>=100?" · lista kan vere avkorta":"");
+    bindDynamic(root);bindDynamic(next);
   }
 
   function renderJobs() {

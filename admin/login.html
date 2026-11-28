@@ -8,7 +8,7 @@
 </head>
 <body>
   <header>
-    <h1>Admin innlogging</h1>
+    <div class="login-brand"><img src="../assets/logo.png" alt="" width="54" height="54"><div><span>SØRGULEN INDUSTRISERVICE</span><h1>Testadmin</h1></div></div>
   </header>
 
   <main class="login-main">
@@ -16,7 +16,7 @@
       <h2>Logg inn</h2>
       <p>Bruk den separate admin-nøkkelen for testmiljøet. Ikkje bruk produksjonsnøkkel.</p>
       <form id="loginForm" class="login-form">
-        <input id="adminKey" type="password" placeholder="Admin-nøkkel" required>
+        <label for="adminKey">Testadmin-nøkkel</label><input id="adminKey" type="password" placeholder="Admin-nøkkel" autocomplete="current-password" required>
         <button type="submit">Logg inn</button>
       </form>
       <div id="loginMessage" class="status-message"></div>
@@ -39,7 +39,7 @@
         const res = await fetch(`${API_BASE}/admin/ping`, { headers: { "x-admin-key": key } });
         if (!res.ok) throw new Error("Feil admin-nøkkel");
         localStorage.setItem(KEY_STORAGE, key);
-        window.location.href = new URLSearchParams(location.search).get("return") === "oversikt" ? "oversikt.html" : "felt.html";
+        window.location.href = new URLSearchParams(location.search).get("return") === "oversikt" || matchMedia("(min-width:1024px)").matches ? "oversikt.html" : "felt.html";
       } catch (err) {
         msg.textContent = err.message || "Innlogging feilet.";
         msg.className = "status-message error";

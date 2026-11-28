@@ -2,7 +2,7 @@
 <html lang="no">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#090d12">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -25,7 +25,7 @@
   <main class="field-main">
     <div id="fieldStatus" class="field-status" role="status" aria-live="polite"></div>
     <button id="fieldSyncBadge" class="field-sync-badge is-synced" type="button" aria-haspopup="dialog">
-      <span class="field-sync-dot"></span><span id="fieldSyncText">Alt synkronisert</span>
+      <span class="field-sync-dot"></span><span id="fieldSyncText">Kontrollerer synkstatus</span>
     </button>
 
     <section class="field-view is-active" data-view="today" aria-labelledby="todayTitle">
@@ -37,19 +37,26 @@
         <button id="refreshFieldBtn" class="field-icon-btn" type="button" aria-label="Oppdater">↻</button>
       </div>
 
+      <div class="field-command-grid" aria-label="Hurtigvalg ute i felt">
+        <a class="field-command field-command-blue" href="broyting.html?from=field"><strong>BRØYTING</strong><span>Se kunder og start dagens runde</span></a>
+        <a class="field-command field-command-neutral" href="#todayCustomers"><strong>SE DAGENS OPPDRAG</strong><span id="fieldTodayCount">Henter dagens plan …</span></a>
+        <button class="field-command field-command-green" type="button" data-open="new-job"><strong>+ NYTT OPPDRAG</strong><span>Registrer kunde og arbeid</span></button>
+        <button class="field-command field-command-neutral" type="button" data-field-quick-register><strong>+ REGISTRER</strong><span>Tid, innkjøp, utstyr og notat</span></button>
+      </div>
       <section id="activeJobCard" class="field-card field-active-card">
         <div class="field-loading">Henter aktivt oppdrag…</div>
       </section>
 
       <div id="fieldPulse" class="field-pulse" hidden></div>
 
-      <section class="field-section">
+      <section class="field-section" id="todayCustomers">
         <div class="field-section-head">
-          <div><p class="field-kicker">Kø</p><h2>Neste oppdrag</h2></div>
+          <div><p class="field-kicker">Dagens plan</p><h2>Dagens øvrige oppdrag</h2></div>
           <button class="field-text-btn" type="button" data-open="new-job">+ Nytt</button>
         </div>
         <div id="todayQueue" class="field-stack"><div class="field-loading">Henter oppdrag…</div></div>
       </section>
+      <section class="field-section" id="upcomingCustomers"><div class="field-section-head"><div><p class="field-kicker">Planlegging</p><h2>Kommende og tidligere åpne oppdrag</h2></div></div><div id="upcomingQueue" class="field-stack"><div class="field-loading">Henter oppdrag …</div></div></section>
     </section>
 
     <section class="field-view" data-view="jobs" aria-labelledby="jobsTitle" hidden>
@@ -85,14 +92,10 @@
         <div class="field-snow-icon">❄</div>
         <h2>Dagens brøytearbeid</h2>
         <p>Åpne den eksisterende brøyteflaten for å se kundene, planlegge og starte runden.</p>
-        <a class="field-primary-link" href="broyting.html?from=field">Åpne dagens brøyteadmin</a>
+        <a class="field-command field-command-blue" href="broyting.html?from=field#customers"><strong>SE DAGENS BRØYTEKUNDER</strong><span>Bestillinger, kø og faste kunder</span></a>
+        <a class="field-command field-command-green" href="broyting.html?from=field#round"><strong>START / FORTSETT BRØYTERUNDE</strong><span>Åpner rundens kontroller</span></a>
       </article>
-      <article class="field-card field-roadmap-card">
-        <p class="field-kicker">Planlagt</p>
-        <div><strong>Nye henvendelser</strong><span>Registrer navn/adresse på sekunder.</span></div>
-        <div><strong>Smart kø</strong><span>Foreslå neste kunde uten å miste kontrollen.</span></div>
-        <div><strong>Brøyteflyt</strong><span>På vei → brøyter → ferdig → må tilbake.</span></div>
-      </article>
+
     </section>
   </main>
 

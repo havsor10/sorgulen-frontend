@@ -3,10 +3,10 @@ const fs = require("node:fs");
 const path = require("node:path");
 const root = path.resolve(__dirname, "..");
 const { execFileSync } = require("node:child_process");
-for (const name of ["booking.js","min-jobb.js","admin/broyting.js","admin/enterprise.js","admin/enterprise-model.js"]) {
+for (const name of ["booking.js","min-jobb.js","admin/broyting.js","admin/felt.js","admin/admin-shell.js","admin/enterprise.js","admin/enterprise-model.js"]) {
   execFileSync(process.execPath, ["--check", path.join(root, name)], { stdio: "inherit" });
 }
-execFileSync(process.execPath, ["--test","tests/staging-snow.test.cjs","tests/staging-enterprise.test.cjs"], { cwd: root, stdio: "inherit" });
+execFileSync(process.execPath, ["--test","tests/staging-snow.test.cjs","tests/staging-enterprise.test.cjs","tests/staging-full-admin.test.cjs"], { cwd: root, stdio: "inherit" });
 
 const out = path.join(root, "staging-dist");
 const TEST_ORIGIN = "https://sorgulen-testmiljo.onrender.com";
@@ -68,6 +68,32 @@ function copy(from, rel = "") {
   }
 }
 copy(root);
+// Design layer is applied to every admin page in staging only. A hash versions
+// shared CSS and local scripts so old Safari caches cannot mix layouts and code.
+const adminDir=path.join(out,"admin");
+const unifiedCss=fs.readFileSync(path.join(adminDir,"enterprise-unified.css"));
+const uiHash=createHash("sha256").update(unifiedCss).digest("hex").slice(0,12);
+let adminPageCount=0;
+for(const name of fs.readdirSync(adminDir).filter(n=>n.endsWith(".html"))){
+  const file=path.join(adminDir,name);
+  let html=fs.readFileSync(file,"utf8");
+  const section=name.slice(0,-5);
+  if(!/<\/head>/i.test(html)||!/<body[\s>]/i.test(html))throw new Error("Invalid admin HTML: "+name);
+  html=html.replace(/<body(?=[\s>])/i,'<body data-admin-redesign="'+section+'"');
+  html=html.replace(/<\/head>/i,'<link rel="stylesheet" href="enterprise-unified.css?v='+uiHash+'">\n</head>');
+  html=html.replace(/(<script\b[^>]*\bsrc=")([^"]+)(")/gi,(full,before,src,after)=>{
+    if(!/^(?:\.\.\/)?[\w.-]+\.js(?:\?[^"]*)?$/.test(src))return full;
+    const rel=src.split("?")[0];const asset=path.resolve(adminDir,rel);
+    if(!fs.existsSync(asset))return full;
+    const hash=createHash("sha256").update(fs.readFileSync(asset)).digest("hex").slice(0,12);
+    return before+rel+"?v="+hash+after;
+  });
+  fs.writeFileSync(file,html,"utf8");
+  if(!html.includes('enterprise-unified.css?v='+uiHash))throw new Error("Missing unified design: "+name);
+  adminPageCount++;
+}
+if(adminPageCount<27)throw new Error("Unexpected missing admin pages: "+adminPageCount);
+console.log("Unified enterprise design applied to",adminPageCount,"admin HTML pages");
 // Bust Safari/browser script caches whenever the staging booking code changes.
 // Only the isolated copy is modified; production HTML stays untouched.
 const bookingHash = createHash("sha256")

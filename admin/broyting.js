@@ -209,6 +209,15 @@
     else els.prepareHelp.textContent = "Bestillingane blir lagde i køen for vald dato. Ingen faktura blir sendt.";
   }
 
+  let initialJump=false;
+  function jumpSnow(kind){
+    if(!state.data){showNotice("Venter på brøytestatus. Prøv igjen når status er hentet.","warning");return;}
+    const candidates=kind==="customers"?[els.inbox,els.nextJob,els.activeJob,els.queueSection,els.noRound]:[els.noRound,els.activeJob,els.nextJob,els.activeRound];
+    const target=candidates.find(node=>node&&!node.classList.contains("hidden")&&!node.closest(".hidden"));
+    if(target)target.scrollIntoView({block:"start",behavior:"smooth"});
+  }
+  $("#snowShowCustomers")?.addEventListener("click",()=>jumpSnow("customers"));
+  $("#snowShowRound")?.addEventListener("click",()=>jumpSnow("round"));
   function render(data, { fromServer = true } = {}) {
     if (!data) return;
     const previousIds = state.knownIds;
@@ -222,6 +231,10 @@
     const hasRound = Boolean(data.round);
     els.noRound.classList.toggle("hidden", hasRound);
     els.activeRound.classList.toggle("hidden", !hasRound);
+    const hint=$("#snowCustomerHint"),label=$("#snowRoundLabel");
+    if(hint)hint.textContent=String(data.summary?.queued||0)+" i kø · "+String(data.unassignedBookings?.total||0)+" uten runde"+(fromServer?"":" · lagret status");
+    if(label)label.textContent=hasRound?"FORTSETT BRØYTERUNDEN":"START BRØYTERUNDE";
+    if(!initialJump){initialJump=true;const hash=location.hash.slice(1);if(hash==="customers"||hash==="round")requestAnimationFrame(()=>jumpSnow(hash));}
     if (!hasRound) { clearInterval(state.timer); els.subline.textContent = "Én kø. Ett neste steg."; return; }
 
     els.subline.textContent = `${data.round.title || "Brøyterunde"} · ${data.round.roundDate || ""}`;
