@@ -94,6 +94,12 @@ for(const name of fs.readdirSync(adminDir).filter(n=>n.endsWith(".html"))){
 }
 if(adminPageCount<27)throw new Error("Unexpected missing admin pages: "+adminPageCount);
 console.log("Unified enterprise design applied to",adminPageCount,"admin HTML pages");
+// Immutable preview entry aliases are built from the same pages, not a second
+// implementation. This makes cache troubleshooting possible without changing
+// the canonical admin routes or API configuration.
+for(const page of ["felt","broyting"]){
+  fs.copyFileSync(path.join(adminDir,page+".html"),path.join(adminDir,page+"-enterprise-20261128.html"));
+}
 // Bust Safari/browser script caches whenever the staging booking code changes.
 // Only the isolated copy is modified; production HTML stays untouched.
 const bookingHash = createHash("sha256")

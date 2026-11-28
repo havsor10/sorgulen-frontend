@@ -30,3 +30,4 @@ test("no new network or billing logic in shared CSS and shell routes",()=>{
  assert.doesNotMatch(css,/@import|url\(https?:/);assert.match(css,/\[hidden\]/);
  assert.match(read("admin/login.html"),/matchMedia\("\(min-width:1024px\)"\)/);
 });
+test("active field timer has priority while command controls remain accessible",()=>{assert.match(read("admin/felt.js"),/\["active","paused"\]\.includes\(job\.status\)\) commands\.before\(card\)/);assert.match(read("tools/build-staging.cjs"),/fs\.copyFileSync\(path\.join\(adminDir,page\+"\.html"\)/);});

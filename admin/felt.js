@@ -357,6 +357,11 @@
   function renderActive() {
     const card = el("activeJobCard");
     const job = state.home?.activeWorkOrder || state.home?.ongoingProject || state.home?.nextWorkOrder;
+    const commands = document.querySelector(".field-command-grid");
+    if(commands && card.parentNode===commands.parentNode){
+      if(job && ["active","paused"].includes(job.status)) commands.before(card);
+      else commands.after(card);
+    }
     if (!job) {
       card.className = "field-card field-active-card";
       card.innerHTML = '<p class="field-kicker">Akkurat nå</p><h2 style="margin:5px 0 7px">Ingen aktiv jobb</h2><p style="margin:0;color:var(--field-muted)">Når telefonen ringer kan du opprette eit oppdrag med bare kundenavn.</p><button class="field-primary-action" type="button" data-open="new-job">+ Nytt oppdrag</button>';
